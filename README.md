@@ -5,7 +5,7 @@
 
 
 ## Installation
-`pymavswarm` must currently be installed manually. To do so refer to the steps below:
+`pymavswarm` must currently be installed manually. To do so, refer to the steps below:
 1. Navigate to the `pymavswarm/` repository directory
 ```bash
 cd path/to/pymavswarm/
