@@ -1,4 +1,5 @@
 from setuptools import setup
+import setuptools
 
 version = "0.0.1"
 
@@ -24,9 +25,7 @@ setup(
         'Topic :: Scientific/Engineering'
     ],
     license='GPLv3',
-    packages=[
-        'pymavswarm'
-    ],
+    packages=setuptools.find_packages(),
     setup_requires=[
         "setuptools", 
         "wheel"
