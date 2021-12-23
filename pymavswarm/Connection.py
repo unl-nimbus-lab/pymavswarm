@@ -24,8 +24,8 @@ class Connection:
                  source_system: int=255, 
                  source_component: int=0, 
                  cmd_timeout: float=1.0,
-                 log=False, 
-                 debug=False) -> None:
+                 log: bool=False, 
+                 debug: bool=False) -> None:
 
         self.logger = self.__init_logger('connection', log=log, debug=debug)
 
@@ -537,7 +537,7 @@ class Connection:
             return
 
 
-    def __init_logger(self, name, debug=False, log=False) -> logging.Logger:
+    def __init_logger(self, name, debug: bool=False, log: bool=False) -> logging.Logger:
         """
         Initialize the logger with the desired debug levels
         """
