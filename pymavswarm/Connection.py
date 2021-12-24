@@ -438,6 +438,50 @@ class Connection:
 
             return
 
+        
+        """
+        HRL commands
+        """
+
+        @self.send_message(['startros'])
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
+            """
+            Start ROS on the respective agent
+            """
+            self.__send_hrl_msg(0, sys_id, comp_id, require_ack)
+
+            return
+
+
+        @self.send_message(['stopros'])
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
+            """
+            Stop ROS on the respective agent
+            """
+            self.__send_hrl_msg(1, sys_id, comp_id, require_ack)
+
+            return
+
+        
+        @self.send_message(['startpath'])
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
+            """
+            Start path execution on the respective agent
+            """
+            self.__send_hrl_msg(2, sys_id, comp_id, require_ack)
+
+            return
+
+        
+        @self.send_message(['stoppath'])
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
+            """
+            Stop path execution on the respective agent
+            """
+            self.__send_hrl_msg(3, sys_id, comp_id, require_ack)
+
+            return
+
 
     def __init_logger(self, name, debug: bool=False, log: bool=False) -> logging.Logger:
         """
@@ -652,15 +696,15 @@ class Connection:
         """
         Helper method used to set a flight mode on a particular agent
         """
+        mode_id = self.master.mode_mapping()[msg]
+
+        self.master.target_system = sys_id
+        self.master.target_component = comp_id
+
         if require_ack:
             ack = False
             
             while not ack:
-                mode_id = self.master.mode_mapping()[msg]
-
-                self.master.target_system = sys_id
-                self.master.target_component = comp_id
-
                 self.master.set_mode(mode_id)
 
                 if self.__ack_sys_cmd(timeout=self.cmd_timeout):
@@ -669,17 +713,41 @@ class Connection:
                 else:
                     self.logger.exception(f'The system was unable to confirm reception of the {msg} command. Re-attempting message send.')
         else:
-            mode_id = self.master.mode_mapping()[msg]
-
-            self.master.target_system = sys_id
-            self.master.target_component = comp_id
-
             self.master.set_mode(mode_id)
 
             if self.__ack_sys_cmd(timeout=self.cmd_timeout):
                 self.logger.debug(f'The system has acknowledged reception of the {msg} command')
             else:
                 self.logger.exception(f'The system was unable to confirm reception of the {msg} command')
+
+        return
+
+
+    def __send_hrl_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
+        """
+        Helper method used to send a desired HRL message
+        """
+        self.master.target_system = sys_id
+        self.master.target_component = comp_id
+
+        if require_ack:
+            ack = False
+            
+            while not ack:
+                self.master.mav.named_value_int_send('hrl-state-arg', msg)
+
+                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the HRL {msg} command')
+                else:
+                    self.logger.exception(f'The system was unable to confirm reception of the HRL {msg} command. Re-attempting message send.')
+        else:
+            self.master.mav.named_value_int_send('hrl-state-arg', msg)
+
+            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                self.logger.debug(f'The system has acknowledged reception of the HRL {msg} command')
+            else:
+                self.logger.exception(f'The system was unable to confirm reception of the HRL {msg} command')
 
         return
 
