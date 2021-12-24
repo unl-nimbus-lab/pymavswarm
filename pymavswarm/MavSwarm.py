@@ -66,12 +66,12 @@ class MavSwarm:
         return True
 
 
-    def send_msg(self, msgs: list[OutgoingMsg], ack: bool=False) -> None:
+    def send_msg(self, msgs: list[OutgoingMsg], require_ack: bool=False) -> None:
         """
         Add the message to the connection's outgoing messages queue
         """
         for msg in msgs:
-            self.connection.outgoing_msgs.put((msg, ack))
+            self.connection.outgoing_msgs.put((msg, require_ack))
         
         return
 

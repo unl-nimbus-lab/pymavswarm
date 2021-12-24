@@ -278,97 +278,59 @@ class Connection:
 
 
         """
-        System Commands
+        Arming commands
         """
 
         @self.send_message(['arm'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Arm an agent
             """
-            # Arm the respective agent
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
-                                              1, 0, 0, 0, 0, 0, 0)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the ARM command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the ARM command')
+            self.__send_arming_msg(1, sys_id, comp_id, require_ack)
 
             return
 
         
         @self.send_message(['disarm'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Disarm an agent
             """
-            # Disarm the respective agent
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
-                                              0, 0, 0, 0, 0, 0, 0)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the DISARM command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the DISARM command')
+            self.__send_arming_msg(0, sys_id, comp_id, require_ack)
 
             return
 
+        
+        """
+        Pre-flight calibration commands
+        """
 
         @self.send_message(['accelcal'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Perform a full accelerometer calibration on the selected agent
             """
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                              0, 0, 0, 0, 1, 0, 0)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the ACCEL_CAL command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the ACCEL_CAL command')
+            self.__send_preflight_calibration_msg(1, sys_id, comp_id, require_ack)
 
             return 
 
 
         @self.send_message(['accelcalsimple'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Perform a simple accelerometer calibration on the selected agent
             """
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                              0, 0, 0, 0, 4, 0, 0)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the ACCEL_CAL_SIMPLE command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the ACCEL_CAL_SIMPLE command')
+            self.__send_preflight_calibration_msg(4, sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['ahrstrim'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Instruct and agent to recalibrate its ahrs parameters
             """
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                              0, 0, 0, 0, 2, 0, 0)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the AHRS_TRIM command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the AHRS_TRIM command')
+            self.__send_preflight_calibration_msg(2, sys_id, comp_id, require_ack)
 
             return
 
@@ -378,161 +340,101 @@ class Connection:
         """
 
         @self.send_message(['stabilize'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to STABILIZE mode
             """
-            self.__send_msg('STABILIZE', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the STABILIZE command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the STABILIZE command')
+            self.__send_flight_mode_msg('STABILIZE', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['acro'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to ACRO mode
             """
-            self.__send_msg('ACRO', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the ACRO command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the ACRO command')
+            self.__send_flight_mode_msg('ACRO', sys_id, comp_id, require_ack)
 
             return
 
         
         @self.send_message(['althold'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to ALT_HOLD mode
             """
-            self.__send_msg('ALT_HOLD', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the ALT_HOLD command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the ALT_HOLD command')
+            self.__send_flight_mode_msg('ALT_HOLD', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['auto'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to AUTO mode
             """
-            self.__send_msg('AUTO', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the AUTO command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the AUTO command')
+            self.__send_flight_mode_msg('AUTO', sys_id, comp_id, require_ack)
 
             return
 
         
         @self.send_message(['loiter'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to LOITER mode
             """
-            self.__send_msg('LOITER', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the LOITER command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the LOITER command')
+            self.__send_flight_mode_msg('LOITER', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['rtl'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to RTL mode
             """
-            self.__send_msg('RTL', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the RTL command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the RTL command')
+            self.__send_flight_mode_msg('RTL', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['land'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to LAND mode
             """
-            self.__send_msg('LAND', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the LAND command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the LAND command')
+            self.__send_flight_mode_msg('LAND', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['throw'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to THROW mode
             """
-            self.__send_msg('THROW', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the THROW command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the THROW command')
+            self.__send_flight_mode_msg('THROW', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['systemid'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to SYSTEM ID mode
             """
-            self.__send_msg('SYSTEMID', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the SYSTEMID command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the SYSTEMID command')
+            self.__send_flight_mode_msg('SYSTEMID', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['guided'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to GUIDED mode
             """
-            self.__send_msg('GUIDED', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the GUIDED command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the GUIDED command')
+            self.__send_flight_mode_msg('GUIDED', sys_id, comp_id, require_ack)
 
             return
 
@@ -684,17 +586,100 @@ class Connection:
 
         return
 
+    
+    def __send_arming_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
+        """
+        Helper method used to send an arming command (arm or disarm)
+        """
 
-    def __send_msg(self, msg, sys_id, comp_id) -> None:
+        if require_ack:
+            ack = False
+            
+            while not ack:
+                self.master.mav.command_long_send(sys_id, comp_id,
+                                                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                                                    msg, 0, 0, 0, 0, 0, 0)
+
+                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the arming command: {msg}')
+                else:
+                    self.logger.exception('The system was unable to confirm reception of the arming command: {msg}. Re-attempting message send.')
+        else:
+            self.master.mav.command_long_send(sys_id, comp_id,
+                                                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                                                msg, 0, 0, 0, 0, 0, 0)
+
+            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                self.logger.debug('The system has acknowledged reception of the arming command: {msg}')
+            else:
+                self.logger.exception('The system was unable to confirm reception of the arming command: {msg}')
+
+        return
+
+
+    def __send_preflight_calibration_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
+        """
+        Helper method used to send a pre-flight calibration message
+        """
+        if require_ack:
+            ack = False
+            
+            while not ack:
+                self.master.mav.command_long_send(sys_id, comp_id,
+                                                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
+                                                    0, 0, 0, 0, msg, 0, 0)
+
+                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the pre-flight calibration command: {msg}')
+                else:
+                    self.logger.exception('The system was unable to confirm reception of the pre-flight calibration command: {msg}. Re-attempting message send.')
+        else:
+            self.master.mav.command_long_send(sys_id, comp_id,
+                                                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
+                                                0, 0, 0, 0, msg, 0, 0)
+
+            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                self.logger.debug('The system has acknowledged reception of the pre-flight calibration command: {msg}')
+            else:
+                self.logger.exception('The system was unable to confirm reception of the pre-flight calibration command: {msg}')
+
+        return
+        
+
+    def __send_flight_mode_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
         """
         Helper method used to set a flight mode on a particular agent
         """
-        mode_id = self.master.mode_mapping()[msg]
+        if require_ack:
+            ack = False
+            
+            while not ack:
+                mode_id = self.master.mode_mapping()[msg]
 
-        self.master.target_system = sys_id
-        self.master.target_component = comp_id
+                self.master.target_system = sys_id
+                self.master.target_component = comp_id
 
-        self.master.set_mode(mode_id)
+                self.master.set_mode(mode_id)
+
+                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the {msg} command')
+                else:
+                    self.logger.exception(f'The system was unable to confirm reception of the {msg} command. Re-attempting message send.')
+        else:
+            mode_id = self.master.mode_mapping()[msg]
+
+            self.master.target_system = sys_id
+            self.master.target_component = comp_id
+
+            self.master.set_mode(mode_id)
+
+            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                self.logger.debug(f'The system has acknowledged reception of the {msg} command')
+            else:
+                self.logger.exception(f'The system was unable to confirm reception of the {msg} command')
 
         return
 
