@@ -71,7 +71,9 @@ class MavSwarm:
         Add the message to the connection's outgoing messages queue
         """
         for msg in msgs:
-            self.connection.outgoing_msgs.put((msg, require_ack))
+            # Ensure that the intended agent is in the network
+            if (msg.sys_id, msg.comp_id) in self.connection.devices:
+                self.connection.outgoing_msgs.put((msg, require_ack))
         
         return
 
