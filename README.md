@@ -6,11 +6,12 @@
 
 ## Installation
 `pymavswarm` must currently be installed manually. To do so, refer to the steps below:
-1. Navigate to the `pymavswarm/` repository directory
+1. Clone this repository
+2. Navigate to the `pymavswarm/` repository directory
 ```bash
 cd path/to/pymavswarm/
 ```
-2. Install the `pymavswarm` Python package
+3. Install the `pymavswarm` Python package
 ```bash
 pip3 install .
 ```
