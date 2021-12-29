@@ -34,8 +34,8 @@ msgs = []
 # Send an arming message to Agent (2, 1)
 msgs.append(OutgoingMsg(MsgMap().system_commands.arm, 2, 1))
 
-# Send the desired messages and check for message acknowledgement
-mavswarm.send_msg(msgs, ack=True)
+# Send the desired messages and require that the messages be acknowledged
+mavswarm.send_msg(msgs, require_ack=True)
 
 # Read the current state of the swarm agents
 for agent in mavswarm.get_agents():
