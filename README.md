@@ -3,10 +3,10 @@
 ## Introduction
 `pymavswarm` is a Python library implemented to enable interaction with robotic swarms using the MAVLink protocol. This library supports reading MAVLink messages sent from multiple agents in a swarm and sending MAVLink messages to agents within the swarm. Such functionality ultimately enables development of new swarm applications such as ground control stations.
 
+## Dependencies
+`pymavswarm` depends on Python versions 3.9 or greater. Ensure that this dependency is met prior to installation.
 
 ## Installation
-`pymavswarm` depends on Python versions 3.9.6 or greater. Ensure that this dependency is met prior to installation.
-
 `pymavswarm` must currently be installed manually. To do so, refer to the steps below:
 1. Clone this repository
 2. Navigate to the `pymavswarm/` repository directory
