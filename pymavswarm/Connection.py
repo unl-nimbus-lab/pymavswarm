@@ -767,7 +767,7 @@ class Connection:
             ack = False
             
             while not ack:
-                self.master.mav.named_value_int_send('hrl-state-arg', msg)
+                self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), msg)
 
                 if self.__ack_sys_cmd(timeout=self.cmd_timeout):
                     ack = True
@@ -775,7 +775,7 @@ class Connection:
                 else:
                     self.logger.exception(f'The system was unable to confirm reception of the HRL {msg} command. Re-attempting message send.')
         else:
-            self.master.mav.named_value_int_send('hrl-state-arg', msg)
+            self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), msg)
 
             if self.__ack_sys_cmd(timeout=self.cmd_timeout):
                 self.logger.debug(f'The system has acknowledged reception of the HRL {msg} command')
