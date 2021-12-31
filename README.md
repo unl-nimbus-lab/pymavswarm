@@ -5,9 +5,7 @@
 
 
 ## Installation
-```
-pymavswarm depends on Python versions 3.9.6 or greater. Ensure that this dependency is met prior to installation.
-```
+`pymavswarm` depends on Python versions 3.9.6 or greater. Ensure that this dependency is met prior to installation.
 
 `pymavswarm` must currently be installed manually. To do so, refer to the steps below:
 1. Clone this repository
