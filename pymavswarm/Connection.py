@@ -83,21 +83,24 @@ class Connection:
             sys_id = msg.get_srcSystem()
             comp_id = msg.get_srcComponent()
 
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
+
             # Create a new device assigned the respective sysid:compid pair
             device = Agent(sys_id, comp_id)
 
             # If the device hasn't been seen before, save it
-            if sys_id not in self.devices:
-                self.devices[sys_id] = device
+            if device_tuple not in self.devices:
+                self.devices[device_tuple] = device
             else:
                 # The connection has been restored
-                if self.devices[sys_id].timeout:
+                if self.devices[device_tuple].timeout:
                     self.logger.info(f'Connection to device {sys_id}:{comp_id} has been restored')
                 
             # Update the last heartbeat variable
-            self.devices[sys_id].last_heartbeat = monotonic.monotonic()
+            self.devices[device_tuple].last_heartbeat = monotonic.monotonic()
             
-            self.devices[sys_id].timeout = False
+            self.devices[device_tuple].timeout = False
 
             return
 
@@ -111,22 +114,27 @@ class Connection:
             if msg.type == mavutil.mavlink.MAV_TYPE_GCS:
                 return
 
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
-            self.devices[sys_id].armed = (msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED) != 0
-            self.devices[sys_id].system_status = msg.system_status
-            self.devices[sys_id].vehicle_type = msg.type
+            self.devices[device_tuple].armed = (msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED) != 0
+            self.devices[device_tuple].system_status = msg.system_status
+            self.devices[device_tuple].vehicle_type = msg.type
 
             # Update the last heartbeat
-            self.devices[sys_id].last_heartbeat = monotonic.monotonic()
+            self.devices[device_tuple].last_heartbeat = monotonic.monotonic()
 
             try:
                 # NOTE: We assume that ArduPilot will be used
-                self.devices[sys_id].flight_mode = mavutil.mode_mapping_bynumber(msg.type)[msg.custom_mode]
+                self.devices[device_tuple].flight_mode = mavutil.mode_mapping_bynumber(msg.type)[msg.custom_mode]
             except Exception as e:
                 # We received an invalid message
                 pass
@@ -139,29 +147,34 @@ class Connection:
             """
             Handle the a GPS position message
             """
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
             # Update the device velocity
-            if self.devices[sys_id].velocity is None:
+            if self.devices[device_tuple].velocity is None:
                 v = Velocity(msg.vx / 100, msg.vy / 100, msg.vz / 100)
-                self.devices[sys_id].velocity = v
+                self.devices[device_tuple].velocity = v
             else:
-                self.devices[sys_id].velocity.vx = msg.vx / 100
-                self.devices[sys_id].velocity.vy = msg.vy / 100
-                self.devices[sys_id].velocity.vz = msg.vz / 100
+                self.devices[device_tuple].velocity.vx = msg.vx / 100
+                self.devices[device_tuple].velocity.vy = msg.vy / 100
+                self.devices[device_tuple].velocity.vz = msg.vz / 100
 
             # Update the device location
-            if self.devices[sys_id].location is None:
+            if self.devices[device_tuple].location is None:
                 loc = Location(msg.lat / 1.0e7, msg.lon / 1.0e7, msg.alt / 1000)
-                self.devices[sys_id].location = loc
+                self.devices[device_tuple].location = loc
             else:
-                self.devices[sys_id].location.latitude = msg.lat / 1.0e7
-                self.devices[sys_id].location.longitude = msg.lon / 1.0e7
-                self.devices[sys_id].location.altitude = msg.alt / 1000
+                self.devices[device_tuple].location.latitude = msg.lat / 1.0e7
+                self.devices[device_tuple].location.longitude = msg.lon / 1.0e7
+                self.devices[device_tuple].location.altitude = msg.alt / 1000
 
             return
 
@@ -171,23 +184,28 @@ class Connection:
             """
             Handle an agent attitude message
             """
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
             # Update the respective devices attitude
-            if self.devices[sys_id].attitude is None:
+            if self.devices[device_tuple].attitude is None:
                 att = Attitude(msg.pitch, msg.yaw, msg.roll, msg.pitchspeed, msg.yawspeed, msg.rollspeed)
-                self.devices[sys_id].attitude = att
+                self.devices[device_tuple].attitude = att
             else:
-                self.devices[sys_id].attitude.pitch = msg.pitch
-                self.devices[sys_id].attitude.roll = msg.roll
-                self.devices[sys_id].attitude.yaw = msg.yaw
-                self.devices[sys_id].attitude.pitch_speed = msg.pitchspeed
-                self.devices[sys_id].attitude.roll_speed = msg.rollspeed
-                self.devices[sys_id].attitude.yaw_speed = msg.yawspeed
+                self.devices[device_tuple].attitude.pitch = msg.pitch
+                self.devices[device_tuple].attitude.roll = msg.roll
+                self.devices[device_tuple].attitude.yaw = msg.yaw
+                self.devices[device_tuple].attitude.pitch_speed = msg.pitchspeed
+                self.devices[device_tuple].attitude.roll_speed = msg.rollspeed
+                self.devices[device_tuple].attitude.yaw_speed = msg.yawspeed
             
             return
 
@@ -197,20 +215,25 @@ class Connection:
             """
             Handle the system status message containing battery state
             """
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
             # Update the battery information
-            if self.devices[sys_id].battery is None:
+            if self.devices[device_tuple].battery is None:
                 batt = Battery(msg.voltage_battery, msg.current_battery, msg.battery_remaining)
-                self.devices[sys_id].battery = batt
+                self.devices[device_tuple].battery = batt
             else:
-                self.devices[sys_id].battery.voltage = msg.voltage_battery
-                self.devices[sys_id].battery.current = msg.current_battery
-                self.devices[sys_id].battery.level = msg.battery_remaining
+                self.devices[device_tuple].battery.voltage = msg.voltage_battery
+                self.devices[device_tuple].battery.current = msg.current_battery
+                self.devices[device_tuple].battery.level = msg.battery_remaining
 
             return
 
@@ -220,21 +243,26 @@ class Connection:
             """
             Handle the GPS status information
             """
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
             # Read the GPS status information
-            if self.devices[sys_id].gps_info is None:
+            if self.devices[device_tuple].gps_info is None:
                 info = GPSInfo(msg.eph, msg.epv, msg.fix_type, msg.satellites_visible)
-                self.devices[sys_id].gps_info = info
+                self.devices[device_tuple].gps_info = info
             else:
-                self.devices[sys_id].gps_info.eph = msg.eph
-                self.devices[sys_id].gps_info.epv = msg.epv
-                self.devices[sys_id].gps_info.fix_type = msg.fix_type
-                self.devices[sys_id].gps_info.satellites_visible = msg.satellites_visible
+                self.devices[device_tuple].gps_info.eph = msg.eph
+                self.devices[device_tuple].gps_info.epv = msg.epv
+                self.devices[device_tuple].gps_info.fix_type = msg.fix_type
+                self.devices[device_tuple].gps_info.satellites_visible = msg.satellites_visible
             
             return
 
@@ -244,14 +272,19 @@ class Connection:
             """
             Handle an EKF status message
             """
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
             # Read the EKF Status information
-            if self.devices[sys_id].ekf is None:
+            if self.devices[device_tuple].ekf is None:
                 ekf = EKFStatus(msg.velocity_variance, 
                                 msg.pos_horiz_variance, 
                                 msg.pos_vert_variance, 
@@ -260,19 +293,19 @@ class Connection:
                                 (msg.flags & ardupilotmega.EKF_POS_HORIZ_ABS) > 0,
                                 (msg.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0,
                                 (msg.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0)
-                self.devices[sys_id].ekf = ekf
+                self.devices[device_tuple].ekf = ekf
             else:
                 # Read variance properties
-                self.devices[sys_id].ekf.velocity_variance = msg.velocity_variance
-                self.devices[sys_id].ekf.pos_horiz_variance = msg.pos_horiz_variance
-                self.devices[sys_id].ekf.pos_vert_variance = msg.pos_vert_variance
-                self.devices[sys_id].ekf.compass_variance = msg.compass_variance
-                self.devices[sys_id].ekf.terrain_alt_variance = msg.terrain_alt_variance
+                self.devices[device_tuple].ekf.velocity_variance = msg.velocity_variance
+                self.devices[device_tuple].ekf.pos_horiz_variance = msg.pos_horiz_variance
+                self.devices[device_tuple].ekf.pos_vert_variance = msg.pos_vert_variance
+                self.devices[device_tuple].ekf.compass_variance = msg.compass_variance
+                self.devices[device_tuple].ekf.terrain_alt_variance = msg.terrain_alt_variance
 
                 # Read flags
-                self.devices[sys_id].ekf.pos_horiz_abs = (msg.flags & ardupilotmega.EKF_POS_HORIZ_ABS) > 0
-                self.devices[sys_id].ekf.const_pos_mode = (msg.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0
-                self.devices[sys_id].ekf.pred_pos_horiz_abs = (msg.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0
+                self.devices[device_tuple].ekf.pos_horiz_abs = (msg.flags & ardupilotmega.EKF_POS_HORIZ_ABS) > 0
+                self.devices[device_tuple].ekf.const_pos_mode = (msg.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0
+                self.devices[device_tuple].ekf.pred_pos_horiz_abs = (msg.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0
 
             return
 
@@ -581,9 +614,9 @@ class Connection:
                 continue
 
             # Update the timeout flag for each device
-            for sys_id in self.devices:
-                if self.devices[sys_id].last_heartbeat is not None:
-                    self.devices[sys_id].timeout = (monotonic.monotonic() - self.devices[sys_id].last_heartbeat) >= self.devices[sys_id].timeout_period
+            for key in self.devices:
+                if self.devices[key].last_heartbeat is not None:
+                    self.devices[key].timeout = (monotonic.monotonic() - self.devices[key].last_heartbeat) >= self.devices[key].timeout_period
 
             # Read a new message
             try:

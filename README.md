@@ -10,11 +10,12 @@ pymavswarm depends on Python versions 3.9.6 or greater. Ensure that this depende
 ```
 
 `pymavswarm` must currently be installed manually. To do so, refer to the steps below:
-1. Navigate to the `pymavswarm/` repository directory
+1. Clone this repository
+2. Navigate to the `pymavswarm/` repository directory
 ```bash
 cd path/to/pymavswarm/
 ```
-2. Install the `pymavswarm` Python package
+3. Install the `pymavswarm` Python package
 ```bash
 pip3 install .
 ```
@@ -37,8 +38,8 @@ msgs = []
 # Send an arming message to Agent (2, 1)
 msgs.append(OutgoingMsg(MsgMap().system_commands.arm, 2, 1))
 
-# Send the desired messages and check for message acknowledgement
-mavswarm.send_msg(msgs, ack=True)
+# Send the desired messages and require that the messages be acknowledged
+mavswarm.send_msg(msgs, require_ack=True)
 
 # Read the current state of the swarm agents
 for agent in mavswarm.get_agents():
@@ -49,4 +50,4 @@ mavswarm.disconnect()
 ```
 
 ## License
-pymavswarm is released under the GNU General Public License v3 or later
+`pymavswarm` is released under the GNU General Public License v3 or later
