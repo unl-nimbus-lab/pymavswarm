@@ -24,8 +24,8 @@ class Connection:
                  source_system: int=255, 
                  source_component: int=0, 
                  cmd_timeout: float=1.0,
-                 log=False, 
-                 debug=False) -> None:
+                 log: bool=False, 
+                 debug: bool=False) -> None:
 
         self.logger = self.__init_logger('connection', log=log, debug=debug)
 
@@ -83,21 +83,24 @@ class Connection:
             sys_id = msg.get_srcSystem()
             comp_id = msg.get_srcComponent()
 
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
+
             # Create a new device assigned the respective sysid:compid pair
             device = Agent(sys_id, comp_id)
 
             # If the device hasn't been seen before, save it
-            if sys_id not in self.devices:
-                self.devices[sys_id] = device
+            if device_tuple not in self.devices:
+                self.devices[device_tuple] = device
             else:
                 # The connection has been restored
-                if self.devices[sys_id].timeout:
+                if self.devices[device_tuple].timeout:
                     self.logger.info(f'Connection to device {sys_id}:{comp_id} has been restored')
                 
             # Update the last heartbeat variable
-            self.devices[sys_id].last_heartbeat = monotonic.monotonic()
+            self.devices[device_tuple].last_heartbeat = monotonic.monotonic()
             
-            self.devices[sys_id].timeout = False
+            self.devices[device_tuple].timeout = False
 
             return
 
@@ -111,22 +114,27 @@ class Connection:
             if msg.type == mavutil.mavlink.MAV_TYPE_GCS:
                 return
 
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
-            self.devices[sys_id].armed = (msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED) != 0
-            self.devices[sys_id].system_status = msg.system_status
-            self.devices[sys_id].vehicle_type = msg.type
+            self.devices[device_tuple].armed = (msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED) != 0
+            self.devices[device_tuple].system_status = msg.system_status
+            self.devices[device_tuple].vehicle_type = msg.type
 
             # Update the last heartbeat
-            self.devices[sys_id].last_heartbeat = monotonic.monotonic()
+            self.devices[device_tuple].last_heartbeat = monotonic.monotonic()
 
             try:
                 # NOTE: We assume that ArduPilot will be used
-                self.devices[sys_id].flight_mode = mavutil.mode_mapping_bynumber(msg.type)[msg.custom_mode]
+                self.devices[device_tuple].flight_mode = mavutil.mode_mapping_bynumber(msg.type)[msg.custom_mode]
             except Exception as e:
                 # We received an invalid message
                 pass
@@ -139,29 +147,34 @@ class Connection:
             """
             Handle the a GPS position message
             """
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
             # Update the device velocity
-            if self.devices[sys_id].velocity is None:
+            if self.devices[device_tuple].velocity is None:
                 v = Velocity(msg.vx / 100, msg.vy / 100, msg.vz / 100)
-                self.devices[sys_id].velocity = v
+                self.devices[device_tuple].velocity = v
             else:
-                self.devices[sys_id].velocity.vx = msg.vx / 100
-                self.devices[sys_id].velocity.vy = msg.vy / 100
-                self.devices[sys_id].velocity.vz = msg.vz / 100
+                self.devices[device_tuple].velocity.vx = msg.vx / 100
+                self.devices[device_tuple].velocity.vy = msg.vy / 100
+                self.devices[device_tuple].velocity.vz = msg.vz / 100
 
             # Update the device location
-            if self.devices[sys_id].location is None:
+            if self.devices[device_tuple].location is None:
                 loc = Location(msg.lat / 1.0e7, msg.lon / 1.0e7, msg.alt / 1000)
-                self.devices[sys_id].location = loc
+                self.devices[device_tuple].location = loc
             else:
-                self.devices[sys_id].location.latitude = msg.lat / 1.0e7
-                self.devices[sys_id].location.longitude = msg.lon / 1.0e7
-                self.devices[sys_id].location.altitude = msg.alt / 1000
+                self.devices[device_tuple].location.latitude = msg.lat / 1.0e7
+                self.devices[device_tuple].location.longitude = msg.lon / 1.0e7
+                self.devices[device_tuple].location.altitude = msg.alt / 1000
 
             return
 
@@ -171,23 +184,28 @@ class Connection:
             """
             Handle an agent attitude message
             """
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
             # Update the respective devices attitude
-            if self.devices[sys_id].attitude is None:
+            if self.devices[device_tuple].attitude is None:
                 att = Attitude(msg.pitch, msg.yaw, msg.roll, msg.pitchspeed, msg.yawspeed, msg.rollspeed)
-                self.devices[sys_id].attitude = att
+                self.devices[device_tuple].attitude = att
             else:
-                self.devices[sys_id].attitude.pitch = msg.pitch
-                self.devices[sys_id].attitude.roll = msg.roll
-                self.devices[sys_id].attitude.yaw = msg.yaw
-                self.devices[sys_id].attitude.pitch_speed = msg.pitchspeed
-                self.devices[sys_id].attitude.roll_speed = msg.rollspeed
-                self.devices[sys_id].attitude.yaw_speed = msg.yawspeed
+                self.devices[device_tuple].attitude.pitch = msg.pitch
+                self.devices[device_tuple].attitude.roll = msg.roll
+                self.devices[device_tuple].attitude.yaw = msg.yaw
+                self.devices[device_tuple].attitude.pitch_speed = msg.pitchspeed
+                self.devices[device_tuple].attitude.roll_speed = msg.rollspeed
+                self.devices[device_tuple].attitude.yaw_speed = msg.yawspeed
             
             return
 
@@ -197,20 +215,25 @@ class Connection:
             """
             Handle the system status message containing battery state
             """
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
             # Update the battery information
-            if self.devices[sys_id].battery is None:
+            if self.devices[device_tuple].battery is None:
                 batt = Battery(msg.voltage_battery, msg.current_battery, msg.battery_remaining)
-                self.devices[sys_id].battery = batt
+                self.devices[device_tuple].battery = batt
             else:
-                self.devices[sys_id].battery.voltage = msg.voltage_battery
-                self.devices[sys_id].battery.current = msg.current_battery
-                self.devices[sys_id].battery.level = msg.battery_remaining
+                self.devices[device_tuple].battery.voltage = msg.voltage_battery
+                self.devices[device_tuple].battery.current = msg.current_battery
+                self.devices[device_tuple].battery.level = msg.battery_remaining
 
             return
 
@@ -220,21 +243,26 @@ class Connection:
             """
             Handle the GPS status information
             """
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
             # Read the GPS status information
-            if self.devices[sys_id].gps_info is None:
+            if self.devices[device_tuple].gps_info is None:
                 info = GPSInfo(msg.eph, msg.epv, msg.fix_type, msg.satellites_visible)
-                self.devices[sys_id].gps_info = info
+                self.devices[device_tuple].gps_info = info
             else:
-                self.devices[sys_id].gps_info.eph = msg.eph
-                self.devices[sys_id].gps_info.epv = msg.epv
-                self.devices[sys_id].gps_info.fix_type = msg.fix_type
-                self.devices[sys_id].gps_info.satellites_visible = msg.satellites_visible
+                self.devices[device_tuple].gps_info.eph = msg.eph
+                self.devices[device_tuple].gps_info.epv = msg.epv
+                self.devices[device_tuple].gps_info.fix_type = msg.fix_type
+                self.devices[device_tuple].gps_info.satellites_visible = msg.satellites_visible
             
             return
 
@@ -244,14 +272,19 @@ class Connection:
             """
             Handle an EKF status message
             """
+            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not sys_id in self.devices:
+            if not device_tuple in self.devices:
                 return
 
             # Read the EKF Status information
-            if self.devices[sys_id].ekf is None:
+            if self.devices[device_tuple].ekf is None:
                 ekf = EKFStatus(msg.velocity_variance, 
                                 msg.pos_horiz_variance, 
                                 msg.pos_vert_variance, 
@@ -260,115 +293,77 @@ class Connection:
                                 (msg.flags & ardupilotmega.EKF_POS_HORIZ_ABS) > 0,
                                 (msg.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0,
                                 (msg.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0)
-                self.devices[sys_id].ekf = ekf
+                self.devices[device_tuple].ekf = ekf
             else:
                 # Read variance properties
-                self.devices[sys_id].ekf.velocity_variance = msg.velocity_variance
-                self.devices[sys_id].ekf.pos_horiz_variance = msg.pos_horiz_variance
-                self.devices[sys_id].ekf.pos_vert_variance = msg.pos_vert_variance
-                self.devices[sys_id].ekf.compass_variance = msg.compass_variance
-                self.devices[sys_id].ekf.terrain_alt_variance = msg.terrain_alt_variance
+                self.devices[device_tuple].ekf.velocity_variance = msg.velocity_variance
+                self.devices[device_tuple].ekf.pos_horiz_variance = msg.pos_horiz_variance
+                self.devices[device_tuple].ekf.pos_vert_variance = msg.pos_vert_variance
+                self.devices[device_tuple].ekf.compass_variance = msg.compass_variance
+                self.devices[device_tuple].ekf.terrain_alt_variance = msg.terrain_alt_variance
 
                 # Read flags
-                self.devices[sys_id].ekf.pos_horiz_abs = (msg.flags & ardupilotmega.EKF_POS_HORIZ_ABS) > 0
-                self.devices[sys_id].ekf.const_pos_mode = (msg.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0
-                self.devices[sys_id].ekf.pred_pos_horiz_abs = (msg.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0
+                self.devices[device_tuple].ekf.pos_horiz_abs = (msg.flags & ardupilotmega.EKF_POS_HORIZ_ABS) > 0
+                self.devices[device_tuple].ekf.const_pos_mode = (msg.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0
+                self.devices[device_tuple].ekf.pred_pos_horiz_abs = (msg.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0
 
             return
 
 
         """
-        System Commands
+        Arming commands
         """
 
         @self.send_message(['arm'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Arm an agent
             """
-            # Arm the respective agent
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
-                                              1, 0, 0, 0, 0, 0, 0)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the ARM command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the ARM command')
+            self.__send_arming_msg(1, sys_id, comp_id, require_ack)
 
             return
 
         
         @self.send_message(['disarm'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Disarm an agent
             """
-            # Disarm the respective agent
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
-                                              0, 0, 0, 0, 0, 0, 0)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the DISARM command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the DISARM command')
+            self.__send_arming_msg(0, sys_id, comp_id, require_ack)
 
             return
 
+        
+        """
+        Pre-flight calibration commands
+        """
 
         @self.send_message(['accelcal'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Perform a full accelerometer calibration on the selected agent
             """
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                              0, 0, 0, 0, 1, 0, 0)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the ACCEL_CAL command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the ACCEL_CAL command')
+            self.__send_preflight_calibration_msg(1, sys_id, comp_id, require_ack)
 
             return 
 
 
         @self.send_message(['accelcalsimple'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Perform a simple accelerometer calibration on the selected agent
             """
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                              0, 0, 0, 0, 4, 0, 0)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the ACCEL_CAL_SIMPLE command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the ACCEL_CAL_SIMPLE command')
+            self.__send_preflight_calibration_msg(4, sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['ahrstrim'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Instruct and agent to recalibrate its ahrs parameters
             """
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                              0, 0, 0, 0, 2, 0, 0)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the AHRS_TRIM command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the AHRS_TRIM command')
+            self.__send_preflight_calibration_msg(2, sys_id, comp_id, require_ack)
 
             return
 
@@ -378,166 +373,150 @@ class Connection:
         """
 
         @self.send_message(['stabilize'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to STABILIZE mode
             """
-            self.__send_msg('STABILIZE', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the STABILIZE command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the STABILIZE command')
+            self.__send_flight_mode_msg('STABILIZE', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['acro'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to ACRO mode
             """
-            self.__send_msg('ACRO', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the ACRO command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the ACRO command')
+            self.__send_flight_mode_msg('ACRO', sys_id, comp_id, require_ack)
 
             return
 
         
         @self.send_message(['althold'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to ALT_HOLD mode
             """
-            self.__send_msg('ALT_HOLD', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the ALT_HOLD command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the ALT_HOLD command')
+            self.__send_flight_mode_msg('ALT_HOLD', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['auto'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to AUTO mode
             """
-            self.__send_msg('AUTO', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the AUTO command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the AUTO command')
+            self.__send_flight_mode_msg('AUTO', sys_id, comp_id, require_ack)
 
             return
 
         
         @self.send_message(['loiter'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to LOITER mode
             """
-            self.__send_msg('LOITER', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the LOITER command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the LOITER command')
+            self.__send_flight_mode_msg('LOITER', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['rtl'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to RTL mode
             """
-            self.__send_msg('RTL', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the RTL command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the RTL command')
+            self.__send_flight_mode_msg('RTL', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['land'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to LAND mode
             """
-            self.__send_msg('LAND', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the LAND command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the LAND command')
+            self.__send_flight_mode_msg('LAND', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['throw'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to THROW mode
             """
-            self.__send_msg('THROW', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the THROW command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the THROW command')
+            self.__send_flight_mode_msg('THROW', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['systemid'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to SYSTEM ID mode
             """
-            self.__send_msg('SYSTEMID', sys_id, comp_id)
-
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the SYSTEMID command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the SYSTEMID command')
+            self.__send_flight_mode_msg('SYSTEMID', sys_id, comp_id, require_ack)
 
             return
 
 
         @self.send_message(['guided'])
-        def sender(self, sys_id, comp_id, ack=False) -> None:
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Set an agent to GUIDED mode
             """
-            self.__send_msg('GUIDED', sys_id, comp_id)
+            self.__send_flight_mode_msg('GUIDED', sys_id, comp_id, require_ack)
 
-            if ack:
-                if not self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    self.logger.exception('The system was unable to confirm reception of the GUIDED command')
-                else:
-                    self.logger.debug('The system has acknowledged reception of the GUIDED command')
+            return
+
+        
+        """
+        HRL commands
+        """
+
+        @self.send_message(['startros'])
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
+            """
+            Start ROS on the respective agent
+            """
+            self.__send_hrl_msg(0, sys_id, comp_id, require_ack)
 
             return
 
 
-    def __init_logger(self, name, debug=False, log=False) -> logging.Logger:
+        @self.send_message(['stopros'])
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
+            """
+            Stop ROS on the respective agent
+            """
+            self.__send_hrl_msg(1, sys_id, comp_id, require_ack)
+
+            return
+
+        
+        @self.send_message(['startpath'])
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
+            """
+            Start path execution on the respective agent
+            """
+            self.__send_hrl_msg(2, sys_id, comp_id, require_ack)
+
+            return
+
+        
+        @self.send_message(['stoppath'])
+        def sender(self, sys_id, comp_id, require_ack=False) -> None:
+            """
+            Stop path execution on the respective agent
+            """
+            self.__send_hrl_msg(3, sys_id, comp_id, require_ack)
+
+            return
+
+
+    def __init_logger(self, name, debug: bool=False, log: bool=False) -> logging.Logger:
         """
         Initialize the logger with the desired debug levels
         """
@@ -635,9 +614,9 @@ class Connection:
                 continue
 
             # Update the timeout flag for each device
-            for sys_id in self.devices:
-                if self.devices[sys_id].last_heartbeat is not None:
-                    self.devices[sys_id].timeout = (monotonic.monotonic() - self.devices[sys_id].last_heartbeat) >= self.devices[sys_id].timeout_period
+            for key in self.devices:
+                if self.devices[key].last_heartbeat is not None:
+                    self.devices[key].timeout = (monotonic.monotonic() - self.devices[key].last_heartbeat) >= self.devices[key].timeout_period
 
             # Read a new message
             try:
@@ -684,8 +663,69 @@ class Connection:
 
         return
 
+    
+    def __send_arming_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
+        """
+        Helper method used to send an arming command (arm or disarm)
+        """
 
-    def __send_msg(self, msg, sys_id, comp_id) -> None:
+        if require_ack:
+            ack = False
+            
+            while not ack:
+                self.master.mav.command_long_send(sys_id, comp_id,
+                                                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                                                    msg, 0, 0, 0, 0, 0, 0)
+
+                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the arming command: {msg}')
+                else:
+                    self.logger.exception('The system was unable to confirm reception of the arming command: {msg}. Re-attempting message send.')
+        else:
+            self.master.mav.command_long_send(sys_id, comp_id,
+                                                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                                                msg, 0, 0, 0, 0, 0, 0)
+
+            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                self.logger.debug('The system has acknowledged reception of the arming command: {msg}')
+            else:
+                self.logger.exception('The system was unable to confirm reception of the arming command: {msg}')
+
+        return
+
+
+    def __send_preflight_calibration_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
+        """
+        Helper method used to send a pre-flight calibration message
+        """
+        if require_ack:
+            ack = False
+            
+            while not ack:
+                self.master.mav.command_long_send(sys_id, comp_id,
+                                                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
+                                                    0, 0, 0, 0, msg, 0, 0)
+
+                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the pre-flight calibration command: {msg}')
+                else:
+                    self.logger.exception('The system was unable to confirm reception of the pre-flight calibration command: {msg}. Re-attempting message send.')
+        else:
+            self.master.mav.command_long_send(sys_id, comp_id,
+                                                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
+                                                0, 0, 0, 0, msg, 0, 0)
+
+            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                self.logger.debug('The system has acknowledged reception of the pre-flight calibration command: {msg}')
+            else:
+                self.logger.exception('The system was unable to confirm reception of the pre-flight calibration command: {msg}')
+
+        return
+        
+
+    def __send_flight_mode_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
         """
         Helper method used to set a flight mode on a particular agent
         """
@@ -694,7 +734,53 @@ class Connection:
         self.master.target_system = sys_id
         self.master.target_component = comp_id
 
-        self.master.set_mode(mode_id)
+        if require_ack:
+            ack = False
+            
+            while not ack:
+                self.master.set_mode(mode_id)
+
+                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the {msg} command')
+                else:
+                    self.logger.exception(f'The system was unable to confirm reception of the {msg} command. Re-attempting message send.')
+        else:
+            self.master.set_mode(mode_id)
+
+            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                self.logger.debug(f'The system has acknowledged reception of the {msg} command')
+            else:
+                self.logger.exception(f'The system was unable to confirm reception of the {msg} command')
+
+        return
+
+
+    def __send_hrl_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
+        """
+        Helper method used to send a desired HRL message
+        """
+        self.master.target_system = sys_id
+        self.master.target_component = comp_id
+
+        if require_ack:
+            ack = False
+            
+            while not ack:
+                self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), msg)
+
+                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the HRL {msg} command')
+                else:
+                    self.logger.exception(f'The system was unable to confirm reception of the HRL {msg} command. Re-attempting message send.')
+        else:
+            self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), msg)
+
+            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                self.logger.debug(f'The system has acknowledged reception of the HRL {msg} command')
+            else:
+                self.logger.exception(f'The system was unable to confirm reception of the HRL {msg} command')
 
         return
 
