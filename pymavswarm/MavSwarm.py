@@ -8,7 +8,7 @@ class MavSwarm:
     This object is the primary interface for mavswarm and enables users to
     send commands to the swarm and read the swarm state
     """
-    def __init__(self, log=False, debug=False) -> None:
+    def __init__(self, log: bool=False, debug: bool=False) -> None:
         super().__init__()
 
         # Initialize loggers
@@ -20,7 +20,7 @@ class MavSwarm:
         self.connection = None
 
     
-    def __init_logger(self, name, debug=False, log=False) -> logging.Logger:
+    def __init_logger(self, name, debug: bool=False, log: bool=False) -> logging.Logger:
         """
         Initialize the logger with the desired debug levels
         """
@@ -66,12 +66,14 @@ class MavSwarm:
         return True
 
 
-    def send_msg(self, msgs: list[OutgoingMsg], ack: bool=False) -> None:
+    def send_msg(self, msgs: list[OutgoingMsg], require_ack: bool=False) -> None:
         """
         Add the message to the connection's outgoing messages queue
         """
         for msg in msgs:
-            self.connection.outgoing_msgs.put((msg, ack))
+            # Ensure that the intended agent is in the network
+            if (msg.sys_id, msg.comp_id) in self.connection.devices:
+                self.connection.outgoing_msgs.put((msg, require_ack))
         
         return
 
