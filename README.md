@@ -37,7 +37,7 @@ msgs = []
 msgs.append(AgentMsg(MsgMap().system_commands.arm, 2, 1))
 
 # Send the desired messages and require that the messages be acknowledged
-mavswarm.send_msg(msgs, require_ack=True)
+mavswarm.send_msg(msgs)
 
 # Read the current state of the swarm agents
 for agent in mavswarm.get_agents():

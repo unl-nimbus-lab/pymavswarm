@@ -660,16 +660,16 @@ class Connection:
                     ack = True
                     self.logger.debug(f'The system has acknowledged reception of the arming command: {msg}')
                 else:
-                    self.logger.exception('The system was unable to confirm reception of the arming command: {msg}. Re-attempting message send.')
+                    self.logger.exception(f'The system was unable to confirm reception of the arming command: {msg}. Re-attempting message send.')
         else:
             self.master.mav.command_long_send(sys_id, comp_id,
                                                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
                                                 msg, 0, 0, 0, 0, 0, 0)
 
             if self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                self.logger.debug('The system has acknowledged reception of the arming command: {msg}')
+                self.logger.debug(f'The system has acknowledged reception of the arming command: {msg}')
             else:
-                self.logger.exception('The system was unable to confirm reception of the arming command: {msg}')
+                self.logger.exception(f'The system was unable to confirm reception of the arming command: {msg}')
 
         return
 
@@ -690,16 +690,16 @@ class Connection:
                     ack = True
                     self.logger.debug(f'The system has acknowledged reception of the pre-flight calibration command: {msg}')
                 else:
-                    self.logger.exception('The system was unable to confirm reception of the pre-flight calibration command: {msg}. Re-attempting message send.')
+                    self.logger.exception(f'The system was unable to confirm reception of the pre-flight calibration command: {msg}. Re-attempting message send.')
         else:
             self.master.mav.command_long_send(sys_id, comp_id,
                                                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
                                                 0, 0, 0, 0, msg, 0, 0)
 
             if self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                self.logger.debug('The system has acknowledged reception of the pre-flight calibration command: {msg}')
+                self.logger.debug(f'The system has acknowledged reception of the pre-flight calibration command: {msg}')
             else:
-                self.logger.exception('The system was unable to confirm reception of the pre-flight calibration command: {msg}')
+                self.logger.exception(f'The system was unable to confirm reception of the pre-flight calibration command: {msg}')
 
         return
         
