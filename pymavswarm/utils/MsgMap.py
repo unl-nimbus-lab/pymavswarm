@@ -27,8 +27,6 @@ class SystemCommands:
         self.accel_cal = 'accelcal'
         self.accel_cal_simple = 'accelcalsimple'
         self.ahrs_trim = 'ahrstrim'
-        self.start_ros = 'startros'
-        self.stop_ros = 'stopros'
         self.start_path_execution = 'startpath'
         self.stop_path_execution = 'stoppath'
 

@@ -17,7 +17,7 @@ class Connection:
     This implementation has been inspired by the following source:
         * Project: Dronekit
         * Repository: dronekit
-        * URL: https://github.com/dronekit/dronekit-python/blob/c7143e0ba94d414416fd36679fd3306ce31a7e69/dronekit/mavlink.py#L114
+        * URL: https://github.com/dronekit/dronekit-python
     """
     def __init__(self, port: str, 
                  baud: int, 
@@ -169,12 +169,12 @@ class Connection:
 
             # Update the device location
             if self.devices[device_tuple].location is None:
-                loc = Location(msg.lat / 1.0e7, msg.lon / 1.0e7, msg.alt / 1000)
+                loc = Location(msg.lat / 1.0e7, msg.lon / 1.0e7, msg.relative_alt / 1000)
                 self.devices[device_tuple].location = loc
             else:
                 self.devices[device_tuple].location.latitude = msg.lat / 1.0e7
                 self.devices[device_tuple].location.longitude = msg.lon / 1.0e7
-                self.devices[device_tuple].location.altitude = msg.alt / 1000
+                self.devices[device_tuple].location.altitude = msg.relative_alt / 1000
 
             return
 
@@ -475,33 +475,13 @@ class Connection:
         """
         HRL commands
         """
-
-        @self.send_message(['startros'])
-        def sender(self, sys_id, comp_id, require_ack=False) -> None:
-            """
-            Start ROS on the respective agent
-            """
-            self.__send_hrl_msg(0, sys_id, comp_id, require_ack)
-
-            return
-
-
-        @self.send_message(['stopros'])
-        def sender(self, sys_id, comp_id, require_ack=False) -> None:
-            """
-            Stop ROS on the respective agent
-            """
-            self.__send_hrl_msg(1, sys_id, comp_id, require_ack)
-
-            return
-
         
         @self.send_message(['startpath'])
         def sender(self, sys_id, comp_id, require_ack=False) -> None:
             """
             Start path execution on the respective agent
             """
-            self.__send_hrl_msg(2, sys_id, comp_id, require_ack)
+            self.__send_hrl_msg(0, sys_id, comp_id, require_ack)
 
             return
 
@@ -511,7 +491,7 @@ class Connection:
             """
             Stop path execution on the respective agent
             """
-            self.__send_hrl_msg(3, sys_id, comp_id, require_ack)
+            self.__send_hrl_msg(1, sys_id, comp_id, require_ack)
 
             return
 
@@ -651,13 +631,13 @@ class Connection:
             if self.outgoing_msgs.qsize() > 0:
 
                 # Get the next message
-                (msg, ack) = self.outgoing_msgs.get(timeout=1)
+                msg = self.outgoing_msgs.get(timeout=1)
 
                 # Send the message if there is a message sender for it
                 if msg.get_type() in self.message_senders:
                     for fn in self.message_senders[msg.get_type()]:
                         try:
-                            fn(self, msg.sys_id, msg.comp_id, ack)
+                            fn(self, msg.sys_id, msg.comp_id, msg.require_ack)
                         except Exception:
                             self.logger.exception(f'Exception in message sender for {msg.get_type()}', exc_info=True)
 
@@ -668,7 +648,6 @@ class Connection:
         """
         Helper method used to send an arming command (arm or disarm)
         """
-
         if require_ack:
             ack = False
             

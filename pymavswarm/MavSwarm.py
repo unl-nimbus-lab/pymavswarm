@@ -1,6 +1,6 @@
 import logging
 from .Connection import Connection
-from .utils import OutgoingMsg
+from .utils import AgentMsg
 
 
 class MavSwarm:
@@ -66,14 +66,14 @@ class MavSwarm:
         return True
 
 
-    def send_msg(self, msgs: list[OutgoingMsg], require_ack: bool=False) -> None:
+    def send_msg(self, msgs: list[AgentMsg]) -> None:
         """
         Add the message to the connection's outgoing messages queue
         """
         for msg in msgs:
             # Ensure that the intended agent is in the network
             if (msg.sys_id, msg.comp_id) in self.connection.devices:
-                self.connection.outgoing_msgs.put((msg, require_ack))
+                self.connection.outgoing_msgs.put(msg)
         
         return
 
