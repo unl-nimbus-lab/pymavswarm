@@ -1,6 +1,8 @@
 import logging
-from .Connection import Connection
+from .Agent import Agent
 from .msg import AgentMsg
+from typing import Optional
+from .Connection import Connection
 
 
 class MavSwarm:
@@ -86,3 +88,25 @@ class MavSwarm:
             return [*self.connection.devices.values()]
         else:
             return []
+
+
+    def get_agent_by_id(self, sys_id: int, comp_id: int) -> Optional[Agent]:
+        """
+        Get a specific agent by its system ID and component ID
+        """
+        for agent in self.connection.devices.values():
+            if agent.sys_id == sys_id and agent.comp_id == comp_id:
+                return agent
+
+        return None
+        
+
+    def get_agent_by_name(self, name: str) -> Optional[Agent]:
+        """
+        Get the first agent in the swarm with the specified name
+        """
+        for agent in self.connection.devices.values():
+            if agent.name == name:
+                return agent
+
+        return None

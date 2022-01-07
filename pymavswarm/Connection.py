@@ -15,10 +15,6 @@ from pymavlink.dialects.v10 import ardupilotmega
 class Connection:
     """
     The connection handles all interaction with the network and the MAVLink master device.
-    This implementation has been inspired by the following source:
-        * Project: Dronekit
-        * Repository: dronekit
-        * URL: https://github.com/dronekit/dronekit-python
     Input Params:
         port             [str]   : The port over which a connection should be established
         baud             [int]   : The baudrate that a connection should be established with
@@ -546,6 +542,10 @@ class Connection:
     def on_message(self, msg):
         """
         Decorator used to create a listener for a mavlink message
+        This implementation has been inspired by the following source:
+            * Project: Dronekit
+            * Repository: dronekit
+            * URL: https://github.com/dronekit/dronekit-python
         """
         def decorator(fn):
             if isinstance(msg, list):
@@ -560,6 +560,10 @@ class Connection:
     def add_message_listener(self, msg, fn) -> None:
         """
         Add a new function to the dictionary of message listeners
+        This implementation has been inspired by the following source:
+            * Project: Dronekit
+            * Repository: dronekit
+            * URL: https://github.com/dronekit/dronekit-python
         """
         if msg not in self.message_listeners:
             self.message_listeners[msg] = []

@@ -1,7 +1,7 @@
 import monotonic
 from .state import *
 from .mission import Mission
-
+from typing import Optional
 
 class Agent:
     """
@@ -9,9 +9,10 @@ class Agent:
     agent's state is updated as new MAVLink messages are received from the
     associated message
     """
-    def __init__(self, sys_id: int, comp_id: int, timeout: float=30.0) -> None:
+    def __init__(self, sys_id: int, comp_id: int, name: Optional[str]=None, timeout: float=30.0) -> None:
         self.sys_id: int = sys_id
         self.comp_id: int = comp_id
+        self.name: Optional[str] = None
         self.attitude: Attitude = Attitude()
         self.battery: Battery = Battery()
         self.docker_info: DockerInfo = DockerInfo()
