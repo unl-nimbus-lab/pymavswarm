@@ -1,4 +1,5 @@
 from math import e
+import math
 import time
 import atexit
 import logging
@@ -902,6 +903,10 @@ class Connection:
             altitude was reached, but rather that the system will attempt to reach 
             the specified altitude
             """
+            if msg.altitude < 0 or math.isinf(msg.altitude) or math.isnan(msg.altitude):
+                self.logger.exception(f'An invalid takeoff altitude was provided ({msg.altitude}). Please send a valid takeoff altitude')
+                return
+
             self.master.mav.command_long_send(msg.target_id, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_NAV_LAND, 
                                               0,
@@ -924,6 +929,10 @@ class Connection:
             altitude was reached, but rather that the system will attempt to reach 
             the specified altitude
             """
+            if msg.altitude < 0 or math.isinf(msg.altitude) or math.isnan(msg.altitude):
+                self.logger.exception(f'An invalid takeoff altitude was provided ({msg.altitude}). Please send a valid takeoff altitude')
+                return
+
             self.master.mav.command_long_send(msg.target_id, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_NAV_LAND, 
                                               0,
