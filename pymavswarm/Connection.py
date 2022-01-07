@@ -893,6 +893,50 @@ class Connection:
 
             return
 
+        
+        @self.send_message(['simpletakeoff'])
+        def sender(self, msg: TakeoffMsg, fn_id: int=0):
+            """
+            Perform a simple takeoff command (just takeoff to a set altitude)
+            Note that acknowledgement of this command does not indicate that the 
+            altitude was reached, but rather that the system will attempt to reach 
+            the specified altitude
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_NAV_LAND, 
+                                              0,
+                                              0, 0, 0, 0, 0, 0, msg.altitude)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of the simple takeoff command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of the simple takeoff command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['takeoff'])
+        def sender(self, msg: TakeoffMsg, fn_id: int=0):
+            """
+            Perform a takeoff command (use lat, lon, and alt)
+            Note that acknowledgement of this command does not indicate that the 
+            altitude was reached, but rather that the system will attempt to reach 
+            the specified altitude
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_NAV_LAND, 
+                                              0,
+                                              0, 0, 0, 0, msg.lat, msg.lon, msg.altitude)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of the takeoff command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of the takeoff command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
 
     def __init_logger(self, name, debug: bool=False, log: bool=False) -> logging.Logger:
         """

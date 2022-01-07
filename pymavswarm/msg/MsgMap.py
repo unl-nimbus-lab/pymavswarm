@@ -67,7 +67,7 @@ class MissionCommand(Enum):
     """
     waypoint = 'waypoint'
     simple_takeoff = 'simpletakeoff'
-
+    takeoff = 'takeoff'
 
 
 class MsgMap(Enum):
