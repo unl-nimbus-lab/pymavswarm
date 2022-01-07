@@ -24,6 +24,19 @@ class SystemCommands(Enum):
     """
     arm = 'arm'
     disarm = 'disarm'
+    reboot = 'reboot'
+    shutdown = 'shutdown'
+
+
+class PreflightCalibrationCommands(Enum):
+    """
+    Enum class used to enable sending preflight calibration commands
+    """
+    gyro_cal = 'gyrocal'
+    magnetometer_cal = 'magnetometercal'
+    ground_pressure_cal = 'groundpressurecal'
+    airspeed_cal = 'airspeedcal'
+    barometer_temp_cal = 'barotempcal'
     accel_cal = 'accelcal'
     accel_cal_simple = 'accelcalsimple'
     ahrs_trim = 'ahrstrim'
@@ -43,6 +56,8 @@ class FlightSpeedCommand(Enum):
     """
     air_speed = 'airspeed'
     ground_speed = 'groundspeed'
+    climb_speed = 'climbspeed'
+    descent_speed = 'descentspeed'
 
 
 class MsgMap(Enum):

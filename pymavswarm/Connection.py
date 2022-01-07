@@ -1,3 +1,4 @@
+from math import e
 import time
 import atexit
 import logging
@@ -318,179 +319,440 @@ class Connection:
             return
 
 
-        """
-        Arming commands
-        """
-
         @self.send_message(['arm'])
-        def sender(self, msg: SystemCommandMsg) -> None:
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
             """
             Arm an agent
             """
-            self.__send_msg(1, CommandTypes.arming_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+                                              0,
+                                              1, 0, 0, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of arm command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of arm command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
         
         @self.send_message(['disarm'])
-        def sender(self, msg: SystemCommandMsg) -> None:
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
             """
             Disarm an agent
             """
-            self.__send_msg(0, CommandTypes.arming_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+                                              0,
+                                              0, 0, 0, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
-        
-        """
-        Pre-flight calibration commands
-        """
+
+        @self.send_message(['reboot'])
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+            """
+            Disarm an agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+                                              0,
+                                              1, 0, 0, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['shutdown'])
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+            """
+            Disarm an agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+                                              0,
+                                              2, 0, 0, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
 
         @self.send_message(['accelcal'])
-        def sender(self, msg: SystemCommandMsg) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
             """
             Perform a full accelerometer calibration on the selected agent
             """
-            self.__send_msg(1, CommandTypes.preflight_calibration_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
+                                              0,
+                                              0, 0, 0, 0, 1, 0, 0)
 
-            return 
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of accelerometer calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of accelerometer calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
 
 
         @self.send_message(['accelcalsimple'])
-        def sender(self, msg: SystemCommandMsg) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
             """
             Perform a simple accelerometer calibration on the selected agent
             """
-            self.__send_msg(4, CommandTypes.preflight_calibration_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
+                                              0,
+                                              0, 0, 0, 0, 4, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of simple accelerometer calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of simple accelerometer calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
 
         @self.send_message(['ahrstrim'])
-        def sender(self, msg: SystemCommandMsg) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
             """
-            Instruct and agent to recalibrate its ahrs parameters
+            Perform an AHRS trim on the selected agent
             """
-            self.__send_msg(2, CommandTypes.preflight_calibration_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
+                                              0,
+                                              0, 0, 0, 0, 2, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of AHRS trim command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of AHRS trim command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
 
-        """
-        Flight Modes
-        """
+        @self.send_message(['gyrocal'])
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+            """
+            Perform a gyroscope calibration on the selected agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
+                                              0,
+                                              1, 0, 0, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of gyroscope calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of gyroscope calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['magnetometercal'])
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+            """
+            Perform a magnetometer calibration on the selected agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
+                                              0,
+                                              0, 1, 0, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of magnetometer calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of magnetometer calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['groundpressurecal'])
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+            """
+            Perform a ground pressure calibration on the selected agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
+                                              0,
+                                              0, 0, 3, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of ground pressure calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of ground pressure calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['airspeedcal'])
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+            """
+            Perform airspeed calibration on the selected agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
+                                              0,
+                                              0, 0, 0, 0, 0, 2, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of airspeed calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of airspeed calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['barotempcal'])
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+            """
+            Perform a barometer temperature calibration on the selected agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
+                                              0,
+                                              0, 0, 0, 0, 0, 0, 3)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of barometer temperature calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of barometer temperature calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
 
         @self.send_message(['stabilize'])
-        def sender(self, msg: FlightModeMsg) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
             """
             Set an agent to STABILIZE mode
             """
-            self.__send_msg('STABILIZE', CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.set_mode(self.master.mode_mapping()['STABILIZE'])
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of flight mode STABILIZE command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode STABILIZE command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
 
         @self.send_message(['acro'])
-        def sender(self, msg: FlightModeMsg) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
             """
             Set an agent to ACRO mode
             """
-            self.__send_msg('ACRO', CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.set_mode(self.master.mode_mapping()['ACRO'])
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of flight mode ACRO command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode ACRO command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
         
         @self.send_message(['althold'])
-        def sender(self, msg: FlightModeMsg) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
             """
             Set an agent to ALT_HOLD mode
             """
-            self.__send_msg('ALT_HOLD', CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.set_mode(self.master.mode_mapping()['ALT_HOLD'])
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of flight mode ALT_HOLD command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode ALT_HOLD command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
 
         @self.send_message(['auto'])
-        def sender(self, msg: FlightModeMsg) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
             """
             Set an agent to AUTO mode
             """
-            self.__send_msg('AUTO', CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.set_mode(self.master.mode_mapping()['AUTO'])
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of flight mode AUTO command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode AUTO command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
         
         @self.send_message(['loiter'])
-        def sender(self, msg: FlightModeMsg) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
             """
             Set an agent to LOITER mode
             """
-            self.__send_msg('LOITER', CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.set_mode(self.master.mode_mapping()['LOITER'])
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of flight mode LOITER command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode LOITER command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
 
         @self.send_message(['rtl'])
-        def sender(self, msg: FlightModeMsg) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
             """
             Set an agent to RTL mode
             """
-            self.__send_msg('RTL', CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.set_mode(self.master.mode_mapping()['RTL'])
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of flight mode RTL command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode RTL command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
 
         @self.send_message(['land'])
-        def sender(self, msg: FlightModeMsg) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
             """
             Set an agent to LAND mode
             """
-            self.__send_msg('LAND', CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.set_mode(self.master.mode_mapping()['LAND'])
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of flight mode LAND command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode LAND command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
 
         @self.send_message(['throw'])
-        def sender(self, msg: FlightModeMsg) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
             """
             Set an agent to THROW mode
             """
-            self.__send_msg('THROW', CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.set_mode(self.master.mode_mapping()['THROW'])
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of flight mode THROW command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode THROW command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
 
         @self.send_message(['systemid'])
-        def sender(self, msg: FlightModeMsg) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
             """
             Set an agent to SYSTEM ID mode
             """
-            self.__send_msg('SYSTEMID', CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.set_mode(self.master.mode_mapping()['SYSTEMID'])
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of flight mode SYSTEMID command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode SYSTEMID command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
 
         @self.send_message(['guided'])
-        def sender(self, msg: FlightModeMsg) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
             """
             Set an agent to GUIDED mode
             """
-            self.__send_msg('GUIDED', CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.set_mode(self.master.mode_mapping()['GUIDED'])
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of flight mode GUIDED command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode GUIDED command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -500,23 +762,119 @@ class Connection:
         """
         
         @self.send_message(['startpath'])
-        def sender(self, msg: HRLMsg) -> None:
+        def sender(self, msg: HRLMsg, fn_id: int=0) -> None:
             """
             Start path execution on the respective agent
             """
-            self.__send_msg(0, CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of start flight path HRL command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of stop flight path HRL command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
         
         @self.send_message(['stoppath'])
-        def sender(self, msg: HRLMsg) -> None:
+        def sender(self, msg: HRLMsg, fn_id: int=0) -> None:
             """
             Stop path execution on the respective agent
             """
-            self.__send_msg(1, CommandTypes.flight_mode_command, 
-                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
+            # Reset target
+            self.master.target_system = msg.target_id
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), 1)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of start flight path HRL command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of stop flight path HRL command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['airspeed'])
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0):
+            """
+            Set a new airspeed on an agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED, 
+                                              0,
+                                              0, msg.speed, -1, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of air speed command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of air speed command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['groundspeed'])
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0):
+            """
+            Set a new airspeed on an agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED, 
+                                              0,
+                                              1, msg.speed, -1, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of ground speed command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of ground speed command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['climbspeed'])
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0):
+            """
+            Set a new airspeed on an agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED, 
+                                              0,
+                                              2, msg.speed, -1, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of climb speed command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of climb speed command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['descentspeed'])
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0):
+            """
+            Set a new airspeed on an agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED, 
+                                              0,
+                                              3, msg.speed, -1, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of descent speed command send to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of descent speed command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -577,7 +935,7 @@ class Connection:
     
     def send_message(self, msg):
         """
-        Decorator used to create a listener for a mavlink message
+        Decorator used to create a sender for a mavlink message
         """
         def decorator(fn):
             if isinstance(msg, list):
@@ -591,7 +949,7 @@ class Connection:
 
     def add_message_sender(self, msg, fn) -> None:
         """
-        Add a new function to the dictionary of message listeners
+        Add a new function to the dictionary of message senders
         """
         if msg not in self.message_senders:
             self.message_senders[msg] = []
@@ -668,79 +1026,33 @@ class Connection:
 
                 # Send the message if there is a message sender for it
                 if msg.get_type() in self.message_senders:
-                    for fn in self.message_senders[msg.get_type()]:
+                    for fn_id, fn in enumerate(self.message_senders[msg.get_type()]):
                         try:
-                            fn(self, msg)
+                            fn(self, msg, fn_id=fn_id)
                         except Exception:
                             self.logger.exception(f'Exception in message sender for {msg.get_type()}', exc_info=True)
 
         return
 
 
-    def __send_msg(self, msg, msg_type, sys_id, comp_id, check_ack=True, msg_timeout=10.0, ack_timeout=1.0) -> bool:
+    def __retry_msg_send(self, msg, fn) -> bool:
         """
-        Helper method used to send a MAVLink message to an agent
+        Retry a message send until the an acknowledgement is received or a timeout occurs
         """
-        if check_ack:
-            ack = False
-            start_time = time.time()
+        ack = False
+        start_time = time.time()
 
-            # Reset the target system and component if sending a
-            # flight mode command or HRL command
-            if msg_type == CommandTypes.flight_mode_command or msg_type == CommandTypes.hrl_command:
-                self.master.target_system = sys_id
-                self.master.target_component = comp_id
+        while time.time() - start_time >= msg.msg_timeout:
+            # Don't let the message come back here and create an infinite loop
+            msg.retry = False
             
-            # Resend a command until acknowledged or timeout
-            while not ack:
-                # Indicate that an error occurred 
-                if time.time() - start_time >= msg_timeout:
-                    self.logger.fatal(f'The system was unable to confirm reception of the {CommandTypes(msg_type)}: {msg} within the timeout period.')
-                    return False
+            # Reattempt the message send
+            fn(self, msg)
 
-                # Case statement used to send the appropriate MAVLink command based off of the
-                # specified message type
-                if msg_type == CommandTypes.arming_command:
-                    self.master.mav.command_long_send(sys_id, comp_id,
-                                                      mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
-                                                      msg, 0, 0, 0, 0, 0, 0)
-                elif msg_type == CommandTypes.preflight_calibration_command:
-                    self.master.mav.command_long_send(sys_id, comp_id,
-                                                      mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                                      0, 0, 0, 0, msg, 0, 0)
-                elif msg_type == CommandTypes.flight_mode_command:
-                    self.master.set_mode(self.master.mode_mapping()[msg])
-                elif msg_type == CommandTypes.hrl_command:
-                    self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), msg)
-                else:
-                    self.logger.exception(f'An invalid command type was provided: {msg_type}. Please use a supported CommandTypes message type')
-                    return False
+            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+                ack = True
 
-                if self.__ack_sys_cmd(timeout=ack_timeout):
-                    ack = True
-                    self.logger.debug(f'The system has acknowledged reception of the {CommandTypes(msg_type)}: {msg}')
-                else:
-                    self.logger.error(f'The system was unable to confirm reception of the {CommandTypes(msg_type)}: {msg}. Re-attempting message send.')
-        
-        # Send a command with no acknowledgement checking
-        else:
-            if msg_type == CommandTypes.arming_command:
-                self.master.mav.command_long_send(sys_id, comp_id,
-                                                  mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
-                                                  msg, 0, 0, 0, 0, 0, 0)
-            elif msg_type == CommandTypes.preflight_calibration_command:
-                self.master.mav.command_long_send(sys_id, comp_id,
-                                                  mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                                  0, 0, 0, 0, msg, 0, 0)
-            elif msg_type == CommandTypes.flight_mode_command:
-                self.master.set_mode(self.master.mode_mapping()[msg])
-            elif msg_type == CommandTypes.hrl_command:
-                self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), msg)
-            else:
-                self.logger.exception(f'An invalid command type was provided: {msg_type}. Please use a support CommandTypes message type')
-                return False
-
-        return True
+        return ack
 
 
     def __ack_sys_cmd(self, timeout=1.0) -> bool:
@@ -831,14 +1143,3 @@ class Connection:
             self.master.close()
 
         return
-
-
-
-class CommandTypes(Enum):
-    """
-    Enum class used to encompass the command types that may be sent by pymavswarm
-    """
-    hrl_command = 0
-    arming_command = 1
-    flight_mode_command = 2
-    preflight_calibration_command = 3
