@@ -1,6 +1,6 @@
 import logging
 from .Connection import Connection
-from .utils import AgentMsg
+from .msg import AgentMsg
 
 
 class MavSwarm:
