@@ -331,9 +331,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of arm command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of arm command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of arm command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of arm command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -350,9 +350,28 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of disarm command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of disarm command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+        
+        @self.send_message(['kill'])
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+            """
+            Force disarm an agent
+            """
+            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+                                              0,
+                                              0, 21196, 0, 0, 0, 0, 0)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of kill command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of kill command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -369,9 +388,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of disarm command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of disarm command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -388,9 +407,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of disarm command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of disarm command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of disarm command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -407,9 +426,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of accelerometer calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of accelerometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of accelerometer calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of accelerometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -426,9 +445,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of simple accelerometer calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of simple accelerometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of simple accelerometer calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of simple accelerometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -445,9 +464,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of AHRS trim command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of AHRS trim command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of AHRS trim command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of AHRS trim command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -464,9 +483,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of gyroscope calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of gyroscope calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of gyroscope calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of gyroscope calibration command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -483,9 +502,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of magnetometer calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of magnetometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of magnetometer calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of magnetometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -502,9 +521,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of ground pressure calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of ground pressure calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of ground pressure calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of ground pressure calibration command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -521,9 +540,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of airspeed calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of airspeed calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of airspeed calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of airspeed calibration command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -540,9 +559,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of barometer temperature calibration command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of barometer temperature calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of barometer temperature calibration command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of barometer temperature calibration command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -561,9 +580,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of flight mode STABILIZE command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of flight mode STABILIZE command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of flight mode STABILIZE command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode STABILIZE command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -582,9 +601,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of flight mode ACRO command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of flight mode ACRO command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of flight mode ACRO command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode ACRO command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -603,9 +622,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of flight mode ALT_HOLD command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of flight mode ALT_HOLD command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of flight mode ALT_HOLD command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode ALT_HOLD command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -624,9 +643,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of flight mode AUTO command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of flight mode AUTO command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of flight mode AUTO command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode AUTO command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -645,9 +664,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of flight mode LOITER command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of flight mode LOITER command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of flight mode LOITER command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode LOITER command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -666,9 +685,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of flight mode RTL command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of flight mode RTL command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of flight mode RTL command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode RTL command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -687,9 +706,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of flight mode LAND command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of flight mode LAND command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of flight mode LAND command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode LAND command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -708,9 +727,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of flight mode THROW command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of flight mode THROW command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of flight mode THROW command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode THROW command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -729,9 +748,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of flight mode SYSTEMID command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of flight mode SYSTEMID command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of flight mode SYSTEMID command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode SYSTEMID command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -750,16 +769,12 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of flight mode GUIDED command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of flight mode GUIDED command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of flight mode GUIDED command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of flight mode GUIDED command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
-        
-        """
-        HRL commands
-        """
         
         @self.send_message(['startpath'])
         def sender(self, msg: HRLMsg, fn_id: int=0) -> None:
@@ -775,9 +790,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of start flight path HRL command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of start flight path HRL command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of stop flight path HRL command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of stop flight path HRL command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -796,9 +811,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of start flight path HRL command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of start flight path HRL command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of stop flight path HRL command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of stop flight path HRL command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -815,9 +830,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of air speed command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of air speed command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of air speed command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of air speed command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -834,9 +849,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of ground speed command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of ground speed command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of ground speed command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of ground speed command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -853,9 +868,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of climb speed command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of climb speed command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of climb speed command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of climb speed command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 
@@ -872,9 +887,9 @@ class Connection:
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
-                    self.logger.info(f'Successfully acknowledged reception of descent speed command send to Agent ({msg.target_id}, {msg.target_comp})')
+                    self.logger.info(f'Successfully acknowledged reception of descent speed command sent to Agent ({msg.target_id}, {msg.target_comp})')
                 else:
-                    self.logger.fatal(f'Failed to acknowledge reception of descent speed command send to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+                    self.logger.fatal(f'Failed to acknowledge reception of descent speed command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
 
             return
 

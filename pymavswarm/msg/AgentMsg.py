@@ -10,7 +10,8 @@ class AgentMsg:
                                 acknowledgement is not received. This is only used when check_ack is set
                                 to true
         - ack_timeout [float] : The amount of time that pymavswarm should way to check for an acknowledgement
-                                from an agent. This is only used when check_ack is set to true
+                                from an agent. This is only used when check_ack is set to true. This should be kept
+                                as short as possible to keep agent state information up-to-date
     """
     def __init__(self, msg_type: str, 
                  target_id: int, 

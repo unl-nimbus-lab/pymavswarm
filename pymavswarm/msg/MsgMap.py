@@ -26,6 +26,7 @@ class SystemCommands(Enum):
     disarm = 'disarm'
     reboot = 'reboot'
     shutdown = 'shutdown'
+    kill = 'kill'
 
 
 class PreflightCalibrationCommands(Enum):
@@ -58,6 +59,15 @@ class FlightSpeedCommand(Enum):
     ground_speed = 'groundspeed'
     climb_speed = 'climbspeed'
     descent_speed = 'descentspeed'
+
+
+class MissionCommand(Enum):
+    """
+    Enum class used to retrieve mission commands
+    """
+    waypoint = 'waypoint'
+    simple_takeoff = 'simpletakeoff'
+
 
 
 class MsgMap(Enum):
