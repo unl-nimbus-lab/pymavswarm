@@ -100,7 +100,7 @@ class Connection:
             device_tuple = (sys_id, comp_id)
 
             # Create a new device assigned the respective sysid:compid pair
-            device = Agent(sys_id, comp_id, timeout_period=agent_timeout)
+            device = Agent(sys_id, comp_id, timeout=agent_timeout)
 
             # If the device hasn't been seen before, save it
             if device_tuple not in self.devices:
@@ -624,7 +624,7 @@ class Connection:
             # Update the timeout flag for each device
             for key in self.devices:
                 if self.devices[key].last_heartbeat is not None:
-                    self.devices[key].timeout = (monotonic.monotonic() - self.devices[key].last_heartbeat) >= self.devices[key].timeout_period
+                    self.devices[key].timeout = (monotonic.monotonic() - self.devices[key].last_heartbeat) >= self.devices[key].timeout
 
             # Read a new message
             try:
