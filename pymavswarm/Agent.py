@@ -3,6 +3,8 @@ from .state import *
 from .mission import Mission
 from typing import Optional
 
+
+
 class Agent:
     """
     Agent represents and stores the state of an agent in the network. The

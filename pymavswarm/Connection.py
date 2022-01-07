@@ -3,11 +3,12 @@ import atexit
 import logging
 import monotonic
 import threading
+from .msg import *
 from .state import *
+from enum import Enum
 from queue import Queue
 from .Agent import Agent
 from pymavlink import mavutil
-from .utils import CommandTypes
 from pymavlink.dialects.v10 import ardupilotmega
 
 
@@ -31,8 +32,6 @@ class Connection:
                  baud: int, 
                  source_system: int=255, 
                  source_component: int=0,
-                 msg_timeout: float=15, 
-                 ack_timeout: float=1.0,
                  agent_timeout: float=30.0,
                  log: bool=False, 
                  debug: bool=False) -> None:
@@ -324,21 +323,23 @@ class Connection:
         """
 
         @self.send_message(['arm'])
-        def sender(self, sys_id, comp_id, check_ack=True) -> None:
+        def sender(self, msg: SystemCommandMsg) -> None:
             """
             Arm an agent
             """
-            self.__send_msg(1, CommandTypes.arming_command, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(1, CommandTypes.arming_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
         
         @self.send_message(['disarm'])
-        def sender(self, sys_id, comp_id, check_ack=True) -> None:
+        def sender(self, msg: SystemCommandMsg) -> None:
             """
             Disarm an agent
             """
-            self.__send_msg(0, CommandTypes.arming_command, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(0, CommandTypes.arming_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
@@ -348,34 +349,34 @@ class Connection:
         """
 
         @self.send_message(['accelcal'])
-        def sender(self, sys_id, comp_id, check_ack=True) -> None:
+        def sender(self, msg: SystemCommandMsg) -> None:
             """
             Perform a full accelerometer calibration on the selected agent
             """
-            self.__send_msg(1, CommandTypes.preflight_calibration_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(1, CommandTypes.preflight_calibration_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return 
 
 
         @self.send_message(['accelcalsimple'])
-        def sender(self, sys_id, comp_id, check_ack=True) -> None:
+        def sender(self, msg: SystemCommandMsg) -> None:
             """
             Perform a simple accelerometer calibration on the selected agent
             """
-            self.__send_msg(4, CommandTypes.preflight_calibration_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(4, CommandTypes.preflight_calibration_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
 
         @self.send_message(['ahrstrim'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: SystemCommandMsg) -> None:
             """
             Instruct and agent to recalibrate its ahrs parameters
             """
             self.__send_msg(2, CommandTypes.preflight_calibration_command, 
-                sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
@@ -385,111 +386,111 @@ class Connection:
         """
 
         @self.send_message(['stabilize'])
-        def sender(self, sys_id, comp_id, check_ack=True) -> None:
+        def sender(self, msg: FlightModeMsg) -> None:
             """
             Set an agent to STABILIZE mode
             """
-            self.__send_msg('STABILIZE', CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('STABILIZE', CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
 
         @self.send_message(['acro'])
-        def sender(self, sys_id, comp_id, check_ack=True) -> None:
+        def sender(self, msg: FlightModeMsg) -> None:
             """
             Set an agent to ACRO mode
             """
-            self.__send_msg('ACRO', CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('ACRO', CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
         
         @self.send_message(['althold'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: FlightModeMsg) -> None:
             """
             Set an agent to ALT_HOLD mode
             """
-            self.__send_msg('ALT_HOLD', CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('ALT_HOLD', CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
 
         @self.send_message(['auto'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: FlightModeMsg) -> None:
             """
             Set an agent to AUTO mode
             """
-            self.__send_msg('AUTO', CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('AUTO', CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
         
         @self.send_message(['loiter'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: FlightModeMsg) -> None:
             """
             Set an agent to LOITER mode
             """
-            self.__send_msg('LOITER', CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('LOITER', CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
 
         @self.send_message(['rtl'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: FlightModeMsg) -> None:
             """
             Set an agent to RTL mode
             """
-            self.__send_msg('RTL', CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('RTL', CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
 
         @self.send_message(['land'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: FlightModeMsg) -> None:
             """
             Set an agent to LAND mode
             """
-            self.__send_msg('LAND', CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('LAND', CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
 
         @self.send_message(['throw'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: FlightModeMsg) -> None:
             """
             Set an agent to THROW mode
             """
-            self.__send_msg('THROW', CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('THROW', CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
 
         @self.send_message(['systemid'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: FlightModeMsg) -> None:
             """
             Set an agent to SYSTEM ID mode
             """
-            self.__send_msg('SYSTEMID', CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('SYSTEMID', CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
 
         @self.send_message(['guided'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: FlightModeMsg) -> None:
             """
             Set an agent to GUIDED mode
             """
-            self.__send_msg('GUIDED', CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('GUIDED', CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
@@ -499,23 +500,23 @@ class Connection:
         """
         
         @self.send_message(['startpath'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: HRLMsg) -> None:
             """
             Start path execution on the respective agent
             """
-            self.__send_msg(0, CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(0, CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
         
         @self.send_message(['stoppath'])
-        def sender(self, sys_id, comp_id, check_ack=False) -> None:
+        def sender(self, msg: HRLMsg) -> None:
             """
             Stop path execution on the respective agent
             """
-            self.__send_msg(1, CommandTypes.flight_mode_command, sys_id, 
-                comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(1, CommandTypes.flight_mode_command, 
+                msg.sys_id, msg.comp_id, msg.check_ack, msg.msg_timeout, msg.ack_timeout)
 
             return
 
@@ -669,7 +670,7 @@ class Connection:
                 if msg.get_type() in self.message_senders:
                     for fn in self.message_senders[msg.get_type()]:
                         try:
-                            fn(self, msg.sys_id, msg.comp_id, msg.require_ack)
+                            fn(self, msg)
                         except Exception:
                             self.logger.exception(f'Exception in message sender for {msg.get_type()}', exc_info=True)
 
@@ -712,7 +713,7 @@ class Connection:
                 elif msg_type == CommandTypes.hrl_command:
                     self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), msg)
                 else:
-                    self.logger.exception(f'An invalid command type was provided: {msg_type}. Please use a support CommandTypes message type')
+                    self.logger.exception(f'An invalid command type was provided: {msg_type}. Please use a supported CommandTypes message type')
                     return False
 
                 if self.__ack_sys_cmd(timeout=ack_timeout):
@@ -830,3 +831,14 @@ class Connection:
             self.master.close()
 
         return
+
+
+
+class CommandTypes(Enum):
+    """
+    Enum class used to encompass the command types that may be sent by pymavswarm
+    """
+    hrl_command = 0
+    arming_command = 1
+    flight_mode_command = 2
+    preflight_calibration_command = 3
