@@ -7,6 +7,7 @@ from .state import *
 from queue import Queue
 from .Agent import Agent
 from pymavlink import mavutil
+from .utils import CommandTypes
 from pymavlink.dialects.v10 import ardupilotmega
 
 
@@ -18,6 +19,17 @@ class Connection:
         * Project: Dronekit
         * Repository: dronekit
         * URL: https://github.com/dronekit/dronekit-python
+    Input Params:
+        port             [str]   : The port over which a connection should be established
+        baud             [int]   : The baudrate that a connection should be established with
+        source_system    [int]   : The system ID of the connection
+        source_component [int]   : The component ID of the connection
+        msg_timeout      [float] : The period of time that pymavswarm should re-attempt a message send if 
+                                   a message isn't acknowledged by an agent
+        ack_timeout      [float] : The period of time that pymavswarm should check for an acknowledgement bit
+                                   from the agent that it sent a message to
+        log              [bool]  : Boolean indicating whether the system should log the outputs to the terminal screen
+        debug            [bool]  : Boolean indicating whether to run pymavswarm in debug mode
     """
     def __init__(self, port: str, 
                  baud: int, 
@@ -320,7 +332,7 @@ class Connection:
             """
             Arm an agent
             """
-            self.__send_arming_msg(1, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(1, CommandTypes.arming_command, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -330,7 +342,7 @@ class Connection:
             """
             Disarm an agent
             """
-            self.__send_arming_msg(0, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(0, CommandTypes.arming_command, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -344,7 +356,8 @@ class Connection:
             """
             Perform a full accelerometer calibration on the selected agent
             """
-            self.__send_preflight_calibration_msg(1, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(1, CommandTypes.preflight_calibration_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return 
 
@@ -354,7 +367,8 @@ class Connection:
             """
             Perform a simple accelerometer calibration on the selected agent
             """
-            self.__send_preflight_calibration_msg(4, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(4, CommandTypes.preflight_calibration_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -364,7 +378,8 @@ class Connection:
             """
             Instruct and agent to recalibrate its ahrs parameters
             """
-            self.__send_preflight_calibration_msg(2, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(2, CommandTypes.preflight_calibration_command, 
+                sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -378,7 +393,8 @@ class Connection:
             """
             Set an agent to STABILIZE mode
             """
-            self.__send_flight_mode_msg('STABILIZE', sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('STABILIZE', CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -388,7 +404,8 @@ class Connection:
             """
             Set an agent to ACRO mode
             """
-            self.__send_flight_mode_msg('ACRO', sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('ACRO', CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -398,7 +415,8 @@ class Connection:
             """
             Set an agent to ALT_HOLD mode
             """
-            self.__send_flight_mode_msg('ALT_HOLD', sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('ALT_HOLD', CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -408,7 +426,8 @@ class Connection:
             """
             Set an agent to AUTO mode
             """
-            self.__send_flight_mode_msg('AUTO', sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('AUTO', CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -418,7 +437,8 @@ class Connection:
             """
             Set an agent to LOITER mode
             """
-            self.__send_flight_mode_msg('LOITER', sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('LOITER', CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -428,7 +448,8 @@ class Connection:
             """
             Set an agent to RTL mode
             """
-            self.__send_flight_mode_msg('RTL', sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('RTL', CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -438,7 +459,8 @@ class Connection:
             """
             Set an agent to LAND mode
             """
-            self.__send_flight_mode_msg('LAND', sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('LAND', CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -448,7 +470,8 @@ class Connection:
             """
             Set an agent to THROW mode
             """
-            self.__send_flight_mode_msg('THROW', sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('THROW', CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -458,7 +481,8 @@ class Connection:
             """
             Set an agent to SYSTEM ID mode
             """
-            self.__send_flight_mode_msg('SYSTEMID', sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('SYSTEMID', CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -468,7 +492,8 @@ class Connection:
             """
             Set an agent to GUIDED mode
             """
-            self.__send_flight_mode_msg('GUIDED', sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg('GUIDED', CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -482,7 +507,8 @@ class Connection:
             """
             Start path execution on the respective agent
             """
-            self.__send_hrl_msg(0, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(0, CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -492,7 +518,8 @@ class Connection:
             """
             Stop path execution on the respective agent
             """
-            self.__send_hrl_msg(1, sys_id, comp_id, check_ack, msg_timeout, ack_timeout)
+            self.__send_msg(1, CommandTypes.flight_mode_command, sys_id, 
+                comp_id, check_ack, msg_timeout, ack_timeout)
 
             return
 
@@ -644,131 +671,69 @@ class Connection:
 
         return
 
-    
-    def __send_arming_msg(self, msg, sys_id, comp_id, check_ack=True, msg_timeout=10.0, ack_timeout=1.0) -> bool:
+
+    def __send_msg(self, msg, msg_type, sys_id, comp_id, check_ack=True, msg_timeout=10.0, ack_timeout=1.0) -> bool:
         """
-        Helper method used to send an arming command (arm or disarm)
+        Helper method used to send a MAVLink message to an agent
         """
         if check_ack:
             ack = False
             start_time = time.time()
+
+            # Reset the target system and component if sending a
+            # flight mode command or HRL command
+            if msg_type == CommandTypes.flight_mode_command or msg_type == CommandTypes.hrl_command:
+                self.master.target_system = sys_id
+                self.master.target_component = comp_id
             
+            # Resend a command until acknowledged or timeout
             while not ack:
                 # Indicate that an error occurred 
                 if time.time() - start_time >= msg_timeout:
-                    self.logger.fatal(f'The system was unable to confirm reception of the arming command: {msg} within the timeout period.')
-                    
+                    self.logger.fatal(f'The system was unable to confirm reception of the {CommandTypes(msg_type)}: {msg} within the timeout period.')
                     return False
 
+                # Case statement used to send the appropriate MAVLink command based off of the
+                # specified message type
+                if msg_type == CommandTypes.arming_command:
+                    self.master.mav.command_long_send(sys_id, comp_id,
+                                                      mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                                                      msg, 0, 0, 0, 0, 0, 0)
+                elif msg_type == CommandTypes.preflight_calibration_command:
+                    self.master.mav.command_long_send(sys_id, comp_id,
+                                                      mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
+                                                      0, 0, 0, 0, msg, 0, 0)
+                elif msg_type == CommandTypes.flight_mode_command:
+                    self.master.set_mode(self.master.mode_mapping()[msg])
+                elif msg_type == CommandTypes.hrl_command:
+                    self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), msg)
+                else:
+                    self.logger.exception(f'An invalid command type was provided: {msg_type}. Please use a support CommandTypes message type')
+                    return False
+
+                if self.__ack_sys_cmd(timeout=ack_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the {CommandTypes(msg_type)}: {msg}')
+                else:
+                    self.logger.error(f'The system was unable to confirm reception of the {CommandTypes(msg_type)}: {msg}. Re-attempting message send.')
+        
+        # Send a command with no acknowledgement checking
+        else:
+            if msg_type == CommandTypes.arming_command:
                 self.master.mav.command_long_send(sys_id, comp_id,
                                                   mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
                                                   msg, 0, 0, 0, 0, 0, 0)
-
-                if self.__ack_sys_cmd(timeout=ack_timeout):
-                    ack = True
-                    self.logger.debug(f'The system has acknowledged reception of the arming command: {msg}')
-                else:
-                    self.logger.error(f'The system was unable to confirm reception of the arming command: {msg}. Re-attempting message send.')
-        else:
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
-                                              msg, 0, 0, 0, 0, 0, 0)
-
-        return True
-
-
-    def __send_preflight_calibration_msg(self, msg, sys_id, comp_id, check_ack=True, msg_timeout=10.0, ack_timeout=1.0) -> bool:
-        """
-        Helper method used to send a pre-flight calibration message
-        """
-        if check_ack:
-            ack = False
-            start_time = time.time()
-            
-            while not ack:
-                # Indicate that an error occurred 
-                if time.time() - start_time >= msg_timeout:
-                    self.logger.fatal(f'The system was unable to confirm reception of the pre-flight calibration command: {msg} within the timeout period.')
-                    
-                    return False
-
+            elif msg_type == CommandTypes.preflight_calibration_command:
                 self.master.mav.command_long_send(sys_id, comp_id,
                                                   mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
                                                   0, 0, 0, 0, msg, 0, 0)
-
-                if self.__ack_sys_cmd(timeout=ack_timeout):
-                    ack = True
-                    self.logger.debug(f'The system has acknowledged reception of the pre-flight calibration command: {msg}')
-                else:
-                    self.logger.error(f'The system was unable to confirm reception of the pre-flight calibration command: {msg}. Re-attempting message send.')
-        else:
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                              mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                              0, 0, 0, 0, msg, 0, 0)
-
-        return True
-        
-
-    def __send_flight_mode_msg(self, msg, sys_id, comp_id, check_ack=True, msg_timeout=10.0, ack_timeout=1.0) -> None:
-        """
-        Helper method used to set a flight mode on a particular agent
-        """
-        mode_id = self.master.mode_mapping()[msg]
-
-        self.master.target_system = sys_id
-        self.master.target_component = comp_id
-        
-        if check_ack:
-            ack = False
-            start_time = time.time()
-            
-            while not ack:
-                # Indicate that an error occurred 
-                if time.time() - start_time >= msg_timeout:
-                    self.logger.fatal(f'The system was unable to confirm reception of the flight mode command: {msg} within the timeout period.')
-                    
-                    return False
-
-                self.master.set_mode(mode_id)
-
-                if self.__ack_sys_cmd(timeout=ack_timeout):
-                    ack = True
-                    self.logger.debug(f'The system has acknowledged reception of the {msg} command')
-                else:
-                    self.logger.error(f'The system was unable to confirm reception of the {msg} command. Re-attempting message send.')
-        else:
-            self.master.set_mode(mode_id)
-
-        return True
-
-
-    def __send_hrl_msg(self, msg, sys_id, comp_id, check_ack=True, msg_timeout=10.0, ack_timeout=1.0) -> None:
-        """
-        Helper method used to send a desired HRL message
-        """
-        self.master.target_system = sys_id
-        self.master.target_component = comp_id
-
-        if check_ack:
-            ack = False
-            start_time = time.time()
-            
-            while not ack:
-                # Indicate that an error occurred 
-                if time.time() - start_time >= msg_timeout:
-                    self.logger.fatal(f'The system was unable to confirm reception of the HRL command: {msg} within the timeout period.')
-                    
-                    return False
-
+            elif msg_type == CommandTypes.flight_mode_command:
+                self.master.set_mode(self.master.mode_mapping()[msg])
+            elif msg_type == CommandTypes.hrl_command:
                 self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), msg)
-
-                if self.__ack_sys_cmd(timeout=ack_timeout):
-                    ack = True
-                    self.logger.debug(f'The system has acknowledged reception of the HRL {msg} command')
-                else:
-                    self.logger.error(f'The system was unable to confirm reception of the HRL {msg} command. Re-attempting message send.')
-        else:
-            self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), msg)
+            else:
+                self.logger.exception(f'An invalid command type was provided: {msg_type}. Please use a support CommandTypes message type')
+                return False
 
         return True
 

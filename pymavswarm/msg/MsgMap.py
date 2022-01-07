@@ -1,41 +1,40 @@
-class FlightModes:
+from enum import Enum
+
+class FlightModes(Enum):
     """
-    Helper class used to enable easy retrieval of the command used by a connection to 
+    Enum class used to enable easy retrieval of the command used by a connection to 
     send a respective flight mode message
     """
-    def __init__(self) -> None:
-        self.stabilize = 'stabilize'
-        self.acro = 'acro'
-        self.alt_hold = 'althold'
-        self.auto = 'auto'
-        self.loiter = 'loiter'
-        self.rtl = 'rtl'
-        self.land = 'land'
-        self.throw = 'throw'
-        self.systemid = 'systemid'
-        self.guided = 'guided'
+    stabilize = 'stabilize'
+    acro = 'acro'
+    alt_hold = 'althold'
+    auto = 'auto'
+    loiter = 'loiter'
+    rtl = 'rtl'
+    land = 'land'
+    throw = 'throw'
+    systemid = 'systemid'
+    guided = 'guided'
 
 
-class SystemCommands:
+class SystemCommands(Enum):
     """
-    Helper class used to enable easy retrieval of the command used by a connection to 
+    Enum class used to enable easy retrieval of the command used by a connection to 
     send a respective system command message
     """
-    def __init__(self) -> None:
-        self.arm = 'arm'
-        self.disarm = 'disarm'
-        self.accel_cal = 'accelcal'
-        self.accel_cal_simple = 'accelcalsimple'
-        self.ahrs_trim = 'ahrstrim'
-        self.start_path_execution = 'startpath'
-        self.stop_path_execution = 'stoppath'
+    arm = 'arm'
+    disarm = 'disarm'
+    accel_cal = 'accelcal'
+    accel_cal_simple = 'accelcalsimple'
+    ahrs_trim = 'ahrstrim'
+    start_path_execution = 'startpath'
+    stop_path_execution = 'stoppath'
 
 
-class MsgMap:
+class MsgMap(Enum):
     """
     Helper class used to provide easy retrieval of the commands used by mavswarm to send
     messages
     """
-    def __init__(self) -> None:
-        self.flight_modes = FlightModes()
-        self.system_commands = SystemCommands()
+    flight_modes = FlightModes
+    system_commands = SystemCommands
