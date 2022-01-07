@@ -1,4 +1,3 @@
-from math import e
 import math
 import time
 import atexit
@@ -937,6 +936,62 @@ class Connection:
                                               mavutil.mavlink.MAV_CMD_NAV_LAND, 
                                               0,
                                               0, 0, 0, 0, msg.lat, msg.lon, msg.altitude)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of the takeoff command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of the takeoff command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['simplewaypoint'])
+        def sender(self, msg: WaypointMsg, fn_id: int=0):
+            """
+            Perform a simple waypoint command (just lat, lon, and alt)
+            Note that acknowledgement of this command does not indicate that the 
+            waypoint was reached, but rather that the system will attempt to reach 
+            the specified waypoint
+            """
+            if msg.altitude < 0 or math.isinf(msg.altitude) or math.isnan(msg.altitude):
+                self.logger.exception(f'An invalid takeoff altitude was provided ({msg.altitude}). Please send a valid waypoint altitude')
+                return
+
+            self.master.mav.mission_item_send(msg.target_id, msg.target_comp, 
+                                              0, 
+                                              mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                                              mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 
+                                              0, 0, 0, 0, 0, 0, 
+                                              msg.lat, msg.lon, msg.alt)
+
+            if msg.retry:
+                if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                    self.logger.info(f'Successfully acknowledged reception of the simple waypoint command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                else:
+                    self.logger.fatal(f'Failed to acknowledge reception of the simple waypoint command sent to Agent ({msg.target_id}, {msg.target_comp}) before timeout')
+
+            return
+
+
+        @self.send_message(['waypoint'])
+        def sender(self, msg: WaypointMsg, fn_id: int=0):
+            """
+            Perform a waypoint navigation command
+            Note that acknowledgement of this command does not indicate that the 
+            waypoint was reached, but rather that the system will attempt to reach 
+            the specified waypoint
+            """
+            if msg.altitude < 0 or math.isinf(msg.altitude) or math.isnan(msg.altitude):
+                self.logger.exception(f'An invalid takeoff altitude was provided ({msg.altitude}). Please send a valid waypoint altitude')
+                return
+
+            self.master.mav.mission_item_send(msg.target_id, msg.target_comp, 
+                                              0, 
+                                              mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                                              mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 
+                                              0, 0, 
+                                              msg.hold, msg.accept_radius, msg.pass_radius, msg.yaw, msg.lat, msg.lon, msg.alt)
 
             if msg.retry:
                 if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):

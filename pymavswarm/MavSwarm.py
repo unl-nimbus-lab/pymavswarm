@@ -1,6 +1,5 @@
 import logging
 from .Agent import Agent
-from .msg import AgentMsg
 from typing import Optional
 from .Connection import Connection
 
@@ -68,7 +67,7 @@ class MavSwarm:
         return True
 
 
-    def send_msg(self, msgs: list[AgentMsg]) -> None:
+    def send_msg(self, msgs: list) -> None:
         """
         Add the message to the connection's outgoing messages queue
         """

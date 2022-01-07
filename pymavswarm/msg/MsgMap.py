@@ -65,6 +65,7 @@ class MissionCommand(Enum):
     """
     Enum class used to retrieve mission commands
     """
+    simple_waypoint = 'simplewaypoint'
     waypoint = 'waypoint'
     simple_takeoff = 'simpletakeoff'
     takeoff = 'takeoff'
