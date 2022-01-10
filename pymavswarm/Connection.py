@@ -819,7 +819,7 @@ class Connection:
 
 
         @self.send_message(['airspeed'])
-        def sender(self, msg: FlightSpeedMsg, fn_id: int=0):
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> None:
             """
             Set a new airspeed on an agent
             """
@@ -838,7 +838,7 @@ class Connection:
 
 
         @self.send_message(['groundspeed'])
-        def sender(self, msg: FlightSpeedMsg, fn_id: int=0):
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> None:
             """
             Set a new airspeed on an agent
             """
@@ -857,7 +857,7 @@ class Connection:
 
 
         @self.send_message(['climbspeed'])
-        def sender(self, msg: FlightSpeedMsg, fn_id: int=0):
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> None:
             """
             Set a new airspeed on an agent
             """
@@ -876,7 +876,7 @@ class Connection:
 
 
         @self.send_message(['descentspeed'])
-        def sender(self, msg: FlightSpeedMsg, fn_id: int=0):
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> None:
             """
             Set a new airspeed on an agent
             """
@@ -895,7 +895,7 @@ class Connection:
 
         
         @self.send_message(['simpletakeoff'])
-        def sender(self, msg: TakeoffMsg, fn_id: int=0):
+        def sender(self, msg: TakeoffMsg, fn_id: int=0) -> None:
             """
             Perform a simple takeoff command (just takeoff to a set altitude)
             Note that acknowledgement of this command does not indicate that the 
@@ -921,7 +921,7 @@ class Connection:
 
 
         @self.send_message(['takeoff'])
-        def sender(self, msg: TakeoffMsg, fn_id: int=0):
+        def sender(self, msg: TakeoffMsg, fn_id: int=0) -> None:
             """
             Perform a takeoff command (use lat, lon, and alt)
             Note that acknowledgement of this command does not indicate that the 
@@ -947,7 +947,7 @@ class Connection:
 
 
         @self.send_message(['simplewaypoint'])
-        def sender(self, msg: WaypointMsg, fn_id: int=0):
+        def sender(self, msg: WaypointMsg, fn_id: int=0) -> None:
             """
             Perform a simple waypoint command (just lat, lon, and alt)
             Note that acknowledgement of this command does not indicate that the 
@@ -975,7 +975,7 @@ class Connection:
 
 
         @self.send_message(['waypoint'])
-        def sender(self, msg: WaypointMsg, fn_id: int=0):
+        def sender(self, msg: WaypointMsg, fn_id: int=0) -> None:
             """
             Perform a waypoint navigation command
             Note that acknowledgement of this command does not indicate that the 
