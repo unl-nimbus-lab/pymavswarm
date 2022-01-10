@@ -6,7 +6,7 @@ class Mission:
     """
     Mission defines a set of waypoints that should be executed sequentially by an agent
     """
-    def __init__(self, waypoints: list(Waypoint)=[], log: bool=False, debug: bool=False) -> None:
+    def __init__(self, waypoints: list=[], log: bool=False, debug: bool=False) -> None:
         self.logger = self.__init_logger('mission', log=log, debug=debug)
         self.waypoints = waypoints
 

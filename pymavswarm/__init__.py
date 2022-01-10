@@ -1,3 +1,3 @@
 from .MavSwarm import MavSwarm
-from .utils import MsgMap, AgentMsg
+from .msg import *
 from .Agent import Agent

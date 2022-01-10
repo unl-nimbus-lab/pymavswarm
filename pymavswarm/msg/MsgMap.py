@@ -71,11 +71,15 @@ class MissionCommand(Enum):
     takeoff = 'takeoff'
 
 
-class MsgMap(Enum):
+class MsgMap:
     """
     Helper class used to provide easy retrieval of the commands used by pymavswarm to send
     messages
     """
-    flight_modes = FlightModes
-    system_commands = SystemCommands
-    hrl_commands = HRLCommands
+    def __init__(self) -> None:
+        self.flight_modes = FlightModes
+        self.system_commands = SystemCommands
+        self.preflight_calibration_commands = PreflightCalibrationCommands
+        self.hrl_commands = HRLCommands
+        self.flight_speed_commands = FlightSpeedCommand
+        self.mission_commands = MissionCommand
