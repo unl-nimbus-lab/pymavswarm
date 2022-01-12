@@ -37,3 +37,5 @@ class WaypointMsg(AgentMsg):
         self.lon = lon
         self.alt = alt
 
+        return
+

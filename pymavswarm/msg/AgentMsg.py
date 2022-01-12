@@ -26,6 +26,8 @@ class AgentMsg:
         self.msg_timeout = msg_timeout
         self.ack_timeout = ack_timeout
 
+        return
+
 
     def get_type(self) -> str:
         return self.msg_type

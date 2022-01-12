@@ -7,5 +7,7 @@ class PreflightCalibrationMsg(AgentMsg):
     PreflightCalibrationMsg represents messages that perform pre-flight calibrations on a selected
     agent
     """
-    def __init__(self, msg_type: str, sys_id: int, comp_id: int, check_ack: bool) -> None:
-        super().__init__(msg_type, sys_id, comp_id, check_ack)
+    def __init__(self, msg_type: str, sys_id: int, comp_id: int, check_ack: bool, msg_timeout: float=5.0) -> None:
+        super().__init__(msg_type, sys_id, comp_id, check_ack, msg_timeout=msg_timeout)
+        
+        return

@@ -23,3 +23,5 @@ class TakeoffMsg(AgentMsg):
         self.altitude = altitude
         self.lat = lat
         self.lon = lon
+
+        return

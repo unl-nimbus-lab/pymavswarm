@@ -83,3 +83,5 @@ class MsgMap:
         self.hrl_commands = HRLCommands
         self.flight_speed_commands = FlightSpeedCommand
         self.mission_commands = MissionCommand
+
+        return
