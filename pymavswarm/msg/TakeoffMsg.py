@@ -12,14 +12,14 @@ class TakeoffMsg(AgentMsg):
     """
     def __init__(self, altitude: float,
                  msg_type: str, 
-                 target_id: int, 
+                 target_system: int, 
                  target_comp: int, 
                  retry: bool, 
                  lat: Optional[float]=None,
                  lon: Optional[float]=None,
                  msg_timeout: float=5.0, 
                  ack_timeout: float=1.0) -> None:
-        super().__init__(msg_type, target_id, target_comp, retry, msg_timeout=msg_timeout, ack_timeout=ack_timeout)
+        super().__init__(msg_type, target_system, target_comp, retry, msg_timeout=msg_timeout, ack_timeout=ack_timeout)
         self.altitude = altitude
         self.lat = lat
         self.lon = lon

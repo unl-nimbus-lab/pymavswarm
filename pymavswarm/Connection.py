@@ -9,6 +9,7 @@ from .state import *
 from enum import Enum
 from queue import Queue
 from .Agent import Agent
+from .param import Parameter
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega
 
@@ -59,6 +60,7 @@ class Connection:
         self.message_listeners = {}
         self.message_senders = {}
         self.outgoing_msgs = Queue()
+        self.outgoing_params = Queue()
         self.ack_msg_flag = False
 
         # Register the exit callback
@@ -73,6 +75,9 @@ class Connection:
 
         self.outgoing_msg_t = threading.Thread(target=self.__send_msg_handler)
         self.outgoing_msg_t.daemon = True
+
+        self.outgoing_param_t = threading.Thread(target=self.__set_param_handler)
+        self.outgoing_param_t.daemon = True
 
 
         """
@@ -324,13 +329,13 @@ class Connection:
             """
             Arm an agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
                                               0,
                                               1, 0, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg(timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -338,9 +343,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the arm command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the arm command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the arm command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the arm command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -350,13 +355,13 @@ class Connection:
             """
             Disarm an agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
                                               0,
                                               0, 0, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -364,9 +369,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the disarm command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the disarm command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the disarm command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the disarm command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -376,13 +381,13 @@ class Connection:
             """
             Force disarm an agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
                                               0,
                                               0, 21196, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -390,9 +395,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the kill command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the kill command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the kill command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the kill command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -402,13 +407,13 @@ class Connection:
             """
             Reboot an agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
                                               0,
                                               1, 0, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -416,9 +421,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the reboot command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the reboot command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the reboot command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the reboot command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -428,13 +433,13 @@ class Connection:
             """
             Shutdown an agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
                                               0,
                                               2, 0, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -442,9 +447,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the shutdown command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the shutdown command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the shutdown command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the shutdown command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -454,13 +459,13 @@ class Connection:
             """
             Perform a full accelerometer calibration on the selected agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
                                               0,
                                               0, 0, 0, 0, 1, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -468,9 +473,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the accelerometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the accelerometer calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the accelerometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the accelerometer calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -480,13 +485,13 @@ class Connection:
             """
             Perform a simple accelerometer calibration on the selected agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
                                               0,
                                               0, 0, 0, 0, 4, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -494,9 +499,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the simple accelerometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the simple accelerometer calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the simple accelerometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the simple accelerometer calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -506,13 +511,13 @@ class Connection:
             """
             Perform an AHRS trim on the selected agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
                                               0,
                                               0, 0, 0, 0, 2, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -520,9 +525,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the AHRS trim command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the AHRS trim command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the AHRS trim command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the AHRS trim command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -532,13 +537,13 @@ class Connection:
             """
             Perform a gyroscope calibration on the selected agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
                                               0,
                                               1, 0, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -546,9 +551,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the gyroscope calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the gyroscope calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the gyroscope calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the gyroscope calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -558,13 +563,13 @@ class Connection:
             """
             Perform a magnetometer calibration on the selected agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
                                               0,
                                               0, 1, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -572,9 +577,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the magnetometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the magnetometer calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the magnetometer calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the magnetometer calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -584,13 +589,13 @@ class Connection:
             """
             Perform a ground pressure calibration on the selected agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
                                               0,
                                               0, 0, 3, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -598,9 +603,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the ground pressue calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the ground pressue calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the ground pressue calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the ground pressue calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -610,13 +615,13 @@ class Connection:
             """
             Perform airspeed calibration on the selected agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
                                               0,
                                               0, 0, 0, 0, 0, 2, 0)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -624,9 +629,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the airspeed calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the airspeed calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the airspeed calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the airspeed calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -636,13 +641,13 @@ class Connection:
             """
             Perform a barometer temperature calibration on the selected agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 
                                               0,
                                               0, 0, 0, 0, 0, 0, 3)
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -650,9 +655,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the barometer temperature calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the barometer temperature calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the barometer temperature calibration command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the barometer temperature calibration command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -663,7 +668,7 @@ class Connection:
             Set an agent to STABILIZE mode
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -671,7 +676,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -679,9 +684,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the flight mode STABILIZE command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the flight mode STABILIZE command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the flight mode STABILIZE command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the flight mode STABILIZE command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -692,7 +697,7 @@ class Connection:
             Set an agent to ACRO mode
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -700,7 +705,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -708,9 +713,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the flight mode ACRO command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the flight mode ACRO command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the flight mode ACRO command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the flight mode ACRO command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -721,7 +726,7 @@ class Connection:
             Set an agent to ALT_HOLD mode
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -729,7 +734,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -737,9 +742,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the flight mode ALT_HOLD command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the flight mode ALT_HOLD command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the flight mode ALT_HOLD command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the flight mode ALT_HOLD command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -750,7 +755,7 @@ class Connection:
             Set an agent to AUTO mode
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -758,7 +763,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -766,9 +771,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the flight mode AUTO command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the flight mode AUTO command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the flight mode AUTO command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the flight mode AUTO command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -779,7 +784,7 @@ class Connection:
             Set an agent to LOITER mode
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -787,7 +792,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -795,9 +800,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the flight mode LOITER command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the flight mode LOITER command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the flight mode LOITER command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the flight mode LOITER command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -808,7 +813,7 @@ class Connection:
             Set an agent to RTL mode
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -816,7 +821,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -824,9 +829,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the flight mode RTL command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the flight mode RTL command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the flight mode RTL command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the flight mode RTL command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -837,7 +842,7 @@ class Connection:
             Set an agent to LAND mode
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -845,7 +850,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -853,9 +858,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the flight mode LAND command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the flight mode LAND command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the flight mode LAND command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the flight mode LAND command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -866,7 +871,7 @@ class Connection:
             Set an agent to THROW mode
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -874,7 +879,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -882,9 +887,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the flight mode THROW command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the flight mode THROW command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the flight mode THROW command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the flight mode THROW command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -895,7 +900,7 @@ class Connection:
             Set an agent to SYSTEM ID mode
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -903,7 +908,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -911,9 +916,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the flight mode SYSTEMID command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the flight mode SYSTEMID command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the flight mode SYSTEMID command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the flight mode SYSTEMID command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -924,7 +929,7 @@ class Connection:
             Set an agent to GUIDED mode
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -932,7 +937,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -940,9 +945,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the flight mode GUIDED command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the flight mode GUIDED command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the flight mode GUIDED command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the flight mode GUIDED command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -953,7 +958,7 @@ class Connection:
             Start path execution on the respective agent
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -961,7 +966,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -969,9 +974,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the start flight path HRL command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the start flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the start flight path HRL command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the start flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -982,7 +987,7 @@ class Connection:
             Stop path execution on the respective agent
             """
             # Reset target
-            self.master.target_system = msg.target_id
+            self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
             # Send flight mode
@@ -990,7 +995,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -998,9 +1003,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the stop flight path HRL command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the stop flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the stop flight path HRL command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the stop flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -1010,14 +1015,14 @@ class Connection:
             """
             Set a new airspeed on an agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED, 
                                               0,
                                               0, msg.speed, -1, 0, 0, 0, 0)
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -1025,9 +1030,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the air speed command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the air speed command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the air speed command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the air speed command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -1037,14 +1042,14 @@ class Connection:
             """
             Set a new airspeed on an agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED, 
                                               0,
                                               1, msg.speed, -1, 0, 0, 0, 0)
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -1052,9 +1057,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the ground speed command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the ground speed command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the ground speed command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the ground speed command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -1064,14 +1069,14 @@ class Connection:
             """
             Set a new airspeed on an agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED, 
                                               0,
                                               2, msg.speed, -1, 0, 0, 0, 0)
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -1079,9 +1084,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the climb speed command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the climb speed command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the climb speed command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the climb speed command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -1091,14 +1096,14 @@ class Connection:
             """
             Set a new airspeed on an agent
             """
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED, 
                                               0,
                                               3, msg.speed, -1, 0, 0, 0, 0)
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -1106,9 +1111,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the descent speed command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the descent speed command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the descent speed command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the descent speed command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -1125,14 +1130,14 @@ class Connection:
                 self.logger.exception(f'An invalid takeoff altitude was provided ({msg.altitude}). Please send a valid takeoff altitude')
                 return
 
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_NAV_LAND, 
                                               0,
                                               0, 0, 0, 0, 0, 0, msg.altitude)
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -1140,9 +1145,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the simple takeoff command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the simple takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the simple takeoff command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the simple takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -1159,14 +1164,14 @@ class Connection:
                 self.logger.exception(f'An invalid takeoff altitude was provided ({msg.altitude}). Please send a valid takeoff altitude')
                 return
 
-            self.master.mav.command_long_send(msg.target_id, msg.target_comp,
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_NAV_LAND, 
                                               0,
                                               0, 0, 0, 0, msg.lat, msg.lon, msg.altitude)
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -1174,9 +1179,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the takeoff command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the takeoff command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -1193,7 +1198,7 @@ class Connection:
                 self.logger.exception(f'An invalid takeoff altitude was provided ({msg.altitude}). Please send a valid waypoint altitude')
                 return
 
-            self.master.mav.mission_item_send(msg.target_id, msg.target_comp, 
+            self.master.mav.mission_item_send(msg.target_system, msg.target_comp, 
                                               0, 
                                               mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
                                               mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 
@@ -1202,7 +1207,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -1210,9 +1215,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the simple waypoint command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the simple waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the simple waypoint command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the simple waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -1229,7 +1234,7 @@ class Connection:
                 self.logger.exception(f'An invalid takeoff altitude was provided ({msg.altitude}). Please send a valid waypoint altitude')
                 return
 
-            self.master.mav.mission_item_send(msg.target_id, msg.target_comp, 
+            self.master.mav.mission_item_send(msg.target_system, msg.target_comp, 
                                               0, 
                                               mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
                                               mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 
@@ -1238,7 +1243,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_sys_cmd(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -1246,9 +1251,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the waypoint command sent to Agent ({msg.target_id}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the waypoint command sent to Agent ({msg.target_id}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
@@ -1428,10 +1433,10 @@ class Connection:
         return ack
 
 
-    def __ack_sys_cmd(self, timeout=1.0) -> bool:
+    def __ack_msg(self, msg_type: str, timeout=1.0) -> bool:
         """
-        Helper method used to ensure that the flight mode command was acknowledged 
-        in the provided timeout period
+        Helper method used to ensure that a distributed msg is acknowledged
+        'COMMAND_ACK'
         """
         # Skip mavlink message reads in the consumer thread
         self.ack_msg_flag = True
@@ -1445,10 +1450,10 @@ class Connection:
         while time.time() - start_t < timeout:
             # Read a new message
             try:
-                ack_msg = self.master.recv_match(type='COMMAND_ACK', blocking=False)
+                ack_msg = self.master.recv_match(type=msg_type, blocking=False)
                 ack_msg = ack_msg.to_dict()
                 
-                if ack_msg['mavpackettype'] == 'COMMAND_ACK':
+                if ack_msg['mavpackettype'] == msg_type:
                     ack_success = True
                     self.logger.debug(mavutil.mavlink.enums['MAV_RESULT'][ack_msg['result']].description)
                     break
@@ -1465,6 +1470,47 @@ class Connection:
         self.ack_msg_flag = False
         
         return ack_success
+
+
+    def __set_param_handler(self) -> None:
+        """
+        Handle setting parameters on an agent in the network
+        """
+        while self.connected:
+            if self.outgoing_params.qsize() > 0:
+                param = self.outgoing_params.get(timeout=1)
+                self.__set_param(param)
+
+        return
+
+
+    def __set_param(self, param: Parameter) -> bool:
+        """
+        Set the value of a parameter
+        """
+        try:
+            self.master.mav.param_set_send(param.target_system, param.target_comp,
+                                           str.encode(param.param_name),
+                                           param.param_value)
+        except Exception as e:
+            self.logger.error(f'An error occurred while attempting to set {param.param_name} to {param.param_value}', e)
+            return False
+
+        ack = False
+
+        if self.__ack_msg('PARAM_VALUE', timeout=param.ack_timeout):
+            ack = True
+        else:
+            if param.retry:
+                if self.__retry_msg_send(param, self.__set_param):
+                    ack = True
+                
+        if ack:
+            self.logger.info(f'Successfully set {param.param_name} to {param.param_value} on Agent ({param.target_system}, {param.target_comp})')    
+        else:
+            self.logger.error(f'Failed to set {param.param_name} to {param.param_value} on Agent ({param.target_system}, {param.target_comp})')
+
+        return ack
 
     
     def start_connection(self) -> None:
@@ -1484,6 +1530,7 @@ class Connection:
         self.heartbeat_t.start()
         self.incoming_msg_t.start()
         self.outgoing_msg_t.start()
+        self.outgoing_param_t.start()
 
         return
 
@@ -1500,6 +1547,9 @@ class Connection:
 
         if self.outgoing_msg_t is not None:
             self.outgoing_msg_t.join()
+
+        if self.outgoing_param_t is not None:
+            self.outgoing_param_t.join()
 
         return
 

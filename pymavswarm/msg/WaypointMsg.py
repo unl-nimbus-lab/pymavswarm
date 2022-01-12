@@ -23,12 +23,12 @@ class WaypointMsg(AgentMsg):
                  lon: float,
                  alt: float,             
                  msg_type: str, 
-                 target_id: int, 
+                 target_system: int, 
                  target_comp: int, 
                  retry: bool, 
                  msg_timeout: float=5, 
                  ack_timeout: float=1) -> None:
-        super().__init__(msg_type, target_id, target_comp, retry, msg_timeout=msg_timeout, ack_timeout=ack_timeout)
+        super().__init__(msg_type, target_system, target_comp, retry, msg_timeout=msg_timeout, ack_timeout=ack_timeout)
         self.hold = hold
         self.accept_radius = accept_radius
         self.pass_radius = pass_radius
