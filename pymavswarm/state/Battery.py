@@ -19,3 +19,5 @@ class Battery:
             self.level = None
         else:
             self.level = level
+
+        return

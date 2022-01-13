@@ -2,6 +2,7 @@ import math
 import time
 import atexit
 import logging
+from typing import Any, Tuple
 import monotonic
 import threading
 from .msg import *
@@ -61,7 +62,7 @@ class Connection:
         self.outgoing_msgs = Queue()
         self.outgoing_params = Queue()
         self.read_params = Queue()
-        self.ack_msg_flag = False
+        self.read_msg_mutex = threading.Lock()
 
         # Register the exit callback
         atexit.register(self.disconnect)
@@ -78,6 +79,9 @@ class Connection:
 
         self.outgoing_param_t = threading.Thread(target=self.__set_param_handler)
         self.outgoing_param_t.daemon = True
+
+        self.incoming_param_t = threading.Thread(target=self.__read_param_handler)
+        self.incoming_param_t.daemon = True
 
 
         """
@@ -361,7 +365,7 @@ class Connection:
                                               0, 0, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -387,7 +391,7 @@ class Connection:
                                               0, 21196, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -413,7 +417,7 @@ class Connection:
                                               1, 0, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -439,7 +443,7 @@ class Connection:
                                               2, 0, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -465,7 +469,7 @@ class Connection:
                                               0, 0, 0, 0, 1, 0, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -491,7 +495,7 @@ class Connection:
                                               0, 0, 0, 0, 4, 0, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -517,7 +521,7 @@ class Connection:
                                               0, 0, 0, 0, 2, 0, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -543,7 +547,7 @@ class Connection:
                                               1, 0, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -569,7 +573,7 @@ class Connection:
                                               0, 1, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -595,7 +599,7 @@ class Connection:
                                               0, 0, 3, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -621,7 +625,7 @@ class Connection:
                                               0, 0, 0, 0, 0, 2, 0)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -647,7 +651,7 @@ class Connection:
                                               0, 0, 0, 0, 0, 0, 3)
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -676,7 +680,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -705,7 +709,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -734,7 +738,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -763,7 +767,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -792,7 +796,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -821,7 +825,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -850,7 +854,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -879,7 +883,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -908,7 +912,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -937,7 +941,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -966,7 +970,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -995,7 +999,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -1022,7 +1026,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -1049,7 +1053,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -1076,7 +1080,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -1103,7 +1107,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -1137,7 +1141,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -1171,7 +1175,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -1207,7 +1211,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -1243,7 +1247,7 @@ class Connection:
 
             ack = False
 
-            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
                 ack = True
             else:
                 if msg.retry:
@@ -1358,11 +1362,6 @@ class Connection:
         Handle incoming messages and distribute them to their respective handlers
         """
         while self.connected:
-            # Skip the read if the sending thread is attempting
-            # to acknowledge reception
-            if self.ack_msg_flag:
-                continue
-
             # Update the timeout flag for each device
             for key in self.devices:
                 if self.devices[key].last_heartbeat is not None:
@@ -1370,7 +1369,11 @@ class Connection:
 
             # Read a new message
             try:
-                msg = self.master.recv_msg()
+                if not self.read_msg_mutex.acquire(timeout=1.0):
+                    msg = None
+                else:
+                    msg = self.master.recv_msg()
+                    self.read_msg_mutex.release()
             except mavutil.mavlink.MAVError as e:
                 self.logger.debug('An error occurred on MAVLink message reception')
                 msg = None
@@ -1433,15 +1436,11 @@ class Connection:
         return ack
 
 
-    def __ack_msg(self, msg_type: str, timeout=1.0) -> bool:
+    def __ack_msg(self, msg_type: str, timeout=1.0) -> Tuple[bool, Any]:
         """
         Helper method used to ensure that a distributed msg is acknowledged
         """
-        if not self.ack_msg_flag:
-            # Skip mavlink message reads in the consumer thread
-            self.ack_msg_flag = True
-        else:
-            # Another thread is checking for acknowledgement already
+        if not self.read_msg_mutex.acquire(timeout=1.0):
             return False
 
         # Flag indicating whether the message was acknowledged
@@ -1458,7 +1457,6 @@ class Connection:
                 
                 if ack_msg['mavpackettype'] == msg_type:
                     ack_success = True
-                    self.logger.debug(mavutil.mavlink.enums['MAV_RESULT'][ack_msg['result']].description)
                     break
             except mavutil.mavlink.MAVError as e:
                 self.logger.debug('An error occurred on MAVLink message reception')
@@ -1470,9 +1468,9 @@ class Connection:
                 self.logger.exception('Exception while receiving message: ', exc_info=False)
 
         # Continue reading status messages
-        self.ack_msg_flag = False
+        self.read_msg_mutex.release()
         
-        return ack_success
+        return ack_success, ack_msg
 
 
     def __set_param_handler(self) -> None:
@@ -1494,7 +1492,7 @@ class Connection:
         default values
         """
         try:
-            self.master.mav.param_set_send(param.target_system, param.target_comp,
+            self.master.mav.param_set_send(param.sys_id, param.comp_id,
                                            str.encode(param.param_id),
                                            param.param_value)
         except Exception as e:
@@ -1503,7 +1501,7 @@ class Connection:
 
         ack = False
 
-        if self.__ack_msg('PARAM_VALUE', timeout=param.ack_timeout):
+        if self.__ack_msg('PARAM_VALUE', timeout=param.ack_timeout)[0]:
             ack = True
         else:
             if param.retry:
@@ -1511,52 +1509,50 @@ class Connection:
                     ack = True
                 
         if ack:
-            self.logger.info(f'Successfully set {param.param_id} to {param.param_value} on Agent ({param.target_system}, {param.target_comp})')    
+            self.logger.info(f'Successfully set {param.param_id} to {param.param_value} on Agent ({param.sys_id}, {param.comp_id})')    
         else:
-            self.logger.error(f'Failed to set {param.param_id} to {param.param_value} on Agent ({param.target_system}, {param.target_comp})')
+            self.logger.error(f'Failed to set {param.param_id} to {param.param_value} on Agent ({param.sys_id}, {param.comp_id})')
 
         return ack
 
 
     def __read_param_handler(self) -> None:
         """
-        Handler responsible for reading requested parameters
+        Handler responsible for reading requested parameters. Note that this
+        thread is primarily responsible for handling read requests and verifying
+        that a read was accomplished on the message listener thread. The agent state
+        itself is updated on the message listener thread
         """
         while self.connected:
-            pass
+            if self.read_param.qsize() > 0:
+                param = self.read_params.get(timeout=1)
+                self.__read_param(param)
+
+        return
 
 
-    def read_param(self, param: Parameter) -> bool:
+    def __read_param(self, param: Parameter) -> bool:
         """
         Read a desired parameter value
         """
         try:
-            agent = self.devices[(param.target_system, param.target_comp)]
-        except KeyError:
-            self.logger.error(f'Agent ({param.target_system}, {param.target_comp}) does not exist in the network')
-            return False
-
-        # Get the last param set to check for state changes
-        last_param = agent.last_param_read
-
-        try:
-            self.master.mav.param_request_read_send(param.target_system, param.target_comp,
+            self.master.mav.param_request_read_send(param.sys_id, param.comp_id,
                                                     str.encode(param),
                                                     -1)
         except Exception as e:
-            self.logger.exception(f'An exception occurred while attempting to read {param.param_id} from Agent ({param.target_system}, {param.target_comp})', e)
+            self.logger.exception(f'An exception occurred while attempting to read {param.param_id} from Agent ({param.sys_id}, {param.comp_id})', e)
             return False
-
-        start_time = time.time()
 
         ack = False
 
-        while time.time() - start_time <= param.ack_timeout:
-            updated_agent = self.devices[(sys_id, comp_id)]
+        ack, msg = self.__ack_msg('PARAM_VALUE', timeout=param.ack_timeout)
 
-            if updated_agent.last_param_read.param_name != last_param.param_name or updated_agent.last_param_read.param_value != last_param.param_value:
-                ack = True
-                break
+        if ack:
+            self.devices[(param.sys_id, param.comp_id)].last_params_read.append(msg)
+        else:
+            if param.retry:
+                if self.__retry_msg_send(param, self.__set_param):
+                    ack = True
 
         return ack
 
@@ -1579,6 +1575,7 @@ class Connection:
         self.incoming_msg_t.start()
         self.outgoing_msg_t.start()
         self.outgoing_param_t.start()
+        self.incoming_param_t.start()
 
         return
 
@@ -1598,6 +1595,9 @@ class Connection:
 
         if self.outgoing_param_t is not None:
             self.outgoing_param_t.join()
+
+        if self.incoming_param_t is not None:
+            self.incoming_param_t.join()
 
         return
 

@@ -44,6 +44,6 @@ class Agent:
         self.timeout: bool = False
         self.current_waypoint: int = 0
         self.mission: Mission = Mission()
-        self.last_param_read = deque(maxlen=max_params_stored)
+        self.last_params_read = deque(maxlen=max_params_stored)
 
         return

@@ -85,7 +85,7 @@ class MavSwarm:
         """
         for param in params:
             # Ensure that the intended agent is in the network
-            if (param.target_system, param.target_id) in self.connection.devices:
+            if (param.sys_id, param.comp_id) in self.connection.devices:
                 self.connection.outgoing_params.put(param)
 
         return
@@ -93,9 +93,17 @@ class MavSwarm:
 
     def read_param(self, params: list) -> None:
         """
-        Read a desired parameter value
+        Read a desired parameter value. Note that, in the current configuration
+        each agent stores the most recent 5 parameter values read in a circular
+        buffer. Therefore, when performing a bulk parameter read, ensure that
+        a maximum of five parameters are read at once on the specific agent
         """
-        pass
+        for param in params:
+            # Ensure that the intended agent is in the network
+            if (param.sys_id, param.comp_id) in self.connection.devices:
+                self.connection.read_params.put(param)
+
+        return
 
     
     def get_agents(self) -> list:

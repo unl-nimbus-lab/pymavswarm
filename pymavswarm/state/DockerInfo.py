@@ -7,3 +7,5 @@ class DockerInfo:
         """
         self.version = version
         self.last_update = last_update
+
+        return

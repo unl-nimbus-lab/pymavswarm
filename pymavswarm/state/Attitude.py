@@ -20,3 +20,5 @@ class Attitude:
         self.pitch_speed = pitch_speed
         self.yaw_speed = yaw_speed
         self.roll_speed = roll_speed
+
+        return
