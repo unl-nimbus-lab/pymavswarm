@@ -1,6 +1,7 @@
 import monotonic
 from .state import *
 from .mission import Mission
+from .param import Parameter
 from typing import Optional
 
 
@@ -32,3 +33,4 @@ class Agent:
         self.timeout: bool = False
         self.current_waypoint: int = 0
         self.mission: Mission = Mission()
+        self.last_param_read = Parameter(sys_id, comp_id, 'None', False, 0.0)

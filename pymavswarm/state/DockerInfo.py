@@ -6,5 +6,5 @@ class DockerInfo:
         version     : The current version of the Docker image deployed by the agent
         last_update : The last date that the agent was updated
         """
-        self.version: str = version
-        self.last_update: str = last_update
+        self.version = version
+        self.last_update = last_update

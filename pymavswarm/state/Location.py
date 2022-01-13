@@ -10,6 +10,6 @@ class Location:
         altitude  : alt : mm    : Altitude (MSL). Positive for up. Note that virtually all GPS modules 
                                   provide the MSL altitude in addition to the WGS84 altitude.
         """
-        self.latitude: float = latitude
-        self.longitude: float = longitude
-        self.altitude: float = altitude
+        self.latitude = latitude
+        self.longitude = longitude
+        self.altitude = altitude

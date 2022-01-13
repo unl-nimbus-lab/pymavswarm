@@ -6,7 +6,6 @@ import monotonic
 import threading
 from .msg import *
 from .state import *
-from enum import Enum
 from queue import Queue
 from .Agent import Agent
 from .param import Parameter
@@ -61,6 +60,7 @@ class Connection:
         self.message_senders = {}
         self.outgoing_msgs = Queue()
         self.outgoing_params = Queue()
+        self.read_params = Queue()
         self.ack_msg_flag = False
 
         # Register the exit callback
@@ -1436,11 +1436,14 @@ class Connection:
     def __ack_msg(self, msg_type: str, timeout=1.0) -> bool:
         """
         Helper method used to ensure that a distributed msg is acknowledged
-        'COMMAND_ACK'
         """
-        # Skip mavlink message reads in the consumer thread
-        self.ack_msg_flag = True
-        
+        if not self.ack_msg_flag:
+            # Skip mavlink message reads in the consumer thread
+            self.ack_msg_flag = True
+        else:
+            # Another thread is checking for acknowledgement already
+            return False
+
         # Flag indicating whether the message was acknowledged
         ack_success = False
 
@@ -1486,14 +1489,16 @@ class Connection:
 
     def __set_param(self, param: Parameter) -> bool:
         """
-        Set the value of a parameter
+        Set the value of a parameter. Note that this sets the parameter value in RAM
+        and not to EEPROM. Therefore, on reboot, the parameters will be reset to their 
+        default values
         """
         try:
             self.master.mav.param_set_send(param.target_system, param.target_comp,
-                                           str.encode(param.param_name),
+                                           str.encode(param.param_id),
                                            param.param_value)
         except Exception as e:
-            self.logger.error(f'An error occurred while attempting to set {param.param_name} to {param.param_value}', e)
+            self.logger.error(f'An error occurred while attempting to set {param.param_id} to {param.param_value}', e)
             return False
 
         ack = False
@@ -1506,9 +1511,52 @@ class Connection:
                     ack = True
                 
         if ack:
-            self.logger.info(f'Successfully set {param.param_name} to {param.param_value} on Agent ({param.target_system}, {param.target_comp})')    
+            self.logger.info(f'Successfully set {param.param_id} to {param.param_value} on Agent ({param.target_system}, {param.target_comp})')    
         else:
-            self.logger.error(f'Failed to set {param.param_name} to {param.param_value} on Agent ({param.target_system}, {param.target_comp})')
+            self.logger.error(f'Failed to set {param.param_id} to {param.param_value} on Agent ({param.target_system}, {param.target_comp})')
+
+        return ack
+
+
+    def __read_param_handler(self) -> None:
+        """
+        Handler responsible for reading requested parameters
+        """
+        while self.connected:
+            pass
+
+
+    def read_param(self, param: Parameter) -> bool:
+        """
+        Read a desired parameter value
+        """
+        try:
+            agent = self.devices[(param.target_system, param.target_comp)]
+        except KeyError:
+            self.logger.error(f'Agent ({param.target_system}, {param.target_comp}) does not exist in the network')
+            return False
+
+        # Get the last param set to check for state changes
+        last_param = agent.last_param_read
+
+        try:
+            self.master.mav.param_request_read_send(param.target_system, param.target_comp,
+                                                    str.encode(param),
+                                                    -1)
+        except Exception as e:
+            self.logger.exception(f'An exception occurred while attempting to read {param.param_id} from Agent ({param.target_system}, {param.target_comp})', e)
+            return False
+
+        start_time = time.time()
+
+        ack = False
+
+        while time.time() - start_time <= param.ack_timeout:
+            updated_agent = self.devices[(sys_id, comp_id)]
+
+            if updated_agent.last_param_read.param_name != last_param.param_name or updated_agent.last_param_read.param_value != last_param.param_value:
+                ack = True
+                break
 
         return ack
 

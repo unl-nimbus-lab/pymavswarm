@@ -90,6 +90,13 @@ class MavSwarm:
 
         return
 
+
+    def read_param(self, params: list) -> None:
+        """
+        Read a desired parameter value
+        """
+        pass
+
     
     def get_agents(self) -> list:
         """

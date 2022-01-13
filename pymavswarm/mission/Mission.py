@@ -2,6 +2,8 @@ import logging
 from typing import Optional
 from .Waypoint import Waypoint
 
+
+
 class Mission:
     """
     Mission defines a set of waypoints that should be executed sequentially by an agent

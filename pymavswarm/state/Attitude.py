@@ -15,9 +15,9 @@ class Attitude:
         yaw_speed   : yawspeed   : rad/s : Yaw angular speed
         roll_speed  : rollspeed  : rad/s : Roll angular speed
         """
-        self.pitch: float = pitch
-        self.yaw: float = yaw
-        self.roll: float = roll
-        self.pitch_speed: float = pitch_speed
-        self.yaw_speed: float = yaw_speed
-        self.roll_speed: float = roll_speed
+        self.pitch = pitch
+        self.yaw = yaw
+        self.roll = roll
+        self.pitch_speed = pitch_speed
+        self.yaw_speed = yaw_speed
+        self.roll_speed = roll_speed

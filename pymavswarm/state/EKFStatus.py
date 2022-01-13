@@ -23,11 +23,11 @@ class EKFStatus:
         compass_variance     : Compass variance.
         terrain_alt_variance : Terrain Altitude variance.
         """
-        self.velocity_variance: float = velocity_variance
-        self.pos_horiz_variance: float = pos_horiz_variance
-        self.pos_vert_variance: float = pos_vert_variance
-        self.compass_variance: float = compass_variance
-        self.terrain_alt_variance: float = terrain_alt_variance
-        self.pos_horiz_abs: float = pos_horiz_abs
-        self.const_pos_mode: float = const_pos_mode
-        self.pred_pos_horiz_abs: float = pred_pos_horiz_abs
+        self.velocity_variance = velocity_variance
+        self.pos_horiz_variance = pos_horiz_variance
+        self.pos_vert_variance = pos_vert_variance
+        self.compass_variance = compass_variance
+        self.terrain_alt_variance = terrain_alt_variance
+        self.pos_horiz_abs = pos_horiz_abs
+        self.const_pos_mode = const_pos_mode
+        self.pred_pos_horiz_abs = pred_pos_horiz_abs

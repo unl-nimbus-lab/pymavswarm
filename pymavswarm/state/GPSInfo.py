@@ -11,7 +11,7 @@ class GPSInfo:
         fix_type           : GPS fix type (GPS_FIX_TYPE)
         satellites_visible : Number of satellites visible. If unknown, set to UINT8_MAX
         """
-        self.eph: float = eph
-        self.epv: float = epv
-        self.fix_type: int = fix_type
-        self.satellites_visible: int = satellites_visible
+        self.eph = eph
+        self.epv = epv
+        self.fix_type = fix_type
+        self.satellites_visible = satellites_visible
