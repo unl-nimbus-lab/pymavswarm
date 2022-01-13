@@ -1,6 +1,5 @@
 class Battery:
-    def __init__(self, 
-                 voltage: float=0.0, 
+    def __init__(self, voltage: float=0.0, 
                  current: float=0.0, 
                  level: float=0.0) -> None:
         """

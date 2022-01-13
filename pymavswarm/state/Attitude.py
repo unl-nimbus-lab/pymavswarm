@@ -1,6 +1,5 @@
 class Attitude:
-    def __init__(self, 
-                 pitch: float=0.0, 
+    def __init__(self, pitch: float=0.0, 
                  yaw: float=0.0, 
                  roll: float=0.0, 
                  pitch_speed: float=0.0, 

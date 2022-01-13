@@ -6,4 +6,3 @@ from .Location import Location
 from .EKFStatus import EKFStatus
 from .Telemetry import Telemetry
 from .Velocity import Velocity
-from .Parameter import Parameter

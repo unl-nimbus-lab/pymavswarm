@@ -1,6 +1,5 @@
 class DockerInfo:
-    def __init__(self, 
-                 version: str='None', 
+    def __init__(self, version: str='None', 
                  last_update: str='None') -> None:
         """
         version     : The current version of the Docker image deployed by the agent

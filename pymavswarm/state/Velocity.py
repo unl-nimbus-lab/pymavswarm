@@ -1,6 +1,5 @@
 class Velocity:
-    def __init__(self, 
-                 vx: float=0.0, 
+    def __init__(self, vx: float=0.0, 
                  vy: float=0.0, 
                  vz: float=0.0) -> None:
         """
@@ -12,3 +11,5 @@ class Velocity:
         self.vx = vx
         self.vy = vy
         self.vz = vz
+
+        return

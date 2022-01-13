@@ -1,6 +1,5 @@
 class Telemetry:
-    def __init__(self, 
-                 drop_rate: float=0.0, 
+    def __init__(self, drop_rate: float=0.0, 
                  comm_errors=None) -> None:
         """
         MAVLink Specification
@@ -11,3 +10,5 @@ class Telemetry:
         """
         self.drop_rate = drop_rate
         self.comm_errors = comm_errors
+
+        return

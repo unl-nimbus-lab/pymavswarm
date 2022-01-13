@@ -1,6 +1,5 @@
 class GPSInfo:
-    def __init__(self, 
-                 eph: float=0.0, 
+    def __init__(self, eph: float=0.0, 
                  epv: float=0.0, 
                  fix_type: int=0, 
                  satellites_visible: int=0) -> None:
@@ -15,3 +14,5 @@ class GPSInfo:
         self.epv = epv
         self.fix_type = fix_type
         self.satellites_visible = satellites_visible
+
+        return

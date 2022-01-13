@@ -1,6 +1,5 @@
 class Location:
-    def __init__(self, 
-                 latitude: float=0.0, 
+    def __init__(self, latitude: float=0.0, 
                  longitude: float=0.0, 
                  altitude: float=0.0) -> None:
         """
@@ -13,3 +12,5 @@ class Location:
         self.latitude = latitude
         self.longitude = longitude
         self.altitude = altitude
+
+        return

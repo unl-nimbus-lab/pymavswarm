@@ -3,13 +3,13 @@ class EKFStatus:
     EKF Flags indicating EKF status (True if healthy)
     """
     def __init__(self, velocity_variance: float=0.0, 
-                       pos_horiz_variance: float=0.0, 
-                       pos_vert_variance: float=0.0, 
-                       compass_variance: float=0.0, 
-                       terrain_alt_variance: float=0.0, 
-                       pos_horiz_abs: float=0.0, 
-                       const_pos_mode: float=0.0, 
-                       pred_pos_horiz_abs: float=0.0) -> None:
+                 pos_horiz_variance: float=0.0, 
+                 pos_vert_variance: float=0.0, 
+                 compass_variance: float=0.0, 
+                 terrain_alt_variance: float=0.0, 
+                 pos_horiz_abs: float=0.0, 
+                 const_pos_mode: float=0.0, 
+                 pred_pos_horiz_abs: float=0.0) -> None:
         """
         MAVLink Specification
         pos_horiz_abs        : Flags, EKF's Horizontal position (absolute) estimate is good.
@@ -31,3 +31,5 @@ class EKFStatus:
         self.pos_horiz_abs = pos_horiz_abs
         self.const_pos_mode = const_pos_mode
         self.pred_pos_horiz_abs = pred_pos_horiz_abs
+
+        return
