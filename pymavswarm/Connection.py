@@ -878,6 +878,8 @@ class Connection:
             self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
+            print(self.master.mode_mapping())
+
             # Send flight mode
             self.master.set_mode(self.master.mode_mapping()['THROW'])
 
@@ -1492,9 +1494,12 @@ class Connection:
         default values
         """
         try:
+            # NOTE: In the current state, we only support float parameter value types
+            #       Additional types may be added in the future
             self.master.mav.param_set_send(param.sys_id, param.comp_id,
                                            str.encode(param.param_id),
-                                           param.param_value)
+                                           param.param_value,
+                                           9)
         except Exception as e:
             self.logger.error(f'An error occurred while attempting to set {param.param_id} to {param.param_value}', e)
             return False
@@ -1555,7 +1560,7 @@ class Connection:
                     ack = True
 
         if ack:
-            self.logger.info(f'Successfully read {param.param_id} from Agent ({param.sys_id}, {param.comp_id}). Value: {msg}') 
+            self.logger.info(f'Successfully read {param.param_id} from Agent ({param.sys_id}, {param.comp_id}). Value: {msg}')
         else:
             self.logger.error(f'Failed to read {param.param_id} from Agent ({param.sys_id}, {param.comp_id})')
 
