@@ -1537,7 +1537,7 @@ class Connection:
         """
         try:
             self.master.mav.param_request_read_send(param.sys_id, param.comp_id,
-                                                    str.encode(param),
+                                                    str.encode(param.param_id),
                                                     -1)
         except Exception as e:
             self.logger.exception(f'An exception occurred while attempting to read {param.param_id} from Agent ({param.sys_id}, {param.comp_id})', e)
@@ -1553,6 +1553,11 @@ class Connection:
             if param.retry:
                 if self.__retry_msg_send(param, self.__set_param):
                     ack = True
+
+        if ack:
+            self.logger.info(f'Successfully read {param.param_id} from Agent ({param.sys_id}, {param.comp_id}). Value: {msg}') 
+        else:
+            self.logger.error(f'Failed to read {param.param_id} from Agent ({param.sys_id}, {param.comp_id})')
 
         return ack
 
