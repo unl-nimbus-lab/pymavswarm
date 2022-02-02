@@ -19,16 +19,16 @@ class Connection:
     """
     The connection handles all interaction with the network and the MAVLink master device.
     Input Params:
-        port             [str]   : The port over which a connection should be established
-        baud             [int]   : The baudrate that a connection should be established with
-        source_system    [int]   : The system ID of the connection
-        source_component [int]   : The component ID of the connection
-        msg_timeout      [float] : The period of time that pymavswarm should re-attempt a message send if 
+        port             : str   : The port over which a connection should be established
+        baud             : int   : The baudrate that a connection should be established with
+        source_system    : int   : The system ID of the connection
+        source_component : int   : The component ID of the connection
+        msg_timeout      : float : The period of time that pymavswarm should re-attempt a message send if 
                                    a message isn't acknowledged by an agent
-        ack_timeout      [float] : The period of time that pymavswarm should check for an acknowledgement bit
+        ack_timeout      : float : The period of time that pymavswarm should check for an acknowledgement bit
                                    from the agent that it sent a message to
-        log              [bool]  : Boolean indicating whether the system should log the outputs to the terminal screen
-        debug            [bool]  : Boolean indicating whether to run pymavswarm in debug mode
+        log              : bool  : Boolean indicating whether the system should log the outputs to the terminal screen
+        debug            : bool  : Boolean indicating whether to run pymavswarm in debug mode
     """
     def __init__(self, port: str, 
                  baud: int, 
@@ -339,7 +339,7 @@ class Connection:
                                               1, 0, 0, 0, 0, 0, 0)
             ack = False
 
-            if self.__ack_msg(timeout=msg.ack_timeout):
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout):
                 ack = True
             else:
                 if msg.retry:
@@ -1365,7 +1365,7 @@ class Connection:
             # Update the timeout flag for each device
             for key in self.devices:
                 if self.devices[key].last_heartbeat is not None:
-                    self.devices[key].timeout = (monotonic.monotonic() - self.devices[key].last_heartbeat) >= self.devices[key].timeout
+                    self.devices[key].timeout = (monotonic.monotonic() - self.devices[key].last_heartbeat) >= self.devices[key].timeout_period
 
             # Read a new message
             try:
@@ -1524,7 +1524,7 @@ class Connection:
         itself is updated on the message listener thread
         """
         while self.connected:
-            if self.read_param.qsize() > 0:
+            if self.read_params.qsize() > 0:
                 param = self.read_params.get(timeout=1)
                 self.__read_param(param)
 

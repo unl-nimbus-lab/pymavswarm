@@ -20,7 +20,7 @@ class AgentMsg:
                  msg_timeout: float=5.0,
                  ack_timeout: float=1.0) -> None:
         self.msg_type = msg_type
-        self.target_id = target_system
+        self.target_system = target_system
         self.target_comp = target_comp
         self.retry = retry
         self.msg_timeout = msg_timeout

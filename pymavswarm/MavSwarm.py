@@ -48,9 +48,9 @@ class MavSwarm:
             try:
                 self.connection = Connection(port, baudrate, source_system, source_component, log=self.__log, debug=self.__debug)
                 self.connection.start_connection()
-            except Exception as e:
+            except Exception:
                 # Handle the error message
-                self.logger.debug('MavSwarm was unable to establish a connection with the specified device', e)
+                self.logger.debug('MavSwarm was unable to establish a connection with the specified device')
 
                 return False
 

@@ -19,9 +19,7 @@ class TakeoffMsg(AgentMsg):
                  lat: Optional[float]=None,
                  lon: Optional[float]=None,
                  msg_timeout: float=5.0, 
-                 ack_timeout: float=1.0) -> None:
-        assert msg_type in MissionCommand, f'Attempted to generate an invalid Mission Command message: {msg_type}'
-                 
+                 ack_timeout: float=1.0) -> None:                 
         super().__init__(msg_type, target_system, target_comp, retry, msg_timeout=msg_timeout, ack_timeout=ack_timeout)
         self.altitude = altitude
         self.lat = lat

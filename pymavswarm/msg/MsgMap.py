@@ -1,20 +1,8 @@
-from enum import Enum, EnumMeta
+from dataclasses import dataclass
 
 
-class MetaEnum(EnumMeta):
-    def __contains__(cls, item):
-        try:
-            cls(item)
-        except ValueError:
-            return False
-        return True    
-
-
-class BaseEnum(Enum, metaclass=MetaEnum):
-    pass
-
-
-class FlightModes(BaseEnum):
+@dataclass
+class FlightModes:
     """
     Enum class used to enable easy retrieval of the command used by a connection to 
     send a respective flight mode message
@@ -31,7 +19,8 @@ class FlightModes(BaseEnum):
     guided = 'guided'
 
 
-class SystemCommands(BaseEnum):
+@dataclass
+class SystemCommands:
     """
     Enum class used to enable easy retrieval of the command used by a connection to 
     send a respective system command message
@@ -43,7 +32,8 @@ class SystemCommands(BaseEnum):
     kill = 'kill'
 
 
-class PreflightCalibrationCommands(BaseEnum):
+@dataclass
+class PreflightCalibrationCommands:
     """
     Enum class used to enable sending preflight calibration commands
     """
@@ -57,7 +47,8 @@ class PreflightCalibrationCommands(BaseEnum):
     ahrs_trim = 'ahrstrim'
 
 
-class HRLCommands(BaseEnum):
+@dataclass
+class HRLCommands:
     """
     Enum class used to enable easy retrieval of the command used to send HRL commands
     """
@@ -65,7 +56,8 @@ class HRLCommands(BaseEnum):
     stop_path_execution = 'stoppath'
 
 
-class FlightSpeedCommand(BaseEnum):
+@dataclass
+class FlightSpeedCommand:
     """
     Enum class used to enable retrieval of the command used to send flight speed change requests
     """
@@ -75,7 +67,8 @@ class FlightSpeedCommand(BaseEnum):
     descent_speed = 'descentspeed'
 
 
-class MissionCommand(BaseEnum):
+@dataclass
+class MissionCommand:
     """
     Enum class used to retrieve mission commands
     """
