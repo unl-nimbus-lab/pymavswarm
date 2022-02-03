@@ -878,8 +878,6 @@ class Connection:
             self.master.target_system = msg.target_system
             self.master.target_component = msg.target_comp
 
-            print(self.master.mode_mapping())
-
             # Send flight mode
             self.master.set_mode(self.master.mode_mapping()['THROW'])
 
