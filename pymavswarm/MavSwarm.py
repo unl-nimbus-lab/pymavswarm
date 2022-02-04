@@ -74,7 +74,7 @@ class MavSwarm:
         for msg in msgs:
             # Ensure that the intended agent is in the network
             if (msg.target_system, msg.target_comp) in self.connection.devices:
-                self.connection.outgoing_msgs.put(msg)
+                self.connection.send_msg_handler(msg)
         
         return
 

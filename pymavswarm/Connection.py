@@ -2,7 +2,6 @@ import math
 import time
 import atexit
 import logging
-from typing import Any, Tuple
 import monotonic
 import threading
 from .msg import *
@@ -11,6 +10,7 @@ from queue import Queue
 from .Agent import Agent
 from .param import Parameter
 from pymavlink import mavutil
+from typing import Any, Tuple
 from pymavlink.dialects.v10 import ardupilotmega
 
 
@@ -63,6 +63,7 @@ class Connection:
         self.outgoing_params = Queue()
         self.read_params = Queue()
         self.read_msg_mutex = threading.Lock()
+        self.send_msg_mutex = threading.Lock()
 
         # Register the exit callback
         atexit.register(self.disconnect)
@@ -1396,23 +1397,38 @@ class Connection:
         return
 
     
-    def __send_msg_handler(self) -> None:
+    def send_msg_handler(self, msg: Any) -> None:
+        """
+        Public method that is accesssed by the mavsarm interface to signal the handler
+        to complete message sending
+        """
+        handler_t = threading.Thread(target=self.__send_msg_handler, args=(msg,))
+
+        # Send the message
+        handler_t.start()
+
+        return
+
+
+    
+    def __send_msg_handler(self, msg: Any) -> None:
         """
         Handle sending messages to the agents on the network
         """
-        while self.connected:
-            if self.outgoing_msgs.qsize() > 0:
+        self.send_msg_mutex.acquire()
 
-                # Get the next message
-                msg = self.outgoing_msgs.get(timeout=1)
-
-                # Send the message if there is a message sender for it
-                if msg.get_type() in self.message_senders:
-                    for fn_id, fn in enumerate(self.message_senders[msg.get_type()]):
-                        try:
-                            fn(self, msg, fn_id=fn_id)
-                        except Exception:
-                            self.logger.exception(f'Exception in message sender for {msg.get_type()}', exc_info=True)
+        try:
+            # Send the message if there is a message sender for it
+            if msg.get_type() in self.message_senders:
+                for fn_id, fn in enumerate(self.message_senders[msg.get_type()]):
+                    try:
+                        fn(self, msg, fn_id=fn_id)
+                    except Exception:
+                        self.logger.exception(f'Exception in message sender for {msg.get_type()}', exc_info=True)
+        except Exception:
+            self.logger.exception(f'An error occurred while attempting to send the provided message', exc_info=True)
+        finally:
+            self.send_msg_mutex.release()
 
         return
 
@@ -1581,9 +1597,8 @@ class Connection:
         """
         self.heartbeat_t.start()
         self.incoming_msg_t.start()
-        self.outgoing_msg_t.start()
-        self.outgoing_param_t.start()
-        self.incoming_param_t.start()
+        # self.outgoing_param_t.start()
+        # self.incoming_param_t.start()
 
         return
 
@@ -1597,9 +1612,6 @@ class Connection:
 
         if self.incoming_msg_t is not None:
             self.incoming_msg_t.join()
-
-        if self.outgoing_msg_t is not None:
-            self.outgoing_msg_t.join()
 
         if self.outgoing_param_t is not None:
             self.outgoing_param_t.join()
