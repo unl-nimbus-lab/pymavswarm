@@ -34,11 +34,10 @@ class Connection:
                  baud: int, 
                  source_system: int=255, 
                  source_component: int=0,
-                 agent_timeout: float=30.0,
-                 log: bool=False, 
+                 agent_timeout: float=30.0, 
                  debug: bool=False) -> None:
 
-        self.logger = self.__init_logger('connection', log=log, debug=debug)
+        self.logger = self.__init_logger('connection', debug=debug)
 
         # Create a new mavlink connection
         self.master = mavutil.mavlink_connection(port, 
@@ -1253,20 +1252,16 @@ class Connection:
             return ack
 
 
-    def __init_logger(self, name, debug: bool=False, log: bool=False) -> logging.Logger:
+    def __init_logger(self, name, debug: bool=False) -> logging.Logger:
         """
         Initialize the logger with the desired debug levels
         """
         logging.basicConfig()
 
         # Set the desired debug level
-        if debug or (debug and log):
+        if debug:
             logger = logging.getLogger(name)
             logger.setLevel(logging.DEBUG)
-            return logger
-        elif log:
-            logger = logging.getLogger(name)
-            logger.setLevel(logging.INFO)
             return logger
         else:
             return logging.getLogger(name)

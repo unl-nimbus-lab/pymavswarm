@@ -9,32 +9,27 @@ class MavSwarm:
     This object is the primary interface for mavswarm and enables users to
     send commands to the swarm and read the swarm state
     """
-    def __init__(self, log: bool=False, debug: bool=False) -> None:
+    def __init__(self, debug: bool=False) -> None:
         super().__init__()
 
         # Initialize loggers
-        self.__log = log
         self.__debug = debug
-        self.logger = self.__init_logger('mavswarm', debug=debug, log=log)
+        self.logger = self.__init_logger('mavswarm', debug=debug)
 
         # Class variables
         self.connection = None
 
     
-    def __init_logger(self, name, debug: bool=False, log: bool=False) -> logging.Logger:
+    def __init_logger(self, name, debug: bool=False) -> logging.Logger:
         """
         Initialize the logger with the desired debug levels
         """
         logging.basicConfig()
 
         # Set the desired debug level
-        if debug or (debug and log):
+        if debug:
             logger = logging.getLogger(name)
             logger.setLevel(logging.DEBUG)
-            return logger
-        elif log:
-            logger = logging.getLogger(name)
-            logger.setLevel(logging.INFO)
             return logger
         else:
             return logging.getLogger(name)
@@ -46,7 +41,7 @@ class MavSwarm:
         """
         if self.connection is None:            
             try:
-                self.connection = Connection(port, baudrate, source_system, source_component, log=self.__log, debug=self.__debug)
+                self.connection = Connection(port, baudrate, source_system, source_component, debug=self.__debug)
                 self.connection.start_connection()
             except Exception:
                 # Handle the error message
