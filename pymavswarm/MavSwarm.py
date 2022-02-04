@@ -86,7 +86,7 @@ class MavSwarm:
         for param in params:
             # Ensure that the intended agent is in the network
             if (param.sys_id, param.comp_id) in self.connection.devices:
-                self.connection.outgoing_params.put(param)
+                self.connection.set_param_handler(param)
 
         return
 
@@ -101,7 +101,7 @@ class MavSwarm:
         for param in params:
             # Ensure that the intended agent is in the network
             if (param.sys_id, param.comp_id) in self.connection.devices:
-                self.connection.read_params.put(param)
+                self.connection.read_param_handler(param)
 
         return
 

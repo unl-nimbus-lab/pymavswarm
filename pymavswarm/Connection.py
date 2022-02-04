@@ -75,16 +75,6 @@ class Connection:
         self.incoming_msg_t = threading.Thread(target=self.__incoming_msg_handler)
         self.incoming_msg_t.daemon = True
 
-        self.outgoing_msg_t = threading.Thread(target=self.__send_msg_handler)
-        self.outgoing_msg_t.daemon = True
-
-        self.outgoing_param_t = threading.Thread(target=self.__set_param_handler)
-        self.outgoing_param_t.daemon = True
-
-        self.incoming_param_t = threading.Thread(target=self.__read_param_handler)
-        self.incoming_param_t.daemon = True
-
-
         """
         Messaage Listeners
         """
@@ -1397,42 +1387,6 @@ class Connection:
         return
 
     
-    def send_msg_handler(self, msg: Any) -> None:
-        """
-        Public method that is accesssed by the mavsarm interface to signal the handler
-        to complete message sending
-        """
-        handler_t = threading.Thread(target=self.__send_msg_handler, args=(msg,))
-
-        # Send the message
-        handler_t.start()
-
-        return
-
-
-    
-    def __send_msg_handler(self, msg: Any) -> None:
-        """
-        Handle sending messages to the agents on the network
-        """
-        self.send_msg_mutex.acquire()
-
-        try:
-            # Send the message if there is a message sender for it
-            if msg.get_type() in self.message_senders:
-                for fn_id, fn in enumerate(self.message_senders[msg.get_type()]):
-                    try:
-                        fn(self, msg, fn_id=fn_id)
-                    except Exception:
-                        self.logger.exception(f'Exception in message sender for {msg.get_type()}', exc_info=True)
-        except Exception:
-            self.logger.exception(f'An error occurred while attempting to send the provided message', exc_info=True)
-        finally:
-            self.send_msg_mutex.release()
-
-        return
-
-
     def __retry_msg_send(self, msg, fn) -> bool:
         """
         Retry a message send until the an acknowledgement is received or a timeout occurs
@@ -1488,15 +1442,72 @@ class Connection:
         
         return ack_success, ack_msg
 
+    
+    def send_msg_handler(self, msg: Any) -> None:
+        """
+        Public method that is accesssed by the mavsarm interface to signal the handler
+        to complete message sending
+        """
+        # Make sure that a connection is established before attempting to send a message
+        if self.connected:
+            handler_t = threading.Thread(target=self.__send_msg_handler, args=(msg,))
 
-    def __set_param_handler(self) -> None:
+            # Send the message
+            handler_t.start()
+
+        return
+
+
+    def __send_msg_handler(self, msg: Any) -> None:
+        """
+        Handle sending messages to the agents on the network
+        """
+        # Prevent multiple sends from occurring at once
+        self.send_msg_mutex.acquire()
+
+        try:
+            # Send the message if there is a message sender for it
+            if msg.get_type() in self.message_senders:
+                for fn_id, fn in enumerate(self.message_senders[msg.get_type()]):
+                    try:
+                        fn(self, msg, fn_id=fn_id)
+                    except Exception:
+                        self.logger.exception(f'Exception in message sender for {msg.get_type()}', exc_info=True)
+        except Exception:
+            self.logger.exception(f'An error occurred while attempting to send the provided message', exc_info=True)
+        finally:
+            self.send_msg_mutex.release()
+
+        return
+        
+
+    def set_param_handler(self, param: Parameter) -> None:
+        """
+        Set the value of a parameter on a given agent
+        """
+        # Make sure that a connection is established before attempting to set a param
+        if self.connected:
+            handler_t = threading.Thread(target=self.__set_param_handler, args=(param,))
+
+            # Set the parameter
+            handler_t.start()
+
+        return
+
+
+    def __set_param_handler(self, param: Parameter) -> None:
         """
         Handle setting parameters on an agent in the network
         """
-        while self.connected:
-            if self.outgoing_params.qsize() > 0:
-                param = self.outgoing_params.get(timeout=1)
-                self.__set_param(param)
+        # Prevent multiple sends from occurring at once
+        self.send_msg_mutex.acquire()
+
+        try:
+            self.__set_param(param)
+        except Exception:
+            self.logger.exception(f'An error occurred while attempting to send the provided message', exc_info=True)
+        finally:
+            self.send_msg_mutex.release()
 
         return
 
@@ -1535,17 +1546,36 @@ class Connection:
         return ack
 
 
-    def __read_param_handler(self) -> None:
+    def read_param_handler(self, param: Parameter) -> None:
+        """
+        Read the value of a parameter
+        """
+        # Make sure that a connection is established before attempting to set a param
+        if self.connected:
+            handler_t = threading.Thread(target=self.__read_param_handler, args=(param,))
+
+            # Send the message
+            handler_t.start()
+
+        return
+
+
+    def __read_param_handler(self, param: Parameter) -> None:
         """
         Handler responsible for reading requested parameters. Note that this
         thread is primarily responsible for handling read requests and verifying
         that a read was accomplished on the message listener thread. The agent state
         itself is updated on the message listener thread
         """
-        while self.connected:
-            if self.read_params.qsize() > 0:
-                param = self.read_params.get(timeout=1)
-                self.__read_param(param)
+        # Prevent multiple reads from occurring at once
+        self.send_msg_mutex.acquire()
+
+        try:
+            self.__read_param(param)
+        except Exception:
+            self.logger.exception(f'An error occurred while attempting to send the provided message', exc_info=True)
+        finally:
+            self.send_msg_mutex.release()
 
         return
 
@@ -1597,8 +1627,6 @@ class Connection:
         """
         self.heartbeat_t.start()
         self.incoming_msg_t.start()
-        # self.outgoing_param_t.start()
-        # self.incoming_param_t.start()
 
         return
 
@@ -1612,12 +1640,6 @@ class Connection:
 
         if self.incoming_msg_t is not None:
             self.incoming_msg_t.join()
-
-        if self.outgoing_param_t is not None:
-            self.outgoing_param_t.join()
-
-        if self.incoming_param_t is not None:
-            self.incoming_param_t.join()
 
         return
 
