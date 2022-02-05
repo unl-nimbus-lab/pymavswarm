@@ -1592,7 +1592,9 @@ class Connection:
         ack, msg = self.__ack_msg('PARAM_VALUE', timeout=param.ack_timeout)
 
         if ack:
-            self.devices[(param.sys_id, param.comp_id)].last_params_read.append(msg)
+            read_param = ReadParameter(msg['param_id'], msg['param_value'], msg['param_type'], msg['param_index'], msg['param_count'])
+
+            self.devices[(param.sys_id, param.comp_id)].last_params_read.append(read_param)
         else:
             if param.retry:
                 if self.__retry_msg_send(param, self.__set_param):
