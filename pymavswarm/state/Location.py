@@ -1,6 +1,5 @@
 class Location:
-    def __init__(self, 
-                 latitude: float=0.0, 
+    def __init__(self, latitude: float=0.0, 
                  longitude: float=0.0, 
                  altitude: float=0.0) -> None:
         """
@@ -10,6 +9,8 @@ class Location:
         altitude  : alt : mm    : Altitude (MSL). Positive for up. Note that virtually all GPS modules 
                                   provide the MSL altitude in addition to the WGS84 altitude.
         """
-        self.latitude: float = latitude
-        self.longitude: float = longitude
-        self.altitude: float = altitude
+        self.latitude = latitude
+        self.longitude = longitude
+        self.altitude = altitude
+
+        return
