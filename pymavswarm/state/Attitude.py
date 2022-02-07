@@ -1,6 +1,5 @@
 class Attitude:
-    def __init__(self, 
-                 pitch: float=0.0, 
+    def __init__(self, pitch: float=0.0, 
                  yaw: float=0.0, 
                  roll: float=0.0, 
                  pitch_speed: float=0.0, 
@@ -15,9 +14,11 @@ class Attitude:
         yaw_speed   : yawspeed   : rad/s : Yaw angular speed
         roll_speed  : rollspeed  : rad/s : Roll angular speed
         """
-        self.pitch: float = pitch
-        self.yaw: float = yaw
-        self.roll: float = roll
-        self.pitch_speed: float = pitch_speed
-        self.yaw_speed: float = yaw_speed
-        self.roll_speed: float = roll_speed
+        self.pitch = pitch
+        self.yaw = yaw
+        self.roll = roll
+        self.pitch_speed = pitch_speed
+        self.yaw_speed = yaw_speed
+        self.roll_speed = roll_speed
+
+        return

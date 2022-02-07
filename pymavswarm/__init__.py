@@ -1,3 +1,4 @@
 from .MavSwarm import MavSwarm
-from .utils import MsgMap, OutgoingMsg
+from .msg import *
+from .param import Parameter
 from .Agent import Agent

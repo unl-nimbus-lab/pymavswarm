@@ -1,6 +1,5 @@
 class GPSInfo:
-    def __init__(self, 
-                 eph: float=0.0, 
+    def __init__(self, eph: float=0.0, 
                  epv: float=0.0, 
                  fix_type: int=0, 
                  satellites_visible: int=0) -> None:
@@ -11,7 +10,9 @@ class GPSInfo:
         fix_type           : GPS fix type (GPS_FIX_TYPE)
         satellites_visible : Number of satellites visible. If unknown, set to UINT8_MAX
         """
-        self.eph: float = eph
-        self.epv: float = epv
-        self.fix_type: int = fix_type
-        self.satellites_visible: int = satellites_visible
+        self.eph = eph
+        self.epv = epv
+        self.fix_type = fix_type
+        self.satellites_visible = satellites_visible
+
+        return
