@@ -447,6 +447,10 @@ class Connection:
 
             return ack
 
+        
+        """
+        Pre-flight calibration commands
+        """
 
         @self.send_message(['accelcal'])
         def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
@@ -1400,6 +1404,64 @@ class Connection:
 
         return ack
 
+    
+    def __send_arming_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
+        """
+        Helper method used to send an arming command (arm or disarm)
+        """
+
+        if require_ack:
+            ack = False
+            
+            while not ack:
+                self.master.mav.command_long_send(sys_id, comp_id,
+                                                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                                                    msg, 0, 0, 0, 0, 0, 0)
+
+                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the arming command: {msg}')
+                else:
+                    self.logger.exception('The system was unable to confirm reception of the arming command: {msg}. Re-attempting message send.')
+        else:
+            self.master.mav.command_long_send(sys_id, comp_id,
+                                                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                                                msg, 0, 0, 0, 0, 0, 0)
+
+            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                self.logger.debug('The system has acknowledged reception of the arming command: {msg}')
+            else:
+                self.logger.exception('The system was unable to confirm reception of the arming command: {msg}')
+
+        return
+
+
+    def __send_preflight_calibration_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
+        """
+        Helper method used to send a pre-flight calibration message
+        """
+        if require_ack:
+            ack = False
+            
+            while not ack:
+                self.master.mav.command_long_send(sys_id, comp_id,
+                                                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
+                                                    0, 0, 0, 0, msg, 0, 0)
+
+                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                    ack = True
+                    self.logger.debug(f'The system has acknowledged reception of the pre-flight calibration command: {msg}')
+                else:
+                    self.logger.exception('The system was unable to confirm reception of the pre-flight calibration command: {msg}. Re-attempting message send.')
+        else:
+            self.master.mav.command_long_send(sys_id, comp_id,
+                                                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
+                                                0, 0, 0, 0, msg, 0, 0)
+
+            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
+                self.logger.debug('The system has acknowledged reception of the pre-flight calibration command: {msg}')
+            else:
+                self.logger.exception('The system was unable to confirm reception of the pre-flight calibration command: {msg}')
 
     def __ack_msg(self, msg_type: str, timeout=1.0) -> Tuple[bool, Any]:
         """
