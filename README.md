@@ -22,7 +22,7 @@ pip3 install .
 `pymavswarm` has been implemented to enable easy interfacing with robotic swarms. Refer to the following code snippet for a simple example to get started with the library. For more comprehensive documentation and examples, checkout the project Wiki.
 
 ```python
-from pymavswarm import MavSwarm, AgentMsg, MsgMap
+from pymavswarm import MavSwarm, SystemCommandMsg, MsgMap
 
 # Create a new pymavswarm interface
 mavswarm = MavSwarm()
@@ -34,7 +34,7 @@ mavswarm.connect('/dev/ttyUSB0', 115200, 255, 0)
 msgs = []
 
 # Send an arming message to Agent (2, 1)
-msgs.append(AgentMsg(MsgMap.system_commands.arm, 2, 1, True))
+msgs.append(SystemCommandMsg(MsgMap.system_commands.arm, 2, 1, True))
 
 # Send the desired messages and require that the messages be acknowledged
 mavswarm.send_msg(msgs)
