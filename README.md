@@ -34,7 +34,7 @@ mavswarm.connect('/dev/ttyUSB0', 115200, 255, 0)
 msgs = []
 
 # Send an arming message to Agent (2, 1)
-msgs.append(SystemCommandMsg(MsgMap.system_commands.arm, 2, 1, True))
+msgs.append(SystemCommandMsg(MsgMap().system_commands.arm, 2, 1, True))
 
 # Send the desired messages and require that the messages be acknowledged
 mavswarm.send_msg(msgs)
