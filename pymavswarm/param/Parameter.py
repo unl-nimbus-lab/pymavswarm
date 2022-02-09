@@ -29,7 +29,7 @@ class Parameter:
         self.param_id = param_id
         self.param_value = param_value
         self.retry = retry
-        self.param_timeout = msg_timeout
+        self.msg_timeout = msg_timeout
         self.ack_timeout = ack_timeout
 
         return

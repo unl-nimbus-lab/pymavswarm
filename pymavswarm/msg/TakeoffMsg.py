@@ -11,8 +11,8 @@ class TakeoffMsg(AgentMsg):
         lon      [float] :   : Longitude - this is optional
         lat      [float] :   : Latitude - this is optional
     """
-    def __init__(self, altitude: float,
-                 msg_type: str, 
+    def __init__(self, msg_type: str, 
+                 altitude: float,
                  target_system: int, 
                  target_comp: int, 
                  retry: bool, 
