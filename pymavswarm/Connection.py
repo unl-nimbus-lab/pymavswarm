@@ -1129,7 +1129,7 @@ class Connection:
                 return
 
             self.master.mav.command_long_send(msg.target_system, msg.target_comp,
-                                              mavutil.mavlink.MAV_CMD_NAV_LAND, 
+                                              mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 
                                               0,
                                               0, 0, 0, 0, 0, 0, msg.altitude)
 
@@ -1163,7 +1163,7 @@ class Connection:
                 return
 
             self.master.mav.command_long_send(msg.target_system, msg.target_comp,
-                                              mavutil.mavlink.MAV_CMD_NAV_LAND, 
+                                              mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 
                                               0,
                                               0, 0, 0, 0, msg.lat, msg.lon, msg.altitude)
 
