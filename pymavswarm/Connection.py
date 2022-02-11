@@ -1125,7 +1125,7 @@ class Connection:
                 return
 
             self.master.mav.command_long_send(msg.target_system, msg.target_comp,
-                                              mavutil.mavlink.MAV_CMD_NAV_LAND, 
+                                              mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 
                                               0,
                                               0, 0, 0, 0, 0, 0, msg.altitude)
 
@@ -1159,7 +1159,7 @@ class Connection:
                 return
 
             self.master.mav.command_long_send(msg.target_system, msg.target_comp,
-                                              mavutil.mavlink.MAV_CMD_NAV_LAND, 
+                                              mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 
                                               0,
                                               0, 0, 0, 0, msg.lat, msg.lon, msg.altitude)
 
@@ -1392,9 +1392,9 @@ class Connection:
         # Don't let the message come back here and create an infinite loop
         msg.retry = False
 
-        while time.time() - start_time >= msg.msg_timeout:
+        while time.time() - start_time <= msg.msg_timeout:
             # Reattempt the message send
-            if fn(self, msg):
+            if fn(msg):
                 ack = True
                 break
 
@@ -1597,7 +1597,7 @@ class Connection:
             self.devices[(param.sys_id, param.comp_id)].last_params_read.append(read_param)
         else:
             if param.retry:
-                if self.__retry_msg_send(param, self.__set_param):
+                if self.__retry_msg_send(param, self.__read_param):
                     ack = True
 
         if ack:
