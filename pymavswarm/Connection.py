@@ -441,16 +441,90 @@ class Connection:
                         ack = True
                     
             if ack:
+                self.logger.info(f'Successfully acknowledged reception of the disarm command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the disarm command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+        
+        @self.send_message(['kill'])
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+            """
+            Force disarm an agent
+            """
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+                                              0,
+                                              0, 21196, 0, 0, 0, 0, 0)
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
+                self.logger.info(f'Successfully acknowledged reception of the kill command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the kill command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+
+        @self.send_message(['reboot'])
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+            """
+            Reboot an agent
+            """
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+                                              0,
+                                              1, 0, 0, 0, 0, 0, 0)
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
+                self.logger.info(f'Successfully acknowledged reception of the reboot command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the reboot command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+
+        @self.send_message(['shutdown'])
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+            """
+            Shutdown an agent
+            """
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+                                              0,
+                                              2, 0, 0, 0, 0, 0, 0)
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
                 self.logger.info(f'Successfully acknowledged reception of the shutdown command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
                 self.logger.error(f'Failed to acknowledge reception of the shutdown command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
-        
-        """
-        Pre-flight calibration commands
-        """
 
         @self.send_message(['accelcal'])
         def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
@@ -1396,72 +1470,14 @@ class Connection:
         # Don't let the message come back here and create an infinite loop
         msg.retry = False
 
-        while time.time() - start_time >= msg.msg_timeout:
+        while time.time() - start_time <= msg.msg_timeout:
             # Reattempt the message send
-            if fn(self, msg):
+            if fn(msg):
                 ack = True
                 break
 
         return ack
 
-    
-    def __send_arming_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
-        """
-        Helper method used to send an arming command (arm or disarm)
-        """
-
-        if require_ack:
-            ack = False
-            
-            while not ack:
-                self.master.mav.command_long_send(sys_id, comp_id,
-                                                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
-                                                    msg, 0, 0, 0, 0, 0, 0)
-
-                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    ack = True
-                    self.logger.debug(f'The system has acknowledged reception of the arming command: {msg}')
-                else:
-                    self.logger.exception('The system was unable to confirm reception of the arming command: {msg}. Re-attempting message send.')
-        else:
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
-                                                msg, 0, 0, 0, 0, 0, 0)
-
-            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                self.logger.debug('The system has acknowledged reception of the arming command: {msg}')
-            else:
-                self.logger.exception('The system was unable to confirm reception of the arming command: {msg}')
-
-        return
-
-
-    def __send_preflight_calibration_msg(self, msg, sys_id, comp_id, require_ack=False) -> None:
-        """
-        Helper method used to send a pre-flight calibration message
-        """
-        if require_ack:
-            ack = False
-            
-            while not ack:
-                self.master.mav.command_long_send(sys_id, comp_id,
-                                                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                                    0, 0, 0, 0, msg, 0, 0)
-
-                if self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                    ack = True
-                    self.logger.debug(f'The system has acknowledged reception of the pre-flight calibration command: {msg}')
-                else:
-                    self.logger.exception('The system was unable to confirm reception of the pre-flight calibration command: {msg}. Re-attempting message send.')
-        else:
-            self.master.mav.command_long_send(sys_id, comp_id,
-                                                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
-                                                0, 0, 0, 0, msg, 0, 0)
-
-            if self.__ack_sys_cmd(timeout=self.cmd_timeout):
-                self.logger.debug('The system has acknowledged reception of the pre-flight calibration command: {msg}')
-            else:
-                self.logger.exception('The system was unable to confirm reception of the pre-flight calibration command: {msg}')
 
     def __ack_msg(self, msg_type: str, timeout=1.0) -> Tuple[bool, Any]:
         """
@@ -1659,7 +1675,7 @@ class Connection:
             self.devices[(param.sys_id, param.comp_id)].last_params_read.append(read_param)
         else:
             if param.retry:
-                if self.__retry_msg_send(param, self.__set_param):
+                if self.__retry_msg_send(param, self.__read_param):
                     ack = True
 
         if ack:
