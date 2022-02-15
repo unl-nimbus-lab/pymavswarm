@@ -45,7 +45,7 @@ class MavSwarm:
                 self.connection.start_connection()
             except Exception:
                 # Handle the error message
-                self.logger.debug('MavSwarm was unable to establish a connection with the specified device')
+                self.logger.debug('MavSwarm was unable to establish a connection with the specified device', exc_info=True)
 
                 return False
 
@@ -58,6 +58,7 @@ class MavSwarm:
         """
         if self.connection is not None:
             self.connection.disconnect()
+            self.connection = None
 
         return True
 
