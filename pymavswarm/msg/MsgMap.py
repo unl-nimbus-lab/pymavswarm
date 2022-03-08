@@ -53,7 +53,9 @@ class HRLCommands:
     Enum class used to enable easy retrieval of the command used to send HRL commands
     """
     start_path_execution = 'startpath'
+    reset_path_execution = 'resetpath'
     stop_path_execution = 'stoppath'
+    start_live_execution = 'startlive'
 
 
 @dataclass
