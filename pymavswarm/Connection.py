@@ -1388,6 +1388,70 @@ class Connection:
             return ack
 
 
+        @self.send_message(['resethomecurrent'])
+        def sender(self, msg: HomePositionMsg, fn_id: int=0) -> bool:
+            """
+            Reset the saved home position of an agent to the current position
+            """
+            # Set the home position to the current location
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_DO_SET_HOME, 
+                                              0,
+                                              1, 0, 0, 0, 0, 0, 0)
+
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
+                self.logger.info(f'Successfully acknowledged reception of the waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+        
+        @self.send_message(['resethome'])
+        def sender(self, msg: HomePositionMsg, fn_id: int=0) -> bool:
+            """
+            Reset the saved home position of an agent to the current position
+            """
+            if msg.lon is None or msg.lat is None or msg.altitude is None:
+                self.logger.exception('Cannot reset the home location to the given location unless the latitude, longitude, and altitude are all provided.')
+                return
+
+            if msg.altitude < 0.0 or msg.altitude > 150.0:
+                self.logger.exception(f'An invalid home position altitude was provided ({msg.altitude}). Please set a valid altitude')
+                return
+
+            # Set the home position to the current location
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_DO_SET_HOME, 
+                                              0,
+                                              0, 0, 0, 0, msg.lat, msg.lon, msg.altitude)
+
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
+                self.logger.info(f'Successfully acknowledged reception of the waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+
     def __init_logger(self, name, debug: bool=False) -> logging.Logger:
         """
         Initialize the logger with the desired debug levels
