@@ -1409,9 +1409,9 @@ class Connection:
                         ack = True
                     
             if ack:
-                self.logger.info(f'Successfully acknowledged reception of the waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+                self.logger.info(f'Successfully acknowledged reception of the reset home command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
-                self.logger.error(f'Failed to acknowledge reception of the waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')
+                self.logger.error(f'Failed to acknowledge reception of the reset home command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 

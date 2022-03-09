@@ -12,10 +12,10 @@ class TakeoffMsg(AgentMsg):
         lat      :   : Latitude - this is optional
     """
     def __init__(self, msg_type: str, 
-                 altitude: float,
                  target_system: int, 
                  target_comp: int, 
                  retry: bool, 
+                 altitude: float=3.0,
                  lat: Optional[float]=None,
                  lon: Optional[float]=None,
                  msg_timeout: float=5.0, 
