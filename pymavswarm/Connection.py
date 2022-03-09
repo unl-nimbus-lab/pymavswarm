@@ -1315,6 +1315,14 @@ class Connection:
 
             return ack
 
+        
+        @self.send_message(['fulltakeoff'])
+        def sender(self, msg: TakeoffMsg, fn_id: int=0) -> None:
+            """
+            TODO
+            """
+            return False
+
 
         @self.send_message(['simplewaypoint'])
         def sender(self, msg: WaypointMsg, fn_id: int=0) -> None:
