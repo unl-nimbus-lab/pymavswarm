@@ -1053,10 +1053,10 @@ class Connection:
             return ack
 
         
-        @self.send_message(['stoppath'])
+        @self.send_message(['resetpath'])
         def sender(self, msg: HRLMsg, fn_id: int=0) -> None:
             """
-            Stop path execution on the respective agent
+            Reset path execution on the respective agent
             """
             # Reset target
             self.master.target_system = msg.target_system
@@ -1075,9 +1075,67 @@ class Connection:
                         ack = True
                     
             if ack:
+                self.logger.info(f'Successfully acknowledged reception of the reset flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the reset flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+
+        @self.send_message(['stoppath'])
+        def sender(self, msg: HRLMsg, fn_id: int=0) -> None:
+            """
+            Start path execution on the respective agent
+            """
+            # Reset target
+            self.master.target_system = msg.target_system
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), 2)
+
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
                 self.logger.info(f'Successfully acknowledged reception of the stop flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
                 self.logger.error(f'Failed to acknowledge reception of the stop flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+
+        @self.send_message(['startlive'])
+        def sender(self, msg: HRLMsg, fn_id: int=0) -> None:
+            """
+            Start path execution on the respective agent
+            """
+            # Reset target
+            self.master.target_system = msg.target_system
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), 3)
+
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
+                self.logger.info(f'Successfully acknowledged reception of the start live HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the start live HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')
 
             return ack
 
