@@ -7,15 +7,15 @@ class TakeoffMsg(AgentMsg):
     """
     Message used to indicate that an agent should takeoff to a certain location/altitude
     Params:
-        altitude [float] : m : The altitude that an agent should takeoff to
-        lon      [float] :   : Longitude - this is optional
-        lat      [float] :   : Latitude - this is optional
+        altitude : m : The altitude that an agent should takeoff to
+        lon      :   : Longitude - this is optional
+        lat      :   : Latitude - this is optional
     """
     def __init__(self, msg_type: str, 
-                 altitude: float,
                  target_system: int, 
                  target_comp: int, 
                  retry: bool, 
+                 altitude: float=3.0,
                  lat: Optional[float]=None,
                  lon: Optional[float]=None,
                  msg_timeout: float=5.0, 
