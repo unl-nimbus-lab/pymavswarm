@@ -1,6 +1,7 @@
 from .AgentMsg import AgentMsg
 
 
+
 class WaypointMsg(AgentMsg):
     """
     WaypointMsg represents a desired waypoint for an agent to fly to. Based on the MAV_CMD_NAV_WAYPOINT message
@@ -15,20 +16,19 @@ class WaypointMsg(AgentMsg):
         lon           :     : Longitude
         alt           :     : Altitude
     """
-    def __init__(self, hold: float,
-                 accept_radius: float,
-                 pass_radius: float,
-                 yaw: float,
-                 lat: float,
+    def __init__(self, lat: float,
                  lon: float,
-                 alt: float,             
-                 msg_type: str, 
+                 alt: float,
                  target_system: int, 
                  target_comp: int, 
-                 retry: bool, 
-                 msg_timeout: float=5, 
-                 ack_timeout: float=1) -> None:
-        super().__init__(msg_type, target_system, target_comp, retry, msg_timeout=msg_timeout, ack_timeout=ack_timeout)
+                 retry: bool,
+                 hold: float=0,
+                 accept_radius: float=0,
+                 pass_radius: float=0,
+                 yaw: float=0, 
+                 msg_timeout: float=5.0, 
+                 ack_timeout: float=1.0) -> None:
+        super().__init__('WAYPOINT', target_system, target_comp, retry, msg_timeout=msg_timeout, ack_timeout=ack_timeout)
         self.hold = hold
         self.accept_radius = accept_radius
         self.pass_radius = pass_radius

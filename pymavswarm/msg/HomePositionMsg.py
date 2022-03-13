@@ -1,5 +1,5 @@
-from typing import Optional
 from .AgentMsg import AgentMsg
+
 
 
 class HomePositionMsg(AgentMsg):
@@ -13,15 +13,16 @@ class HomePositionMsg(AgentMsg):
         long :   : Longitude
         alt  : m : Altitude
     """
-    def __init__(self, msg_type: str, 
+    def __init__(self, use_current_location: bool,
                  target_system: int, 
                  target_comp: int, 
                  retry: bool,
-                 lat: Optional[float]=None,
-                 lon: Optional[float]=None,
-                 alt: Optional[float]=None,
+                 lat: float=0,
+                 lon: float=0,
+                 alt: float=0,
                  msg_timeout: float=5.0) -> None:
-        super().__init__(msg_type, target_system, target_comp, retry, msg_timeout=msg_timeout)
+        super().__init__('RESET_HOME', target_system, target_comp, retry, msg_timeout=msg_timeout)
+        self.use_current_location = use_current_location
         self.altitude = alt
         self.lat = lat
         self.lon = lon
