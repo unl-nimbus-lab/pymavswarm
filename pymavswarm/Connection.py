@@ -1333,6 +1333,17 @@ class Connection:
             else:
                 self.logger.error(f'Failed to acknowledge reception of the guided command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed.')
                 return False
+
+            # Wait until the system switches into guided mode and ensure that it falls within the timeout period
+            mode_time = time.time()
+
+            # Wait until the agent is armed
+            while not self.devices[(msg.target_system, msg.target_comp)].flight_mode == 'GUIDED':
+                if time.time() - mode_time < msg.state_change_timeout:
+                    pass
+                else:
+                    self.logger.error(f'The system failed to switch into GUIDED mode on Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
+                    return False
                 
             # Create a new arming message to send
             arm_msg = SystemCommandMsg(MsgMap().system_commands.arm, msg.target_system, msg.target_comp, msg.retry, msg.msg_timeout)
@@ -1343,6 +1354,17 @@ class Connection:
             else:
                 self.logger.error(f'Failed to acknowledge reception of the arm command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed.')
                 return False
+
+            # Wait until the system arms and ensure that it falls within the timeout period
+            arm_time = time.time()
+
+            # Wait until the agent is armed
+            while not self.devices[(msg.target_system, msg.target_comp)].armed:
+                if time.time() - arm_time < msg.state_change_timeout:
+                    pass
+                else:
+                    self.logger.error(f'The system failed to arm Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
+                    return False
 
             # Reset the message type to be a full takeoff command
             msg.msg_type = MsgMap().mission_commands.simple_takeoff
@@ -1374,6 +1396,17 @@ class Connection:
             else:
                 self.logger.error(f'Failed to acknowledge reception of the guided command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed.')
                 return False
+
+            # Wait until the system switches into guided mode and ensure that it falls within the timeout period
+            mode_time = time.time()
+
+            # Wait until the agent is armed
+            while not self.devices[(msg.target_system, msg.target_comp)].flight_mode == 'GUIDED':
+                if time.time() - mode_time < msg.state_change_timeout:
+                    pass
+                else:
+                    self.logger.error(f'The system failed to switch into GUIDED mode on Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
+                    return False
                 
             # Create a new arming message to send
             arm_msg = SystemCommandMsg(MsgMap().system_commands.arm, msg.target_system, msg.target_comp, msg.retry, msg.msg_timeout)
@@ -1384,6 +1417,17 @@ class Connection:
             else:
                 self.logger.error(f'Failed to acknowledge reception of the arm command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed.')
                 return False
+
+            # Wait until the system arms and ensure that it falls within the timeout period
+            arm_time = time.time()
+
+            # Wait until the agent is armed
+            while not self.devices[(msg.target_system, msg.target_comp)].armed:
+                if time.time() - arm_time < msg.state_change_timeout:
+                    pass
+                else:
+                    self.logger.error(f'The system failed to arm Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
+                    return False
 
             # Reset the message type to be a full takeoff command
             msg.msg_type = MsgMap().mission_commands.takeoff
@@ -1734,12 +1778,14 @@ class Connection:
 
         return
 
-
+    
     def __send_msg_helper(self, msg: Any) -> bool:
         """
         Helper function used to handle calling all of the message handlers.
         This method is used by the sequence commands such as the full takeoff
         command to provide indication of a function execution result.
+
+        NOTE: THIS IS USED DO NOT DELETE
         """
         # Helper function used to send the desired command
         if msg.get_type() in self.message_senders:
@@ -1757,21 +1803,22 @@ class Connection:
         """
         Handle sending messages to the agents on the network
         """
-        # Prevent multiple sends from occurring at once
-        self.send_msg_mutex.acquire()
-
         try:
             # Send the message if there is a message sender for it
             if msg.get_type() in self.message_senders:
                 for fn_id, fn in enumerate(self.message_senders[msg.get_type()]):
+                    # Prevent multiple sends from occurring at once
+                    self.send_msg_mutex.acquire()
+
+                    # Execute the command
                     try:
                         fn(self, msg, fn_id=fn_id)
                     except Exception:
                         self.logger.exception(f'Exception in message sender for {msg.get_type()}', exc_info=True)
+                    finally:
+                        self.send_msg_mutex.release()
         except Exception:
             self.logger.exception(f'An error occurred while attempting to send the provided message', exc_info=True)
-        finally:
-            self.send_msg_mutex.release()
 
         return
         
