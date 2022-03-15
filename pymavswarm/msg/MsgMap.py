@@ -82,6 +82,7 @@ class MissionCommand:
     full_simple_takeoff = 'simplefulltakeoff'
     reset_home_position_to_current = 'resethomecurrent'
     reset_home_position = 'resethome'
+    get_home_position = 'gethomeposition'
 
 
 class MsgMap:

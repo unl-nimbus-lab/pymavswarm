@@ -45,5 +45,6 @@ class Agent:
         self.current_waypoint: int = 0
         self.mission: Mission = Mission()
         self.last_params_read = deque(maxlen=max_params_stored)
+        self.home_position = Location()
 
         return

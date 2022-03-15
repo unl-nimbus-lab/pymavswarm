@@ -318,6 +318,67 @@ class Connection:
 
             return
 
+        
+        @self.on_message(['ATTITUDE'])
+        def listener(self, msg) -> None:
+            """
+            Handle an agent attitude message
+            """
+            # Get the system ID and component ID
+            sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
+
+            # Let the heartbeat implementation handle this
+            if not device_tuple in self.devices:
+                return
+
+            # Update the respective devices attitude
+            if self.devices[device_tuple].attitude is None:
+                att = Attitude(msg.pitch, msg.yaw, msg.roll, msg.pitchspeed, msg.yawspeed, msg.rollspeed)
+                self.devices[device_tuple].attitude = att
+            else:
+                self.devices[device_tuple].attitude.pitch = msg.pitch
+                self.devices[device_tuple].attitude.roll = msg.roll
+                self.devices[device_tuple].attitude.yaw = msg.yaw
+                self.devices[device_tuple].attitude.pitch_speed = msg.pitchspeed
+                self.devices[device_tuple].attitude.roll_speed = msg.rollspeed
+                self.devices[device_tuple].attitude.yaw_speed = msg.yawspeed
+            
+            return
+
+
+        @self.on_message(['HOME_POSITION'])
+        def listener(self, msg) -> None:
+            """
+            Handle the home position message
+
+            NOTE: The altitude is provided in MSL, NOT AGL
+            """
+            # Get the system ID and component ID
+            sys_id = msg.get_srcSystem()
+            comp_id = msg.get_srcComponent()
+
+            # Create a new tuple key
+            device_tuple = (sys_id, comp_id)
+
+            # Let the heartbeat implementation handle this
+            if not device_tuple in self.devices:
+                return
+
+            # Update the device home location
+            if self.devices[device_tuple].home_position is None:
+                loc = Location(msg.latitude / 1.0e7, msg.longitude / 1.0e7, msg.altitude / 1000)
+                self.devices[device_tuple].home_position = loc
+            else:
+                self.devices[device_tuple].home_position.latitude = msg.latitude / 1.0e7
+                self.devices[device_tuple].home_position.longitude = msg.longitude / 1.0e7
+                self.devices[device_tuple].home_position.altitude = msg.altitude / 1000
+
+            return
+
 
         @self.send_message(['arm'])
         def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
@@ -1510,6 +1571,33 @@ class Connection:
             return ack
 
 
+        @self.send_message(['gethomeposition'])
+        def sender(self, msg: AgentMsg, fn_id: int=0) -> bool:
+            """
+            Get the current home position of an agent
+            """
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
+                                              0,
+                                              0, 0, 0, 0, 0, 0, 0)
+
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
+                self.logger.info(f'Successfully acknowledged reception of the get home position command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the get home position command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+
         @self.send_message(['resethomecurrent'])
         def sender(self, msg: HomePositionMsg, fn_id: int=0) -> bool:
             """
@@ -1541,7 +1629,7 @@ class Connection:
         @self.send_message(['resethome'])
         def sender(self, msg: HomePositionMsg, fn_id: int=0) -> bool:
             """
-            Reset the saved home position of an agent to the current position
+            Reset the saved home position of an agent to the desired position
             """
             if msg.lon is None or msg.lat is None or msg.altitude is None:
                 self.logger.exception('Cannot reset the home location to the given location unless the latitude, longitude, and altitude are all provided.')
@@ -1551,7 +1639,7 @@ class Connection:
                 self.logger.exception(f'An invalid home position altitude was provided ({msg.altitude}). Please set a valid altitude')
                 return
 
-            # Set the home position to the current location
+            # Set the home position to the desired location
             self.master.mav.command_long_send(msg.target_system, msg.target_comp,
                                               mavutil.mavlink.MAV_CMD_DO_SET_HOME, 
                                               0,
