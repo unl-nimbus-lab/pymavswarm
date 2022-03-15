@@ -2,6 +2,7 @@ import math
 import time
 import atexit
 import logging
+import asyncio
 import monotonic
 import threading
 from .msg import *
@@ -1337,18 +1338,15 @@ class Connection:
             # Wait until the system switches into guided mode and ensure that it falls within the timeout period
             mode_time = time.time()
 
-            # Wait until the agent is armed
             while not self.devices[(msg.target_system, msg.target_comp)].flight_mode == 'GUIDED':
-                if time.time() - mode_time < msg.state_change_timeout:
-                    pass
-                else:
+                if time.time() - mode_time >= msg.state_timeout:
                     self.logger.error(f'The system failed to switch into GUIDED mode on Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
                     return False
                 
             # Create a new arming message to send
             arm_msg = SystemCommandMsg(MsgMap().system_commands.arm, msg.target_system, msg.target_comp, msg.retry, msg.msg_timeout)
             
-            # Attempt to Arm the system
+            # Attempt to arm the system
             if self.__send_msg_helper(arm_msg):
                 self.logger.info(f'Successfully acknowledged reception of the arm command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
@@ -1358,15 +1356,15 @@ class Connection:
             # Wait until the system arms and ensure that it falls within the timeout period
             arm_time = time.time()
 
-            # Wait until the agent is armed
             while not self.devices[(msg.target_system, msg.target_comp)].armed:
-                if time.time() - arm_time < msg.state_change_timeout:
-                    pass
-                else:
+                if time.time() - arm_time >= msg.state_timeout:
                     self.logger.error(f'The system failed to arm Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
                     return False
 
-            # Reset the message type to be a full takeoff command
+            # Give the agent a chance to fully arm
+            asyncio.sleep(msg.state_delay)
+
+            # Reset the message type to be a simple takeoff command
             msg.msg_type = MsgMap().mission_commands.simple_takeoff
             
             # Attempt to perform takeoff
@@ -1387,7 +1385,7 @@ class Connection:
                 2. Arm
                 3. Takeoff
             """
-            # Create a new guided mode
+            # Create a new guided mode message
             guided_msg = FlightModeMsg(MsgMap().flight_modes.guided, msg.target_system, msg.target_comp, msg.retry, msg.msg_timeout)
             
             # Attempt to switch to GUIDED mode
@@ -1400,18 +1398,15 @@ class Connection:
             # Wait until the system switches into guided mode and ensure that it falls within the timeout period
             mode_time = time.time()
 
-            # Wait until the agent is armed
             while not self.devices[(msg.target_system, msg.target_comp)].flight_mode == 'GUIDED':
-                if time.time() - mode_time < msg.state_change_timeout:
-                    pass
-                else:
+                if time.time() - mode_time >= msg.state_timeout:
                     self.logger.error(f'The system failed to switch into GUIDED mode on Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
                     return False
                 
             # Create a new arming message to send
             arm_msg = SystemCommandMsg(MsgMap().system_commands.arm, msg.target_system, msg.target_comp, msg.retry, msg.msg_timeout)
             
-            # Attempt to Arm the system
+            # Attempt to arm the system
             if self.__send_msg_helper(arm_msg):
                 self.logger.info(f'Successfully acknowledged reception of the arm command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
@@ -1423,11 +1418,12 @@ class Connection:
 
             # Wait until the agent is armed
             while not self.devices[(msg.target_system, msg.target_comp)].armed:
-                if time.time() - arm_time < msg.state_change_timeout:
-                    pass
-                else:
+                if time.time() - arm_time >= msg.state_change_timeout:
                     self.logger.error(f'The system failed to arm Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
                     return False
+
+            # Give the agent a chance to fully arm
+            asyncio.sleep(msg.state_delay)
 
             # Reset the message type to be a full takeoff command
             msg.msg_type = MsgMap().mission_commands.takeoff
