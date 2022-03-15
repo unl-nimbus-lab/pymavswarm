@@ -78,6 +78,8 @@ class MissionCommand:
     waypoint = 'waypoint'
     simple_takeoff = 'simpletakeoff'
     takeoff = 'takeoff'
+    full_takeoff = 'fulltakeoff'
+    full_simple_takeoff = 'simplefulltakeoff'
     reset_home_position_to_current = 'resethomecurrent'
     reset_home_position = 'resethome'
 
