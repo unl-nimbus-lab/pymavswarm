@@ -12,6 +12,8 @@ class Mission:
         self.logger = self.__init_logger('mission', debug=debug)
         self.waypoints = waypoints
 
+        return
+
 
     def __init_logger(self, name, debug: bool=False) -> logging.Logger:
         """

@@ -1,8 +1,7 @@
 import monotonic
 from .state import *
-from .mission import Mission
-from .param import Parameter
 from typing import Optional
+from .mission import Mission
 from collections import deque
 
 
@@ -46,5 +45,6 @@ class Agent:
         self.mission: Mission = Mission()
         self.last_params_read = deque(maxlen=max_params_stored)
         self.home_position = Location()
+        self.hrl_state = 'None'
 
         return
