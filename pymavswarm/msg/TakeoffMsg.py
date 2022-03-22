@@ -21,7 +21,8 @@ class TakeoffMsg(AgentMsg):
                  msg_timeout: float=5.0,  
                  ack_timeout: float=1.0,
                  state_timeout: float=5.0,
-                 state_delay: float=3.0) -> None:
+                 state_delay: float=3.0,
+                 validate_state: bool=False) -> None:
         super().__init__(msg_type, 
                          target_system, 
                          target_comp, 
@@ -29,7 +30,8 @@ class TakeoffMsg(AgentMsg):
                          msg_timeout=msg_timeout,
                          ack_timeout=ack_timeout,
                          state_timeout=state_timeout,
-                         state_delay=state_delay)
+                         state_delay=state_delay,
+                         validate_state=validate_state)
         self.altitude = altitude
         self.lat = lat
         self.lon = lon

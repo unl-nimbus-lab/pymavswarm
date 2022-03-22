@@ -19,6 +19,8 @@ class MavSwarm:
         # Class variables
         self.connection = None
 
+        return
+
     
     def __init_logger(self, name, debug: bool=False) -> logging.Logger:
         """

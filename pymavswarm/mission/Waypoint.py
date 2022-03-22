@@ -13,3 +13,5 @@ class Waypoint:
         self.altitude = altitude
         self.air_speed = air_speed
         self.ground_speed = ground_speed
+
+        return
