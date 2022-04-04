@@ -1,6 +1,7 @@
 from typing import Union, Optional
 
 
+
 class Parameter:
     """
     Parameter represents a key/value pair that may be sent to an agent to 
@@ -23,7 +24,8 @@ class Parameter:
                  retry: bool,
                  msg_timeout: float=3.0,
                  param_value: Optional[Union[float, int]]=None,
-                 ack_timeout: float=1.0) -> None:
+                 ack_timeout: float=1.0,
+                 callbacks: list=[]) -> None:
         self.sys_id = sys_id
         self.comp_id = comp_id
         self.param_id = param_id
@@ -31,5 +33,17 @@ class Parameter:
         self.retry = retry
         self.msg_timeout = msg_timeout
         self.ack_timeout = ack_timeout
+        self.__callbacks = callbacks
 
+        return
+
+    
+    def add_param_callback(self, fn) -> None:
+        self.__callbacks.append(fn)
+        return
+
+    
+    def remove_param_callback(self, fn) -> None:
+        if fn in self.__callbacks:
+            self.__callbacks.remove(fn)
         return

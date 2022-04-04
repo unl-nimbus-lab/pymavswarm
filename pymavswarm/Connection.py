@@ -57,11 +57,17 @@ class Connection:
         # Class variables
         self.connected = True
         self.devices = {}
+
+        # Message Handlers
         self.message_listeners = {}
         self.message_senders = {}
+        
+        # Message Queues
         self.outgoing_msgs = Queue()
         self.outgoing_params = Queue()
         self.read_params = Queue()
+
+        # Mutexes
         self.read_msg_mutex = threading.Lock()
         self.send_msg_mutex = threading.Lock()
 
@@ -76,7 +82,7 @@ class Connection:
         self.incoming_msg_t.daemon = True
 
         """
-        Messaage Listeners
+        Message Listeners
         """
 
         @self.on_message(['HEARTBEAT'])

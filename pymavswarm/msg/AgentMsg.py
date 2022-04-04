@@ -17,7 +17,8 @@ class AgentMsg:
         - state_delay    [float] : The amount of time that pymavswarm should wait after sending a command prior to sending
                                    another command. This parameter is used for sequence-driven commands such as the full
                                    takeoff command sequence.
-        - validate_state [float] : 
+        - validate_state [bool]  : Flag indicating that pymavswarm should check to ensure that the message caused the desired
+                                   state change in the system
                                    
     """
     def __init__(self, msg_type: str, 
@@ -28,7 +29,8 @@ class AgentMsg:
                  ack_timeout: float=1.0,
                  state_timeout: float=5.0,
                  state_delay: float=3.0,
-                 validate_state: bool=False) -> None:
+                 validate_state: bool=False,
+                 callbacks: list=[]) -> None:
         self.msg_type = msg_type
         self.target_system = target_system
         self.target_comp = target_comp
@@ -38,9 +40,21 @@ class AgentMsg:
         self.state_timeout = state_timeout
         self.state_delay = state_delay
         self.validate_state = validate_state
+        self.__callbacks = callbacks
 
         return
         
 
     def get_type(self) -> str:
         return self.msg_type
+
+    
+    def add_message_callback(self, fn) -> None:
+        self.__callbacks.append(fn)
+        return
+
+    
+    def remove_message_callback(self, fn) -> None:
+        if fn in self.__callbacks:
+            self.__callbacks.remove(fn)
+        return
