@@ -5,15 +5,6 @@ from .AgentMsg import AgentMsg
 class TakeoffMsg(AgentMsg):
     """
     Takeoff to a certain location/altitude
-
-    ..py:attribute:: altitude
-        The altitude that the agent should takeoff to
-
-    ..py:attribute:: latitude
-        The latitude of the takeoff waypoint
-
-    ..py:attribute:: longitude
-        The longitude of the takeoff waypoint
     """
 
     def __init__(
@@ -49,33 +40,36 @@ class TakeoffMsg(AgentMsg):
         :type alt: float
 
         :param lat: The desired takeoff latitude (optional)
-        :type lat: float
+        :type lat: Optional[float], optional
 
         :param lon: The desired takeoff longitude (optional)
-        :type lon: float
+        :type lon: Optional[float], optional
 
         :param msg_timeout: The amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
-            check_ack is set to true.
+            retry is set to true, defaults to 5.0
         :type msg_timeout: float
 
         :param ack_timeout: The amount of time that pymavswarm should wait to check for
-            an acknowledgement from an agent. This is only used when check_ack is set
+            an acknowledgement from an agent. This is only used when retry is set
             to true. This should be kept as short as possible to keep agent state
-            information up-to-date.
+            information up-to-date, defaults to 1.0
         :type ack_timeout: float
 
         :param state_timeout: The amount of time that pymavswarm should wait for a
-            given agent's state to change after receiving a mavlink message
+            given agent's state to change after receiving a mavlink message, defaults
+            to 5.0
         :type state_timeout: float
 
         :param state_delay: The amount of time that pymavswarm should wait after
             sending a command prior to sending another command. This parameter is used
-            for sequence-driven commands such as the full takeoff command sequence.
+            for sequence-driven commands such as the full takeoff command sequence,
+            defaults to 3.0
         :type state_delay: float
 
         :param validate_state: Flag indicating that pymavswarm should check to ensure
-            that the message caused the desired state change in the system
+            that the message caused the desired state change in the system, defaults to
+            False
         :type validate_state: bool
         """
         super().__init__(
@@ -97,12 +91,27 @@ class TakeoffMsg(AgentMsg):
 
     @property
     def altitude(self) -> float:
+        """
+        The altitude that the agent should takeoff to
+
+        :rtype: float
+        """
         return self.__altitude
 
     @property
     def latitude(self) -> float:
+        """
+        The latitude of the takeoff waypoint
+
+        :rtype: float
+        """
         return self.__latitude
 
     @property
     def longitude(self) -> float:
+        """
+        The longitude of the takeoff waypoint
+
+        :rtype: float
+        """
         return self.__longitude

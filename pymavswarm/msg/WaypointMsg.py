@@ -4,30 +4,6 @@ from .AgentMsg import AgentMsg
 class WaypointMsg(AgentMsg):
     """
     Desired waypoint for an agent to fly to
-
-    .py:attribute:: hold
-        Time to stay at waypoint for rotary wing (ignored by fixed wing)
-
-    .py:attribute:: accept_radius
-        If the sphere with this radius (m) is hit, the waypoint counts as reached
-
-    .py:attribute:: pass_radius
-        0 to pass through the WP, if > 0 radius to pass by WP. Positive value for
-        clockwise orbit, negative value for counter-clockwise orbit. Allows trajectory
-        control.
-
-    .py:attribute:: yaw
-        Desired yaw angle at waypoint (rotary wing). NaN to use the current system yaw
-        heading mode (e.g. yaw towards next waypoint, yaw to home, etc.).
-
-    .py:attribute:: latitude
-        Latitude of the waypoint
-
-    .py:attribute:: longitude
-        Longitude of the waypoint
-
-    .py:attribute:: altitude
-        Altitude of the waypoint
     """
 
     def __init__(
@@ -90,26 +66,29 @@ class WaypointMsg(AgentMsg):
 
         :param msg_timeout: The amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
-            check_ack is set to true.
+            retry is set to true, defaults to 5.0
         :type msg_timeout: float
 
         :param ack_timeout: The amount of time that pymavswarm should wait to check for
-            an acknowledgement from an agent. This is only used when check_ack is set
+            an acknowledgement from an agent. This is only used when retry is set
             to true. This should be kept as short as possible to keep agent state
-            information up-to-date.
+            information up-to-date, defaults to 1.0
         :type ack_timeout: float
 
         :param state_timeout: The amount of time that pymavswarm should wait for a
-            given agent's state to change after receiving a mavlink message
+            given agent's state to change after receiving a mavlink message, defaults
+            to 5.0
         :type state_timeout: float
 
         :param state_delay: The amount of time that pymavswarm should wait after
             sending a command prior to sending another command. This parameter is used
-            for sequence-driven commands such as the full takeoff command sequence.
+            for sequence-driven commands such as the full takeoff command sequence,
+            defaults to 3.0
         :type state_delay: float
 
         :param validate_state: Flag indicating that pymavswarm should check to ensure
-            that the message caused the desired state change in the system
+            that the message caused the desired state change in the system, defaults to
+            False
         :type validate_state: bool
         """
         super().__init__(
@@ -135,28 +114,66 @@ class WaypointMsg(AgentMsg):
 
     @property
     def hold(self) -> float:
+        """
+        Time to stay at waypoint for rotary wing (ignored by fixed wing)
+
+        :rtype: float
+        """
         return self.__hold
 
     @property
     def accept_radius(self) -> float:
+        """
+        If the sphere with this radius (m) is hit, the waypoint counts as reached
+
+        :rtype: float
+        """
         return self.__accept_radius
 
     @property
     def pass_radius(self) -> float:
+        """
+        0 to pass through the WP, if > 0 radius to pass by WP. Positive value for
+        clockwise orbit, negative value for counter-clockwise orbit. Allows trajectory
+        control.
+
+        :rtype: float
+        """
         return self.__pass_radius
 
     @property
     def yaw(self) -> float:
+        """
+        Desired yaw angle at waypoint (rotary wing). NaN to use the current system yaw
+        heading mode (e.g. yaw towards next waypoint, yaw to home, etc.).
+
+        :rtype: float
+        """
         return self.__yaw
 
     @property
     def latitude(self) -> float:
+        """
+        Latitude of the waypoint
+
+        :rtype: float
+        """
         return self.__lat
 
     @property
     def longitude(self) -> float:
+        """
+        Longitude of the waypoint
+
+        :rtype: float
+        """
         return self.__lon
 
     @property
     def altitude(self) -> float:
+        """
+        Altitude of the waypoint
+
+        :rtype: float
+        """
         return self.__alt

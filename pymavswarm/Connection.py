@@ -2117,27 +2117,27 @@ class Connection:
         try:
             # NOTE: In the current state, we only support float parameter value types
             #       Additional types may be added in the future
-            self.master.mav.param_set_send(param.sys_id, param.comp_id,
-                                           str.encode(param.param_id),
-                                           param.param_value,
+            self.master.mav.param_set_send(param.__sys_id, param.__comp_id,
+                                           str.encode(param.__param_id),
+                                           param.__param_value,
                                            9)
         except Exception as e:
-            self.logger.error(f'An error occurred while attempting to set {param.param_id} to {param.param_value}', e)
+            self.logger.error(f'An error occurred while attempting to set {param.__param_id} to {param.__param_value}', e)
             return False
 
         ack = False
 
-        if self.__ack_msg('PARAM_VALUE', timeout=param.ack_timeout)[0]:
+        if self.__ack_msg('PARAM_VALUE', timeout=param.__ack_timeout)[0]:
             ack = True
         else:
-            if param.retry:
+            if param.__retry:
                 if self.__retry_msg_send(param, self.__set_param):
                     ack = True
                 
         if ack:
-            self.logger.info(f'Successfully set {param.param_id} to {param.param_value} on Agent ({param.sys_id}, {param.comp_id})')    
+            self.logger.info(f'Successfully set {param.__param_id} to {param.__param_value} on Agent ({param.__sys_id}, {param.__comp_id})')    
         else:
-            self.logger.error(f'Failed to set {param.param_id} to {param.param_value} on Agent ({param.sys_id}, {param.comp_id})')
+            self.logger.error(f'Failed to set {param.__param_id} to {param.__param_value} on Agent ({param.__sys_id}, {param.__comp_id})')
 
         return ack
 
@@ -2181,30 +2181,30 @@ class Connection:
         Read a desired parameter value
         """
         try:
-            self.master.mav.param_request_read_send(param.sys_id, param.comp_id,
-                                                    str.encode(param.param_id),
+            self.master.mav.param_request_read_send(param.__sys_id, param.__comp_id,
+                                                    str.encode(param.__param_id),
                                                     -1)
         except Exception as e:
-            self.logger.exception(f'An exception occurred while attempting to read {param.param_id} from Agent ({param.sys_id}, {param.comp_id})', e)
+            self.logger.exception(f'An exception occurred while attempting to read {param.__param_id} from Agent ({param.__sys_id}, {param.__comp_id})', e)
             return False
 
         ack = False
 
-        ack, msg = self.__ack_msg('PARAM_VALUE', timeout=param.ack_timeout)
+        ack, msg = self.__ack_msg('PARAM_VALUE', timeout=param.__ack_timeout)
 
         if ack:
             read_param = ReadParameter(msg['param_id'], msg['param_value'], msg['param_type'], msg['param_index'], msg['param_count'])
 
-            self.devices[(param.sys_id, param.comp_id)].last_params_read.append(read_param)
+            self.devices[(param.__sys_id, param.__comp_id)].last_params_read.append(read_param)
         else:
-            if param.retry:
+            if param.__retry:
                 if self.__retry_msg_send(param, self.__read_param):
                     ack = True
 
         if ack:
-            self.logger.info(f'Successfully read {param.param_id} from Agent ({param.sys_id}, {param.comp_id}). Value: {msg}')
+            self.logger.info(f'Successfully read {param.__param_id} from Agent ({param.__sys_id}, {param.__comp_id}). Value: {msg}')
         else:
-            self.logger.error(f'Failed to read {param.param_id} from Agent ({param.sys_id}, {param.comp_id})')
+            self.logger.error(f'Failed to read {param.__param_id} from Agent ({param.__sys_id}, {param.__comp_id})')
 
         return ack
 

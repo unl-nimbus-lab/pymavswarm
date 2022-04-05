@@ -1,43 +1,6 @@
 class AgentMsg:
     """
     Parent class used to construct MAVLink commands
-
-    ..py:attribute:: msg_type
-        The sub-message type for a message
-
-    ..py:attribute:: target_system
-        The target system ID
-
-    ..py:attribute:: target_comp
-        The target component ID
-
-    ..py:attribute:: retry
-        Indicate whether pymavswarm should retry sending the message
-        until acknowledgement
-
-    ..py:attribute:: msg_timeout
-        The amount of time that pymavswarm should attempt to resend
-        a message if acknowledgement is not received. This is only used when check_ack
-        is set to true.
-
-    ..py:attribute:: ack_timeout
-        The amount of time that pymavswarm should wait to check for an
-        acknowledgement from an agent. This is only used when check_ack is set to true.
-        This should be kept as short as possible to keep agent state information
-        up-to-date.
-
-    ..py:attribute:: state_timeout
-        The amount of time that pymavswarm should wait for a given agent's
-        state to change after receiving a mavlink message
-
-    ..py:attribute:: state_delay
-        The amount of time that pymavswarm should wait after sending a command
-        prior to sending another command. This parameter is used for sequence-driven
-        commands such as the full takeoff command sequence.
-
-    ..py:attribute:: validate_state
-        Flag indicating that pymavswarm should check to ensure that the
-        message caused the desired state change in the system
     """
 
     def __init__(
@@ -69,29 +32,33 @@ class AgentMsg:
 
         :param msg_timeout: The amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
-            check_ack is set to true.
+            retry is set to true, defaults to 5.0
         :type msg_timeout: float
 
         :param ack_timeout: The amount of time that pymavswarm should wait to check for
-            an acknowledgement from an agent. This is only used when check_ack is set
+            an acknowledgement from an agent. This is only used when retry is set
             to true. This should be kept as short as possible to keep agent state
-            information up-to-date.
+            information up-to-date, defaults to 1.0
         :type ack_timeout: float
 
         :param state_timeout: The amount of time that pymavswarm should wait for a
-            given agent's state to change after receiving a mavlink message
+            given agent's state to change after receiving a mavlink message, defaults
+            to 5.0
         :type state_timeout: float
 
         :param state_delay: The amount of time that pymavswarm should wait after
             sending a command prior to sending another command. This parameter is used
-            for sequence-driven commands such as the full takeoff command sequence.
+            for sequence-driven commands such as the full takeoff command sequence,
+            defaults to 3.0
         :type state_delay: float
 
         :param validate_state: Flag indicating that pymavswarm should check to ensure
-            that the message caused the desired state change in the system
+            that the message caused the desired state change in the system, defaults to
+            False
         :type validate_state: bool
 
-        :param callbacks: List of methods that should be signaled on message events
+        :param callbacks: List of methods that should be signaled on message events,
+            defaults to []
         :type callbacks: list
         """
         self.__msg_type = msg_type
@@ -118,41 +85,102 @@ class AgentMsg:
 
     @property
     def msg_type(self) -> str:
+        """
+        The sub-message type for a message
+
+        :rtype: str
+        """
         return self.__msg_type
 
     @property
     def target_system(self) -> int:
+        """
+        The target system ID
+
+        :rtype: int
+        """
         return self.__target_system
 
     @property
     def target_comp(self) -> int:
+        """
+        The target component ID
+
+        :rtype: int
+        """
         return self.__target_comp
 
     @property
     def retry(self) -> bool:
+        """
+        Indicate whether pymavswarm should retry sending the message
+        until acknowledgement
+
+        :rtype: bool
+        """
         return self.__retry
 
     @retry.setter
     def retry(self, retry: bool) -> None:
+        """
+        retry setter
+
+        :param retry: Flag
+        :type retry: bool
+        """
         self.__retry = retry
         return
 
     @property
     def msg_timeout(self) -> float:
+        """
+        The amount of time that pymavswarm should attempt to resend
+        a message if acknowledgement is not received. This is only used when retry
+        is set to true.
+
+        :rtype: float
+        """
         return self.__msg_timeout
 
     @property
     def ack_timeout(self) -> float:
+        """
+        The amount of time that pymavswarm should wait to check for an
+        acknowledgement from an agent. This is only used when retry is set to true.
+        This should be kept as short as possible to keep agent state information
+        up-to-date.
+
+        :rtype: float
+        """
         return self.__ack_timeout
 
     @property
     def state_timeout(self) -> float:
+        """
+        The amount of time that pymavswarm should wait for a given agent's
+        state to change after receiving a mavlink message
+
+        :rtype: float
+        """
         return self.__state_timeout
 
     @property
     def state_delay(self) -> float:
+        """
+        The amount of time that pymavswarm should wait after sending a command
+        prior to sending another command. This parameter is used for sequence-driven
+        commands such as the full takeoff command sequence.
+
+        :rtype: float
+        """
         return self.__state_delay
 
     @property
     def validate_state(self) -> bool:
+        """
+        Flag indicating that pymavswarm should check to ensure that the
+        message caused the desired state change in the system
+
+        :rtype: bool
+        """
         return self.__validate_state

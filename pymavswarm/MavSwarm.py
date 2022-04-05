@@ -9,20 +9,20 @@ class MavSwarm:
     This object is the primary interface for mavswarm and enables users to
     send commands to the swarm and read the swarm state
     """
-    def __init__(self, debug: bool=False) -> None:
+
+    def __init__(self, debug: bool = False) -> None:
         super().__init__()
 
         # Initialize loggers
         self.__debug = debug
-        self.logger = self.__init_logger('mavswarm', debug=debug)
+        self.logger = self.__init_logger("mavswarm", debug=debug)
 
         # Class variables
         self.connection = None
 
         return
 
-    
-    def __init_logger(self, name, debug: bool=False) -> logging.Logger:
+    def __init_logger(self, name, debug: bool = False) -> logging.Logger:
         """
         Initialize the logger with the desired debug levels
         """
@@ -36,24 +36,33 @@ class MavSwarm:
         else:
             return logging.getLogger(name)
 
-
-    def connect(self, port: str, baudrate: int, source_system: int=255, source_component: int=0) -> bool:
+    def connect(
+        self,
+        port: str,
+        baudrate: int,
+        source_system: int = 255,
+        source_component: int = 0,
+    ) -> bool:
         """
         Create a new connection using the specified serial port
         """
-        if self.connection is None:            
+        if self.connection is None:
             try:
-                self.connection = Connection(port, baudrate, source_system, source_component, debug=self.__debug)
+                self.connection = Connection(
+                    port, baudrate, source_system, source_component, debug=self.__debug
+                )
                 self.connection.start_connection()
             except Exception:
                 # Handle the error message
-                self.logger.debug('MavSwarm was unable to establish a connection with the specified device', exc_info=True)
+                self.logger.debug(
+                    "MavSwarm was unable to establish a connection with the specified device",
+                    exc_info=True,
+                )
 
                 return False
 
         return True
 
-    
     def disconnect(self) -> bool:
         """
         Disconnect the connection
@@ -64,7 +73,6 @@ class MavSwarm:
 
         return True
 
-
     def send_msg(self, msgs: list) -> None:
         """
         Add the message to the connection's outgoing messages queue
@@ -73,9 +81,8 @@ class MavSwarm:
             # Ensure that the intended agent is in the network
             if (msg.target_system, msg.target_comp) in self.connection.devices:
                 self.connection.send_msg_handler(msg)
-        
-        return
 
+        return
 
     def set_param(self, params: list) -> None:
         """
@@ -87,7 +94,6 @@ class MavSwarm:
                 self.connection.set_param_handler(param)
 
         return
-
 
     def read_param(self, params: list) -> None:
         """
@@ -103,7 +109,6 @@ class MavSwarm:
 
         return
 
-    
     def get_agents(self) -> list:
         """
         Get the list of agents in the network
@@ -112,7 +117,6 @@ class MavSwarm:
             return [*self.connection.devices.values()]
         else:
             return []
-
 
     def get_agent_by_id(self, sys_id: int, comp_id: int) -> Optional[Agent]:
         """
@@ -124,7 +128,6 @@ class MavSwarm:
             return self.connection.devices[device_id]
 
         return None
-        
 
     def get_agent_by_name(self, name: str) -> Optional[Agent]:
         """
