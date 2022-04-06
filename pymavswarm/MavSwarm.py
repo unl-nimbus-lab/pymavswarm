@@ -151,10 +151,13 @@ class MavSwarm:
 
     def read_param(self, params: list) -> None:
         """
-        Read a desired parameter value. Note that, in the current configuration
+        Read a desired parameter value. Note that, in the current configuration,
         each agent stores the most recent 5 parameter values read in a circular
         buffer. Therefore, when performing a bulk parameter read, ensure that
         a maximum of five parameters are read at once on the specific agent
+
+        :param params: The list of params to read
+        :type params: list
         """
         for param in params:
             # Ensure that the intended agent is in the network
@@ -166,6 +169,15 @@ class MavSwarm:
     def get_agent_by_id(self, sys_id: int, comp_id: int) -> Optional[Agent]:
         """
         Get a specific agent by its system ID and component ID
+
+        :param sys_id: The system ID of the agent to access
+        :type sys_id: int
+
+        :param comp_id: The component ID of the agent to access
+        :type comp_id: int
+
+        :return: The identified agent if found
+        :rtype: Optional[Agent]
         """
         device_id = (sys_id, comp_id)
 
@@ -177,6 +189,12 @@ class MavSwarm:
     def get_agent_by_name(self, name: str) -> Optional[Agent]:
         """
         Get the first agent in the swarm with the specified name
+
+        :param name: The name of the agent to access
+        :type name: str
+
+        :return: The first agent identified with the given name
+        :rtype: Optional[Agent]
         """
         for agent in self.__connection.devices.values():
             if agent.name == name:
