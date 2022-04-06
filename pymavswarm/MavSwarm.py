@@ -10,65 +10,53 @@ class MavSwarm:
     send commands to the swarm and read the swarm state
     """
 
-    def __init__(self, debug: bool = False) -> None:
+    def __init__(self, log_level: int = logging.INFO) -> None:
         """
-        :param debug: Flag indicating whether to log debug messages, defaults to False
-        :type debug: bool, optional
+        :param log_level: Log level of the system, defaults to logging.INFO
+        :type log_level: int, optional
         """
         super().__init__()
 
         # Initialize loggers
-        self.__debug = debug
-        self.__logger = self.__init_logger("mavswarm", debug=debug)
+        self.__log_level = log_level
+        self.__logger = self.__init_logger("mavswarm", log_level=log_level)
 
-        # Class variables
+        # System connection
         self.__connection = None
 
         return
 
     @property
-    def connection(self) -> Connection:
+    def agents(self) -> list:
         """
-        The MAVLink connect, provides an interface to the network
+        Get the connection devices
 
-        :rtype: Connection
-        """
-        return self.__connection
+        Used to provide a layer of abstraction from the connection
 
-    @connection.setter
-    def connection(self, connection: Union[Connection, None]) -> None:
+        :rtype: list
         """
-        connection setter
+        if self.__connection is not None:
+            return [*self.__connection.devices.values()]
+        else:
+            return []
 
-        :param connection: New connection
-        :type connection: Union[Connection, None]
+    def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
         """
-        self.__connection = connection
-        return
-
-    def __init_logger(self, name: str, debug: bool = False) -> logging.Logger:
-        """
-        Initialize the logger with the desired debug levels
+        Initialize the logger with the desired log level
 
         :param name: The name of the logger
         :type name: str
 
-        :param debug: Flag indicating whether to log debug level messages, defaults to 
-            False
-        :type debug: bool, optional
+        :param log_level: Log level of the system logger, defaults to logging.INFO
+        :type log_level: int, optional
 
         :return: Configured logger
         :rtype: logging.Logger
         """
         logging.basicConfig()
-
-        # Set the desired debug level
-        if debug:
-            logger = logging.getLogger(name)
-            logger.setLevel(logging.DEBUG)
-            return logger
-        else:
-            return logging.getLogger(name)
+        logger = logging.getLogger(name)
+        logger.setLevel(log_level)
+        return logger
 
     def connect(
         self,
@@ -98,15 +86,19 @@ class MavSwarm:
         if self.__connection is None:
             try:
                 self.__connection = Connection(
-                    port, baudrate, source_system, source_component, debug=self.__debug
+                    port,
+                    baudrate,
+                    source_system,
+                    source_component,
+                    log_level=self.__log_level,
                 )
                 self.__connection.start_connection()
             except Exception:
                 # Ensure that the connection is none on failure
                 self.__connection = None
-                
+
                 # Handle the error message
-                self.__logger.debug(
+                self.__logger.info(
                     "MavSwarm was unable to establish a connection with the "
                     "specified device",
                     exc_info=True,
@@ -170,15 +162,6 @@ class MavSwarm:
                 self.__connection.read_param_handler(param)
 
         return
-
-    def get_agents(self) -> list:
-        """
-        Get the list of agents in the network
-        """
-        if self.__connection is not None:
-            return [*self.__connection.devices.values()]
-        else:
-            return []
 
     def get_agent_by_id(self, sys_id: int, comp_id: int) -> Optional[Agent]:
         """
