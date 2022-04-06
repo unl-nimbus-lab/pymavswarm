@@ -1,30 +1,64 @@
 import logging
 from .Agent import Agent
-from typing import Optional
+from typing import Optional, Union
 from .Connection import Connection
 
 
 class MavSwarm:
     """
-    This object is the primary interface for mavswarm and enables users to
+    Primary interface for pymavswarm and enables users to
     send commands to the swarm and read the swarm state
     """
 
     def __init__(self, debug: bool = False) -> None:
+        """
+        :param debug: Flag indicating whether to log debug messages, defaults to False
+        :type debug: bool, optional
+        """
         super().__init__()
 
         # Initialize loggers
         self.__debug = debug
-        self.logger = self.__init_logger("mavswarm", debug=debug)
+        self.__logger = self.__init_logger("mavswarm", debug=debug)
 
         # Class variables
-        self.connection = None
+        self.__connection = None
 
         return
 
-    def __init_logger(self, name, debug: bool = False) -> logging.Logger:
+    @property
+    def connection(self) -> Connection:
+        """
+        The MAVLink connect, provides an interface to the network
+
+        :rtype: Connection
+        """
+        return self.__connection
+
+    @connection.setter
+    def connection(self, connection: Union[Connection, None]) -> None:
+        """
+        connection setter
+
+        :param connection: New connection
+        :type connection: Union[Connection, None]
+        """
+        self.__connection = connection
+        return
+
+    def __init_logger(self, name: str, debug: bool = False) -> logging.Logger:
         """
         Initialize the logger with the desired debug levels
+
+        :param name: The name of the logger
+        :type name: str
+
+        :param debug: Flag indicating whether to log debug level messages, defaults to 
+            False
+        :type debug: bool, optional
+
+        :return: Configured logger
+        :rtype: logging.Logger
         """
         logging.basicConfig()
 
@@ -45,17 +79,36 @@ class MavSwarm:
     ) -> bool:
         """
         Create a new connection using the specified serial port
+
+        :param port: The serial port to attempt connection on
+        :type port: str
+
+        :param baudrate: The serial connection baudrate
+        :type baudrate: int
+
+        :param source_system: The system ID for the source system, defaults to 255
+        :type source_system: int, optional
+
+        :param source_component: The component ID for the source system, defaults to 0
+        :type source_component: int, optional
+
+        :return: Flag indicating whether connection was successful
+        :rtype: bool
         """
-        if self.connection is None:
+        if self.__connection is None:
             try:
-                self.connection = Connection(
+                self.__connection = Connection(
                     port, baudrate, source_system, source_component, debug=self.__debug
                 )
-                self.connection.start_connection()
+                self.__connection.start_connection()
             except Exception:
+                # Ensure that the connection is none on failure
+                self.__connection = None
+                
                 # Handle the error message
-                self.logger.debug(
-                    "MavSwarm was unable to establish a connection with the specified device",
+                self.__logger.debug(
+                    "MavSwarm was unable to establish a connection with the "
+                    "specified device",
                     exc_info=True,
                 )
 
@@ -65,33 +118,42 @@ class MavSwarm:
 
     def disconnect(self) -> bool:
         """
-        Disconnect the connection
+        Disconnect from the network
+
+        :return: Flag indicating whether the disconnect attempt was successful
+        :rtype: bool
         """
-        if self.connection is not None:
-            self.connection.disconnect()
-            self.connection = None
+        if self.__connection is not None:
+            self.__connection.disconnect()
+            self.__connection = None
 
         return True
 
     def send_msg(self, msgs: list) -> None:
         """
         Add the message to the connection's outgoing messages queue
+
+        :param msgs: A list of messages to send to the network/agents
+        :type msgs: list
         """
         for msg in msgs:
             # Ensure that the intended agent is in the network
-            if (msg.target_system, msg.target_comp) in self.connection.devices:
-                self.connection.send_msg_handler(msg)
+            if (msg.target_system, msg.target_comp) in self.__connection.devices:
+                self.__connection.send_msg_handler(msg)
 
         return
 
     def set_param(self, params: list) -> None:
         """
         Add the params to the connection's outgoing parameter queue
+
+        :param params: A list of parameters to set/read from agents
+        :type params: list
         """
         for param in params:
             # Ensure that the intended agent is in the network
-            if (param.sys_id, param.comp_id) in self.connection.devices:
-                self.connection.set_param_handler(param)
+            if (param.sys_id, param.comp_id) in self.__connection.devices:
+                self.__connection.set_param_handler(param)
 
         return
 
@@ -104,8 +166,8 @@ class MavSwarm:
         """
         for param in params:
             # Ensure that the intended agent is in the network
-            if (param.sys_id, param.comp_id) in self.connection.devices:
-                self.connection.read_param_handler(param)
+            if (param.sys_id, param.comp_id) in self.__connection.devices:
+                self.__connection.read_param_handler(param)
 
         return
 
@@ -113,8 +175,8 @@ class MavSwarm:
         """
         Get the list of agents in the network
         """
-        if self.connection is not None:
-            return [*self.connection.devices.values()]
+        if self.__connection is not None:
+            return [*self.__connection.devices.values()]
         else:
             return []
 
@@ -124,8 +186,8 @@ class MavSwarm:
         """
         device_id = (sys_id, comp_id)
 
-        if device_id in self.connection.devices:
-            return self.connection.devices[device_id]
+        if device_id in self.__connection.devices:
+            return self.__connection.devices[device_id]
 
         return None
 
@@ -133,7 +195,7 @@ class MavSwarm:
         """
         Get the first agent in the swarm with the specified name
         """
-        for agent in self.connection.devices.values():
+        for agent in self.__connection.devices.values():
             if agent.name == name:
                 return agent
 
