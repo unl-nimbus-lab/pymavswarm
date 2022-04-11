@@ -89,7 +89,7 @@ class Parameter:
     def param_id(self) -> str:
         """
         The ID of the parameter that should be set/read on an agent
-        
+
         :rtype: str
         """
         return self.__param_id
@@ -108,7 +108,7 @@ class Parameter:
         """
         Flag indicating whether the system should re-attempt parameter setting/reading
         if the system fails to acknowledge it
-        
+
         :rtype: bool
         """
         return self.__retry
@@ -129,7 +129,7 @@ class Parameter:
         """
         The period of time that pymavswarm should attempt to re-set a parameter
         if acknowledgement fails (parameter setting only)
-        
+
         :rtype: float
         """
         return self.__msg_timeout
@@ -139,7 +139,7 @@ class Parameter:
         """
         The amount of time that pymavswarm should wait for acknowledgement before
         considering that the system failed to acknowledge the parameter setting/reading
-        
+
         :rtype: float
         """
         return self.__ack_timeout

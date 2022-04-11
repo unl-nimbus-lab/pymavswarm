@@ -7,11 +7,10 @@ import monotonic
 import threading
 from .msg import *
 from .state import *
-from queue import Queue
 from .Agent import Agent
 from .param import Parameter
 from pymavlink import mavutil
-from typing import Any, Tuple
+from typing import Any, Tuple, Union
 from pymavlink.dialects.v10 import ardupilotmega
 
 
@@ -70,80 +69,80 @@ class Connection:
 
         if resp is None:
             raise TimeoutError(
-                "The system was unable to establish a connection with the specified device within the timeout period"
+                "The system was unable to establish a connection with the specified"
+                "device within the timeout period"
             )
 
         # Class variables
-        self.connected = True
-        self.devices = {}
+        self.__connected = True
+        self.__devices = {}
 
         # Message Handlers
-        self.message_listeners = {}
-        self.message_senders = {}
-
-        # Message Queues
-        self.outgoing_msgs = Queue()
-        self.outgoing_params = Queue()
-        self.read_params = Queue()
+        self.__message_listeners = {}
+        self.__message_senders = {}
 
         # Mutexes
-        self.read_msg_mutex = threading.Lock()
-        self.send_msg_mutex = threading.Lock()
+        self.__read_msg_mutex = threading.Lock()
+        self.__send_msg_mutex = threading.Lock()
 
         # Register the exit callback
         atexit.register(self.disconnect)
 
         # Threads
-        self.heartbeat_t = threading.Thread(target=self.__heartbeat)
-        self.heartbeat_t.daemon = True
+        self.__heartbeat_t = threading.Thread(target=self.__heartbeat)
+        self.__heartbeat_t.daemon = True
 
-        self.incoming_msg_t = threading.Thread(target=self.__incoming_msg_handler)
-        self.incoming_msg_t.daemon = True
+        self.__incoming_msg_t = threading.Thread(target=self.__incoming_msg_handler)
+        self.__incoming_msg_t.daemon = True
 
         """
         Message Listeners
         """
 
         @self.on_message(["HEARTBEAT"])
-        def listener(self, msg) -> None:
+        def listener(self, msg: Any) -> None:
             """
-            Callback function used to handle incoming messages
+            Register new devices or update the timeout status of existing agents
+
+            :param msg: Incoming MAVLink message
+            :type msg: Any
             """
             # Make sure that the message isn't from a GCS
             if msg.get_type() == mavutil.mavlink.MAV_TYPE_GCS:
                 return
 
-            # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
             comp_id = msg.get_srcComponent()
 
-            # Create a new tuple key
-            device_tuple = (sys_id, comp_id)
+            device_id = (sys_id, comp_id)
 
             # Create a new device assigned the respective sysid:compid pair
             device = Agent(sys_id, comp_id, timeout_period=agent_timeout)
 
             # If the device hasn't been seen before, save it
-            if device_tuple not in self.devices:
-                self.devices[device_tuple] = device
+            if device_id not in self.devices:
+                self.devices[device_id] = device
             else:
                 # The connection has been restored
-                if self.devices[device_tuple].timeout:
+                if self.devices[device_id].timeout:
                     self.logger.info(
                         f"Connection to device {sys_id}:{comp_id} has been restored"
                     )
 
             # Update the last heartbeat variable
-            self.devices[device_tuple].last_heartbeat = monotonic.monotonic()
+            self.devices[device_id].last_heartbeat = monotonic.monotonic()
 
-            self.devices[device_tuple].timeout = False
+            self.devices[device_id].timeout = False
 
             return
 
         @self.on_message(["HEARTBEAT"])
-        def listener(self, msg) -> None:
+        def listener(self, msg: Any) -> None:
             """
             Handle general device information contained within a heartbeat
+
+            :param msg: Incoming MAVLink message
+            :type msg: Any
             """
             # Ignore messages sent by a GCS
             if msg.type == mavutil.mavlink.MAV_TYPE_GCS:
@@ -163,6 +162,7 @@ class Connection:
             self.devices[device_tuple].armed = (
                 msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
             ) != 0
+
             self.devices[device_tuple].system_status = msg.system_status
             self.devices[device_tuple].vehicle_type = msg.type
 
@@ -181,9 +181,12 @@ class Connection:
             return
 
         @self.on_message(["GLOBAL_POSITION_INT"])
-        def listener(self, msg) -> None:
+        def listener(self, msg: Any) -> None:
             """
             Handle the a GPS position message
+
+            :param msg: Incoming MAVLink message
+            :type msg: Any
             """
             # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
@@ -219,9 +222,12 @@ class Connection:
             return
 
         @self.on_message(["ATTITUDE"])
-        def listener(self, msg) -> None:
+        def listener(self, msg: Any) -> None:
             """
             Handle an agent attitude message
+
+            :param msg: Incoming MAVLink message
+            :type msg: Any
             """
             # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
@@ -256,9 +262,12 @@ class Connection:
             return
 
         @self.on_message(["SYS_STATUS"])
-        def listener(self, msg) -> None:
+        def listener(self, msg: Any) -> None:
             """
             Handle the system status message containing battery state
+
+            :param msg: Incoming MAVLink message
+            :type msg: Any
             """
             # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
@@ -285,9 +294,12 @@ class Connection:
             return
 
         @self.on_message(["GPS_RAW_INT"])
-        def listener(self, msg) -> None:
+        def listener(self, msg: Any) -> None:
             """
             Handle the GPS status information
+
+            :param msg: Incoming MAVLink message
+            :type msg: Any
             """
             # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
@@ -315,9 +327,12 @@ class Connection:
             return
 
         @self.on_message(["EKF_STATUS_REPORT"])
-        def listener(self, msg) -> None:
+        def listener(self, msg: Any) -> None:
             """
             Handle an EKF status message
+
+            :param msg: Incoming MAVLink message
+            :type msg: Any
             """
             # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
@@ -369,9 +384,12 @@ class Connection:
             return
 
         @self.on_message(["ATTITUDE"])
-        def listener(self, msg) -> None:
+        def listener(self, msg: Any) -> None:
             """
             Handle an agent attitude message
+
+            :param msg: Incoming MAVLink message
+            :type msg: Any
             """
             # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
@@ -406,11 +424,14 @@ class Connection:
             return
 
         @self.on_message(["HOME_POSITION"])
-        def listener(self, msg) -> None:
+        def listener(self, msg: Any) -> None:
             """
             Handle the home position message
 
             NOTE: The altitude is provided in MSL, NOT AGL
+
+            :param msg: Incoming MAVLink message
+            :type msg: Any
             """
             # Get the system ID and component ID
             sys_id = msg.get_srcSystem()
@@ -441,9 +462,23 @@ class Connection:
         @self.send_message(["arm"])
         def sender(
             self, msg: SystemCommandMsg, fn_id: int = 0, device_exists: bool = False
-        ) -> None:
+        ) -> bool:
             """
             Arm an agent
+
+            :param msg: Arming mesasge
+            :type msg: SystemCommandMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether the message was sent successfully
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -462,7 +497,8 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the arm command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the arm command sent to "
+                    f"Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
@@ -477,15 +513,18 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the armed state"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the armed state"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the armed state"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the armed state"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the arm command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the arm command sent to Agent "
+                    f"({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -502,6 +541,20 @@ class Connection:
         ) -> bool:
             """
             Disarm an agent
+
+            :param msg: Disarm message
+            :type msg: SystemCommandMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -520,7 +573,8 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the disarm command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the disarm command sent "
+                    f"to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
@@ -533,15 +587,18 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the disarmed state"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the disarmed state"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the disarmed state"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the disarmed state"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the disarm command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the disarm command sent to "
+                    f"Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -558,6 +615,20 @@ class Connection:
         ) -> bool:
             """
             Force disarm an agent
+
+            :param msg: Kill message
+            :type msg: SystemCommandMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -576,17 +647,20 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the kill command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    f"Successfully acknowledged reception of the kill command sent to "
+                    f"Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the kill command."
+                        "The system does not support verification of state changes for "
+                        "the kill command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the kill command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the kill command sent to "
+                    f"Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -603,6 +677,20 @@ class Connection:
         ) -> bool:
             """
             Reboot an agent
+
+            :param msg: Reboot message
+            :type msg: SystemCommandMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -621,17 +709,20 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the reboot command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the reboot command sent "
+                    f"to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the reboot command."
+                        "The system does not support verification of state changes for "
+                        "the reboot command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the reboot command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the reboot command sent to "
+                    f"Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -648,6 +739,20 @@ class Connection:
         ) -> bool:
             """
             Shutdown an agent
+
+            :param msg: Shutdown message
+            :type msg: SystemCommandMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -666,17 +771,20 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the shutdown command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the shutdown command sent "
+                    f"to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the shutdown command."
+                        "The system does not support verification of state changes for "
+                        "the shutdown command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the shutdown command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the shutdown command sent to "
+                    f"Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -696,6 +804,20 @@ class Connection:
         ) -> bool:
             """
             Perform a full accelerometer calibration on the selected agent
+
+            :param msg: Calibration message
+            :type msg: PreflightCalibrationMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -714,17 +836,21 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the accelerometer calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the accelerometer "
+                    f"calibration command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the accelerometer calibration command."
+                        "The system does not support verification of state changes for "
+                        "the accelerometer calibration command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the accelerometer calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the accelerometer calibration "
+                    f"command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -744,6 +870,20 @@ class Connection:
         ) -> bool:
             """
             Perform a simple accelerometer calibration on the selected agent
+
+            :param msg: Calibration message
+            :type msg: PreflightCalibrationMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -762,17 +902,22 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the simple accelerometer calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the simple accelerometer "
+                    f"calibration command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the simple accelerometer calibration command."
+                        "The system does not support verification of state changes for "
+                        "the simple accelerometer calibration command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the simple accelerometer calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the simple accelerometer "
+                    f"calibration command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -792,6 +937,20 @@ class Connection:
         ) -> bool:
             """
             Perform an AHRS trim on the selected agent
+
+            :param msg: Calibration message
+            :type msg: PreflightCalibrationMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -810,17 +969,20 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the AHRS trim command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    f"Successfully acknowledged reception of the AHRS trim command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the AHRS trim command."
+                        "The system does not support verification of state changes for "
+                        "the AHRS trim command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the AHRS trim command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the AHRS trim command sent to "
+                    f"Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -840,6 +1002,20 @@ class Connection:
         ) -> bool:
             """
             Perform a gyroscope calibration on the selected agent
+
+            :param msg: Calibration message
+            :type msg: PreflightCalibrationMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -858,17 +1034,22 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the gyroscope calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the gyroscope calibration "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the gyroscope calibration command."
+                        "The system does not support verification of state changes for "
+                        "the gyroscope calibration command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the gyroscope calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the gyroscope calibration "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -888,6 +1069,20 @@ class Connection:
         ) -> bool:
             """
             Perform a magnetometer calibration on the selected agent
+
+            :param msg: Calibration message
+            :type msg: PreflightCalibrationMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -906,17 +1101,21 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the magnetometer calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the magnetometer "
+                    f"calibration command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the magnetometer calibration command."
+                        "The system does not support verification of state changes for "
+                        "the magnetometer calibration command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the magnetometer calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the magnetometer calibration "
+                    "command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -936,6 +1135,20 @@ class Connection:
         ) -> bool:
             """
             Perform a ground pressure calibration on the selected agent
+
+            :param msg: Calibration message
+            :type msg: PreflightCalibrationMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -954,17 +1167,22 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the ground pressure calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the ground pressure "
+                    f"calibration command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the ground pressure calibration command."
+                        "The system does not support verification of state changes for "
+                        "the ground pressure calibration command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the ground pressure calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the ground pressure "
+                    f"calibration command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -984,6 +1202,20 @@ class Connection:
         ) -> bool:
             """
             Perform airspeed calibration on the selected agent
+
+            :param msg: Calibration message
+            :type msg: PreflightCalibrationMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -1002,17 +1234,22 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the airspeed calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the airspeed calibration "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the airspeed calibration command."
+                        "The system does not support verification of state changes for "
+                        "the airspeed calibration command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the airspeed calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the airspeed calibration "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1032,6 +1269,20 @@ class Connection:
         ) -> bool:
             """
             Perform a barometer temperature calibration on the selected agent
+
+            :param msg: Calibration message
+            :type msg: PreflightCalibrationMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -1050,17 +1301,22 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the barometer temperature calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the barometer "
+                    f"temperature calibration command sent to Agent "
+                    f"({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the barometer temperature calibration command."
+                        "The system does not support verification of state changes for "
+                        "the barometer temperature calibration command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the barometer temperature calibration command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the barometer temperature "
+                    f"calibration command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1077,6 +1333,20 @@ class Connection:
         ) -> bool:
             """
             Set an agent to STABILIZE mode
+
+            :param msg: Flight mode message
+            :type msg: FlightModeMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1089,7 +1359,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the flight mode STABILIZE command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the flight mode "
+                    f"STABILIZE command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1107,15 +1379,21 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the STABILIZE flight mode"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the STABILIZE flight "
+                            "mode"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the STABILIZE flight mode"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the STABILIZE flight "
+                            "mode"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the flight mode STABILIZE command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the flight mode STABILIZE "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1132,6 +1410,20 @@ class Connection:
         ) -> bool:
             """
             Set an agent to ACRO mode
+
+            :param msg: Flight mode message
+            :type msg: FlightModeMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1144,7 +1436,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the flight mode ACRO command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the flight mode ACRO "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1162,15 +1456,18 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the ACRO flight mode"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the ACRO flight mode"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the ACRO flight mode"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the ACRO flight mode"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the flight mode ACRO command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the flight mode ACRO command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1187,6 +1484,20 @@ class Connection:
         ) -> bool:
             """
             Set an agent to ALT_HOLD mode
+
+            :param msg: Flight mode message
+            :type msg: FlightModeMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1199,7 +1510,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the flight mode ALT_HOLD command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the flight mode ALT_HOLD "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1217,15 +1530,19 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the ALT_HOLD flight mode"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the ALT_HOLD flight mode"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the ALT_HOLD flight mode"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the ALT_HOLD flight mode"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the flight mode ALT_HOLD command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the flight mode ALT_HOLD "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1242,6 +1559,20 @@ class Connection:
         ) -> bool:
             """
             Set an agent to AUTO mode
+
+            :param msg: Flight mode message
+            :type msg: FlightModeMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1254,7 +1585,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the flight mode AUTO command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    f"Successfully acknowledged reception of the flight mode AUTO "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1272,15 +1605,18 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the AUTO flight mode"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the AUTO flight mode"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the AUTO flight mode"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the AUTO flight mode"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the flight mode AUTO command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the flight mode AUTO command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1297,6 +1633,20 @@ class Connection:
         ) -> bool:
             """
             Set an agent to LOITER mode
+
+            :param msg: Flight mode message
+            :type msg: FlightModeMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1309,7 +1659,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the flight mode LOITER command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the flight mode LOITER "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1327,15 +1679,19 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the LOITER flight mode"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the LOITER flight mode"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the LOITER flight mode"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the LOITER flight mode"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the flight mode LOITER command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the flight mode LOITER "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1352,6 +1708,20 @@ class Connection:
         ) -> bool:
             """
             Set an agent to RTL mode
+
+            :param msg: Flight mode message
+            :type msg: FlightModeMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1364,7 +1734,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the flight mode RTL command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the flight mode RTL "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1382,15 +1754,19 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the RTL flight mode"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the RTL flight mode"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the RTL flight mode"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the RTL flight mode"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the flight mode RTL command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the flight mode RTL "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1407,6 +1783,20 @@ class Connection:
         ) -> bool:
             """
             Set an agent to LAND mode
+
+            :param msg: Flight mode message
+            :type msg: FlightModeMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1419,7 +1809,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the flight mode LAND command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the flight mode "
+                    f"LAND command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1437,15 +1829,18 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the LAND flight mode"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the LAND flight mode"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the LAND flight mode"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the LAND flight mode"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the flight mode LAND command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the flight mode LAND command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1462,6 +1857,20 @@ class Connection:
         ) -> bool:
             """
             Set an agent to THROW mode
+
+            :param msg: Flight mode message
+            :type msg: FlightModeMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1474,7 +1883,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the flight mode THROW command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the flight mode THROW "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1492,15 +1903,19 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the THROW flight mode"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the THROW flight mode"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the THROW flight mode"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the THROW flight mode"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the flight mode THROW command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the flight mode THROW "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1517,6 +1932,20 @@ class Connection:
         ) -> bool:
             """
             Set an agent to SYSTEMID mode
+
+            :param msg: Flight mode message
+            :type msg: FlightModeMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1529,7 +1958,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the flight mode SYSTEMID command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    f"Successfully acknowledged reception of the flight mode SYSTEMID "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1547,15 +1978,19 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the SYSTEMID flight mode"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the SYSTEMID flight mode"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the SYSTEMID flight mode"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the SYSTEMID flight mode"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the flight mode SYSTEMID command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the flight mode SYSTEMID "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1572,6 +2007,20 @@ class Connection:
         ) -> bool:
             """
             Set an agent to GUIDED mode
+
+            :param msg: Flight mode message
+            :type msg: FlightModeMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1584,7 +2033,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the flight mode GUIDED command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the flight mode GUIDED "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1602,15 +2053,19 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the GUIDED flight mode"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the GUIDED flight mode"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) switched to the GUIDED flight mode"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) switched to the GUIDED flight mode"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the flight mode GUIDED command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the flight mode GUIDED "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1627,6 +2082,20 @@ class Connection:
         ) -> bool:
             """
             Start path execution on the respective agent
+
+            :param msg: HRL message
+            :type msg: HRLMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1641,7 +2110,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the start flight path HRL command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the start flight path "
+                    f"HRL command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1659,15 +2130,19 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) started HRL path execution"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) started HRL path execution"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) started HRL path execution"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) started HRL path execution"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the start path execution HRL command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the start path execution HRL "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1684,6 +2159,20 @@ class Connection:
         ) -> bool:
             """
             Reset path execution on the respective agent
+
+            :param msg: HRL message
+            :type msg: HRLMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1698,7 +2187,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the reset flight path HRL command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the reset flight path HRL "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1716,15 +2207,18 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) reset HRL path execution"
+                            f"{msg.__target_comp}) reset HRL path execution"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) reset HRL path execution"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) reset HRL path execution"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the reset path execution HRL command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    f"Failed to acknowledge reception of the reset path execution HRL "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1741,6 +2235,20 @@ class Connection:
         ) -> bool:
             """
             Start path execution on the respective agent
+
+            :param msg: HRL message
+            :type msg: HRLMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1755,7 +2263,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the stop flight path HRL command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the stop flight path HRL "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1773,15 +2283,19 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) stopped HRL path execution"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) stopped HRL path execution"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) stopped HRL path execution"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) stopped HRL path execution"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the stop path execution HRL command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the stop path execution HRL "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1797,7 +2311,21 @@ class Connection:
             self, msg: HRLMsg, fn_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
-            Start path execution on the respective agent
+            Start live path execution on the respective agent
+
+            :param msg: HRL message
+            :type msg: HRLMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Reset target
             self.master.target_system = msg.__target_system
@@ -1812,7 +2340,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the start live HRL command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the start live HRL "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -1830,15 +2360,19 @@ class Connection:
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully verified that Agent ({msg.__target_system}, {msg.__target_comp}) started live HRL path execution"
+                            f"Successfully verified that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) started live HRL path execution"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to verify that Agent ({msg.__target_system}, {msg.__target_comp}) started live HRL path execution"
+                            f"Failed to verify that Agent ({msg.__target_system}, "
+                            f"{msg.__target_comp}) started live HRL path execution"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the start live path execution HRL command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the start live path execution "
+                    f"HRL command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1855,6 +2389,20 @@ class Connection:
         ) -> bool:
             """
             Set a new airspeed on an agent
+
+            :param msg: Speed message
+            :type msg: FlightSpeedMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -1873,17 +2421,20 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the airspeed command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the airspeed command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the airspeed command."
+                        "The system does not support verification of state changes for "
+                        "the airspeed command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the airspeed command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the airspeed command sent to "
+                    f"Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1899,7 +2450,21 @@ class Connection:
             self, msg: FlightSpeedMsg, fn_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
-            Set a new airspeed on an agent
+            Set a new groundspeed on an agent
+
+            :param msg: Speed message
+            :type msg: FlightSpeedMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -1918,17 +2483,20 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the ground speed command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the ground speed command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the ground speed command."
+                        "The system does not support verification of state changes for "
+                        "the ground speed command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the ground speed command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the ground speed command sent "
+                    f"to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1944,7 +2512,21 @@ class Connection:
             self, msg: FlightSpeedMsg, fn_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
-            Set a new airspeed on an agent
+            Set a new climbspeed on an agent
+
+            :param msg: Speed message
+            :type msg: FlightSpeedMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -1963,17 +2545,20 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the climb speed command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the climb speed command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the climb speed command."
+                        "The system does not support verification of state changes for "
+                        "the climb speed command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the climb speed command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the climb speed command sent "
+                    f"to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -1989,7 +2574,21 @@ class Connection:
             self, msg: FlightSpeedMsg, fn_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
-            Set a new airspeed on an agent
+            Set a new descent speed on an agent
+
+            :param msg: Speed message
+            :type msg: FlightSpeedMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -2008,17 +2607,20 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the descent speed command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the descent speed command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the descent speed command."
+                        "The system does not support verification of state changes for "
+                        "the descent speed command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the descent speed command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the descent speed command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -2038,6 +2640,20 @@ class Connection:
             Note that acknowledgement of this command does not indicate that the
             altitude was reached, but rather that the system will attempt to reach
             the specified altitude
+
+            :param msg: Takeoff message
+            :type msg: TakeoffMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             if (
                 msg.__altitude < 0
@@ -2045,7 +2661,8 @@ class Connection:
                 or math.isnan(msg.__altitude)
             ):
                 self.logger.exception(
-                    f"An invalid takeoff altitude was provided ({msg.__altitude}). Please send a valid takeoff altitude"
+                    f"An invalid takeoff altitude was provided ({msg.__altitude}). "
+                    "Please send a valid takeoff altitude"
                 )
                 return
 
@@ -2066,17 +2683,21 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the simple takeoff command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the simple takeoff "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the simple takeoff command."
+                        "The system does not support verification of state changes for "
+                        "the simple takeoff command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the simple takeoff command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the simple takeoff command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -2096,6 +2717,20 @@ class Connection:
             Note that acknowledgement of this command does not indicate that the
             altitude was reached, but rather that the system will attempt to reach
             the specified altitude
+
+            :param msg: Speed message
+            :type msg: TakeoffMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             if (
                 msg.__altitude < 0
@@ -2103,7 +2738,8 @@ class Connection:
                 or math.isnan(msg.__altitude)
             ):
                 self.logger.exception(
-                    f"An invalid takeoff altitude was provided ({msg.__altitude}). Please send a valid takeoff altitude"
+                    f"An invalid takeoff altitude was provided ({msg.__altitude}). "
+                    "Please send a valid takeoff altitude"
                 )
                 return
 
@@ -2124,17 +2760,20 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the takeoff command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the takeoff command sent "
+                    f"to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the takeoff command."
+                        "The system does not support verification of state changes for "
+                        "the takeoff command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the takeoff command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    f"Failed to acknowledge reception of the takeoff command sent to "
+                    f"Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -2154,6 +2793,20 @@ class Connection:
                 1. Switch to GUIDED mode
                 2. Arm
                 3. Takeoff
+
+            :param msg: Speed message
+            :type msg: TakeoffMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Create a new guided mode
             guided_msg = FlightModeMsg(
@@ -2169,9 +2822,12 @@ class Connection:
             )
 
             # Attempt to switch to GUIDED mode
-            if not self.__send_msg_helper(guided_msg, device_exists):
+            if not self.__send_seq_msg(guided_msg, device_exists):
                 self.logger.error(
-                    f"Failed to acknowledge reception of the guided command stage within the simple full takeoff command sent to Agent ({msg.__target_system}, {msg.__target_comp}). Full takeoff sequence failed."
+                    "Failed to acknowledge reception of the guided command stage "
+                    "within the simple full takeoff command sent to Agent "
+                    f"({msg.__target_system}, {msg.__target_comp}). Full takeoff "
+                    "sequence failed."
                 )
                 return False
 
@@ -2189,9 +2845,12 @@ class Connection:
             )
 
             # Attempt to arm the system
-            if self.__send_msg_helper(arm_msg, device_exists):
+            if self.__send_seq_msg(arm_msg, device_exists):
                 self.logger.error(
-                    f"Failed to acknowledge reception of the arm command stage within the simple full takeoff command sent to Agent ({msg.__target_system}, {msg.__target_comp}). Full takeoff sequence failed."
+                    "Failed to acknowledge reception of the arm command stage within "
+                    "the simple full takeoff command sent to Agent "
+                    f"({msg.__target_system}, {msg.__target_comp}). Full takeoff "
+                    "sequence failed."
                 )
                 return False
 
@@ -2202,9 +2861,12 @@ class Connection:
             msg.__msg_type = MsgMap().mission_commands.simple_takeoff
 
             # Attempt to perform takeoff
-            if self.__send_msg_helper(msg, device_exists):
+            if self.__send_seq_msg(msg, device_exists):
                 self.logger.error(
-                    f"Failed to acknowledge reception of the takeoff command stage within the simple full takeoff command sent to Agent ({msg.__target_system}, {msg.__target_comp}). Full takeoff sequence failed."
+                    "Failed to acknowledge reception of the takeoff command stage "
+                    "within the simple full takeoff command sent to Agent "
+                    f"({msg.__target_system}, {msg.__target_comp}). Full takeoff "
+                    "sequence failed."
                 )
                 return False
 
@@ -2223,6 +2885,20 @@ class Connection:
                 1. Switch to GUIDED mode
                 2. Arm
                 3. Takeoff
+
+            :param msg: Speed message
+            :type msg: TakeoffMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             # Create a new guided mode
             guided_msg = FlightModeMsg(
@@ -2238,9 +2914,12 @@ class Connection:
             )
 
             # Attempt to switch to GUIDED mode
-            if not self.__send_msg_helper(guided_msg, device_exists):
+            if not self.__send_seq_msg(guided_msg, device_exists):
                 self.logger.error(
-                    f"Failed to acknowledge reception of the guided command stage within the full takeoff command sent to Agent ({msg.__target_system}, {msg.__target_comp}). Full takeoff sequence failed."
+                    "Failed to acknowledge reception of the guided command stage "
+                    "within the full takeoff command sent to Agent "
+                    f"({msg.__target_system}, {msg.__target_comp}). Full takeoff "
+                    "sequence failed."
                 )
                 return False
 
@@ -2258,9 +2937,11 @@ class Connection:
             )
 
             # Attempt to arm the system
-            if self.__send_msg_helper(arm_msg, device_exists):
+            if self.__send_seq_msg(arm_msg, device_exists):
                 self.logger.error(
-                    f"Failed to acknowledge reception of the arm command stage within the full takeoff command sent to Agent ({msg.__target_system}, {msg.__target_comp}). Full takeoff sequence failed."
+                    "Failed to acknowledge reception of the arm command stage within "
+                    f"the full takeoff command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp}). Full takeoff sequence failed."
                 )
                 return False
 
@@ -2271,9 +2952,11 @@ class Connection:
             msg.__msg_type = MsgMap().mission_commands.takeoff
 
             # Attempt to perform takeoff
-            if self.__send_msg_helper(msg, device_exists):
+            if self.__send_seq_msg(msg, device_exists):
                 self.logger.error(
-                    f"Failed to acknowledge reception of the takeoff command stage within the full takeoff command sent to Agent ({msg.__target_system}, {msg.__target_comp}). Full takeoff sequence failed."
+                    "Failed to acknowledge reception of the takeoff command stage "
+                    "within the full takeoff command sent to Agent "
+                    f"({msg.__target_system}, {msg.__target_comp}). Full takeoff sequence failed."
                 )
                 return False
 
@@ -2289,13 +2972,29 @@ class Connection:
         ) -> bool:
             """
             Perform a simple waypoint command (just lat, lon, and alt)
-            Note that acknowledgement of this command does not indicate that the
+
+            NOTE: Acknowledgement of this command does not indicate that the
             waypoint was reached, but rather that the system will attempt to reach
             the specified waypoint
+
+            :param msg: Waypoint message
+            :type msg: WaypointMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             if msg.altitude < 0 or math.isinf(msg.altitude) or math.isnan(msg.altitude):
                 self.logger.exception(
-                    f"An invalid takeoff altitude was provided ({msg.altitude}). Please send a valid waypoint altitude"
+                    f"An invalid takeoff altitude was provided ({msg.altitude}). "
+                    "Please send a valid waypoint altitude"
                 )
                 return
 
@@ -2319,17 +3018,21 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the simple waypoint command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the simple waypoint "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the simple waypoint command."
+                        "The system does not support verification of state changes for "
+                        "the simple waypoint command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the simple waypoint command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    f"Failed to acknowledge reception of the simple waypoint command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -2346,13 +3049,29 @@ class Connection:
         ) -> bool:
             """
             Perform a waypoint navigation command
-            Note that acknowledgement of this command does not indicate that the
+
+            NOTE: Acknowledgement of this command does not indicate that the
             waypoint was reached, but rather that the system will attempt to reach
             the specified waypoint
+
+            :param msg: Waypoint message
+            :type msg: WaypointMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             if msg.altitude < 0 or math.isinf(msg.altitude) or math.isnan(msg.altitude):
                 self.logger.exception(
-                    f"An invalid takeoff altitude was provided ({msg.altitude}). Please send a valid waypoint altitude"
+                    f"An invalid takeoff altitude was provided ({msg.altitude}). "
+                    "Please send a valid waypoint altitude"
                 )
                 return
 
@@ -2376,17 +3095,20 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the waypoint command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the waypoint command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the waypoint command."
+                        "The system does not support verification of state changes for "
+                        "the waypoint command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the waypoint command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the waypoint command sent to "
+                    f"Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -2403,6 +3125,20 @@ class Connection:
         ) -> bool:
             """
             Get the current home position of an agent
+
+            :param msg: Get home position message
+            :type msg: AgentMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             self.master.mav.command_long_send(
                 msg.__target_system,
@@ -2421,17 +3157,21 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the get home position command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the get home position "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
                 if msg.__validate_state and device_exists:
                     self.logger.info(
-                        "The system does not support verification of state changes for the get home position command."
+                        "The system does not support verification of state changes for "
+                        "the get home position command."
                     )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the get home position command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the get home position command "
+                    f"sent to Agent ({msg.__target_system}, {msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -2452,6 +3192,20 @@ class Connection:
             NOTE: Validation of this command can take a while. To ensure that the system
             has sufficient time to verify that the home position was properly reset, it may
             be necessary to extend the timeout periods
+
+            :param msg: Reset home position message
+            :type msg: HomePositionMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             system_id = (msg.__target_system, msg.__target_comp)
 
@@ -2459,8 +3213,10 @@ class Connection:
                 current_home_pos = self.devices[system_id].home_position
 
                 self.logger.info(
-                    f"The initial home position prior to home location reset is as follows: \
-                    Latitude: {current_home_pos.latitude}, Longitude: {current_home_pos.longitude}, Altitude: {current_home_pos.altitude}"
+                    "The initial home position prior to home location reset is as "
+                    f"follows: Latitude: {current_home_pos.latitude}, Longitude: "
+                    f"{current_home_pos.longitude}, Altitude: "
+                    f"{current_home_pos.altitude}"
                 )
 
             # Set the home position to the current location
@@ -2482,7 +3238,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the reset home position to current position command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the reset home position "
+                    f"to current position command sent to Agent "
+                    f"({msg.__target_system}, {msg.__target_comp})"
                 )
                 ack = True
 
@@ -2504,24 +3262,32 @@ class Connection:
                         )
 
                         # Get the updated home position
-                        self.__send_msg_helper(update_home_state_msg, device_exists)
+                        self.__send_seq_msg(update_home_state_msg, device_exists)
 
                         if time.time() - start_time >= msg.__state_timeout:
                             ack = False
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully the reset the home position of Agent ({msg.__target_system}, {msg.__target_comp}) to: \
-                            Latitude: {self.devices[system_id].home_position.latitude}, Longitude: {self.devices[system_id].home_position.longitude}, \
-                            Altitude: {self.devices[system_id].home_position.altitude}"
+                            "Successfully the reset the home position of Agent "
+                            f"({msg.__target_system}, {msg.__target_comp}) to: "
+                            "Latitude: "
+                            f"{self.devices[system_id].home_position.latitude}, "
+                            "Longitude: "
+                            f"{self.devices[system_id].home_position.longitude}, "
+                            f"Altitude: "
+                            f"{self.devices[system_id].home_position.altitude}"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to reset the home position of Agent ({msg.__target_system}, {msg.__target_comp})"
+                            "Failed to reset the home position of Agent "
+                            f"({msg.__target_system}, {msg.__target_comp})"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the reset home position to current position command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the reset home position to "
+                    f"current position command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -2538,6 +3304,20 @@ class Connection:
         ) -> bool:
             """
             Reset the saved home position of an agent to the desired position
+
+            :param msg: Reset home position message
+            :type msg: HomePositionMsg
+
+            :param fn_id: The index of the method in the message type function handler
+                list, defaults to 0
+            :type fn_id: int, optional
+
+            :param device_exists: Flag indicating whether the device that the message
+                is intended for exists in the network, defaults to False
+            :type device_exists: bool, optional
+
+            :return: Indicates whether or not the message was successfully sent
+            :rtype: bool
             """
             if (
                 msg.__longitude is None
@@ -2545,13 +3325,15 @@ class Connection:
                 or msg.__altitude is None
             ):
                 self.logger.exception(
-                    "Cannot reset the home location to the given location unless the latitude, longitude, and altitude are all provided."
+                    "Cannot reset the home location to the given location unless the "
+                    "latitude, longitude, and altitude are all provided."
                 )
                 return False
 
             if msg.__altitude < 0.0 or msg.__altitude > 150.0:
                 self.logger.exception(
-                    f"An invalid home position altitude was provided ({msg.__altitude}). Please set a valid altitude"
+                    "An invalid home position altitude was provided "
+                    f"({msg.__altitude}). Please set a valid altitude"
                 )
                 return False
 
@@ -2561,8 +3343,10 @@ class Connection:
                 current_home_pos = self.devices[system_id]
 
                 self.logger.info(
-                    f"The initial home position prior to home location reset is as follows: \
-                    Latitude: {current_home_pos.latitude}, Longitude: {current_home_pos.longitude}, Altitude: {current_home_pos.altitude}"
+                    "The initial home position prior to home location reset is "
+                    f"as follows: Latitude: {current_home_pos.latitude}, Longitude: "
+                    f"{current_home_pos.longitude}, Altitude: "
+                    f"{current_home_pos.altitude}"
                 )
 
             # Set the home position to the desired location
@@ -2584,7 +3368,9 @@ class Connection:
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.__ack_timeout):
                 self.logger.info(
-                    f"Successfully acknowledged reception of the reset home position command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Successfully acknowledged reception of the reset home position "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
                 ack = True
 
@@ -2606,24 +3392,32 @@ class Connection:
                         )
 
                         # Get the updated home position
-                        self.__send_msg_helper(update_home_state_msg, device_exists)
+                        self.__send_seq_msg(update_home_state_msg, device_exists)
 
                         if time.time() - start_time >= msg.__state_timeout:
                             ack = False
                             break
                     if ack:
                         self.logger.info(
-                            f"Successfully the reset the home position of Agent ({msg.__target_system}, {msg.__target_comp}) to: \
-                            Latitude: {self.devices[system_id].home_position.latitude}, Longitude: {self.devices[system_id].home_position.longitude}, \
-                            Altitude: {self.devices[system_id].home_position.altitude}"
+                            "Successfully the reset the home position of Agent "
+                            f"({msg.__target_system}, {msg.__target_comp}) to: "
+                            "Latitude: "
+                            f"{self.devices[system_id].home_position.latitude}, "
+                            "Longitude: "
+                            f"{self.devices[system_id].home_position.longitude}, "
+                            f"Altitude: "
+                            f"{self.devices[system_id].home_position.altitude}"
                         )
                     else:
                         self.logger.error(
-                            f"Failed to reset the home position of Agent ({msg.__target_system}, {msg.__target_comp})"
+                            "Failed to reset the home position of Agent "
+                            f"({msg.__target_system}, {msg.__target_comp})"
                         )
             else:
                 self.logger.error(
-                    f"Failed to acknowledge reception of the reset home position command sent to Agent ({msg.__target_system}, {msg.__target_comp})"
+                    "Failed to acknowledge reception of the reset home position "
+                    f"command sent to Agent ({msg.__target_system}, "
+                    f"{msg.__target_comp})"
                 )
 
             if msg.__retry and not ack:
@@ -2634,22 +3428,53 @@ class Connection:
 
             return ack
 
-    def __init_logger(self, name, log_level: int = logging.INFO) -> logging.Logger:
+    def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
         """
         Initialize the logger with the desired debug levels
+
+        :param name: The name of the logger
+        :type name: str
+
+        :param log_level: The log level to display, defaults to logging.INFO
+        :type log_level: int, optional
+
+        :return: A newly configured logger
+        :rtype: logging.Logger
         """
         logging.basicConfig()
         logger = logging.getLogger(name)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(log_level)
         return logger
 
-    def on_message(self, msg):
+    @property
+    def connected(self) -> bool:
+        """
+        Flag indicating whether the system currently has a connection
+
+        :rtype: bool
+        """
+        return self.connected
+
+    @property
+    def devices(self) -> dict:
+        """
+        The current set of recognized devices
+
+        The dict keys are (system ID, component ID) tuples
+
+        :rtype: dict
+        """
+
+    def on_message(self, msg: Union[list, str]):
         """
         Decorator used to create a listener for a mavlink message
         This implementation has been inspired by the following source:
             * Project: Dronekit
             * Repository: dronekit
             * URL: https://github.com/dronekit/dronekit-python
+
+        :param msg: The type of message to watch for
+        :type msg: Union[list, str]
         """
 
         def decorator(fn):
@@ -2661,25 +3486,33 @@ class Connection:
 
         return decorator
 
-    def add_message_listener(self, msg, fn) -> None:
+    def add_message_listener(self, msg: str, fn) -> None:
         """
         Add a new function to the dictionary of message listeners
         This implementation has been inspired by the following source:
             * Project: Dronekit
             * Repository: dronekit
             * URL: https://github.com/dronekit/dronekit-python
-        """
-        if msg not in self.message_listeners:
-            self.message_listeners[msg] = []
 
-        if fn not in self.message_listeners[msg]:
-            self.message_listeners[msg].append(fn)
+        :param msg: The message type to bind the function to
+        :type msg: str
+        :param fn: The function to connect
+        :type fn: function
+        """
+        if msg not in self.__message_listeners:
+            self.__message_listeners[msg] = []
+
+        if fn not in self.__message_listeners[msg]:
+            self.__message_listeners[msg].append(fn)
 
         return
 
-    def send_message(self, msg):
+    def send_message(self, msg: Union[list, str]):
         """
         Decorator used to create a sender for a mavlink message
+
+        :param msg: The message type to connect to the sender
+        :type msg: Union[list, str]
         """
 
         def decorator(fn):
@@ -2691,15 +3524,21 @@ class Connection:
 
         return decorator
 
-    def add_message_sender(self, msg, fn) -> None:
+    def add_message_sender(self, msg: str, fn) -> None:
         """
         Add a new function to the dictionary of message senders
-        """
-        if msg not in self.message_senders:
-            self.message_senders[msg] = []
 
-        if fn not in self.message_senders[msg]:
-            self.message_senders[msg].append(fn)
+        :param msg: The message type to connect to the sender
+        :type msg: str
+
+        :param fn: The function to connect
+        :type fn: function
+        """
+        if msg not in self.__message_senders:
+            self.__message_senders[msg] = []
+
+        if fn not in self.__message_senders[msg]:
+            self.__message_senders[msg].append(fn)
 
         return
 
@@ -2708,7 +3547,7 @@ class Connection:
         Function used to sent a heartbeat to the network indicating that the GCS
         is still operating
         """
-        while self.connected:
+        while self.__connected:
             self.master.mav.heartbeat_send(
                 mavutil.mavlink.MAV_TYPE_GCS,
                 mavutil.mavlink.MAV_AUTOPILOT_INVALID,
@@ -2726,21 +3565,21 @@ class Connection:
         """
         Handle incoming messages and distribute them to their respective handlers
         """
-        while self.connected:
+        while self.__connected:
             # Update the timeout flag for each device
-            for key in self.devices:
-                if self.devices[key].last_heartbeat is not None:
-                    self.devices[key].timeout = (
-                        monotonic.monotonic() - self.devices[key].last_heartbeat
-                    ) >= self.devices[key].timeout_period
+            for key in self.__devices:
+                if self.__devices[key].last_heartbeat is not None:
+                    self.__devices[key].timeout = (
+                        monotonic.monotonic() - self.__devices[key].last_heartbeat
+                    ) >= self.__devices[key].timeout_period
 
             # Read a new message
             try:
-                if not self.read_msg_mutex.acquire(timeout=1.0):
+                if not self.__read_msg_mutex.acquire(timeout=1.0):
                     msg = None
                 else:
                     msg = self.master.recv_msg()
-                    self.read_msg_mutex.release()
+                    self.__read_msg_mutex.release()
             except mavutil.mavlink.MAVError as e:
                 self.logger.debug("An error occurred on MAVLink message reception")
                 msg = None
@@ -2755,8 +3594,8 @@ class Connection:
                 continue
 
             # Apply the respective message handler(s)
-            if msg.get_type() in self.message_listeners:
-                for fn in self.message_listeners[msg.get_type()]:
+            if msg.get_type() in self.__message_listeners:
+                for fn in self.__message_listeners[msg.get_type()]:
                     try:
                         fn(self, msg)
                     except Exception:
@@ -2767,9 +3606,19 @@ class Connection:
 
         return
 
-    def __retry_msg_send(self, msg, fn) -> bool:
+    def __retry_msg_send(self, msg: Any, fn) -> bool:
         """
-        Retry a message send until the an acknowledgement is received or a timeout occurs
+        Retry a message send until the an acknowledgement is received or a timeout
+        occurs
+
+        :param msg: The message to retry sending
+        :type msg: Any
+
+        :param fn: The function to call using the message
+        :type fn: function
+
+        :return: Indicate whether the retry was successful
+        :rtype: bool
         """
         ack = False
         start_time = time.time()
@@ -2788,8 +3637,18 @@ class Connection:
     def __ack_msg(self, msg_type: str, timeout=1.0) -> Tuple[bool, Any]:
         """
         Helper method used to ensure that a distributed msg is acknowledged
+
+        :param msg_type: The type of message that should be acknowledged
+        :type msg_type: str
+
+        :param timeout: The acceptable time period before the acknowledgement is
+            considered timed out, defaults to 1.0
+        :type timeout: float, optional
+
+        :return: _description_
+        :rtype: Tuple[bool, Any]
         """
-        if not self.read_msg_mutex.acquire(timeout=1.0):
+        if not self.__read_msg_mutex.acquire(timeout=1.0):
             return False
 
         # Flag indicating whether the message was acknowledged
@@ -2819,17 +3678,20 @@ class Connection:
                 )
 
         # Continue reading status messages
-        self.read_msg_mutex.release()
+        self.__read_msg_mutex.release()
 
         return ack_success, ack_msg
 
     def send_msg_handler(self, msg: Any) -> None:
         """
-        Public method that is accesssed by the mavsarm interface to signal the handler
+        Public method that is accesssed by the mavswarm interface to signal the handler
         to complete message sending
+
+        :param msg: The message to send
+        :type msg: Any
         """
         # Make sure that a connection is established before attempting to send a message
-        if self.connected:
+        if self.__connected:
             handler_t = threading.Thread(target=self.__send_msg_handler, args=(msg,))
 
             # Send the message
@@ -2837,17 +3699,28 @@ class Connection:
 
         return
 
-    def __send_msg_helper(self, msg: Any, device_exists: bool) -> bool:
+    def __send_seq_msg(self, msg: Any, device_exists: bool) -> bool:
         """
         Helper function used to handle calling all of the message handlers.
         This method is used by the sequence commands such as the full takeoff
         command to provide indication of a function execution result.
 
         NOTE: THIS IS USED DO NOT DELETE
+
+        :param msg: The message to send
+        :type msg: Any
+
+        :param device_exists: Flag indicating whether the given device exists in the
+            network
+        :type device_exists: bool
+
+        :return: Indicates whether all of the message senders for a given message
+            successfully sent their respective message
+        :rtype: bool
         """
         # Helper function used to send the desired command
-        if msg.get_type() in self.message_senders:
-            for fn_id, fn in enumerate(self.message_senders[msg.get_type()]):
+        if msg.get_type() in self.__message_senders:
+            for fn_id, fn in enumerate(self.__message_senders[msg.get_type()]):
                 try:
                     if not fn(self, msg, fn_id=fn_id, device_exists=device_exists):
                         return False
@@ -2859,23 +3732,28 @@ class Connection:
     def __send_msg_handler(self, msg: Any) -> None:
         """
         Handle sending messages to the agents on the network
+
+        :param msg: The message to send
+        :type msg: Any
         """
         try:
             # Send the message if there is a message sender for it
-            if msg.get_type() in self.message_senders:
+            if msg.get_type() in self.__message_senders:
                 device_exists = False
 
-                if (msg.target_system, msg.target_comp) in self.devices:
+                if (msg.target_system, msg.target_comp) in self.__devices:
                     device_exists = True
                 else:
                     self.logger.info(
-                        f"The current set of registered devices does not include Agent ({msg.target_system, msg.target_comp}). \
-                        The provided message will still be sent; however, the system may not be able to confirm reception of the message."
+                        "The current set of registered devices does not include Agent "
+                        f"({msg.target_system, msg.target_comp}). The provided message "
+                        "will still be sent; however, the system may not be able to "
+                        "confirm reception of the message."
                     )
 
-                for fn_id, fn in enumerate(self.message_senders[msg.get_type()]):
+                for fn_id, fn in enumerate(self.__message_senders[msg.get_type()]):
                     # Prevent multiple sends from occurring at once
-                    self.send_msg_mutex.acquire()
+                    self.__send_msg_mutex.acquire()
 
                     # Execute the command
                     try:
@@ -2886,7 +3764,7 @@ class Connection:
                             exc_info=True,
                         )
                     finally:
-                        self.send_msg_mutex.release()
+                        self.__send_msg_mutex.release()
         except Exception:
             self.logger.exception(
                 f"An error occurred while attempting to send the provided message",
@@ -2898,9 +3776,12 @@ class Connection:
     def set_param_handler(self, param: Parameter) -> None:
         """
         Set the value of a parameter on a given agent
+
+        :param param: The parameter to set
+        :type param: Parameter
         """
         # Make sure that a connection is established before attempting to set a param
-        if self.connected:
+        if self.__connected:
             handler_t = threading.Thread(target=self.__set_param_handler, args=(param,))
 
             # Set the parameter
@@ -2911,9 +3792,12 @@ class Connection:
     def __set_param_handler(self, param: Parameter) -> None:
         """
         Handle setting parameters on an agent in the network
+
+        :param param: The parameter to set
+        :type param: Parameter
         """
         # Prevent multiple sends from occurring at once
-        self.send_msg_mutex.acquire()
+        self.__send_msg_mutex.acquire()
 
         try:
             self.__set_param(param)
@@ -2923,15 +3807,22 @@ class Connection:
                 exc_info=True,
             )
         finally:
-            self.send_msg_mutex.release()
+            self.__send_msg_mutex.release()
 
         return
 
     def __set_param(self, param: Parameter) -> bool:
         """
-        Set the value of a parameter. Note that this sets the parameter value in RAM
-        and not to EEPROM. Therefore, on reboot, the parameters will be reset to their
-        default values
+        Set the value of a parameter.
+
+        NOTE: This sets the parameter value in RAM and not to EEPROM. Therefore, on
+        reboot, the parameters will be reset to their default values
+
+        :param param: The parameter to set
+        :type param: Parameter
+
+        :return: Indicates whether the parameter was successfully set
+        :rtype: bool
         """
         try:
             # NOTE: In the current state, we only support float parameter value types
@@ -2945,8 +3836,8 @@ class Connection:
             )
         except Exception as e:
             self.logger.error(
-                f"An error occurred while attempting to set {param.__param_id} to {param.__param_value}",
-                e,
+                f"An error occurred while attempting to set {param.__param_id} to "
+                f"{param.__param_value}"
             )
             return False
 
@@ -2961,11 +3852,13 @@ class Connection:
 
         if ack:
             self.logger.info(
-                f"Successfully set {param.__param_id} to {param.__param_value} on Agent ({param.__sys_id}, {param.__comp_id})"
+                f"Successfully set {param.__param_id} to {param.__param_value} on "
+                f"Agent ({param.__sys_id}, {param.__comp_id})"
             )
         else:
             self.logger.error(
-                f"Failed to set {param.__param_id} to {param.__param_value} on Agent ({param.__sys_id}, {param.__comp_id})"
+                f"Failed to set {param.__param_id} to {param.__param_value} on Agent "
+                f"({param.__sys_id}, {param.__comp_id})"
             )
 
         return ack
@@ -2973,9 +3866,12 @@ class Connection:
     def read_param_handler(self, param: Parameter) -> None:
         """
         Read the value of a parameter
+
+        :param param: The parameter to read
+        :type param: Parameter
         """
         # Make sure that a connection is established before attempting to set a param
-        if self.connected:
+        if self.__connected:
             handler_t = threading.Thread(
                 target=self.__read_param_handler, args=(param,)
             )
@@ -2987,29 +3883,38 @@ class Connection:
 
     def __read_param_handler(self, param: Parameter) -> None:
         """
-        Handler responsible for reading requested parameters. Note that this
-        thread is primarily responsible for handling read requests and verifying
-        that a read was accomplished on the message listener thread. The agent state
-        itself is updated on the message listener thread
+        Handler responsible for reading requested parameters.
+
+        NOTE: This thread is primarily responsible for handling read requests and
+        verifying that a read was accomplished on the message listener thread. The
+        agent state itself is updated on the message listener thread
+
+        :param param: The parameter to read
+        :type param: Parameter
         """
         # Prevent multiple reads from occurring at once
-        self.send_msg_mutex.acquire()
+        self.__send_msg_mutex.acquire()
 
         try:
             self.__read_param(param)
         except Exception:
             self.logger.exception(
-                f"An error occurred while attempting to send the provided message",
-                exc_info=True,
+                f"An error occurred while attempting to send the provided message"
             )
         finally:
-            self.send_msg_mutex.release()
+            self.__send_msg_mutex.release()
 
         return
 
     def __read_param(self, param: Parameter) -> bool:
         """
         Read a desired parameter value
+
+        :param param: The parameter to read
+        :type param: Parameter
+
+        :return: Indicates whether the parameter was successfully read
+        :rtype: bool
         """
         try:
             self.master.mav.param_request_read_send(
@@ -3017,8 +3922,8 @@ class Connection:
             )
         except Exception as e:
             self.logger.exception(
-                f"An exception occurred while attempting to read {param.__param_id} from Agent ({param.__sys_id}, {param.__comp_id})",
-                e,
+                f"An exception occurred while attempting to read {param.__param_id} "
+                f"from Agent ({param.__sys_id}, {param.__comp_id})",
             )
             return False
 
@@ -3035,7 +3940,7 @@ class Connection:
                 msg["param_count"],
             )
 
-            self.devices[(param.__sys_id, param.__comp_id)].last_params_read.append(
+            self.__devices[(param.__sys_id, param.__comp_id)].last_params_read.append(
                 read_param
             )
         else:
@@ -3045,11 +3950,13 @@ class Connection:
 
         if ack:
             self.logger.info(
-                f"Successfully read {param.__param_id} from Agent ({param.__sys_id}, {param.__comp_id}). Value: {msg}"
+                f"Successfully read {param.__param_id} from Agent ({param.__sys_id}, "
+                f"{param.__comp_id}). Value: {msg}"
             )
         else:
             self.logger.error(
-                f"Failed to read {param.__param_id} from Agent ({param.__sys_id}, {param.__comp_id})"
+                f"Failed to read {param.__param_id} from Agent ({param.__sys_id}, "
+                f"{param.__comp_id})"
             )
 
         return ack
@@ -3067,8 +3974,8 @@ class Connection:
         Start all threads available to the connection for message reception,
         message sending, and heartbeat handling
         """
-        self.heartbeat_t.start()
-        self.incoming_msg_t.start()
+        self.__heartbeat_t.start()
+        self.__incoming_msg_t.start()
 
         return
 
@@ -3076,11 +3983,11 @@ class Connection:
         """
         Join all threads
         """
-        if self.heartbeat_t is not None:
-            self.heartbeat_t.join()
+        if self.__heartbeat_t is not None:
+            self.__heartbeat_t.join()
 
-        if self.incoming_msg_t is not None:
-            self.incoming_msg_t.join()
+        if self.__incoming_msg_t is not None:
+            self.__incoming_msg_t.join()
 
         return
 
@@ -3088,9 +3995,9 @@ class Connection:
         """
         Close the connection and disconnect all threads
         """
-        self.connected = False
+        self.__connected = False
         self.__stop_t()
-        self.devices.clear()
+        self.__devices.clear()
 
         if self.master is not None:
             self.master.close()
