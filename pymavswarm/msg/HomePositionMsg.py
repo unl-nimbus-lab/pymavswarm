@@ -1,5 +1,5 @@
 from typing import Optional
-from .AgentMsg import AgentMsg
+from AgentMsg import AgentMsg
 
 
 class HomePositionMsg(AgentMsg):

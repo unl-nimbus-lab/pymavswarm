@@ -1,4 +1,4 @@
-from .AgentMsg import AgentMsg
+from AgentMsg import AgentMsg
 
 
 class FlightSpeedMsg(AgentMsg):
