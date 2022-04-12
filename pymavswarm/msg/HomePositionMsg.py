@@ -120,3 +120,19 @@ class HomePositionMsg(AgentMsg):
         :rtype: float
         """
         return self.__longitude
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the context of the message
+
+        :rtype: dict
+        """
+        context = super().context
+
+        # Update to include new properties
+        context["latitude"] = self.__latitude
+        context["longitude"] = self.__longitude
+        context["altitude"] = self.__altitude
+
+        return context

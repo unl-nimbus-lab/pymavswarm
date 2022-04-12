@@ -1,3 +1,6 @@
+from typing import Callable
+
+
 class State:
     """
     Parent class used to provide relationship between state objects
@@ -12,7 +15,7 @@ class State:
 
         return
 
-    def add_callback(self, fn) -> None:
+    def add_callback(self, fn: Callable) -> None:
         """
         Add a new observer callback
 
@@ -22,7 +25,7 @@ class State:
         self.callbacks.append(fn)
         return
 
-    def remove_callback(self, fn) -> None:
+    def remove_callback(self, fn: Callable) -> None:
         """
         Remove a given function from the list of observers
 

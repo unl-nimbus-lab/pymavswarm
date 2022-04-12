@@ -177,3 +177,23 @@ class WaypointMsg(AgentMsg):
         :rtype: float
         """
         return self.__alt
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the context of the message
+
+        :rtype: dict
+        """
+        context = super().context
+
+        # Update to include new properties
+        context["yaw"] = self.__yaw
+        context["pass_radius"] = self.__pass_radius
+        context["accept_radius"] = self.__accept_radius
+        context["hold"] = self.__hold
+        context["latitude"] = self.__latitude
+        context["longitude"] = self.__longitude
+        context["altitude"] = self.__altitude
+
+        return context

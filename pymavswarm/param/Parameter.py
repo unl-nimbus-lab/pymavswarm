@@ -1,3 +1,8 @@
+import sys
+
+sys.path.append("../..")
+
+from event import Event
 from typing import Union, Optional
 
 
@@ -12,10 +17,9 @@ class Parameter:
         comp_id: int,
         param_id: str,
         retry: bool,
-        msg_timeout: float = 3.0,
         param_value: Optional[Union[float, int]] = None,
+        msg_timeout: float = 3.0,
         ack_timeout: float = 1.0,
-        callbacks: list = [],
     ) -> None:
         """
         :param sys_id: The system ID of the agent whose parameters should be set/read
@@ -43,28 +47,24 @@ class Parameter:
 
         :param ack_timeout: _description_, defaults to 1.0
         :type ack_timeout: float, optional
-
-        :param callbacks: _description_, defaults to []
-        :type callbacks: list, optional
         """
         self.__sys_id = sys_id
         self.__comp_id = comp_id
         self.__param_id = param_id
-        self.__param_value = param_value
         self.__retry = retry
+        self.__param_value = param_value
+
+        if msg_timeout < 0.0 or ack_timeout < 0.0:
+            raise ValueError(
+                "An invalid timeout or delay was provided. Ensure that "
+                "all timeouts and delays are non-negative"
+            )
+            
         self.__msg_timeout = msg_timeout
         self.__ack_timeout = ack_timeout
-        self.__callbacks = callbacks
+        self.__parameter_read_result_event = Event()
+        self.__parameter_write_result_event = Event()
 
-        return
-
-    def add_param_callback(self, fn) -> None:
-        self.__callbacks.append(fn)
-        return
-
-    def remove_param_callback(self, fn) -> None:
-        if fn in self.__callbacks:
-            self.__callbacks.remove(fn)
         return
 
     @property
@@ -143,3 +143,38 @@ class Parameter:
         :rtype: float
         """
         return self.__ack_timeout
+
+    @property
+    def parameter_read_result_event(self) -> Event:
+        """
+        Event signaling the result of a parameter read result
+
+        :rtype: Event
+        """
+        return self.__parameter_read_result_event
+
+    @property
+    def parameter_write_result_event(self) -> Event:
+        """
+        Event signaling the result of a parameter write result
+
+        :rtype: Event
+        """
+        return self.__parameter_write_result_event
+
+    @property
+    def context(self) -> dict:
+        """
+        The current context of the parameter when an event occurred
+
+        :rtype: dict
+        """
+        return {
+            "sys_id": self.__sys_id,
+            "comp_id": self.__comp_id,
+            "param_id": self.__param_id,
+            "param_value": self.__param_value,
+            "retry": self.__retry,
+            "msg_timeout": self.__msg_timeout,
+            "ack_timeout": self.__ack_timeout,
+        }

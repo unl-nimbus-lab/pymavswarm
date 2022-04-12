@@ -86,3 +86,17 @@ class FlightSpeedMsg(AgentMsg):
         :rtype: float
         """
         return self.__speed
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the context of the message
+
+        :rtype: dict
+        """
+        context = super().context
+
+        # Update to include new properties
+        context["speed"] = self.__speed
+
+        return context

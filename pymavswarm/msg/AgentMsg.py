@@ -1,3 +1,10 @@
+import sys
+
+sys.path.append("../..")
+
+from event import Event
+
+
 class AgentMsg:
     """
     Parent class used to construct MAVLink commands
@@ -14,7 +21,6 @@ class AgentMsg:
         state_timeout: float = 5.0,
         state_delay: float = 3.0,
         validate_state: bool = False,
-        callbacks: list = [],
     ) -> None:
         """
         :param msg_type: The sub-message type for a message
@@ -56,31 +62,30 @@ class AgentMsg:
             that the message caused the desired state change in the system, defaults to
             False
         :type validate_state: bool
-
-        :param callbacks: List of methods that should be signaled on message events,
-            defaults to []
-        :type callbacks: list
         """
         self.__msg_type = msg_type
         self.__target_system = target_system
         self.__target_comp = target_comp
         self.__retry = retry
+
+        if (
+            msg_timeout < 0.0
+            or ack_timeout < 0.0
+            or state_timeout < 0.0
+            or state_delay < 0.0
+        ):
+            raise ValueError(
+                "An invalid timeout or delay was provided. Ensure that "
+                "all timeouts and delays are non-negative"
+            )
+
         self.__msg_timeout = msg_timeout
         self.__ack_timeout = ack_timeout
         self.__state_timeout = state_timeout
         self.__state_delay = state_delay
         self.__validate_state = validate_state
-        self.__callbacks = callbacks
+        self.__message_result_event = Event()
 
-        return
-
-    def add_message_callback(self, fn) -> None:
-        self.__callbacks.append(fn)
-        return
-
-    def remove_message_callback(self, fn) -> None:
-        if fn in self.__callbacks:
-            self.__callbacks.remove(fn)
         return
 
     @property
@@ -184,3 +189,32 @@ class AgentMsg:
         :rtype: bool
         """
         return self.__validate_state
+
+    @property
+    def message_result_event(self) -> Event:
+        """
+        Event signaling the result of a message send
+
+        :rtype: Event
+        """
+        return self.__message_result_event
+
+    @property
+    def context(self) -> dict:
+        """
+        Current context of the message
+
+        :return: Dictionary with the message context
+        :rtype: dict
+        """
+        return {
+            "msg_type": self.__msg_type,
+            "target_system": self.__target_system,
+            "target_comp": self.__target_comp,
+            "retry": self.__retry,
+            "msg_timeout": self.__msg_timeout,
+            "ack_timeout": self.__ack_timeout,
+            "state_timeout": self.__state_timeout,
+            "state_delay": self.__state_delay,
+            "validate_state": self.__validate_state,
+        }

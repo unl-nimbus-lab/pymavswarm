@@ -1,3 +1,4 @@
+import imp
 from .MavSwarm import MavSwarm
 from .msg import *
 from .param import Parameter
