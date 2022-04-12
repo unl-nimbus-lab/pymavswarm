@@ -1,6 +1,6 @@
 import logging
 from typing import Optional
-from .Waypoint import Waypoint
+from Waypoint import Waypoint
 
 
 class Mission:
@@ -78,6 +78,21 @@ class Mission:
 
         return True
 
+    def remove_waypoint(self, waypoint: Waypoint) -> bool:
+        """
+        Remove the provided waypoint from the list of waypoints
+
+        :param waypoint: Waypoint to remove
+        :type waypoint: Waypoint
+
+        :return: Flag indicating whether the waypoint was successfully removed
+        :rtype: bool
+        """
+        if waypoint in self.__waypoints:
+            self.__waypoints.remove(waypoint)
+
+        return True
+
     def remove_waypoint_by_index(self, index: int) -> bool:
         """
         Remove the waypoint at the given index
@@ -127,3 +142,11 @@ class Mission:
                 self.__waypoints.remove(waypoint)
 
         return True
+
+    def clear_waypoints(self) -> None:
+        """
+        Remove all waypoints from the mission
+        """
+        self.__waypoints.clear()
+
+        return
