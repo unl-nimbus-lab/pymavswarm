@@ -7,10 +7,7 @@ class Battery(State):
     """
 
     def __init__(
-        self,
-        voltage: float = 0.0,
-        current: float = 0.0,
-        level: float = 0.0
+        self, voltage: float = 0.0, current: float = 0.0, level: float = 0.0
     ) -> None:
         """
         :param voltage: Battery voltage (mV), UINT16_MAX: Voltage not sent by autopilot,
@@ -41,7 +38,11 @@ class Battery(State):
         :return: Properties of interest associated with the battery state
         :rtype: dict
         """
-        return {"voltage": self.__voltage, "current": self.__current, "level": self.__level}
+        return {
+            "voltage": self.__voltage,
+            "current": self.__current,
+            "level": self.__level,
+        }
 
     @property
     def voltage(self) -> float:
@@ -63,7 +64,7 @@ class Battery(State):
         self.__voltage = voltage
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -90,7 +91,7 @@ class Battery(State):
             self.__current = current / 100.0
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -115,6 +116,6 @@ class Battery(State):
         self.__level = level
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return

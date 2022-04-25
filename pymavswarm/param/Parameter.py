@@ -59,7 +59,7 @@ class Parameter:
                 "An invalid timeout or delay was provided. Ensure that "
                 "all timeouts and delays are non-negative"
             )
-            
+
         self.__msg_timeout = msg_timeout
         self.__ack_timeout = ack_timeout
         self.__parameter_read_result_event = Event()

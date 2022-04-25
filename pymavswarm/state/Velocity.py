@@ -53,7 +53,7 @@ class Velocity(State):
         self.__vx = vel
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -77,7 +77,7 @@ class Velocity(State):
         self.__vy = vel
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -101,6 +101,6 @@ class Velocity(State):
         self.__vz = vel
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return

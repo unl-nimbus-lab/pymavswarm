@@ -61,7 +61,7 @@ class Location(State):
         self.__latitude = lat
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -85,7 +85,7 @@ class Location(State):
         self.__longitude = lon
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -109,6 +109,6 @@ class Location(State):
         self.__altitude = alt
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return

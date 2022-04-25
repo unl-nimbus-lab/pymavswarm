@@ -101,7 +101,7 @@ class EKFStatus(State):
         self.__velocity_variance = variance
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -125,7 +125,7 @@ class EKFStatus(State):
         self.__pos_horiz_variance = variance
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -149,7 +149,7 @@ class EKFStatus(State):
         self.__pos_vert_variance = variance
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -173,7 +173,7 @@ class EKFStatus(State):
         self.__compass_variance = variance
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -197,7 +197,7 @@ class EKFStatus(State):
         self.terrain_alt_variance = variance
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -221,7 +221,7 @@ class EKFStatus(State):
         self.__pos_horiz_abs = flags
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -246,7 +246,7 @@ class EKFStatus(State):
         self.__const_pos_mode = flags
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -270,6 +270,6 @@ class EKFStatus(State):
         self.__pred_pos_horiz_abs = pred
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return

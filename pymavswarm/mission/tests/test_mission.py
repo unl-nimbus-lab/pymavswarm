@@ -77,7 +77,6 @@ class TestMission(unittest.TestCase):
 
         return
 
-    
     def test_remove_waypoint_by_index(self) -> None:
         """
         Test removing a waypoint from the mission

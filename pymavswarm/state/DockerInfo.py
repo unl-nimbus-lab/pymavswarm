@@ -7,7 +7,11 @@ class DockerInfo(State):
     State of the Docker image deployed on an agent
     """
 
-    def __init__(self, version: str = "0.0.0", last_update: datetime.datetime = datetime.datetime(datetime.MINYEAR, 1, 1)) -> None:
+    def __init__(
+        self,
+        version: str = "0.0.0",
+        last_update: datetime.datetime = datetime.datetime(datetime.MINYEAR, 1, 1),
+    ) -> None:
         """
         :param version: Current version of the Docker image deployed on an agent,
             defaults to "0.0.0"
@@ -53,8 +57,8 @@ class DockerInfo(State):
         """
         self.__version = version
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -78,6 +82,6 @@ class DockerInfo(State):
         self.__last_update = date
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return

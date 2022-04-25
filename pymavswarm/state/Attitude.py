@@ -13,7 +13,7 @@ class Attitude(State):
         roll: float = 0.0,
         pitch_speed: float = 0.0,
         yaw_speed: float = 0.0,
-        roll_speed: float = 0.0
+        roll_speed: float = 0.0,
     ) -> None:
         """
         :param pitch: Pitch angle (-pi..+pi), defaults to 0.0
@@ -82,7 +82,7 @@ class Attitude(State):
         self.__pitch = angle
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -106,7 +106,7 @@ class Attitude(State):
         self.__yaw = angle
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -130,7 +130,7 @@ class Attitude(State):
         self.__roll = angle
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -154,7 +154,7 @@ class Attitude(State):
         self.__pitch_speed = rate
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -178,7 +178,7 @@ class Attitude(State):
         self.__roll_speed = rate
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -202,6 +202,6 @@ class Attitude(State):
         self.__yaw_speed = rate
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return

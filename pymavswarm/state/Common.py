@@ -52,7 +52,7 @@ class Common(State):
         self.__value = value
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 

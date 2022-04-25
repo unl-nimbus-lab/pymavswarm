@@ -71,7 +71,7 @@ class GPSInfo(State):
         self.__eph = dilution
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -95,7 +95,7 @@ class GPSInfo(State):
         self.__epv = dilution
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -119,7 +119,7 @@ class GPSInfo(State):
         self.__fix_type = gps_fix_type
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -143,6 +143,6 @@ class GPSInfo(State):
         self.__satellites_visible = satellites
 
         # Signal state change event
-        self.__state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(context=self.context)
 
         return

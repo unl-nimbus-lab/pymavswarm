@@ -17,7 +17,7 @@ class TestParameter(unittest.TestCase):
 
     def test_parameter_read_result_event(self) -> None:
         """
-        Test the parameter_read_result_event to evaluate whether the event properly 
+        Test the parameter_read_result_event to evaluate whether the event properly
         notifies handlers
         """
         # Create a new message
@@ -54,7 +54,7 @@ class TestParameter(unittest.TestCase):
 
     def test_parameter_write_result_event(self) -> None:
         """
-        Test the parameter_write_result_event to evaluate whether the event properly 
+        Test the parameter_write_result_event to evaluate whether the event properly
         notifies handlers
         """
         # Create a new message
