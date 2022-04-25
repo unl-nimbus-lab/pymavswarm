@@ -538,7 +538,7 @@ class Agent:
         """
         return self.__custom_events
 
-    @property.setter
+    @custom_events.setter
     def custom_events(self, events: List[Event]) -> None:
         """
         custom_events setter
