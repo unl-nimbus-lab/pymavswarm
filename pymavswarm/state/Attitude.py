@@ -13,8 +13,7 @@ class Attitude(State):
         roll: float = 0.0,
         pitch_speed: float = 0.0,
         yaw_speed: float = 0.0,
-        roll_speed: float = 0.0,
-        callbacks: list = [],
+        roll_speed: float = 0.0
     ) -> None:
         """
         :param pitch: Pitch angle (-pi..+pi), defaults to 0.0
@@ -34,11 +33,8 @@ class Attitude(State):
 
         :param roll_speed: Roll angular speed (rad/s), defaults to [], defaults to 0.0
         :type roll_speed: float, optional
-
-        :param callbacks: State change observers
-        :type callbacks: list, optional
         """
-        super().__init__(callbacks)
+        super().__init__()
 
         self.__pitch = pitch
         self.__yaw = yaw
@@ -49,7 +45,8 @@ class Attitude(State):
 
         return
 
-    def get_current_state(self) -> dict:
+    @property
+    def context(self) -> dict:
         """
         Get the current state as a dictionary for callbacks
 
@@ -57,12 +54,12 @@ class Attitude(State):
         :rtype: dict
         """
         return {
-            "roll": self.roll,
-            "pitch": self.pitch,
-            "yaw": self.yaw,
-            "roll_speed": self.roll_speed,
-            "pitch_speed": self.pitch_speed,
-            "yaw_speed": self.yaw_speed,
+            "roll": self.__roll,
+            "pitch": self.__pitch,
+            "yaw": self.__yaw,
+            "roll_speed": self.__roll_speed,
+            "pitch_speed": self.__pitch_speed,
+            "yaw_speed": self.__yaw_speed,
         }
 
     @property
@@ -84,8 +81,8 @@ class Attitude(State):
         """
         self.__pitch = angle
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -108,8 +105,8 @@ class Attitude(State):
         """
         self.__yaw = angle
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -132,8 +129,8 @@ class Attitude(State):
         """
         self.__roll = angle
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -156,8 +153,8 @@ class Attitude(State):
         """
         self.__pitch_speed = rate
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -180,8 +177,8 @@ class Attitude(State):
         """
         self.__roll_speed = rate
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -204,7 +201,7 @@ class Attitude(State):
         """
         self.__yaw_speed = rate
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return

@@ -7,33 +7,30 @@ class Common(State):
     Common state object used to provide observer capabilities to basic types
     """
 
-    def __init__(self, value: Any, name: str, callbacks: list = []) -> None:
+    def __init__(self, value: Any, name: str) -> None:
         """
         :param value: Value to initialize the state as
         :type value: Any
 
-        :param name: The name of the state value to provide when getting the current
-            state
+        :param name: The name of the state value to provide when getting the context
         :type name: str
-
-        :param callbacks: Observers to call on state change, defaults to []
-        :type callbacks: list, optional
         """
-        super().__init__(callbacks)
+        super().__init__()
 
         self.__value = value
         self.__name = name
 
         return
 
-    def get_current_state(self) -> dict:
+    @property
+    def context(self) -> dict:
         """
         Get the current state as a dictionary for callbacks
 
         :return: Current value of the state
         :rtype: dict
         """
-        return {self.__name: self.id}
+        return {self.__name: self.__value}
 
     @property
     def value(self) -> int:
@@ -54,7 +51,16 @@ class Common(State):
         """
         self.__value = value
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
+
+    @property
+    def name(self) -> str:
+        """
+        The name associated with the state to provide when retrieving the context
+
+        :rtype: str
+        """
+        return self.__name

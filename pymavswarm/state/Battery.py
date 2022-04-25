@@ -10,8 +10,7 @@ class Battery(State):
         self,
         voltage: float = 0.0,
         current: float = 0.0,
-        level: float = 0.0,
-        callbacks: list = [],
+        level: float = 0.0
     ) -> None:
         """
         :param voltage: Battery voltage (mV), UINT16_MAX: Voltage not sent by autopilot,
@@ -25,11 +24,8 @@ class Battery(State):
         :param level: Battery energy remaining (%), -1: Battery remaining energy not
             sent by autopilot, defaults to 0.0
         :type level: float, optional
-
-        :param callbacks: State change observers, defaults to []
-        :type callbacks: list, optional
         """
-        super().__init__(callbacks)
+        super().__init__()
 
         self.__voltage = voltage
         self.__current = current
@@ -37,14 +33,15 @@ class Battery(State):
 
         return
 
-    def get_current_state(self) -> dict:
+    @property
+    def context(self) -> dict:
         """
         Get the current state as a dictionary for callbacks
 
         :return: Properties of interest associated with the battery state
         :rtype: dict
         """
-        return {"voltage": self.voltage, "current": self.current, "level": self.level}
+        return {"voltage": self.__voltage, "current": self.__current, "level": self.__level}
 
     @property
     def voltage(self) -> float:
@@ -65,8 +62,8 @@ class Battery(State):
         """
         self.__voltage = voltage
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -92,8 +89,8 @@ class Battery(State):
         else:
             self.__current = current / 100.0
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -117,7 +114,7 @@ class Battery(State):
         """
         self.__level = level
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return

@@ -1,4 +1,8 @@
-from typing import Callable
+import sys
+
+sys.path.append("../..")
+
+from event import Event
 
 
 class State:
@@ -6,40 +10,25 @@ class State:
     Parent class used to provide relationship between state objects
     """
 
-    def __init__(self, callbacks: list = []) -> None:
-        """
-        :param callbacks: State change observers, defaults to []
-        :type callbacks: list, optional
-        """
-        self.callbacks = callbacks
+    def __init__(self) -> None:
+        self.__state_changed_event = Event()
 
         return
 
-    def add_callback(self, fn: Callable) -> None:
+    @property
+    def state_changed_event(self) -> Event:
         """
-        Add a new observer callback
+        Indicates that the current property values of a state class have changed
 
-        :param fn: function to add to the list of observers
-        :type fn: function
+        :rtype: Event
         """
-        self.callbacks.append(fn)
-        return
+        return self.__state_changed_event
 
-    def remove_callback(self, fn: Callable) -> None:
+    @property
+    def context(self) -> dict:
         """
-        Remove a given function from the list of observers
-
-        :param fn: Function to remove
-        :type fn: function
-        """
-        if fn in self.callbacks:
-            self.callbacks.remove(fn)
-        return
-
-    def get_current_state(self) -> dict:
-        """
-        Abstract method, get the current properties of a state object
+        Get the current properties of a state object
 
         :rtype: dict
         """
-        raise NotImplementedError
+        raise NotImplementedError("This method has not been implemented")

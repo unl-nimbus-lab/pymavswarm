@@ -27,7 +27,8 @@ class Location(State):
 
         return
 
-    def get_current_state(self) -> dict:
+    @property
+    def context(self) -> dict:
         """
         Get the current state as a dictionary for callbacks
 
@@ -59,8 +60,8 @@ class Location(State):
         """
         self.__latitude = lat
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -83,8 +84,8 @@ class Location(State):
         """
         self.__longitude = lon
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -107,7 +108,7 @@ class Location(State):
         """
         self.__altitude = alt
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return

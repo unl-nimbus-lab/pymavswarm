@@ -36,7 +36,8 @@ class GPSInfo(State):
 
         return
 
-    def get_current_state(self) -> dict:
+    @property
+    def context(self) -> dict:
         """
         Get the current state as a dictionary for callbacks
 
@@ -69,8 +70,8 @@ class GPSInfo(State):
         """
         self.__eph = dilution
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -93,8 +94,8 @@ class GPSInfo(State):
         """
         self.__epv = dilution
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -117,8 +118,8 @@ class GPSInfo(State):
         """
         self.__fix_type = gps_fix_type
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -141,7 +142,7 @@ class GPSInfo(State):
         """
         self.__satellites_visible = satellites
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return

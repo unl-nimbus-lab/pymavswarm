@@ -17,7 +17,8 @@ class Telemetry(State):
 
         return
 
-    def get_current_state(self) -> dict:
+    @property
+    def context(self) -> dict:
         """
         Get the current state as a dictionary for callbacks
 
@@ -46,7 +47,7 @@ class Telemetry(State):
         """
         self.__drop_rate = rate
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return

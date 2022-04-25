@@ -1,8 +1,9 @@
 import monotonic
 from .state import *
+from .event import Event
 from .mission import Mission
 from collections import deque
-from typing import Optional, Any
+from typing import List, Optional, Any
 
 
 class Agent:
@@ -61,6 +62,7 @@ class Agent:
         self.__last_params_read = deque(maxlen=max_params_stored)
         self.__home_position = Location()
         self.__hrl_state = Common("None", "hrl_state")
+        self.__custom_events = []
 
         return
 
@@ -525,4 +527,24 @@ class Agent:
         :type state: str
         """
         self.__hrl_state.value = state
+        return
+
+    @property
+    def custom_events(self) -> List[Event]:
+        """
+        A configurable list that can be used to enable non-default custom events
+
+        :rtype: List[Event]:
+        """
+        return self.__custom_events
+
+    @property.setter
+    def custom_events(self, events: List[Event]) -> None:
+        """
+        custom_events setter
+
+        :param events: The list of custom events
+        :type events: List[Event]
+        """
+        self.__custom_events = events
         return

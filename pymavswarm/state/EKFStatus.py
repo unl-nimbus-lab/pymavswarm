@@ -62,7 +62,8 @@ class EKFStatus(State):
 
         return
 
-    def get_current_state(self) -> dict:
+    @property
+    def context(self) -> dict:
         """
         Get the current state as a dictionary for callbacks
 
@@ -99,8 +100,8 @@ class EKFStatus(State):
         """
         self.__velocity_variance = variance
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -123,8 +124,8 @@ class EKFStatus(State):
         """
         self.__pos_horiz_variance = variance
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -147,8 +148,8 @@ class EKFStatus(State):
         """
         self.__pos_vert_variance = variance
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -171,8 +172,8 @@ class EKFStatus(State):
         """
         self.__compass_variance = variance
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -195,8 +196,8 @@ class EKFStatus(State):
         """
         self.terrain_alt_variance = variance
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -219,8 +220,8 @@ class EKFStatus(State):
         """
         self.__pos_horiz_abs = flags
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -244,8 +245,8 @@ class EKFStatus(State):
         """
         self.__const_pos_mode = flags
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return
 
@@ -268,7 +269,7 @@ class EKFStatus(State):
         """
         self.__pred_pos_horiz_abs = pred
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return

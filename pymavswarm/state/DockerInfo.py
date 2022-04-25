@@ -1,4 +1,5 @@
 from .State import State
+import datetime
 
 
 class DockerInfo(State):
@@ -6,36 +7,32 @@ class DockerInfo(State):
     State of the Docker image deployed on an agent
     """
 
-    def __init__(
-        self, version: str = "None", last_update: str = "None", callbacks: list = []
-    ) -> None:
+    def __init__(self, version: str = "0.0.0", last_update: datetime.datetime = datetime.datetime(datetime.MINYEAR, 1, 1)) -> None:
         """
         :param version: Current version of the Docker image deployed on an agent,
-            defaults to "None"
+            defaults to "0.0.0"
         :type version: str, optional
 
         :param last_update: The date on which the Docker image deployed on the agent
-            was last updated, defaults to "None"
-        :type last_update: str, optional
-
-        :param callbacks: Observers to call on state change, defaults to []
-        :type callbacks: list, optional
+            was last updated, defaults to 1/1/1
+        :type last_update: datetime.datetime, optional
         """
-        super().__init__(callbacks)
+        super().__init__()
 
         self.__version = version
         self.__last_update = last_update
 
         return
 
-    def get_current_state(self) -> dict:
+    @property
+    def context(self) -> dict:
         """
         Get the current state as a dictionary for callbacks
 
         :return: Properties of interested associated with the docker information
         :rtype: dict
         """
-        return {"version": self.version, "last_update": self.last_update}
+        return {"version": self.__version, "last_update": self.__last_update}
 
     @property
     def version(self) -> str:
@@ -80,7 +77,7 @@ class DockerInfo(State):
         """
         self.__last_update = date
 
-        for cb in self.callbacks:
-            cb(self.get_current_state())
+        # Signal state change event
+        self.__state_changed_event.notify(context=self.context)
 
         return

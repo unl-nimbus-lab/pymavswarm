@@ -1,6 +1,6 @@
 import logging
 from .Agent import Agent
-from typing import Optional, Union
+from typing import Optional
 from .Connection import Connection
 
 
