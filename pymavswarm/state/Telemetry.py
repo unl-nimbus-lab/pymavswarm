@@ -1,4 +1,4 @@
-from .State import State
+from pymavswarm.state.State import State
 
 
 class Telemetry(State):
@@ -13,6 +13,8 @@ class Telemetry(State):
             defaults to 0.0
         :type drop_rate: float, optional
         """
+        super().__init__()
+        
         self.__drop_rate = drop_rate
 
         return

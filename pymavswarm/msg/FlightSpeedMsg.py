@@ -1,4 +1,4 @@
-from AgentMsg import AgentMsg
+from pymavswarm.msg.AgentMsg import AgentMsg
 
 
 class FlightSpeedMsg(AgentMsg):
@@ -17,7 +17,6 @@ class FlightSpeedMsg(AgentMsg):
         ack_timeout: float = 1.0,
         state_timeout: float = 5.0,
         state_delay: float = 3.0,
-        validate_state: bool = False,
     ) -> None:
         """
         :param speed: The desired speed in m/s
@@ -57,11 +56,6 @@ class FlightSpeedMsg(AgentMsg):
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
-
-        :param validate_state: Flag indicating that pymavswarm should check to ensure
-            that the message caused the desired state change in the system, defaults to
-            False
-        :type validate_state: bool, optional
         """
         super().__init__(
             msg_type,
@@ -72,7 +66,6 @@ class FlightSpeedMsg(AgentMsg):
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,
-            validate_state=validate_state,
         )
         self.__speed = speed
 

@@ -1,8 +1,4 @@
-import sys
-
-sys.path.append("../..")
-
-from event import Event
+from pymavswarm.event import Event
 
 
 class State:

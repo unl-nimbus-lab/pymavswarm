@@ -2,14 +2,14 @@ import math
 import time
 import atexit
 import logging
-import asyncio
 import monotonic
 import threading
-from .msg import *
-from .state import *
-from .Agent import Agent
-from .param import Parameter
+from pymavswarm.msg import *
 from pymavlink import mavutil
+from pymavswarm.state import *
+from pymavswarm.Agent import Agent
+from pymavswarm.event import Event
+from pymavswarm.param import Parameter
 from typing import Any, Callable, Tuple, Union
 from pymavlink.dialects.v10 import ardupilotmega
 
@@ -76,6 +76,7 @@ class Connection:
         # Class variables
         self.__connected = True
         self.__devices = {}
+        self.__device_list_changed = Event()
 
         # Message Handlers
         self.__message_listeners = {}
@@ -120,19 +121,20 @@ class Connection:
             device = Agent(sys_id, comp_id, timeout_period=agent_timeout)
 
             # If the device hasn't been seen before, save it
-            if device_id not in self.devices:
-                self.devices[device_id] = device
+            if device_id not in self.__devices:
+                self.__devices[device_id] = device
+                self.__device_list_changed.notify()
             else:
                 # The connection has been restored
-                if self.devices[device_id].timeout:
+                if self.__devices[device_id].timeout:
                     self.logger.info(
                         f"Connection to device {sys_id}:{comp_id} has been restored"
                     )
 
             # Update the last heartbeat variable
-            self.devices[device_id].last_heartbeat = monotonic.monotonic()
+            self.__devices[device_id].last_heartbeat = monotonic.monotonic()
 
-            self.devices[device_id].timeout = False
+            self.__devices[device_id].timeout = False
 
             return
 
@@ -156,22 +158,22 @@ class Connection:
             device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not device_tuple in self.devices:
+            if not device_tuple in self.__devices:
                 return
 
-            self.devices[device_tuple].armed = (
+            self.__devices[device_tuple].armed = (
                 msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
             ) != 0
 
-            self.devices[device_tuple].system_status = msg.system_status
-            self.devices[device_tuple].vehicle_type = msg.type
+            self.__devices[device_tuple].system_status = msg.system_status
+            self.__devices[device_tuple].vehicle_type = msg.type
 
             # Update the last heartbeat
-            self.devices[device_tuple].last_heartbeat = monotonic.monotonic()
+            self.__devices[device_tuple].last_heartbeat = monotonic.monotonic()
 
             try:
                 # NOTE: We assume that ArduPilot will be used
-                self.devices[device_tuple].flight_mode = mavutil.mode_mapping_bynumber(
+                self.__devices[device_tuple].flight_mode = mavutil.mode_mapping_bynumber(
                     msg.type
                 )[msg.custom_mode]
             except Exception as e:
@@ -196,28 +198,28 @@ class Connection:
             device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not device_tuple in self.devices:
+            if not device_tuple in self.__devices:
                 return
 
             # Update the device velocity
-            if self.devices[device_tuple].velocity is None:
+            if self.__devices[device_tuple].velocity is None:
                 v = Velocity(msg.vx / 100, msg.vy / 100, msg.vz / 100)
-                self.devices[device_tuple].velocity = v
+                self.__devices[device_tuple].velocity = v
             else:
-                self.devices[device_tuple].velocity.vx = msg.vx / 100
-                self.devices[device_tuple].velocity.vy = msg.vy / 100
-                self.devices[device_tuple].velocity.vz = msg.vz / 100
+                self.__devices[device_tuple].velocity.vx = msg.vx / 100
+                self.__devices[device_tuple].velocity.vy = msg.vy / 100
+                self.__devices[device_tuple].velocity.vz = msg.vz / 100
 
             # Update the device location
-            if self.devices[device_tuple].location is None:
+            if self.__devices[device_tuple].location is None:
                 loc = Location(
                     msg.lat / 1.0e7, msg.lon / 1.0e7, msg.relative_alt / 1000
                 )
-                self.devices[device_tuple].location = loc
+                self.__devices[device_tuple].location = loc
             else:
-                self.devices[device_tuple].location.latitude = msg.lat / 1.0e7
-                self.devices[device_tuple].location.longitude = msg.lon / 1.0e7
-                self.devices[device_tuple].location.altitude = msg.relative_alt / 1000
+                self.__devices[device_tuple].location.latitude = msg.lat / 1.0e7
+                self.__devices[device_tuple].location.longitude = msg.lon / 1.0e7
+                self.__devices[device_tuple].location.altitude = msg.relative_alt / 1000
 
             return
 
@@ -237,11 +239,11 @@ class Connection:
             device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not device_tuple in self.devices:
+            if not device_tuple in self.__devices:
                 return
 
             # Update the respective devices attitude
-            if self.devices[device_tuple].attitude is None:
+            if self.__devices[device_tuple].attitude is None:
                 att = Attitude(
                     msg.pitch,
                     msg.yaw,
@@ -250,14 +252,14 @@ class Connection:
                     msg.yawspeed,
                     msg.rollspeed,
                 )
-                self.devices[device_tuple].attitude = att
+                self.__devices[device_tuple].attitude = att
             else:
-                self.devices[device_tuple].attitude.pitch = msg.pitch
-                self.devices[device_tuple].attitude.roll = msg.roll
-                self.devices[device_tuple].attitude.yaw = msg.yaw
-                self.devices[device_tuple].attitude.pitch_speed = msg.pitchspeed
-                self.devices[device_tuple].attitude.roll_speed = msg.rollspeed
-                self.devices[device_tuple].attitude.yaw_speed = msg.yawspeed
+                self.__devices[device_tuple].attitude.pitch = msg.pitch
+                self.__devices[device_tuple].attitude.roll = msg.roll
+                self.__devices[device_tuple].attitude.yaw = msg.yaw
+                self.__devices[device_tuple].attitude.pitch_speed = msg.pitchspeed
+                self.__devices[device_tuple].attitude.roll_speed = msg.rollspeed
+                self.__devices[device_tuple].attitude.yaw_speed = msg.yawspeed
 
             return
 
@@ -277,19 +279,19 @@ class Connection:
             device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not device_tuple in self.devices:
+            if not device_tuple in self.__devices:
                 return
 
             # Update the battery information
-            if self.devices[device_tuple].battery is None:
+            if self.__devices[device_tuple].battery is None:
                 batt = Battery(
                     msg.voltage_battery, msg.current_battery, msg.battery_remaining
                 )
-                self.devices[device_tuple].battery = batt
+                self.__devices[device_tuple].battery = batt
             else:
-                self.devices[device_tuple].battery.voltage = msg.voltage_battery
-                self.devices[device_tuple].battery.current = msg.current_battery
-                self.devices[device_tuple].battery.level = msg.battery_remaining
+                self.__devices[device_tuple].battery.voltage = msg.voltage_battery
+                self.__devices[device_tuple].battery.current = msg.current_battery
+                self.__devices[device_tuple].battery.level = msg.battery_remaining
 
             return
 
@@ -309,18 +311,18 @@ class Connection:
             device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not device_tuple in self.devices:
+            if not device_tuple in self.__devices:
                 return
 
             # Read the GPS status information
-            if self.devices[device_tuple].gps_info is None:
+            if self.__devices[device_tuple].gps_info is None:
                 info = GPSInfo(msg.eph, msg.epv, msg.fix_type, msg.satellites_visible)
-                self.devices[device_tuple].gps_info = info
+                self.__devices[device_tuple].gps_info = info
             else:
-                self.devices[device_tuple].gps_info.eph = msg.eph
-                self.devices[device_tuple].gps_info.epv = msg.epv
-                self.devices[device_tuple].gps_info.fix_type = msg.fix_type
-                self.devices[
+                self.__devices[device_tuple].gps_info.eph = msg.eph
+                self.__devices[device_tuple].gps_info.epv = msg.epv
+                self.__devices[device_tuple].gps_info.fix_type = msg.fix_type
+                self.__devices[
                     device_tuple
                 ].gps_info.satellites_visible = msg.satellites_visible
 
@@ -342,11 +344,11 @@ class Connection:
             device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not device_tuple in self.devices:
+            if not device_tuple in self.__devices:
                 return
 
             # Read the EKF Status information
-            if self.devices[device_tuple].ekf is None:
+            if self.__devices[device_tuple].ekf is None:
                 ekf = EKFStatus(
                     msg.velocity_variance,
                     msg.pos_horiz_variance,
@@ -357,27 +359,27 @@ class Connection:
                     (msg.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0,
                     (msg.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0,
                 )
-                self.devices[device_tuple].ekf = ekf
+                self.__devices[device_tuple].ekf = ekf
             else:
                 # Read variance properties
-                self.devices[device_tuple].ekf.velocity_variance = msg.velocity_variance
-                self.devices[
+                self.__devices[device_tuple].ekf.velocity_variance = msg.velocity_variance
+                self.__devices[
                     device_tuple
                 ].ekf.pos_horiz_variance = msg.pos_horiz_variance
-                self.devices[device_tuple].ekf.pos_vert_variance = msg.pos_vert_variance
-                self.devices[device_tuple].ekf.compass_variance = msg.compass_variance
-                self.devices[
+                self.__devices[device_tuple].ekf.pos_vert_variance = msg.pos_vert_variance
+                self.__devices[device_tuple].ekf.compass_variance = msg.compass_variance
+                self.__devices[
                     device_tuple
                 ].ekf.terrain_alt_variance = msg.terrain_alt_variance
 
                 # Read flags
-                self.devices[device_tuple].ekf.pos_horiz_abs = (
+                self.__devices[device_tuple].ekf.pos_horiz_abs = (
                     msg.flags & ardupilotmega.EKF_POS_HORIZ_ABS
                 ) > 0
-                self.devices[device_tuple].ekf.const_pos_mode = (
+                self.__devices[device_tuple].ekf.const_pos_mode = (
                     msg.flags & ardupilotmega.EKF_CONST_POS_MODE
                 ) > 0
-                self.devices[device_tuple].ekf.pred_pos_horiz_abs = (
+                self.__devices[device_tuple].ekf.pred_pos_horiz_abs = (
                     msg.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS
                 ) > 0
 
@@ -399,11 +401,11 @@ class Connection:
             device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not device_tuple in self.devices:
+            if not device_tuple in self.__devices:
                 return
 
             # Update the respective devices attitude
-            if self.devices[device_tuple].attitude is None:
+            if self.__devices[device_tuple].attitude is None:
                 att = Attitude(
                     msg.pitch,
                     msg.yaw,
@@ -412,14 +414,14 @@ class Connection:
                     msg.yawspeed,
                     msg.rollspeed,
                 )
-                self.devices[device_tuple].attitude = att
+                self.__devices[device_tuple].attitude = att
             else:
-                self.devices[device_tuple].attitude.pitch = msg.pitch
-                self.devices[device_tuple].attitude.roll = msg.roll
-                self.devices[device_tuple].attitude.yaw = msg.yaw
-                self.devices[device_tuple].attitude.pitch_speed = msg.pitchspeed
-                self.devices[device_tuple].attitude.roll_speed = msg.rollspeed
-                self.devices[device_tuple].attitude.yaw_speed = msg.yawspeed
+                self.__devices[device_tuple].attitude.pitch = msg.pitch
+                self.__devices[device_tuple].attitude.roll = msg.roll
+                self.__devices[device_tuple].attitude.yaw = msg.yaw
+                self.__devices[device_tuple].attitude.pitch_speed = msg.pitchspeed
+                self.__devices[device_tuple].attitude.roll_speed = msg.rollspeed
+                self.__devices[device_tuple].attitude.yaw_speed = msg.yawspeed
 
             return
 
@@ -441,21 +443,21 @@ class Connection:
             device_tuple = (sys_id, comp_id)
 
             # Let the heartbeat implementation handle this
-            if not device_tuple in self.devices:
+            if not device_tuple in self.__devices:
                 return
 
             # Update the device home location
-            if self.devices[device_tuple].home_position is None:
+            if self.__devices[device_tuple].home_position is None:
                 loc = Location(
                     msg.latitude / 1.0e7, msg.longitude / 1.0e7, msg.altitude / 1000
                 )
-                self.devices[device_tuple].home_position = loc
+                self.__devices[device_tuple].home_position = loc
             else:
-                self.devices[device_tuple].home_position.latitude = msg.latitude / 1.0e7
-                self.devices[device_tuple].home_position.longitude = (
+                self.__devices[device_tuple].home_position.latitude = msg.latitude / 1.0e7
+                self.__devices[device_tuple].home_position.longitude = (
                     msg.longitude / 1.0e7
                 )
-                self.devices[device_tuple].home_position.altitude = msg.altitude / 1000
+                self.__devices[device_tuple].home_position.altitude = msg.altitude / 1000
 
             return
 
@@ -502,10 +504,10 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
-                    while not self.devices[(msg.target_system, msg.target_comp)].armed:
+                    while not self.__devices[(msg.target_system, msg.target_comp)].armed:
                         if time.time() - start_time >= msg.state_timeout:
                             ack = False
                             break
@@ -576,10 +578,10 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
-                    while self.devices[(msg.target_system, msg.target_comp)].armed:
+                    while self.__devices[(msg.target_system, msg.target_comp)].armed:
                         if time.time() - start_time >= msg.state_timeout:
                             ack = False
                             break
@@ -650,7 +652,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the kill command."
@@ -712,7 +714,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the reboot command."
@@ -774,7 +776,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the shutdown command."
@@ -840,7 +842,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the accelerometer calibration command."
@@ -906,7 +908,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the simple accelerometer calibration command."
@@ -972,7 +974,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the AHRS trim command."
@@ -1038,7 +1040,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the gyroscope calibration command."
@@ -1105,7 +1107,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the magnetometer calibration command."
@@ -1171,7 +1173,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the ground pressure calibration command."
@@ -1238,7 +1240,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the airspeed calibration command."
@@ -1305,7 +1307,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the barometer temperature calibration command."
@@ -1363,11 +1365,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        self.devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
                         != "STABILIZE"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1438,11 +1440,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        self.devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
                         != "ACRO"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1510,11 +1512,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        self.devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
                         != "ALT_HOLD"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1583,11 +1585,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        self.devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
                         != "AUTO"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1655,11 +1657,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        self.devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
                         != "LOITER"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1728,11 +1730,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        self.devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
                         != "RTL"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1801,11 +1803,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        self.devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
                         != "LAND"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1873,11 +1875,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        self.devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
                         != "THROW"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1946,11 +1948,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        self.devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
                         != "SYSTEMID"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2019,11 +2021,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        self.devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
                         != "GUIDED"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2094,11 +2096,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        not self.devices[(msg.target_system, msg.target_comp)].hrl_state
+                        not self.__devices[(msg.target_system, msg.target_comp)].hrl_state
                         != "start"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2169,11 +2171,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        not self.devices[(msg.target_system, msg.target_comp)].hrl_state
+                        not self.__devices[(msg.target_system, msg.target_comp)].hrl_state
                         != "reset"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2241,11 +2243,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        not self.devices[(msg.target_system, msg.target_comp)].hrl_state
+                        not self.__devices[(msg.target_system, msg.target_comp)].hrl_state
                         != "stop"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2316,11 +2318,11 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
                     while (
-                        not self.devices[(msg.target_system, msg.target_comp)].hrl_state
+                        not self.__devices[(msg.target_system, msg.target_comp)].hrl_state
                         != "live"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2394,7 +2396,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the airspeed command."
@@ -2456,7 +2458,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the ground speed command."
@@ -2518,7 +2520,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the climb speed command."
@@ -2580,7 +2582,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the descent speed command."
@@ -2653,7 +2655,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the simple takeoff command."
@@ -2725,7 +2727,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the takeoff command."
@@ -2778,7 +2780,6 @@ class Connection:
                 ack_timeout=msg.ack_timeout,
                 state_timeout=msg.state_timeout,
                 state_delay=msg.state_delay,
-                validate_state=msg.validate_state,
             )
 
             # Attempt to switch to GUIDED mode
@@ -2801,11 +2802,10 @@ class Connection:
                 ack_timeout=msg.ack_timeout,
                 state_timeout=msg.state_timeout,
                 state_delay=msg.state_delay,
-                validate_state=msg.validate_state,
             )
 
             # Attempt to arm the system
-            if self.__send_seq_msg(arm_msg, device_exists):
+            if not self.__send_seq_msg(arm_msg, device_exists):
                 self.logger.error(
                     "Failed to acknowledge reception of the arm command stage within "
                     "the simple full takeoff command sent to Agent "
@@ -2815,13 +2815,13 @@ class Connection:
                 return False
 
             # Give the agent a chance to fully arm
-            asyncio.sleep(msg.state_delay)
+            time.sleep(msg.state_delay)
 
             # Reset the message type to be a simple takeoff command
             msg.msg_type = MsgMap().mission_commands.simple_takeoff
 
             # Attempt to perform takeoff
-            if self.__send_seq_msg(msg, device_exists):
+            if not self.__send_seq_msg(msg, device_exists):
                 self.logger.error(
                     "Failed to acknowledge reception of the takeoff command stage "
                     "within the simple full takeoff command sent to Agent "
@@ -2831,7 +2831,8 @@ class Connection:
                 return False
 
             self.logger.info(
-                "Successfully sent and acknowledged all steps in the simple full takeoff command sequence."
+                "Successfully sent and acknowledged all steps in the simple full "
+                "takeoff command sequence."
             )
 
             return True
@@ -2870,7 +2871,6 @@ class Connection:
                 ack_timeout=msg.ack_timeout,
                 state_timeout=msg.state_timeout,
                 state_delay=msg.state_delay,
-                validate_state=msg.validate_state,
             )
 
             # Attempt to switch to GUIDED mode
@@ -2893,11 +2893,10 @@ class Connection:
                 ack_timeout=msg.ack_timeout,
                 state_timeout=msg.state_timeout,
                 state_delay=msg.state_delay,
-                validate_state=msg.validate_state,
             )
 
             # Attempt to arm the system
-            if self.__send_seq_msg(arm_msg, device_exists):
+            if not self.__send_seq_msg(arm_msg, device_exists):
                 self.logger.error(
                     "Failed to acknowledge reception of the arm command stage within "
                     f"the full takeoff command sent to Agent ({msg.target_system}, "
@@ -2906,22 +2905,24 @@ class Connection:
                 return False
 
             # Give the agent a chance to fully arm
-            asyncio.sleep(msg.state_delay)
+            time.sleep(msg.state_delay)
 
             # Reset the message type to be a simple takeoff command
             msg.msg_type = MsgMap().mission_commands.takeoff
 
             # Attempt to perform takeoff
-            if self.__send_seq_msg(msg, device_exists):
+            if not self.__send_seq_msg(msg, device_exists):
                 self.logger.error(
                     "Failed to acknowledge reception of the takeoff command stage "
                     "within the full takeoff command sent to Agent "
-                    f"({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed."
+                    f"({msg.target_system}, {msg.target_comp}). Full takeoff sequence "
+                    "failed."
                 )
                 return False
 
             self.logger.info(
-                "Successfully sent and acknowledged all steps in the full takeoff command sequence."
+                "Successfully sent and acknowledged all steps in the full takeoff "
+                "command sequence."
             )
 
             return True
@@ -2984,7 +2985,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the simple waypoint command."
@@ -3060,7 +3061,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the waypoint command."
@@ -3123,7 +3124,7 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     self.logger.info(
                         "The system does not support verification of state changes for "
                         "the get home position command."
@@ -3150,8 +3151,8 @@ class Connection:
             Reset the saved home position of an agent to the current position
 
             NOTE: Validation of this command can take a while. To ensure that the system
-            has sufficient time to verify that the home position was properly reset, it may
-            be necessary to extend the timeout periods
+            has sufficient time to verify that the home position was properly reset, it 
+            may be necessary to extend the timeout periods
 
             :param msg: Reset home position message
             :type msg: HomePositionMsg
@@ -3170,7 +3171,7 @@ class Connection:
             system_id = (msg.target_system, msg.target_comp)
 
             if device_exists:
-                current_home_pos = self.devices[system_id].home_position
+                current_home_pos = self.__devices[system_id].home_position
 
                 self.logger.info(
                     "The initial home position prior to home location reset is as "
@@ -3204,10 +3205,10 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
-                    while vars(self.devices[system_id]) == vars(current_home_pos):
+                    while vars(self.__devices[system_id]) == vars(current_home_pos):
                         # Signal an update state command
                         update_home_state_msg = AgentMsg(
                             MsgMap().mission_commands.get_home_position,
@@ -3232,11 +3233,11 @@ class Connection:
                             "Successfully the reset the home position of Agent "
                             f"({msg.target_system}, {msg.target_comp}) to: "
                             "Latitude: "
-                            f"{self.devices[system_id].home_position.latitude}, "
+                            f"{self.__devices[system_id].home_position.latitude}, "
                             "Longitude: "
-                            f"{self.devices[system_id].home_position.longitude}, "
+                            f"{self.__devices[system_id].home_position.longitude}, "
                             f"Altitude: "
-                            f"{self.devices[system_id].home_position.altitude}"
+                            f"{self.__devices[system_id].home_position.altitude}"
                         )
                     else:
                         self.logger.error(
@@ -3296,7 +3297,7 @@ class Connection:
             system_id = (msg.target_system, msg.target_comp)
 
             if device_exists:
-                current_home_pos = self.devices[system_id]
+                current_home_pos = self.__devices[system_id]
 
                 self.logger.info(
                     "The initial home position prior to home location reset is "
@@ -3330,10 +3331,10 @@ class Connection:
                 )
                 ack = True
 
-                if msg.validate_state and device_exists:
+                if device_exists:
                     start_time = time.time()
 
-                    while vars(self.devices[system_id]) == vars(current_home_pos):
+                    while vars(self.__devices[system_id]) == vars(current_home_pos):
                         # Signal an update state command
                         update_home_state_msg = AgentMsg(
                             MsgMap().mission_commands.get_home_position,
@@ -3358,11 +3359,11 @@ class Connection:
                             "Successfully the reset the home position of Agent "
                             f"({msg.target_system}, {msg.target_comp}) to: "
                             "Latitude: "
-                            f"{self.devices[system_id].home_position.latitude}, "
+                            f"{self.__devices[system_id].home_position.latitude}, "
                             "Longitude: "
-                            f"{self.devices[system_id].home_position.longitude}, "
+                            f"{self.__devices[system_id].home_position.longitude}, "
                             f"Altitude: "
-                            f"{self.devices[system_id].home_position.altitude}"
+                            f"{self.__devices[system_id].home_position.altitude}"
                         )
                     else:
                         self.logger.error(
@@ -3420,6 +3421,16 @@ class Connection:
 
         :rtype: dict
         """
+        return self.__devices
+
+    @property
+    def device_list_changed(self) -> Event:
+        """
+        Event indicating that the list of devices had a new device added or removed
+
+        :rtype: Event
+        """
+        return self.__device_list_changed
 
     def on_message(self, msg: Union[list, str]):
         """

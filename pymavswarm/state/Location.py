@@ -1,4 +1,4 @@
-from .State import State
+from pymavswarm.state.State import State
 
 
 class Location(State):
@@ -21,6 +21,8 @@ class Location(State):
             defaults to 0.0
         :type altitude: float, optional
         """
+        super().__init__()
+        
         self.__latitude = latitude
         self.__longitude = longitude
         self.__altitude = altitude

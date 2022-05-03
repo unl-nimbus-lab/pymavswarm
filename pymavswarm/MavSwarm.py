@@ -1,7 +1,7 @@
 import logging
-from .Agent import Agent
-from typing import Optional
-from .Connection import Connection
+from pymavswarm.event import Event
+from pymavswarm.Agent import Agent
+from pymavswarm.Connection import Connection
 
 
 class MavSwarm:
@@ -39,6 +39,16 @@ class MavSwarm:
             return [*self.__connection.devices.values()]
         else:
             return []
+
+    @property
+    def device_list_changed(self) -> Event:
+        """
+        Event that signals when the list of devices has changed
+
+        :rtype: Event
+        """
+        return self.__connection.device_list_changed
+
 
     def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
         """
@@ -166,7 +176,7 @@ class MavSwarm:
 
         return
 
-    def get_agent_by_id(self, sys_id: int, comp_id: int) -> Optional[Agent]:
+    def get_agent_by_id(self, sys_id: int, comp_id: int) -> Agent:
         """
         Get a specific agent by its system ID and component ID
 
@@ -186,7 +196,7 @@ class MavSwarm:
 
         return None
 
-    def get_agent_by_name(self, name: str) -> Optional[Agent]:
+    def get_agent_by_name(self, name: str) -> Agent:
         """
         Get the first agent in the swarm with the specified name
 

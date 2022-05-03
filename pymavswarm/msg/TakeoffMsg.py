@@ -1,5 +1,5 @@
 from typing import Optional
-from AgentMsg import AgentMsg
+from pymavswarm.msg.AgentMsg import AgentMsg
 
 
 class TakeoffMsg(AgentMsg):
@@ -20,7 +20,6 @@ class TakeoffMsg(AgentMsg):
         ack_timeout: float = 1.0,
         state_timeout: float = 5.0,
         state_delay: float = 3.0,
-        validate_state: bool = False,
     ) -> None:
         """
         :param msg_type: The sub-message type for a message
@@ -66,11 +65,6 @@ class TakeoffMsg(AgentMsg):
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
-
-        :param validate_state: Flag indicating that pymavswarm should check to ensure
-            that the message caused the desired state change in the system, defaults to
-            False
-        :type validate_state: bool, optional
         """
         super().__init__(
             msg_type,
@@ -81,7 +75,6 @@ class TakeoffMsg(AgentMsg):
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,
-            validate_state=validate_state,
         )
         self.__altitude = alt
         self.__latitude = lat

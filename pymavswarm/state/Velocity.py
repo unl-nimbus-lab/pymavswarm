@@ -1,4 +1,4 @@
-from .State import State
+from pymavswarm.state.State import State
 
 
 class Velocity(State):
@@ -17,6 +17,8 @@ class Velocity(State):
         :param vz: Ground Z Speed (Altitude, positive down), defaults to 0.0
         :type vz: float, optional
         """
+        super().__init__()
+        
         self.__vx = vx
         self.__vy = vy
         self.__vz = vz

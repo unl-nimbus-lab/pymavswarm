@@ -1,4 +1,4 @@
-from .State import State
+from pymavswarm.state.State import State
 
 
 class EKFStatus(State):
@@ -15,8 +15,7 @@ class EKFStatus(State):
         terrain_alt_variance: float = 0.0,
         pos_horiz_abs: float = 0.0,
         const_pos_mode: float = 0.0,
-        pred_pos_horiz_abs: float = 0.0,
-        callbacks: list = [],
+        pred_pos_horiz_abs: float = 0.0
     ) -> None:
         """
         :param velocity_variance: Velocity variance, defaults to 0.0
@@ -45,11 +44,8 @@ class EKFStatus(State):
         :param pred_pos_horiz_abs: EKF's predicted horizontal position (absolute)
             estimate is good, defaults to 0.0
         :type pred_pos_horiz_abs: float, optional
-
-        :param callbacks: Observers to call on state change, defaults to []
-        :type callbacks: list, optional
         """
-        super().__init__(callbacks)
+        super().__init__()
 
         self.__velocity_variance = velocity_variance
         self.__pos_horiz_variance = pos_horiz_variance
@@ -194,7 +190,7 @@ class EKFStatus(State):
         :param variance: Terrain altitude variance
         :type variance: float
         """
-        self.terrain_alt_variance = variance
+        self.__terrain_alt_variance = variance
 
         # Signal state change event
         self.state_changed_event.notify(context=self.context)

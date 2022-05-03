@@ -1,8 +1,4 @@
-import sys
-
-sys.path.append("../..")
-
-from event import Event
+from pymavswarm.event import Event
 
 
 class AgentMsg:
@@ -20,7 +16,6 @@ class AgentMsg:
         ack_timeout: float = 1.0,
         state_timeout: float = 5.0,
         state_delay: float = 3.0,
-        validate_state: bool = False,
     ) -> None:
         """
         :param msg_type: The sub-message type for a message
@@ -57,11 +52,6 @@ class AgentMsg:
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float
-
-        :param validate_state: Flag indicating that pymavswarm should check to ensure
-            that the message caused the desired state change in the system, defaults to
-            False
-        :type validate_state: bool
         """
         self.__msg_type = msg_type
         self.__target_system = target_system
@@ -83,7 +73,6 @@ class AgentMsg:
         self.__ack_timeout = ack_timeout
         self.__state_timeout = state_timeout
         self.__state_delay = state_delay
-        self.__validate_state = validate_state
         self.__message_result_event = Event()
 
         return
@@ -96,6 +85,17 @@ class AgentMsg:
         :rtype: str
         """
         return self.__msg_type
+
+    @msg_type.setter
+    def msg_type(self, msg_type: str) -> None:
+        """
+        msg_type setter
+
+        :param msg_type: Message type
+        :type msg_type: str
+        """
+        self.__msg_type = msg_type
+        return
 
     @property
     def target_system(self) -> int:
@@ -181,16 +181,6 @@ class AgentMsg:
         return self.__state_delay
 
     @property
-    def validate_state(self) -> bool:
-        """
-        Flag indicating that pymavswarm should check to ensure that the
-        message caused the desired state change in the system
-
-        :rtype: bool
-        """
-        return self.__validate_state
-
-    @property
     def message_result_event(self) -> Event:
         """
         Event signaling the result of a message send
@@ -216,5 +206,4 @@ class AgentMsg:
             "ack_timeout": self.__ack_timeout,
             "state_timeout": self.__state_timeout,
             "state_delay": self.__state_delay,
-            "validate_state": self.__validate_state,
         }

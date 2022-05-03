@@ -1,4 +1,4 @@
-from .State import State
+from pymavswarm.state.State import State
 
 
 class Attitude(State):

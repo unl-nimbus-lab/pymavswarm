@@ -1,4 +1,4 @@
-from .State import State
+from pymavswarm.state.State import State
 
 
 class GPSInfo(State):
@@ -29,6 +29,8 @@ class GPSInfo(State):
             UINT8_MAX, defaults to 0
         :type satellites_visible: int, optional
         """
+        super().__init__()
+        
         self.__eph = eph
         self.__epv = epv
         self.__fix_type = fix_type
