@@ -53,7 +53,9 @@ class HRLCommands:
     Enum class used to enable easy retrieval of the command used to send HRL commands
     """
     start_path_execution = 'startpath'
+    reset_path_execution = 'resetpath'
     stop_path_execution = 'stoppath'
+    start_live_execution = 'startlive'
 
 
 @dataclass
@@ -76,6 +78,10 @@ class MissionCommand:
     waypoint = 'waypoint'
     simple_takeoff = 'simpletakeoff'
     takeoff = 'takeoff'
+    full_takeoff = 'fulltakeoff'
+    full_simple_takeoff = 'simplefulltakeoff'
+    reset_home_position_to_current = 'resethomecurrent'
+    reset_home_position = 'resethome'
 
 
 class MsgMap:

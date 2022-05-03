@@ -2,6 +2,7 @@ import math
 import time
 import atexit
 import logging
+import asyncio
 import monotonic
 import threading
 from .msg import *
@@ -345,7 +346,7 @@ class Connection:
 
         
         @self.send_message(['disarm'])
-        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> bool:
             """
             Disarm an agent
             """
@@ -371,7 +372,7 @@ class Connection:
 
         
         @self.send_message(['kill'])
-        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> bool:
             """
             Force disarm an agent
             """
@@ -397,7 +398,7 @@ class Connection:
 
 
         @self.send_message(['reboot'])
-        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> bool:
             """
             Reboot an agent
             """
@@ -423,7 +424,7 @@ class Connection:
 
 
         @self.send_message(['shutdown'])
-        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> bool:
             """
             Shutdown an agent
             """
@@ -449,7 +450,7 @@ class Connection:
 
         
         @self.send_message(['kill'])
-        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> bool:
             """
             Force disarm an agent
             """
@@ -475,7 +476,7 @@ class Connection:
 
 
         @self.send_message(['reboot'])
-        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> bool:
             """
             Reboot an agent
             """
@@ -501,7 +502,7 @@ class Connection:
 
 
         @self.send_message(['shutdown'])
-        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> None:
+        def sender(self, msg: SystemCommandMsg, fn_id: int=0) -> bool:
             """
             Shutdown an agent
             """
@@ -527,7 +528,7 @@ class Connection:
 
 
         @self.send_message(['accelcal'])
-        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> bool:
             """
             Perform a full accelerometer calibration on the selected agent
             """
@@ -553,7 +554,7 @@ class Connection:
 
 
         @self.send_message(['accelcalsimple'])
-        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> bool:
             """
             Perform a simple accelerometer calibration on the selected agent
             """
@@ -579,7 +580,7 @@ class Connection:
 
 
         @self.send_message(['ahrstrim'])
-        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> bool:
             """
             Perform an AHRS trim on the selected agent
             """
@@ -605,7 +606,7 @@ class Connection:
 
 
         @self.send_message(['gyrocal'])
-        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> bool:
             """
             Perform a gyroscope calibration on the selected agent
             """
@@ -631,7 +632,7 @@ class Connection:
 
 
         @self.send_message(['magnetometercal'])
-        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> bool:
             """
             Perform a magnetometer calibration on the selected agent
             """
@@ -657,7 +658,7 @@ class Connection:
 
 
         @self.send_message(['groundpressurecal'])
-        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> bool:
             """
             Perform a ground pressure calibration on the selected agent
             """
@@ -683,7 +684,7 @@ class Connection:
 
 
         @self.send_message(['airspeedcal'])
-        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> bool:
             """
             Perform airspeed calibration on the selected agent
             """
@@ -709,7 +710,7 @@ class Connection:
 
 
         @self.send_message(['barotempcal'])
-        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> None:
+        def sender(self, msg: PreflightCalibrationMsg, fn_id: int=0) -> bool:
             """
             Perform a barometer temperature calibration on the selected agent
             """
@@ -735,7 +736,7 @@ class Connection:
 
 
         @self.send_message(['stabilize'])
-        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> bool:
             """
             Set an agent to STABILIZE mode
             """
@@ -764,7 +765,7 @@ class Connection:
 
 
         @self.send_message(['acro'])
-        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> bool:
             """
             Set an agent to ACRO mode
             """
@@ -793,7 +794,7 @@ class Connection:
 
         
         @self.send_message(['althold'])
-        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> bool:
             """
             Set an agent to ALT_HOLD mode
             """
@@ -822,7 +823,7 @@ class Connection:
 
 
         @self.send_message(['auto'])
-        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> bool:
             """
             Set an agent to AUTO mode
             """
@@ -851,7 +852,7 @@ class Connection:
 
         
         @self.send_message(['loiter'])
-        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> bool:
             """
             Set an agent to LOITER mode
             """
@@ -880,7 +881,7 @@ class Connection:
 
 
         @self.send_message(['rtl'])
-        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> bool:
             """
             Set an agent to RTL mode
             """
@@ -909,7 +910,7 @@ class Connection:
 
 
         @self.send_message(['land'])
-        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> bool:
             """
             Set an agent to LAND mode
             """
@@ -938,7 +939,7 @@ class Connection:
 
 
         @self.send_message(['throw'])
-        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> bool:
             """
             Set an agent to THROW mode
             """
@@ -967,7 +968,7 @@ class Connection:
 
 
         @self.send_message(['systemid'])
-        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> bool:
             """
             Set an agent to SYSTEM ID mode
             """
@@ -996,7 +997,7 @@ class Connection:
 
 
         @self.send_message(['guided'])
-        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightModeMsg, fn_id: int=0) -> bool:
             """
             Set an agent to GUIDED mode
             """
@@ -1025,7 +1026,7 @@ class Connection:
 
         
         @self.send_message(['startpath'])
-        def sender(self, msg: HRLMsg, fn_id: int=0) -> None:
+        def sender(self, msg: HRLMsg, fn_id: int=0) -> bool:
             """
             Start path execution on the respective agent
             """
@@ -1053,10 +1054,10 @@ class Connection:
             return ack
 
         
-        @self.send_message(['stoppath'])
-        def sender(self, msg: HRLMsg, fn_id: int=0) -> None:
+        @self.send_message(['resetpath'])
+        def sender(self, msg: HRLMsg, fn_id: int=0) -> bool:
             """
-            Stop path execution on the respective agent
+            Reset path execution on the respective agent
             """
             # Reset target
             self.master.target_system = msg.target_system
@@ -1075,6 +1076,35 @@ class Connection:
                         ack = True
                     
             if ack:
+                self.logger.info(f'Successfully acknowledged reception of the reset flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the reset flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+
+        @self.send_message(['stoppath'])
+        def sender(self, msg: HRLMsg, fn_id: int=0) -> bool:
+            """
+            Start path execution on the respective agent
+            """
+            # Reset target
+            self.master.target_system = msg.target_system
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), 2)
+
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
                 self.logger.info(f'Successfully acknowledged reception of the stop flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')    
             else:
                 self.logger.error(f'Failed to acknowledge reception of the stop flight path HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')
@@ -1082,8 +1112,37 @@ class Connection:
             return ack
 
 
+        @self.send_message(['startlive'])
+        def sender(self, msg: HRLMsg, fn_id: int=0) -> bool:
+            """
+            Start path execution on the respective agent
+            """
+            # Reset target
+            self.master.target_system = msg.target_system
+            self.master.target_component = msg.target_comp
+
+            # Send flight mode
+            self.master.mav.named_value_int_send(int(time.time()), str.encode('hrl-state-arg'), 3)
+
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
+                self.logger.info(f'Successfully acknowledged reception of the start live HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the start live HRL command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+
         @self.send_message(['airspeed'])
-        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> bool:
             """
             Set a new airspeed on an agent
             """
@@ -1110,7 +1169,7 @@ class Connection:
 
 
         @self.send_message(['groundspeed'])
-        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> bool:
             """
             Set a new airspeed on an agent
             """
@@ -1137,7 +1196,7 @@ class Connection:
 
 
         @self.send_message(['climbspeed'])
-        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> bool:
             """
             Set a new airspeed on an agent
             """
@@ -1164,7 +1223,7 @@ class Connection:
 
 
         @self.send_message(['descentspeed'])
-        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> None:
+        def sender(self, msg: FlightSpeedMsg, fn_id: int=0) -> bool:
             """
             Set a new airspeed on an agent
             """
@@ -1191,7 +1250,7 @@ class Connection:
 
         
         @self.send_message(['simpletakeoff'])
-        def sender(self, msg: TakeoffMsg, fn_id: int=0) -> None:
+        def sender(self, msg: TakeoffMsg, fn_id: int=0) -> bool:
             """
             Perform a simple takeoff command (just takeoff to a set altitude)
             Note that acknowledgement of this command does not indicate that the 
@@ -1225,7 +1284,7 @@ class Connection:
 
 
         @self.send_message(['takeoff'])
-        def sender(self, msg: TakeoffMsg, fn_id: int=0) -> None:
+        def sender(self, msg: TakeoffMsg, fn_id: int=0) -> bool:
             """
             Perform a takeoff command (use lat, lon, and alt)
             Note that acknowledgement of this command does not indicate that the 
@@ -1257,9 +1316,130 @@ class Connection:
 
             return ack
 
+        
+        @self.send_message(['simplefulltakeoff'])
+        def sender(self, msg: TakeoffMsg, fn_id: int=0) -> bool:
+            """
+            Command used to signal execution of a full simple takeoff sequence:
+                1. Switch to GUIDED mode
+                2. Arm
+                3. Takeoff
+            """
+            # Create a new guided mode
+            guided_msg = FlightModeMsg(MsgMap().flight_modes.guided, msg.target_system, msg.target_comp, msg.retry, msg.msg_timeout)
+            
+            # Attempt to switch to GUIDED mode
+            if self.__send_msg_helper(guided_msg):
+                self.logger.info(f'Successfully acknowledged reception of the guided command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the guided command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed.')
+                return False
+
+            # Wait until the system switches into guided mode and ensure that it falls within the timeout period
+            mode_time = time.time()
+
+            while not self.devices[(msg.target_system, msg.target_comp)].flight_mode == 'GUIDED':
+                if time.time() - mode_time >= msg.state_timeout:
+                    self.logger.error(f'The system failed to switch into GUIDED mode on Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
+                    return False
+                
+            # Create a new arming message to send
+            arm_msg = SystemCommandMsg(MsgMap().system_commands.arm, msg.target_system, msg.target_comp, msg.retry, msg.msg_timeout)
+            
+            # Attempt to arm the system
+            if self.__send_msg_helper(arm_msg):
+                self.logger.info(f'Successfully acknowledged reception of the arm command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the arm command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed.')
+                return False
+
+            # Wait until the system arms and ensure that it falls within the timeout period
+            arm_time = time.time()
+
+            while not self.devices[(msg.target_system, msg.target_comp)].armed:
+                if time.time() - arm_time >= msg.state_timeout:
+                    self.logger.error(f'The system failed to arm Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
+                    return False
+
+            # Give the agent a chance to fully arm
+            asyncio.sleep(msg.state_delay)
+
+            # Reset the message type to be a simple takeoff command
+            msg.msg_type = MsgMap().mission_commands.simple_takeoff
+            
+            # Attempt to perform takeoff
+            if self.__send_msg_helper(msg):
+                self.logger.info(f'Successfully acknowledged reception of the takeoff command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the takeoff command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed.')
+                return False
+
+            return True
+
+        
+        @self.send_message(['fulltakeoff'])
+        def sender(self, msg: TakeoffMsg, fn_id: int=0) -> bool:
+            """
+            Command used to signal execution of a full takeoff sequence:
+                1. Switch to GUIDED mode
+                2. Arm
+                3. Takeoff
+            """
+            # Create a new guided mode message
+            guided_msg = FlightModeMsg(MsgMap().flight_modes.guided, msg.target_system, msg.target_comp, msg.retry, msg.msg_timeout)
+            
+            # Attempt to switch to GUIDED mode
+            if self.__send_msg_helper(guided_msg):
+                self.logger.info(f'Successfully acknowledged reception of the guided command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the guided command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed.')
+                return False
+
+            # Wait until the system switches into guided mode and ensure that it falls within the timeout period
+            mode_time = time.time()
+
+            while not self.devices[(msg.target_system, msg.target_comp)].flight_mode == 'GUIDED':
+                if time.time() - mode_time >= msg.state_timeout:
+                    self.logger.error(f'The system failed to switch into GUIDED mode on Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
+                    return False
+                
+            # Create a new arming message to send
+            arm_msg = SystemCommandMsg(MsgMap().system_commands.arm, msg.target_system, msg.target_comp, msg.retry, msg.msg_timeout)
+            
+            # Attempt to arm the system
+            if self.__send_msg_helper(arm_msg):
+                self.logger.info(f'Successfully acknowledged reception of the arm command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the arm command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed.')
+                return False
+
+            # Wait until the system arms and ensure that it falls within the timeout period
+            arm_time = time.time()
+
+            # Wait until the agent is armed
+            while not self.devices[(msg.target_system, msg.target_comp)].armed:
+                if time.time() - arm_time >= msg.state_change_timeout:
+                    self.logger.error(f'The system failed to arm Agent ({msg.target_system}, {msg.target_comp}) within the timeout period.')
+                    return False
+
+            # Give the agent a chance to fully arm
+            asyncio.sleep(msg.state_delay)
+
+            # Reset the message type to be a full takeoff command
+            msg.msg_type = MsgMap().mission_commands.takeoff
+            
+            # Attempt to perform takeoff
+            if self.__send_msg_helper(msg):
+                self.logger.info(f'Successfully acknowledged reception of the takeoff command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the takeoff command stage within the full takeoff command sent to Agent ({msg.target_system}, {msg.target_comp}). Full takeoff sequence failed.')
+                return False
+
+            return True
+
 
         @self.send_message(['simplewaypoint'])
-        def sender(self, msg: WaypointMsg, fn_id: int=0) -> None:
+        def sender(self, msg: WaypointMsg, fn_id: int=0) -> bool:
             """
             Perform a simple waypoint command (just lat, lon, and alt)
             Note that acknowledgement of this command does not indicate that the 
@@ -1312,6 +1492,70 @@ class Connection:
                                               mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 
                                               0, 0, 
                                               msg.hold, msg.accept_radius, msg.pass_radius, msg.yaw, msg.lat, msg.lon, msg.alt)
+
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
+                self.logger.info(f'Successfully acknowledged reception of the waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the waypoint command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+
+        @self.send_message(['resethomecurrent'])
+        def sender(self, msg: HomePositionMsg, fn_id: int=0) -> bool:
+            """
+            Reset the saved home position of an agent to the current position
+            """
+            # Set the home position to the current location
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_DO_SET_HOME, 
+                                              0,
+                                              1, 0, 0, 0, 0, 0, 0)
+
+            ack = False
+
+            if self.__ack_msg('COMMAND_ACK', timeout=msg.ack_timeout)[0]:
+                ack = True
+            else:
+                if msg.retry:
+                    if self.__retry_msg_send(msg, self.message_senders[msg.get_type()][fn_id]):
+                        ack = True
+                    
+            if ack:
+                self.logger.info(f'Successfully acknowledged reception of the reset home command sent to Agent ({msg.target_system}, {msg.target_comp})')    
+            else:
+                self.logger.error(f'Failed to acknowledge reception of the reset home command sent to Agent ({msg.target_system}, {msg.target_comp})')
+
+            return ack
+
+        
+        @self.send_message(['resethome'])
+        def sender(self, msg: HomePositionMsg, fn_id: int=0) -> bool:
+            """
+            Reset the saved home position of an agent to the current position
+            """
+            if msg.lon is None or msg.lat is None or msg.altitude is None:
+                self.logger.exception('Cannot reset the home location to the given location unless the latitude, longitude, and altitude are all provided.')
+                return
+
+            if msg.altitude < 0.0 or msg.altitude > 150.0:
+                self.logger.exception(f'An invalid home position altitude was provided ({msg.altitude}). Please set a valid altitude')
+                return
+
+            # Set the home position to the current location
+            self.master.mav.command_long_send(msg.target_system, msg.target_comp,
+                                              mavutil.mavlink.MAV_CMD_DO_SET_HOME, 
+                                              0,
+                                              0, 0, 0, 0, msg.lat, msg.lon, msg.altitude)
 
             ack = False
 
@@ -1530,26 +1774,47 @@ class Connection:
 
         return
 
+    
+    def __send_msg_helper(self, msg: Any) -> bool:
+        """
+        Helper function used to handle calling all of the message handlers.
+        This method is used by the sequence commands such as the full takeoff
+        command to provide indication of a function execution result.
+
+        NOTE: THIS IS USED DO NOT DELETE
+        """
+        # Helper function used to send the desired command
+        if msg.get_type() in self.message_senders:
+            for fn_id, fn in enumerate(self.message_senders[msg.get_type()]):
+                try:
+                    if not fn(self, msg, fn_id=fn_id):
+                        return False
+                except Exception:
+                    pass
+
+        return True
+
 
     def __send_msg_handler(self, msg: Any) -> None:
         """
         Handle sending messages to the agents on the network
         """
-        # Prevent multiple sends from occurring at once
-        self.send_msg_mutex.acquire()
-
         try:
             # Send the message if there is a message sender for it
             if msg.get_type() in self.message_senders:
                 for fn_id, fn in enumerate(self.message_senders[msg.get_type()]):
+                    # Prevent multiple sends from occurring at once
+                    self.send_msg_mutex.acquire()
+
+                    # Execute the command
                     try:
                         fn(self, msg, fn_id=fn_id)
                     except Exception:
                         self.logger.exception(f'Exception in message sender for {msg.get_type()}', exc_info=True)
+                    finally:
+                        self.send_msg_mutex.release()
         except Exception:
             self.logger.exception(f'An error occurred while attempting to send the provided message', exc_info=True)
-        finally:
-            self.send_msg_mutex.release()
 
         return
         

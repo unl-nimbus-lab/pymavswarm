@@ -1,24 +1,26 @@
 from typing import Optional
 from .AgentMsg import AgentMsg
-from .MsgMap import MissionCommand
 
 
-class TakeoffMsg(AgentMsg):
+class HomePositionMsg(AgentMsg):
     """
-    Message used to indicate that an agent should takeoff to a certain location/altitude
+    HomePositionMsg signals a home position reset. The home position can be reset to the current location
+    or set to a specific location. Note that if the home location is being reset to the current position,
+    then the location is not required. If the home location is being set to a specific location, all
+    components must be set. 
     Params:
-        altitude : m : The altitude that an agent should takeoff to
-        lon      :   : Longitude - this is optional
-        lat      :   : Latitude - this is optional
+        lat  :   : Longitude
+        long :   : Longitude
+        alt  : m : Altitude
     """
     def __init__(self, msg_type: str, 
                  target_system: int, 
                  target_comp: int, 
-                 retry: bool, 
-                 altitude: float=3.0,
+                 retry: bool,
                  lat: Optional[float]=None,
                  lon: Optional[float]=None,
-                 msg_timeout: float=5.0,  
+                 alt: Optional[float]=None,
+                 msg_timeout: float=5.0,
                  ack_timeout: float=1.0,
                  state_timeout: float=5.0,
                  state_delay: float=3.0) -> None:
@@ -30,7 +32,7 @@ class TakeoffMsg(AgentMsg):
                          ack_timeout=ack_timeout,
                          state_timeout=state_timeout,
                          state_delay=state_delay)
-        self.altitude = altitude
+        self.altitude = alt
         self.lat = lat
         self.lon = lon
 

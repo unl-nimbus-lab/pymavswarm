@@ -45,7 +45,7 @@ class MavSwarm:
                 self.connection.start_connection()
             except Exception:
                 # Handle the error message
-                self.logger.debug('MavSwarm was unable to establish a connection with the specified device')
+                self.logger.debug('MavSwarm was unable to establish a connection with the specified device', exc_info=True)
 
                 return False
 
@@ -58,6 +58,7 @@ class MavSwarm:
         """
         if self.connection is not None:
             self.connection.disconnect()
+            self.connection = None
 
         return True
 
@@ -115,9 +116,10 @@ class MavSwarm:
         """
         Get a specific agent by its system ID and component ID
         """
-        for agent in self.connection.devices.values():
-            if agent.sys_id == sys_id and agent.comp_id == comp_id:
-                return agent
+        device_id = (sys_id, comp_id)
+
+        if device_id in self.connection.devices:
+            return self.connection.devices[device_id]
 
         return None
         
