@@ -533,17 +533,22 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the armed state"
                         )
+                        msg.message_result_event.notify(code=MsgStatusCodes.STATE_VALIDATION_FAILURE)
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the arm command sent to Agent "
                     f"({msg.target_system}, {msg.target_comp})"
                 )
+                msg.message_result_event.notify(code=MsgStatusCodes.ACK_FAILURE)
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
+            
+            if ack:
+                msg.message_result_event.notify(code=MsgStatusCodes.SUCCESS)
 
             return ack
 
