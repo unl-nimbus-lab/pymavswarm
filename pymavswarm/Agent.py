@@ -540,12 +540,3 @@ class Agent:
         """
         self.__custom_events = events
         return
-
-    @property
-    def system_status_changed_event(self) -> Event:
-        """
-        An event signaling that any agent property has changed
-
-        :rtype: Event
-        """
-        return self.__system_status_changed_event
