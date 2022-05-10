@@ -6,16 +6,22 @@ class Telemetry(State):
     Telemetry state information
     """
 
-    def __init__(self, drop_rate: float = 0.0) -> None:
+    def __init__(
+        self, drop_rate: float = 0.0, optional_context_props: dict = {}
+    ) -> None:
         """
         :param drop_rate: Communication drop rate, (UART, I2C, SPI, CAN), dropped
             packets on all links (packets that were corrupted on reception on the MAV),
             defaults to 0.0
         :type drop_rate: float, optional
+
+        :param optional_context_props: Optional properties to add to the context
+        :type optional_context_props: dict, optional
         """
         super().__init__()
-        
+
         self.__drop_rate = drop_rate
+        self.__optional_context_props = optional_context_props
 
         return
 
@@ -27,7 +33,10 @@ class Telemetry(State):
         :return: Properties of interested associated with the telemetry
         :rtype: dict
         """
-        return {"drop_rate": self.drop_rate}
+        context = {"drop_rate": self.drop_rate}
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def drop_rate(self) -> float:

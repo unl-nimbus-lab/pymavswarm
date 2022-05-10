@@ -39,29 +39,54 @@ class Agent:
             to 5
         :type max_params_stored: int, optional
         """
-        self.__sys_id = Common(sys_id, "sys_id")
-        self.__comp_id = Common(comp_id, "comp_id")
-        self.__name = Common(name, "name")
-        self.__attitude = Attitude()
-        self.__battery = Battery()
-        self.__docker_info = DockerInfo()
-        self.__gps_info = GPSInfo()
-        self.__location = Location()
-        self.__ekf = EKFStatus()
-        self.__telemetry = Telemetry()
-        self.__velocity = Velocity()
-        self.__armed = Common(False, "armed")
-        self.__flight_mode = Common("None", "flight_mode")
-        self.__system_status = Common("None", "system_status")
-        self.__vehicle_type = Common("None", "vehicle_type")
-        self.__last_heartbeat = Common(monotonic.monotonic(), "last_heartbeat")
-        self.__timeout_period = Common(timeout_period, "timeout_period")
-        self.__timeout = Common(False, "timeout")
-        self.__current_waypoint = Common(0, "current_waypoint")
+        # Immutable
+        self.__sys_id = sys_id
+        self.__comp_id = comp_id
+        self.__name = name
+
+        """
+        We create additional context properties here so that listeners of the 
+        respective property events have information about the parent agent
+        """
+        context_props = {"sys_id": sys_id, "comp_id": comp_id, "name": name}
+
+        # Mutable
+        self.__attitude = Attitude(optional_context_props=context_props)
+        self.__battery = Battery(optional_context_props=context_props)
+        self.__docker_info = DockerInfo(optional_context_props=context_props)
+        self.__gps_info = GPSInfo(optional_context_props=context_props)
+        self.__location = Location(optional_context_props=context_props)
+        self.__ekf = EKFStatus(optional_context_props=context_props)
+        self.__telemetry = Telemetry(optional_context_props=context_props)
+        self.__velocity = Velocity(optional_context_props=context_props)
+        self.__armed = Common(False, "armed", optional_context_props=context_props)
+        self.__flight_mode = Common(
+            "None", "flight_mode", optional_context_props=context_props
+        )
+        self.__system_status = Common(
+            "None", "system_status", optional_context_props=context_props
+        )
+        self.__vehicle_type = Common(
+            "None", "vehicle_type", optional_context_props=context_props
+        )
+        self.__last_heartbeat = Common(
+            monotonic.monotonic(),
+            "last_heartbeat",
+            optional_context_props=context_props,
+        )
+        self.__timeout_period = Common(
+            timeout_period, "timeout_period", optional_context_props=context_props
+        )
+        self.__timeout = Common(False, "timeout", optional_context_props=context_props)
+        self.__current_waypoint = Common(
+            0, "current_waypoint", optional_context_props=context_props
+        )
         self.__mission = Mission()
         self.__last_params_read = deque(maxlen=max_params_stored)
-        self.__home_position = Location()
-        self.__hrl_state = Common("None", "hrl_state")
+        self.__home_position = Location(optional_context_props=context_props)
+        self.__hrl_state = Common(
+            "None", "hrl_state", optional_context_props=context_props
+        )
         self.__custom_events = []
 
         return
@@ -75,17 +100,6 @@ class Agent:
         """
         return self.__sys_id.value
 
-    @sys_id.setter
-    def sys_id(self, id: int) -> None:
-        """
-        sys_id setter
-
-        :param id: Assigned ID number
-        :type id: int
-        """
-        self.__sys_id.value = id
-        return
-
     @property
     def comp_id(self) -> int:
         """
@@ -94,17 +108,6 @@ class Agent:
         :rtype: int
         """
         return self.__comp_id.value
-
-    @comp_id.setter
-    def comp_id(self, id: int) -> None:
-        """
-        comp_id setter
-
-        :param id: Assigned ID number
-        :type id: int
-        """
-        self.__comp_id.value = id
-        return
 
     @property
     def name(self) -> str:
@@ -115,17 +118,6 @@ class Agent:
         :rtype: str
         """
         return self.__name.value
-
-    @sys_id.setter
-    def name(self, name: str) -> None:
-        """
-        name setter
-
-        :param name: Desired name
-        :type name: str
-        """
-        self.__name.value = name
-        return
 
     @property
     def attitude(self) -> Attitude:

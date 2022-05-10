@@ -7,18 +7,24 @@ class Common(State):
     Common state object used to provide observer capabilities to basic types
     """
 
-    def __init__(self, value: Any, name: str) -> None:
+    def __init__(
+        self, value: Any, name: str, optional_context_props: dict = {}
+    ) -> None:
         """
         :param value: Value to initialize the state as
         :type value: Any
 
         :param name: The name of the state value to provide when getting the context
         :type name: str
+
+        :param optional_context_props: Optional properties to add to the context
+        :type optional_context_props: dict, optional
         """
         super().__init__()
 
         self.__value = value
         self.__name = name
+        self.__optional_context_props = optional_context_props
 
         return
 
@@ -30,7 +36,10 @@ class Common(State):
         :return: Current value of the state
         :rtype: dict
         """
-        return {self.__name: self.__value}
+        context = {self.__name: self.__value}
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def value(self) -> int:

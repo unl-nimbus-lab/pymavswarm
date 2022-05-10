@@ -14,6 +14,7 @@ class Attitude(State):
         pitch_speed: float = 0.0,
         yaw_speed: float = 0.0,
         roll_speed: float = 0.0,
+        optional_context_props: dict = {},
     ) -> None:
         """
         :param pitch: Pitch angle (-pi..+pi), defaults to 0.0
@@ -33,6 +34,9 @@ class Attitude(State):
 
         :param roll_speed: Roll angular speed (rad/s), defaults to [], defaults to 0.0
         :type roll_speed: float, optional
+
+        :param optional_context_props: Optional properties to add to the context
+        :type optional_context_props: dict, optional
         """
         super().__init__()
 
@@ -42,6 +46,7 @@ class Attitude(State):
         self.__pitch_speed = pitch_speed
         self.__yaw_speed = yaw_speed
         self.__roll_speed = roll_speed
+        self.__optional_context_props = optional_context_props
 
         return
 
@@ -53,7 +58,7 @@ class Attitude(State):
         :return: Properties of interest associated with the attitude
         :rtype: dict
         """
-        return {
+        context = {
             "roll": self.__roll,
             "pitch": self.__pitch,
             "yaw": self.__yaw,
@@ -61,6 +66,9 @@ class Attitude(State):
             "pitch_speed": self.__pitch_speed,
             "yaw_speed": self.__yaw_speed,
         }
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def pitch(self) -> float:

@@ -6,7 +6,13 @@ class Velocity(State):
     Velocity state
     """
 
-    def __init__(self, vx: float = 0.0, vy: float = 0.0, vz: float = 0.0) -> None:
+    def __init__(
+        self,
+        vx: float = 0.0,
+        vy: float = 0.0,
+        vz: float = 0.0,
+        optional_context_props: dict = {},
+    ) -> None:
         """
         :param vx: Ground X Speed (Latitude, positive north), defaults to 0.0
         :type vx: float, optional
@@ -16,12 +22,16 @@ class Velocity(State):
 
         :param vz: Ground Z Speed (Altitude, positive down), defaults to 0.0
         :type vz: float, optional
+
+        :param optional_context_props: Optional properties to add to the context
+        :type optional_context_props: dict, optional
         """
         super().__init__()
-        
+
         self.__vx = vx
         self.__vy = vy
         self.__vz = vz
+        self.__optional_context_props = optional_context_props
 
         return
 
@@ -33,7 +43,10 @@ class Velocity(State):
         :return: Properties of interested associated with the velocity
         :rtype: dict
         """
-        return {"vx": self.vx, "vy": self.vy, "vz": self.vz}
+        context = {"vx": self.vx, "vy": self.vy, "vz": self.vz}
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def vx(self) -> float:

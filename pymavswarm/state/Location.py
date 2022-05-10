@@ -7,7 +7,11 @@ class Location(State):
     """
 
     def __init__(
-        self, latitude: float = 0.0, longitude: float = 0.0, altitude: float = 0.0
+        self,
+        latitude: float = 0.0,
+        longitude: float = 0.0,
+        altitude: float = 0.0,
+        optional_context_props: dict = {},
     ) -> None:
         """
         :param latitude: Latitude (WGS84, EGM96 ellipsoid), defaults to 0.0
@@ -20,12 +24,16 @@ class Location(State):
             modules provide the MSL altitude in addition to the WGS84 altitude,
             defaults to 0.0
         :type altitude: float, optional
+
+        :param optional_context_props: Optional properties to add to the context
+        :type optional_context_props: dict, optional
         """
         super().__init__()
-        
+
         self.__latitude = latitude
         self.__longitude = longitude
         self.__altitude = altitude
+        self.__optional_context_props = optional_context_props
 
         return
 
@@ -37,11 +45,14 @@ class Location(State):
         :return: Properties of interested associated with the GPS information
         :rtype: dict
         """
-        return {
+        context = {
             "latitude": self.latitude,
             "longitude": self.longitude,
             "altitude": self.altitude,
         }
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def latitude(self) -> float:

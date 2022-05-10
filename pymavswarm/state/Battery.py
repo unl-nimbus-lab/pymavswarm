@@ -7,7 +7,11 @@ class Battery(State):
     """
 
     def __init__(
-        self, voltage: float = 0.0, current: float = 0.0, level: float = 0.0
+        self,
+        voltage: float = 0.0,
+        current: float = 0.0,
+        level: float = 0.0,
+        optional_context_props: dict = {},
     ) -> None:
         """
         :param voltage: Battery voltage (mV), UINT16_MAX: Voltage not sent by autopilot,
@@ -21,12 +25,16 @@ class Battery(State):
         :param level: Battery energy remaining (%), -1: Battery remaining energy not
             sent by autopilot, defaults to 0.0
         :type level: float, optional
+
+        :param optional_context_props: Optional properties to add to the context
+        :type optional_context_props: dict, optional
         """
         super().__init__()
 
         self.__voltage = voltage
         self.__current = current
         self.__level = level
+        self.__optional_context_props = optional_context_props
 
         return
 
@@ -38,11 +46,14 @@ class Battery(State):
         :return: Properties of interest associated with the battery state
         :rtype: dict
         """
-        return {
+        context = {
             "voltage": self.__voltage,
             "current": self.__current,
             "level": self.__level,
         }
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def voltage(self) -> float:

@@ -12,6 +12,7 @@ class GPSInfo(State):
         epv: float = 0.0,
         fix_type: int = 0,
         satellites_visible: int = 0,
+        optional_context_props: dict = {},
     ) -> None:
         """
         :param eph: GPS HDOP horizontal dilution of position (unitless * 100).
@@ -28,13 +29,17 @@ class GPSInfo(State):
         :param satellites_visible: Number of satellites visible. If unknown, set to
             UINT8_MAX, defaults to 0
         :type satellites_visible: int, optional
+
+        :param optional_context_props: Optional properties to add to the context
+        :type optional_context_props: dict, optional
         """
         super().__init__()
-        
+
         self.__eph = eph
         self.__epv = epv
         self.__fix_type = fix_type
         self.__satellites_visible = satellites_visible
+        self.__optional_context_props = optional_context_props
 
         return
 
@@ -46,12 +51,15 @@ class GPSInfo(State):
         :return: Properties of interested associated with the GPS information
         :rtype: dict
         """
-        return {
+        context = {
             "eph": self.eph,
             "epv": self.epv,
             "fix_type": self.fix_type,
             "satellites_visible": self.satellites_visible,
         }
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def eph(self) -> float:

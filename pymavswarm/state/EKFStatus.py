@@ -1,3 +1,4 @@
+from click import option
 from pymavswarm.state.State import State
 
 
@@ -15,7 +16,8 @@ class EKFStatus(State):
         terrain_alt_variance: float = 0.0,
         pos_horiz_abs: float = 0.0,
         const_pos_mode: float = 0.0,
-        pred_pos_horiz_abs: float = 0.0
+        pred_pos_horiz_abs: float = 0.0,
+        optional_context_props: dict = {},
     ) -> None:
         """
         :param velocity_variance: Velocity variance, defaults to 0.0
@@ -44,6 +46,9 @@ class EKFStatus(State):
         :param pred_pos_horiz_abs: EKF's predicted horizontal position (absolute)
             estimate is good, defaults to 0.0
         :type pred_pos_horiz_abs: float, optional
+
+        :param optional_context_props: Optional properties to add to the context
+        :type optional_context_props: dict, optional
         """
         super().__init__()
 
@@ -55,6 +60,7 @@ class EKFStatus(State):
         self.__pos_horiz_abs = pos_horiz_abs
         self.__const_pos_mode = const_pos_mode
         self.__pred_pos_horiz_abs = pred_pos_horiz_abs
+        self.__optional_context_props = optional_context_props
 
         return
 
@@ -66,7 +72,7 @@ class EKFStatus(State):
         :return: Properties of interested associated with the EKF status
         :rtype: dict
         """
-        return {
+        context = {
             "velocity_variance": self.velocity_variance,
             "pos_horiz_variance": self.pos_horiz_variance,
             "pos_vert_variance": self.pos_vert_variance,
@@ -76,6 +82,9 @@ class EKFStatus(State):
             "const_pos_mode": self.const_pos_mode,
             "pred_pos_horiz_abs": self.pred_pos_horiz_abs,
         }
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def velocity_variance(self) -> float:

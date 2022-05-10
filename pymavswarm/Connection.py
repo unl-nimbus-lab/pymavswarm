@@ -173,9 +173,9 @@ class Connection:
 
             try:
                 # NOTE: We assume that ArduPilot will be used
-                self.__devices[device_tuple].flight_mode = mavutil.mode_mapping_bynumber(
-                    msg.type
-                )[msg.custom_mode]
+                self.__devices[
+                    device_tuple
+                ].flight_mode = mavutil.mode_mapping_bynumber(msg.type)[msg.custom_mode]
             except Exception as e:
                 # We received an invalid message
                 pass
@@ -362,11 +362,15 @@ class Connection:
                 self.__devices[device_tuple].ekf = ekf
             else:
                 # Read variance properties
-                self.__devices[device_tuple].ekf.velocity_variance = msg.velocity_variance
+                self.__devices[
+                    device_tuple
+                ].ekf.velocity_variance = msg.velocity_variance
                 self.__devices[
                     device_tuple
                 ].ekf.pos_horiz_variance = msg.pos_horiz_variance
-                self.__devices[device_tuple].ekf.pos_vert_variance = msg.pos_vert_variance
+                self.__devices[
+                    device_tuple
+                ].ekf.pos_vert_variance = msg.pos_vert_variance
                 self.__devices[device_tuple].ekf.compass_variance = msg.compass_variance
                 self.__devices[
                     device_tuple
@@ -453,11 +457,15 @@ class Connection:
                 )
                 self.__devices[device_tuple].home_position = loc
             else:
-                self.__devices[device_tuple].home_position.latitude = msg.latitude / 1.0e7
+                self.__devices[device_tuple].home_position.latitude = (
+                    msg.latitude / 1.0e7
+                )
                 self.__devices[device_tuple].home_position.longitude = (
                     msg.longitude / 1.0e7
                 )
-                self.__devices[device_tuple].home_position.altitude = msg.altitude / 1000
+                self.__devices[device_tuple].home_position.altitude = (
+                    msg.altitude / 1000
+                )
 
             return
 
@@ -507,7 +515,9 @@ class Connection:
                 if device_exists:
                     start_time = time.time()
 
-                    while not self.__devices[(msg.target_system, msg.target_comp)].armed:
+                    while not self.__devices[
+                        (msg.target_system, msg.target_comp)
+                    ].armed:
                         if time.time() - start_time >= msg.state_timeout:
                             ack = False
                             break
@@ -2100,7 +2110,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        not self.__devices[(msg.target_system, msg.target_comp)].hrl_state
+                        not self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].hrl_state
                         != "start"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2175,7 +2187,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        not self.__devices[(msg.target_system, msg.target_comp)].hrl_state
+                        not self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].hrl_state
                         != "reset"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2247,7 +2261,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        not self.__devices[(msg.target_system, msg.target_comp)].hrl_state
+                        not self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].hrl_state
                         != "stop"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2322,7 +2338,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        not self.__devices[(msg.target_system, msg.target_comp)].hrl_state
+                        not self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].hrl_state
                         != "live"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -3151,7 +3169,7 @@ class Connection:
             Reset the saved home position of an agent to the current position
 
             NOTE: Validation of this command can take a while. To ensure that the system
-            has sufficient time to verify that the home position was properly reset, it 
+            has sufficient time to verify that the home position was properly reset, it
             may be necessary to extend the timeout periods
 
             :param msg: Reset home position message

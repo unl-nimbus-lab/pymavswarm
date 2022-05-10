@@ -63,7 +63,6 @@ class MavSwarm:
         """
         return self.__connection.device_list_changed
 
-
     def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
         """
         Initialize the logger with the desired log level

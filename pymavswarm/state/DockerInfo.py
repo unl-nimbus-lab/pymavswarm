@@ -11,6 +11,7 @@ class DockerInfo(State):
         self,
         version: str = "0.0.0",
         last_update: datetime.datetime = datetime.datetime(datetime.MINYEAR, 1, 1),
+        optional_context_props: dict = {},
     ) -> None:
         """
         :param version: Current version of the Docker image deployed on an agent,
@@ -20,11 +21,15 @@ class DockerInfo(State):
         :param last_update: The date on which the Docker image deployed on the agent
             was last updated, defaults to 1/1/1
         :type last_update: datetime.datetime, optional
+
+        :param optional_context_props: Optional properties to add to the context
+        :type optional_context_props: dict, optional
         """
         super().__init__()
 
         self.__version = version
         self.__last_update = last_update
+        self.__optional_context_props = optional_context_props
 
         return
 
@@ -36,7 +41,10 @@ class DockerInfo(State):
         :return: Properties of interested associated with the docker information
         :rtype: dict
         """
-        return {"version": self.__version, "last_update": self.__last_update}
+        context = {"version": self.__version, "last_update": self.__last_update}
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def version(self) -> str:
