@@ -1,7 +1,7 @@
 from typing import Union
 
 
-class Parameter:
+class ReadParameter:
     """
     A parameter that has been read from an agent
     """

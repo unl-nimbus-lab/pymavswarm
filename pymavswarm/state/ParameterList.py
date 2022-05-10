@@ -1,5 +1,5 @@
 from collections import deque
-from pymavswarm.state import Parameter, State
+from pymavswarm.state import ReadParameter, State
 
 
 class ParameterList(State):
@@ -44,7 +44,7 @@ class ParameterList(State):
         """
         return self.__max_length
 
-    def append(self, item: Parameter) -> None:
+    def append(self, item: ReadParameter) -> None:
         """
         Add a parameter to the parameter buffer
 
@@ -56,7 +56,7 @@ class ParameterList(State):
 
         return
 
-    def remove(self, item: Parameter) -> None:
+    def remove(self, item: ReadParameter) -> None:
         """
         Remove a parameter from the buffer
 
