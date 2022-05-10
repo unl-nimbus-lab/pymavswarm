@@ -6,6 +6,7 @@ from .Location import Location
 from .EKFStatus import EKFStatus
 from .Telemetry import Telemetry
 from .Velocity import Velocity
-from .ReadParameter import ReadParameter
-from .Common import Common
+from .Parameter import Parameter
+from .Generic import Generic
 from .State import State
+from .ParameterList import ParameterList

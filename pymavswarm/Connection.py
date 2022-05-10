@@ -126,15 +126,15 @@ class Connection:
                 self.__device_list_changed.notify(agent=device)
             else:
                 # The connection has been restored
-                if self.__devices[device_id].timeout:
+                if self.__devices[device_id].timeout.value:
                     self.logger.info(
                         f"Connection to device {sys_id}:{comp_id} has been restored"
                     )
 
             # Update the last heartbeat variable
-            self.__devices[device_id].last_heartbeat = monotonic.monotonic()
+            self.__devices[device_id].last_heartbeat.value = monotonic.monotonic()
 
-            self.__devices[device_id].timeout = False
+            self.__devices[device_id].timeout.value = False
 
             return
 
@@ -161,21 +161,23 @@ class Connection:
             if not device_tuple in self.__devices:
                 return
 
-            self.__devices[device_tuple].armed = (
+            self.__devices[device_tuple].armed.value = (
                 msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
             ) != 0
 
-            self.__devices[device_tuple].system_status = msg.system_status
-            self.__devices[device_tuple].vehicle_type = msg.type
+            self.__devices[device_tuple].system_status.value = msg.system_status
+            self.__devices[device_tuple].vehicle_type.value = msg.type
 
             # Update the last heartbeat
-            self.__devices[device_tuple].last_heartbeat = monotonic.monotonic()
+            self.__devices[device_tuple].last_heartbeat.value = monotonic.monotonic()
 
             try:
                 # NOTE: We assume that ArduPilot will be used
                 self.__devices[
                     device_tuple
-                ].flight_mode = mavutil.mode_mapping_bynumber(msg.type)[msg.custom_mode]
+                ].flight_mode.value = mavutil.mode_mapping_bynumber(msg.type)[
+                    msg.custom_mode
+                ]
             except Exception as e:
                 # We received an invalid message
                 pass
@@ -517,7 +519,7 @@ class Connection:
 
                     while not self.__devices[
                         (msg.target_system, msg.target_comp)
-                    ].armed:
+                    ].armed.value:
                         if time.time() - start_time >= msg.state_timeout:
                             ack = False
                             break
@@ -591,7 +593,9 @@ class Connection:
                 if device_exists:
                     start_time = time.time()
 
-                    while self.__devices[(msg.target_system, msg.target_comp)].armed:
+                    while self.__devices[
+                        (msg.target_system, msg.target_comp)
+                    ].armed.value:
                         if time.time() - start_time >= msg.state_timeout:
                             ack = False
                             break
@@ -1379,7 +1383,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].flight_mode.value
                         != "STABILIZE"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1454,7 +1460,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].flight_mode.value
                         != "ACRO"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1526,7 +1534,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].flight_mode.value
                         != "ALT_HOLD"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1599,7 +1609,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].flight_mode.value
                         != "AUTO"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1671,7 +1683,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].flight_mode.value
                         != "LOITER"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1744,7 +1758,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].flight_mode.value
                         != "RTL"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1817,7 +1833,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].flight_mode.value
                         != "LAND"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1889,7 +1907,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].flight_mode.value
                         != "THROW"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -1962,7 +1982,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].flight_mode.value
                         != "SYSTEMID"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2035,7 +2057,9 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[(msg.target_system, msg.target_comp)].flight_mode
+                        self.__devices[
+                            (msg.target_system, msg.target_comp)
+                        ].flight_mode.value
                         != "GUIDED"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2112,7 +2136,7 @@ class Connection:
                     while (
                         not self.__devices[
                             (msg.target_system, msg.target_comp)
-                        ].hrl_state
+                        ].hrl_state.value
                         != "start"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2189,7 +2213,7 @@ class Connection:
                     while (
                         not self.__devices[
                             (msg.target_system, msg.target_comp)
-                        ].hrl_state
+                        ].hrl_state.value
                         != "reset"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2263,7 +2287,7 @@ class Connection:
                     while (
                         not self.__devices[
                             (msg.target_system, msg.target_comp)
-                        ].hrl_state
+                        ].hrl_state.value
                         != "stop"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -2340,7 +2364,7 @@ class Connection:
                     while (
                         not self.__devices[
                             (msg.target_system, msg.target_comp)
-                        ].hrl_state
+                        ].hrl_state.value
                         != "live"
                     ):
                         if time.time() - start_time >= msg.state_timeout:
@@ -3553,10 +3577,10 @@ class Connection:
         while self.__connected:
             # Update the timeout flag for each device
             for key in self.__devices:
-                if self.__devices[key].last_heartbeat is not None:
-                    self.__devices[key].timeout = (
-                        monotonic.monotonic() - self.__devices[key].last_heartbeat
-                    ) >= self.__devices[key].timeout_period
+                if self.__devices[key].last_heartbeat.value is not None:
+                    self.__devices[key].timeout.value = (
+                        monotonic.monotonic() - self.__devices[key].last_heartbeat.value
+                    ) >= self.__devices[key].timeout_period.value
 
             # Read a new message
             try:
@@ -3917,7 +3941,7 @@ class Connection:
         ack, msg = self.__ack_msg("PARAM_VALUE", timeout=param.__ack_timeout)
 
         if ack:
-            read_param = ReadParameter(
+            read_param = Parameter(
                 msg["param_id"],
                 msg["param_value"],
                 msg["param_type"],

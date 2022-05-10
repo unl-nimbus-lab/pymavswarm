@@ -2,9 +2,9 @@ from typing import Any
 from pymavswarm.state.State import State
 
 
-class Common(State):
+class Generic(State):
     """
-    Common state object used to provide observer capabilities to basic types
+    Generic state object used to provide observer capabilities to basic types
     """
 
     def __init__(
