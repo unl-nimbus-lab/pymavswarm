@@ -123,7 +123,7 @@ class Connection:
             # If the device hasn't been seen before, save it
             if device_id not in self.__devices:
                 self.__devices[device_id] = device
-                self.__device_list_changed.notify()
+                self.__device_list_changed.notify(agent=device)
             else:
                 # The connection has been restored
                 if self.__devices[device_id].timeout:
@@ -3965,6 +3965,7 @@ class Connection:
         self.__connected = False
         self.__stop_t()
         self.__devices.clear()
+        self.__device_list_changed.listeners.clear()
 
         if self.master is not None:
             self.master.close()

@@ -61,10 +61,12 @@ class Battery(State):
         :param voltage: Battery voltage (mV)
         :type voltage: float
         """
+        prev_voltage = self.__voltage
         self.__voltage = voltage
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__voltage != prev_voltage:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -85,13 +87,15 @@ class Battery(State):
         :param current: Battery current (cA)
         :type current: float
         """
+        prev_current = self.__current
         if current == -1:
             self.__current = current
         else:
             self.__current = current / 100.0
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__current != prev_current:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -113,9 +117,11 @@ class Battery(State):
         :param level: Battery level (%)
         :type level: float
         """
+        prev_level = self.__level
         self.__level = level
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__level != prev_level:
+            self.state_changed_event.notify(context=self.context)
 
         return

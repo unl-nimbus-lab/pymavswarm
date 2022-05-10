@@ -60,10 +60,12 @@ class Location(State):
         :param lat: Latitude (degE7)
         :type lat: float
         """
+        prev_latitude = self.__latitude
         self.__latitude = lat
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__latitude != prev_latitude:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -84,10 +86,12 @@ class Location(State):
         :param lon: Longitude (degE7)
         :type lon: float
         """
+        prev_longitude = self.__longitude
         self.__longitude = lon
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__longitude != prev_longitude:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -108,9 +112,11 @@ class Location(State):
         :param alt: Altitude (MSL, mm)
         :type alt: float
         """
+        prev_altitude = self.__altitude
         self.__altitude = alt
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__altitude != prev_altitude:
+            self.state_changed_event.notify(context=self.context)
 
         return

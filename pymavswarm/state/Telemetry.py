@@ -47,9 +47,11 @@ class Telemetry(State):
         :param rate: Drop rate (c%)
         :type rate: float
         """
+        prev_drop_rate = self.__drop_rate
         self.__drop_rate = rate
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__drop_rate != prev_drop_rate:
+            self.state_changed_event.notify(context=self.context)
 
         return

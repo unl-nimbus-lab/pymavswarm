@@ -94,10 +94,12 @@ class EKFStatus(State):
         :param variance: Velocity variance
         :type variance: float
         """
+        prev_velocity_variance = self.__velocity_variance
         self.__velocity_variance = variance
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__velocity_variance != prev_velocity_variance:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -118,10 +120,12 @@ class EKFStatus(State):
         :param variance: Horizontal position variance
         :type variance: float
         """
+        prev_pov_horiz_variance = self.__pos_horiz_variance
         self.__pos_horiz_variance = variance
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__pos_horiz_variance != prev_pov_horiz_variance:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -142,10 +146,12 @@ class EKFStatus(State):
         :param variance: Vertical position variance
         :type variance: float
         """
+        prev_pos_vert_variance = self.__pos_vert_variance
         self.__pos_vert_variance = variance
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__pos_vert_variance != prev_pos_vert_variance:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -166,10 +172,12 @@ class EKFStatus(State):
         :param variance: Compass variance
         :type variance: float
         """
+        prev_compass_variance = self.__compass_variance
         self.__compass_variance = variance
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__compass_variance != prev_compass_variance:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -190,10 +198,12 @@ class EKFStatus(State):
         :param variance: Terrain altitude variance
         :type variance: float
         """
+        prev_terrain_alt_variance = self.__terrain_alt_variance
         self.__terrain_alt_variance = variance
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__terrain_alt_variance != prev_terrain_alt_variance:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -214,10 +224,12 @@ class EKFStatus(State):
         :param flags: EKF flags
         :type flags: float
         """
+        prev_pos_horiz_abs = self.__pos_horiz_abs
         self.__pos_horiz_abs = flags
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__pos_horiz_abs != prev_pos_horiz_abs:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -239,10 +251,12 @@ class EKFStatus(State):
         :param flags: EKF flags
         :type flags: float
         """
+        prev_const_pos_mode = self.__const_pos_mode
         self.__const_pos_mode = flags
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__const_pos_mode != prev_const_pos_mode:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -263,9 +277,11 @@ class EKFStatus(State):
         :param pred: Predicted position
         :type pred: float
         """
+        prev_pred_pos_horiz_abs = self.__pred_pos_horiz_abs
         self.__pred_pos_horiz_abs = pred
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__pred_pos_horiz_abs != prev_pred_pos_horiz_abs:
+            self.state_changed_event.notify(context=self.context)
 
         return

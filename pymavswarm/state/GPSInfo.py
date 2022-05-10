@@ -70,10 +70,12 @@ class GPSInfo(State):
         :param dilution: If unknown, set to: UINT16_MAX
         :type dilution: float
         """
+        prev_eph = self.__eph
         self.__eph = dilution
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__eph != prev_eph:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -94,10 +96,12 @@ class GPSInfo(State):
         :param dilution: If unknown, set to: UINT16_MAX
         :type dilution: float
         """
+        prev_epv = self.__epv
         self.__epv = dilution
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__epv != prev_epv:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -118,10 +122,12 @@ class GPSInfo(State):
         :param gps_fix_type: GPS_FIX_TYPE
         :type gps_fix_type: int
         """
+        prev_fix_type = self.__fix_type
         self.__fix_type = gps_fix_type
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__fix_type != prev_fix_type:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -142,9 +148,11 @@ class GPSInfo(State):
         :param satellites: If unknown, set to UINT8_MAX
         :type satellites: int
         """
+        prev_satellites_visible = self.__satellites_visible
         self.__satellites_visible = satellites
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__satellites_visible != prev_satellites_visible:
+            self.state_changed_event.notify(context=self.context)
 
         return

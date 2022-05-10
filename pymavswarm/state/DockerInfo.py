@@ -55,10 +55,12 @@ class DockerInfo(State):
         :param version: Docker image version
         :type version: str
         """
+        prev_version = self.__version
         self.__version = version
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__version != prev_version:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -79,9 +81,11 @@ class DockerInfo(State):
         :param date: Date that the agent's image was last updated
         :type date: str
         """
+        prev_last_update = self.__last_update
         self.__last_update = date
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__last_update != prev_last_update:
+            self.state_changed_event.notify(context=self.context)
 
         return

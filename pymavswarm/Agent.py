@@ -534,7 +534,7 @@ class Agent:
         """
         A configurable list that can be used to enable non-default custom events
 
-        :rtype: List[Event]:
+        :rtype: List[Event]
         """
         return self.__custom_events
 
@@ -548,3 +548,12 @@ class Agent:
         """
         self.__custom_events = events
         return
+
+    @property
+    def system_status_changed_event(self) -> Event:
+        """
+        An event signaling that any agent property has changed
+
+        :rtype: Event
+        """
+        return self.__system_status_changed_event

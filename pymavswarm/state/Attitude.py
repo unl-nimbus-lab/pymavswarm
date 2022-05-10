@@ -79,10 +79,12 @@ class Attitude(State):
         :param angle: Angle in rad
         :type angle: float
         """
+        prev_pitch = self.__pitch
         self.__pitch = angle
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__pitch != prev_pitch:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -103,10 +105,12 @@ class Attitude(State):
         :param angle: Angle in rad
         :type angle: float
         """
+        prev_yaw = self.__yaw
         self.__yaw = angle
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__yaw != prev_yaw:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -127,10 +131,12 @@ class Attitude(State):
         :param angle: Angle in rad
         :type angle: float
         """
+        prev_roll = self.__roll
         self.__roll = angle
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__roll != prev_roll:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -151,10 +157,12 @@ class Attitude(State):
         :param rate: Rate in rad/s
         :type rate: float
         """
+        prev_pitch_speed = self.__pitch_speed
         self.__pitch_speed = rate
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__pitch_speed != prev_pitch_speed:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -175,10 +183,12 @@ class Attitude(State):
         :param rate: Rate in rad/s
         :type rate: float
         """
+        prev_roll_speed = self.__roll_speed
         self.__roll_speed = rate
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__roll_speed != prev_roll_speed:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -199,9 +209,11 @@ class Attitude(State):
         :param rate: Rate in rad/s
         :type rate: float
         """
+        prev_yaw_speed = self.__yaw_speed
         self.__yaw_speed = rate
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__yaw_speed != prev_yaw_speed:
+            self.state_changed_event.notify(context=self.context)
 
         return

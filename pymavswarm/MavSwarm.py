@@ -27,9 +27,23 @@ class MavSwarm:
         return
 
     @property
-    def agents(self) -> list:
+    def agents(self) -> dict:
         """
         Get the connection devices
+
+        Used to provide a layer of abstraction from the connection
+
+        :rtype: dict
+        """
+        if self.__connection is not None:
+            return self.__connection.devices
+        else:
+            return {}
+
+    @property
+    def agents_as_list(self) -> list:
+        """
+        Get the connection devices as a list
 
         Used to provide a layer of abstraction from the connection
 

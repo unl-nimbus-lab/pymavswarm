@@ -52,10 +52,12 @@ class Velocity(State):
         :param vel: X speed (cm/s)
         :type vel: float
         """
+        prev_vx = self.__vx
         self.__vx = vel
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__vx != prev_vx:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -76,10 +78,12 @@ class Velocity(State):
         :param vel: Y speed (cm/s)
         :type vel: float
         """
+        prev_vy = self.__vy
         self.__vy = vel
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__vy != prev_vy:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
@@ -100,9 +104,11 @@ class Velocity(State):
         :param vel: Z speed (cm/s)
         :type vel: float
         """
+        prev_vz = self.__vz
         self.__vz = vel
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__vz != prev_vz:
+            self.state_changed_event.notify(context=self.context)
 
         return

@@ -49,10 +49,12 @@ class Common(State):
         :param value: The desired state value
         :type value: int
         """
+        prev_value = self.__value
         self.__value = value
 
         # Signal state change event
-        self.state_changed_event.notify(context=self.context)
+        if self.__value != prev_value:
+            self.state_changed_event.notify(context=self.context)
 
         return
 
