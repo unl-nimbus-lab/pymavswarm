@@ -1,6 +1,8 @@
 import logging
+from typing import Union, Any
 from pymavswarm.event import Event
 from pymavswarm.Agent import Agent
+from pymavswarm.msg import MsgPackage
 from pymavswarm.Connection import Connection
 
 
@@ -144,17 +146,35 @@ class MavSwarm:
 
         return True
 
-    def send_msg(self, msgs: list) -> None:
+    def send_msg(self, msg: Any) -> None:
         """
-        Add the message to the connection's outgoing messages queue
+        Send a single message to an agent
 
-        :param msgs: A list of messages to send to the network/agents
-        :type msgs: list
+        :param msg: The message to send
+        :type msgs: Any
         """
-        for msg in msgs:
-            # Ensure that the intended agent is in the network
-            if (msg.target_system, msg.target_comp) in self.__connection.devices:
-                self.__connection.send_msg_handler(msg)
+        if (msg.target_system, msg.target_comp) in self.__connection.devices:
+            self.__connection.send_msg_handler(msg)
+
+        return
+
+    def send_msg_package(self, package: MsgPackage) -> None:
+        """
+        Send a message package
+
+        :param package: The message package that should be sent
+        :type package: MsgPackage
+        """
+        # Warn the user if there are any messages that are intended for non-existent
+        # agents in the swarm
+        for msg in package.msgs:
+            if (msg.target_system, msg.target_comp) not in self.__connection.devices:
+                self.__logger.warning(
+                    f"Agent ({msg.target_system, msg.target_comp}) targeted by the "
+                    "message package does not exist in the swarm"
+                )
+
+        self.__connection.send_package_handler(package)
 
         return
 

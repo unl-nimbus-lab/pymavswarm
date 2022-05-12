@@ -1,5 +1,4 @@
 import math
-from sre_constants import SUCCESS
 import time
 import atexit
 import logging
@@ -10,6 +9,7 @@ from pymavlink import mavutil
 from pymavswarm.state import *
 from pymavswarm.Agent import Agent
 from pymavswarm.event import Event
+from pymavswarm.msg import responses
 from pymavswarm.param import Parameter
 from typing import Any, Callable, Tuple, Union
 from pymavlink.dialects.v10 import ardupilotmega
@@ -507,7 +507,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -515,7 +515,7 @@ class Connection:
                     f"Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -536,22 +536,23 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the armed state"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the arm command sent to Agent "
                     f"({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -590,7 +591,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -598,7 +599,7 @@ class Connection:
                     f"to Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -619,22 +620,23 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the disarmed state"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the disarm command sent to "
                     f"Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -673,7 +675,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -681,7 +683,7 @@ class Connection:
                     f"Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -693,16 +695,17 @@ class Connection:
                     "Failed to acknowledge reception of the kill command sent to "
                     f"Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -741,7 +744,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -749,7 +752,7 @@ class Connection:
                     f"to Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -761,16 +764,17 @@ class Connection:
                     "Failed to acknowledge reception of the reboot command sent to "
                     f"Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -809,7 +813,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -817,7 +821,7 @@ class Connection:
                     f"to Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -829,16 +833,17 @@ class Connection:
                     "Failed to acknowledge reception of the shutdown command sent to "
                     f"Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -880,7 +885,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -889,7 +894,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -901,16 +906,17 @@ class Connection:
                     "Failed to acknowledge reception of the accelerometer calibration "
                     f"command sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -952,7 +958,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -961,7 +967,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -974,16 +980,17 @@ class Connection:
                     f"calibration command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1025,7 +1032,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1033,7 +1040,7 @@ class Connection:
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -1045,16 +1052,17 @@ class Connection:
                     "Failed to acknowledge reception of the AHRS trim command sent to "
                     f"Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1096,7 +1104,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1105,7 +1113,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -1118,16 +1126,17 @@ class Connection:
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1169,7 +1178,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1178,7 +1187,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -1190,16 +1199,17 @@ class Connection:
                     "Failed to acknowledge reception of the magnetometer calibration "
                     "command sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1241,7 +1251,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1250,7 +1260,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -1263,16 +1273,17 @@ class Connection:
                     f"calibration command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1314,7 +1325,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1323,7 +1334,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -1336,16 +1347,17 @@ class Connection:
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1387,7 +1399,7 @@ class Connection:
                 3,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1396,7 +1408,7 @@ class Connection:
                     f"({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -1409,16 +1421,17 @@ class Connection:
                     f"calibration command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1451,7 +1464,7 @@ class Connection:
             self.master.set_mode(self.master.mode_mapping()["STABILIZE"])
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1460,7 +1473,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -1486,23 +1499,24 @@ class Connection:
                             f"{msg.target_comp}) switched to the STABILIZE flight "
                             "mode"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the flight mode STABILIZE "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1535,7 +1549,7 @@ class Connection:
             self.master.set_mode(self.master.mode_mapping()["ACRO"])
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1544,7 +1558,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -1568,22 +1582,23 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the ACRO flight mode"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the flight mode ACRO command "
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1616,7 +1631,7 @@ class Connection:
             self.master.set_mode(self.master.mode_mapping()["ALT_HOLD"])
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1625,7 +1640,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -1649,23 +1664,24 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the ALT_HOLD flight mode"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the flight mode ALT_HOLD "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1698,7 +1714,7 @@ class Connection:
             self.master.set_mode(self.master.mode_mapping()["AUTO"])
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1707,7 +1723,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -1731,22 +1747,23 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the AUTO flight mode"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the flight mode AUTO command "
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1779,7 +1796,7 @@ class Connection:
             self.master.set_mode(self.master.mode_mapping()["LOITER"])
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1788,7 +1805,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -1812,23 +1829,24 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the LOITER flight mode"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the flight mode LOITER "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1861,7 +1879,7 @@ class Connection:
             self.master.set_mode(self.master.mode_mapping()["RTL"])
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1870,7 +1888,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -1894,23 +1912,24 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the RTL flight mode"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the flight mode RTL "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -1943,7 +1962,7 @@ class Connection:
             self.master.set_mode(self.master.mode_mapping()["LAND"])
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -1952,7 +1971,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -1976,20 +1995,20 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the LAND flight mode"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the flight mode LAND command "
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
             return ack
 
@@ -2022,7 +2041,7 @@ class Connection:
             self.master.set_mode(self.master.mode_mapping()["THROW"])
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2031,7 +2050,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -2055,23 +2074,24 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the THROW flight mode"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the flight mode THROW "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2104,7 +2124,7 @@ class Connection:
             self.master.set_mode(self.master.mode_mapping()["SYSTEMID"])
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2113,7 +2133,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -2137,23 +2157,24 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the SYSTEMID flight mode"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the flight mode SYSTEMID "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2186,7 +2207,7 @@ class Connection:
             self.master.set_mode(self.master.mode_mapping()["GUIDED"])
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2195,7 +2216,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -2219,23 +2240,24 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) switched to the GUIDED flight mode"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the flight mode GUIDED "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2270,7 +2292,7 @@ class Connection:
             )
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2279,7 +2301,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -2303,23 +2325,24 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) started HRL path execution"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the start path execution HRL "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2354,7 +2377,7 @@ class Connection:
             )
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2363,7 +2386,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -2378,29 +2401,33 @@ class Connection:
                             ack = False
                             break
                     if ack:
-                        self.logger.info(f"{msg.target_comp}) reset HRL path execution")
+                        self.logger.info(
+                            f"Successfully verified that Agent ({msg.target_system}, "
+                            f"{msg.target_comp}) reset HRL path execution"
+                        )
                     else:
                         self.logger.error(
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) reset HRL path execution"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     f"Failed to acknowledge reception of the reset path execution HRL "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2435,7 +2462,7 @@ class Connection:
             )
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2444,7 +2471,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -2468,23 +2495,24 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) stopped HRL path execution"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the stop path execution HRL "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2519,7 +2547,7 @@ class Connection:
             )
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2528,7 +2556,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -2552,23 +2580,24 @@ class Connection:
                             f"Failed to verify that Agent ({msg.target_system}, "
                             f"{msg.target_comp}) started live HRL path execution"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the start live path execution "
                     f"HRL command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2607,7 +2636,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2615,7 +2644,7 @@ class Connection:
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -2627,16 +2656,17 @@ class Connection:
                     "Failed to acknowledge reception of the airspeed command sent to "
                     f"Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2675,7 +2705,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2683,7 +2713,7 @@ class Connection:
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -2695,16 +2725,17 @@ class Connection:
                     "Failed to acknowledge reception of the ground speed command sent "
                     f"to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2743,7 +2774,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2751,7 +2782,7 @@ class Connection:
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -2763,16 +2794,17 @@ class Connection:
                     "Failed to acknowledge reception of the climb speed command sent "
                     f"to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2811,7 +2843,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2819,7 +2851,7 @@ class Connection:
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -2831,16 +2863,17 @@ class Connection:
                     "Failed to acknowledge reception of the descent speed command "
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2873,9 +2906,8 @@ class Connection:
                     f"An invalid takeoff altitude was provided ({msg.altitude}). "
                     "Please send a valid takeoff altitude"
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.INVALID_PROPERTIES, context=msg.context
-                )
+                msg.response = responses.INVALID_PROPERTIES
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             self.master.mav.command_long_send(
@@ -2892,7 +2924,7 @@ class Connection:
                 msg.altitude,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2901,7 +2933,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -2913,16 +2945,17 @@ class Connection:
                     "Failed to acknowledge reception of the simple takeoff command "
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -2955,9 +2988,8 @@ class Connection:
                     f"An invalid takeoff altitude was provided ({msg.altitude}). "
                     "Please send a valid takeoff altitude"
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.INVALID_PROPERTIES, context=msg.context
-                )
+                msg.response = responses.INVALID_PROPERTIES
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             self.master.mav.command_long_send(
@@ -2974,7 +3006,7 @@ class Connection:
                 msg.altitude,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -2982,7 +3014,7 @@ class Connection:
                     f"to Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -2994,16 +3026,17 @@ class Connection:
                     f"Failed to acknowledge reception of the takeoff command sent to "
                     f"Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -3051,9 +3084,8 @@ class Connection:
                     f"({msg.target_system}, {msg.target_comp}). Full takeoff "
                     "sequence failed."
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.SEQUENCE_STAGE_FAILURE, context=msg.context
-                )
+                msg.response = responses.SEQUENCE_STAGE_FAILURE
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             # Create a new arming message to send
@@ -3076,9 +3108,8 @@ class Connection:
                     f"({msg.target_system}, {msg.target_comp}). Full takeoff "
                     "sequence failed."
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.SEQUENCE_STAGE_FAILURE, context=msg.context
-                )
+                msg.response = responses.SEQUENCE_STAGE_FAILURE
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             # Give the agent a chance to fully arm
@@ -3095,9 +3126,8 @@ class Connection:
                     f"({msg.target_system}, {msg.target_comp}). Full takeoff "
                     "sequence failed."
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.SEQUENCE_STAGE_FAILURE, context=msg.context
-                )
+                msg.response = responses.SEQUENCE_STAGE_FAILURE
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             self.logger.info(
@@ -3105,9 +3135,8 @@ class Connection:
                 "takeoff command sequence."
             )
 
-            msg.message_result_event.notify(
-                code=MsgStatusCodes.SUCCESS, context=msg.context
-            )
+            msg.context.update({"response": responses.SUCCESS})
+            msg.message_result_event.notify(context=msg.context)
 
             return True
 
@@ -3155,9 +3184,8 @@ class Connection:
                     f"({msg.target_system}, {msg.target_comp}). Full takeoff "
                     "sequence failed."
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.SEQUENCE_STAGE_FAILURE, context=msg.context
-                )
+                msg.response = responses.SEQUENCE_STAGE_FAILURE
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             # Create a new arming message to send
@@ -3179,9 +3207,8 @@ class Connection:
                     f"the full takeoff command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp}). Full takeoff sequence failed."
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.SEQUENCE_STAGE_FAILURE, context=msg.context
-                )
+                msg.response = responses.SEQUENCE_STAGE_FAILURE
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             # Give the agent a chance to fully arm
@@ -3198,18 +3225,16 @@ class Connection:
                     f"({msg.target_system}, {msg.target_comp}). Full takeoff sequence "
                     "failed."
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.SEQUENCE_STAGE_FAILURE, context=msg.context
-                )
+                msg.response = responses.SEQUENCE_STAGE_FAILURE
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             self.logger.info(
                 "Successfully sent and acknowledged all steps in the full takeoff "
                 "command sequence."
             )
-            msg.message_result_event.notify(
-                code=MsgStatusCodes.SUCCESS, context=msg.context
-            )
+            msg.response = responses.SUCCESS
+            msg.message_result_event.notify(context=msg.context)
 
             return True
 
@@ -3243,9 +3268,8 @@ class Connection:
                     f"An invalid takeoff altitude was provided ({msg.altitude}). "
                     "Please send a valid waypoint altitude"
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.INVALID_PROPERTIES, context=msg.context
-                )
+                msg.response = responses.INVALID_PROPERTIES
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             self.master.mav.mission_item_send(
@@ -3265,7 +3289,7 @@ class Connection:
                 msg.altitude,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -3274,7 +3298,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -3286,16 +3310,17 @@ class Connection:
                     f"Failed to acknowledge reception of the simple waypoint command "
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -3329,9 +3354,8 @@ class Connection:
                     f"An invalid takeoff altitude was provided ({msg.altitude}). "
                     "Please send a valid waypoint altitude"
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.INVALID_PROPERTIES, context=msg.context
-                )
+                msg.response = responses.INVALID_PROPERTIES
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             self.master.mav.mission_item_send(
@@ -3351,7 +3375,7 @@ class Connection:
                 msg.altitude,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -3359,7 +3383,7 @@ class Connection:
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -3371,16 +3395,17 @@ class Connection:
                     "Failed to acknowledge reception of the waypoint command sent to "
                     f"Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -3419,7 +3444,7 @@ class Connection:
                 0,
             )
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -3428,7 +3453,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     self.logger.info(
@@ -3440,16 +3465,17 @@ class Connection:
                     "Failed to acknowledge reception of the get home position command "
                     f"sent to Agent ({msg.target_system}, {msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -3506,7 +3532,7 @@ class Connection:
             )
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -3515,7 +3541,7 @@ class Connection:
                     f"({msg.target_system}, {msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -3533,7 +3559,6 @@ class Connection:
                             msg.ack_timeout,
                             msg.state_timeout,
                             msg.state_delay,
-                            msg.validate_state,
                         )
 
                         # Get the updated home position
@@ -3558,23 +3583,24 @@ class Connection:
                             "Failed to reset the home position of Agent "
                             f"({msg.target_system}, {msg.target_comp})"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the reset home position to "
                     f"current position command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -3604,9 +3630,8 @@ class Connection:
                     "Cannot reset the home location to the given location unless the "
                     "latitude, longitude, and altitude are all provided."
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.INVALID_PROPERTIES, context=msg.context
-                )
+                msg.response = responses.INVALID_PROPERTIES
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             if msg.altitude < 0.0 or msg.altitude > 150.0:
@@ -3614,9 +3639,8 @@ class Connection:
                     "An invalid home position altitude was provided "
                     f"({msg.altitude}). Please set a valid altitude"
                 )
-                msg.message_result_event.notify(
-                    code=MsgStatusCodes.INVALID_PROPERTIES, context=msg.context
-                )
+                msg.response = responses.INVALID_PROPERTIES
+                msg.message_result_event.notify(context=msg.context)
                 return False
 
             system_id = (msg.target_system, msg.target_comp)
@@ -3647,7 +3671,7 @@ class Connection:
             )
 
             ack = False
-            msg_code = MsgStatusCodes.ACK_FAILURE
+            msg_code = responses.ACK_FAILURE
 
             if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
                 self.logger.info(
@@ -3656,7 +3680,7 @@ class Connection:
                     f"{msg.target_comp})"
                 )
                 ack = True
-                msg_code = MsgStatusCodes.SUCCESS
+                msg_code = responses.SUCCESS
 
                 if device_exists:
                     start_time = time.time()
@@ -3678,7 +3702,6 @@ class Connection:
                             msg.ack_timeout,
                             msg.state_timeout,
                             msg.state_delay,
-                            msg.validate_state,
                         )
 
                         # Get the updated home position
@@ -3703,23 +3726,24 @@ class Connection:
                             "Failed to reset the home position of Agent "
                             f"({msg.target_system}, {msg.target_comp})"
                         )
-                        msg_code = MsgStatusCodes.STATE_VALIDATION_FAILURE
+                        msg_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.logger.error(
                     "Failed to acknowledge reception of the reset home position "
                     f"command sent to Agent ({msg.target_system}, "
                     f"{msg.target_comp})"
                 )
-                msg_code = MsgStatusCodes.ACK_FAILURE
+                msg_code = responses.ACK_FAILURE
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
                     msg, self.message_senders[msg.msg_type][fn_id]
                 ):
                     ack = True
-                    msg_code = MsgStatusCodes.SUCCESS
+                    msg_code = responses.SUCCESS
 
-            msg.message_result_event.notify(code=msg_code, context=msg.context)
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
@@ -3989,7 +4013,7 @@ class Connection:
 
     def send_msg_handler(self, msg: Any) -> None:
         """
-        Public method that is accesssed by the mavswarm interface to signal the handler
+        Public method that is accessed by the mavswarm interface to signal the handler
         to complete message sending
 
         :param msg: The message to send
@@ -4004,13 +4028,80 @@ class Connection:
 
         return
 
+    def send_package_handler(self, package: MsgPackage) -> None:
+        """
+        Public method that is accessed by the mavswarm interface to signal the handler
+        to send a message package
+
+        :param package: Package of messages to send
+        :type package: MsgPackage
+        """
+        # Make sure that a connection is established before attempting to send a message
+        if self.__connected:
+            handler_t = threading.Thread(
+                target=self.__send_package_handler, args=(package,)
+            )
+
+            # Send the message
+            handler_t.start()
+
+        return
+
+    def __send_package_handler(self, package: MsgPackage) -> None:
+        """
+        Helper function used to send each message in a package and to
+        manage each message's success/failure
+
+        :param package: Package of messages to send
+        :type package: MsgPackage
+        """
+
+        def get_msg_success(msg: Any) -> list:
+            msg_results = self.__send_msg_handler(msg)
+
+            # Overall message success is a failure if any of the functions fails
+            msg_success = True
+            for result in msg_results:
+                if not result[2]:
+                    msg_success = False
+
+            return msg_success
+
+        # Initial attempt at sending each message in the package
+        for msg in package.msgs:
+            if not get_msg_success(msg):
+                package.msgs_failed.append(msg)
+            else:
+                package.msgs_succeeded.append(msg)
+
+        # Retry sending the failed messages
+        if package.retry and len(package.msgs_failed) > 0:
+            for attempt in range(package.max_retry_attempts):
+                # Only retry sending the failed messages
+                if len(package.msgs_failed) > 0:
+                    for msg in package.msgs_failed:
+                        if get_msg_success(msg):
+                            package.msgs_failed.remove(msg)
+                            package.msgs_succeeded.append(msg)
+                else:
+                    break
+
+        if len(package.msgs_failed) > 0:
+            package.response = responses.SUCCESS
+            package.package_result_event.notify(context=package.context)
+        else:
+            package.response = responses.PACKAGE_FAILURE
+            package.package_result_event.notify(context=package.context)
+
+        return
+
     def __send_seq_msg(self, msg: Any, device_exists: bool) -> bool:
         """
         Helper function used to handle calling all of the message handlers.
         This method is used by the sequence commands such as the full takeoff
         command to provide indication of a function execution result.
 
-        NOTE: THIS IS USED DO NOT DELETE
+        NOTE: THIS IS USED. DO NOT DELETE
 
         :param msg: The message to send
         :type msg: Any
@@ -4034,13 +4125,16 @@ class Connection:
 
         return True
 
-    def __send_msg_handler(self, msg: Any) -> None:
+    def __send_msg_handler(self, msg: Any) -> list:
         """
         Handle sending messages to the agents on the network
 
         :param msg: The message to send
         :type msg: Any
         """
+        # List of the results for each function called by the message
+        msg_fn_results = []
+
         try:
             # Send the message if there is a message sender for it
             if msg.msg_type in self.__message_senders:
@@ -4060,15 +4154,21 @@ class Connection:
                     # Prevent multiple sends from occurring at once
                     self.__send_msg_mutex.acquire()
 
+                    # Result of the particular function called
+                    fn_result = False
+
                     # Execute the command
                     try:
-                        fn(self, msg, fn_id=fn_id, device_exists=device_exists)
+                        fn_result = fn(
+                            self, msg, fn_id=fn_id, device_exists=device_exists
+                        )
                     except Exception:
                         self.logger.exception(
                             f"Exception in message sender for {msg.msg_type}",
                             exc_info=True,
                         )
                     finally:
+                        msg_fn_results.append((msg.msg_type, fn_id, fn_result))
                         self.__send_msg_mutex.release()
         except Exception:
             self.logger.exception(
@@ -4076,7 +4176,7 @@ class Connection:
                 exc_info=True,
             )
 
-        return
+        return msg_fn_results
 
     def set_param_handler(self, param: Parameter) -> None:
         """

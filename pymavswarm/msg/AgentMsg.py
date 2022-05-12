@@ -74,6 +74,7 @@ class AgentMsg:
         self.__state_timeout = state_timeout
         self.__state_delay = state_delay
         self.__message_result_event = Event()
+        self.__response = None
 
         return
 
@@ -190,6 +191,26 @@ class AgentMsg:
         return self.__message_result_event
 
     @property
+    def response(self) -> int:
+        """
+        The message response (e.g., SUCCESS)
+
+        :rtype: int
+        """
+        return self.__response
+
+    @response.setter
+    def response(self, code: int) -> None:
+        """
+        response setter
+
+        :param code: The response code
+        :type code: int
+        """
+        self.__response = code
+        return
+
+    @property
     def context(self) -> dict:
         """
         Current context of the message
@@ -206,4 +227,5 @@ class AgentMsg:
             "ack_timeout": self.__ack_timeout,
             "state_timeout": self.__state_timeout,
             "state_delay": self.__state_delay,
+            "response": self.__response,
         }
