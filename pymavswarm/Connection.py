@@ -3959,7 +3959,7 @@ class Connection:
 
         while time.time() - start_time <= msg.msg_timeout:
             # Reattempt the message send
-            if fn(self, msg, device_exists = device_exists):
+            if fn(self, msg, device_exists=device_exists):
                 ack = True
                 break
 
