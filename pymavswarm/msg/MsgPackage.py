@@ -13,12 +13,12 @@ class MsgPackage:
         """
         :param msgs: The list of messages that should be sent as part of the package
         :type msgs: list
-        
-        :param retry: Flag indicating whether the system should re-attempt sending the 
+
+        :param retry: Flag indicating whether the system should re-attempt sending the
             failed messages, defaults to False
         :type retry: bool, optional
-        
-        :param max_retry_attempts: The maximum number of attempts that should be made 
+
+        :param max_retry_attempts: The maximum number of attempts that should be made
             at successfully sending any previously failed messages, defaults to 2
         :type max_retry_attempts: int, optional
         """

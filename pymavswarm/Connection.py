@@ -546,7 +546,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -630,7 +630,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -699,7 +699,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -768,7 +768,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -837,7 +837,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -910,7 +910,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -984,7 +984,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1056,7 +1056,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1130,7 +1130,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1203,7 +1203,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1277,7 +1277,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1351,7 +1351,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1425,7 +1425,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1510,7 +1510,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1592,7 +1592,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1675,7 +1675,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1757,7 +1757,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1840,7 +1840,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1923,7 +1923,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2005,7 +2005,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2085,7 +2085,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2168,7 +2168,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2251,7 +2251,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2336,7 +2336,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2421,7 +2421,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2506,7 +2506,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2591,7 +2591,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2660,7 +2660,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2729,7 +2729,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2798,7 +2798,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2867,7 +2867,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2949,7 +2949,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3030,7 +3030,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3314,7 +3314,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3399,7 +3399,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3469,7 +3469,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3504,10 +3504,10 @@ class Connection:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            system_id = (msg.target_system, msg.target_comp)
+            agent_id = (msg.target_system, msg.target_comp)
 
             if device_exists:
-                current_home_pos = self.__devices[system_id].home_position
+                current_home_pos = self.__devices[agent_id].home_position
 
                 self.logger.info(
                     "The initial home position prior to home location reset is as "
@@ -3546,7 +3546,7 @@ class Connection:
                 if device_exists:
                     start_time = time.time()
 
-                    while vars(self.__devices[system_id].home_position) == vars(
+                    while vars(self.__devices[agent_id].home_position) == vars(
                         current_home_pos
                     ):
                         # Signal an update state command
@@ -3572,16 +3572,18 @@ class Connection:
                             "Successfully the reset the home position of Agent "
                             f"({msg.target_system}, {msg.target_comp}) to: "
                             "Latitude: "
-                            f"{self.__devices[system_id].home_position.latitude}, "
+                            f"{self.__devices[agent_id].home_position.latitude}, "
                             "Longitude: "
-                            f"{self.__devices[system_id].home_position.longitude}, "
+                            f"{self.__devices[agent_id].home_position.longitude}, "
                             f"Altitude: "
-                            f"{self.__devices[system_id].home_position.altitude}"
+                            f"{self.__devices[agent_id].home_position.altitude}"
                         )
                     else:
                         self.logger.error(
                             "Failed to reset the home position of Agent "
-                            f"({msg.target_system}, {msg.target_comp})"
+                            f"({msg.target_system}, {msg.target_comp}) or the current "
+                            "location of the agent has not changed since last updating "
+                            "the home position."
                         )
                         msg_code = responses.STATE_VALIDATION_FAILURE
             else:
@@ -3594,7 +3596,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3643,10 +3645,10 @@ class Connection:
                 msg.message_result_event.notify(context=msg.context)
                 return False
 
-            system_id = (msg.target_system, msg.target_comp)
+            agent_id = (msg.target_system, msg.target_comp)
 
             if device_exists:
-                current_home_pos = self.__devices[system_id]
+                current_home_pos = self.__devices[agent_id]
 
                 self.logger.info(
                     "The initial home position prior to home location reset is "
@@ -3686,10 +3688,10 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[system_id].home_position.latitude != msg.latitude
-                        and self.__devices[system_id].home_position.longitude
+                        self.__devices[agent_id].home_position.latitude != msg.latitude
+                        and self.__devices[agent_id].home_position.longitude
                         != msg.longitude
-                        and self.__devices[system_id].home_position.altitude
+                        and self.__devices[agent_id].home_position.altitude
                         != msg.altitude
                     ):
                         # Signal an update state command
@@ -3715,11 +3717,11 @@ class Connection:
                             "Successfully the reset the home position of Agent "
                             f"({msg.target_system}, {msg.target_comp}) to: "
                             "Latitude: "
-                            f"{self.__devices[system_id].home_position.latitude}, "
+                            f"{self.__devices[agent_id].home_position.latitude}, "
                             "Longitude: "
-                            f"{self.__devices[system_id].home_position.longitude}, "
+                            f"{self.__devices[agent_id].home_position.longitude}, "
                             f"Altitude: "
-                            f"{self.__devices[system_id].home_position.altitude}"
+                            f"{self.__devices[agent_id].home_position.altitude}"
                         )
                     else:
                         self.logger.error(
@@ -3737,7 +3739,7 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.message_senders[msg.msg_type][fn_id]
+                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3935,7 +3937,7 @@ class Connection:
 
         return
 
-    def __retry_msg_send(self, msg: Any, fn: Callable) -> bool:
+    def __retry_msg_send(self, msg: Any, fn: Callable, device_exists: bool) -> bool:
         """
         Retry a message send until the an acknowledgement is received or a timeout
         occurs
@@ -3957,7 +3959,35 @@ class Connection:
 
         while time.time() - start_time <= msg.msg_timeout:
             # Reattempt the message send
-            if fn(msg):
+            if fn(self, msg, device_exists = device_exists):
+                ack = True
+                break
+
+        return ack
+
+    def __retry_param_send(self, param: Any, fn: Callable) -> bool:
+        """
+        Retry a parameter send until the an acknowledgement is received or a timeout
+        occurs
+
+        :param param: The parameter to retry sending
+        :type msg: Any
+
+        :param fn: The function to call using the message
+        :type fn: function
+
+        :return: Indicate whether the retry was successful
+        :rtype: bool
+        """
+        ack = False
+        start_time = time.time()
+
+        # Don't let the message come back here and create an infinite loop
+        param.retry = False
+
+        while time.time() - start_time <= param.msg_timeout:
+            # Reattempt the message send
+            if fn(param):
                 ack = True
                 break
 
@@ -4252,7 +4282,7 @@ class Connection:
             ack = True
         else:
             if param.retry:
-                if self.__retry_msg_send(param, self.__set_param):
+                if self.__retry_param_send(param, self.__set_param):
                     ack = True
 
         if ack:
@@ -4350,7 +4380,7 @@ class Connection:
             )
         else:
             if param.retry:
-                if self.__retry_msg_send(param, self.__read_param):
+                if self.__retry_param_send(param, self.__read_param):
                     ack = True
 
         if ack:
