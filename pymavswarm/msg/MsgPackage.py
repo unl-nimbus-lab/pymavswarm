@@ -34,6 +34,11 @@ class MsgPackage:
 
     @property
     def context(self) -> dict:
+        """
+        Current context of the package.
+
+        :rtype: dict
+        """
         return {
             "msgs_succeeded": self.__msgs_succeeded,
             "msgs_failed": self.__msgs_failed,

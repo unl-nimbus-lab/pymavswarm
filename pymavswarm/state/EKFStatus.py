@@ -1,4 +1,3 @@
-from click import option
 from pymavswarm.state.State import State
 
 

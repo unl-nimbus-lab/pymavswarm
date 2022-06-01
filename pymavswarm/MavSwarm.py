@@ -1,9 +1,10 @@
 import logging
-from typing import Union, Any
+from typing import Any
 from pymavswarm.event import Event
 from pymavswarm.Agent import Agent
 from pymavswarm.msg import MsgPackage
 from pymavswarm.Connection import Connection
+from pymavswarm.param import Parameter, ParameterPackage
 
 
 class MavSwarm:
@@ -14,7 +15,9 @@ class MavSwarm:
 
     def __init__(self, log_level: int = logging.INFO) -> None:
         """
-        :param log_level: Log level of the system, defaults to logging.INFO
+        Constructor.
+
+        :param log_level: log level of the system, defaults to logging.INFO
         :type log_level: int, optional
         """
         super().__init__()
@@ -31,9 +34,9 @@ class MavSwarm:
     @property
     def agents(self) -> dict:
         """
-        Get the connection devices
+        Get the connection devices.
 
-        Used to provide a layer of abstraction from the connection
+        Used to provide a layer of abstraction from the connection.
 
         :rtype: dict
         """
@@ -45,9 +48,9 @@ class MavSwarm:
     @property
     def agents_as_list(self) -> list:
         """
-        Get the connection devices as a list
+        Get the connection devices as a list.
 
-        Used to provide a layer of abstraction from the connection
+        Used to provide a layer of abstraction from the connection.
 
         :rtype: list
         """
@@ -59,7 +62,7 @@ class MavSwarm:
     @property
     def device_list_changed(self) -> Event:
         """
-        Event that signals when the list of devices has changed
+        Event that signals when the list of devices has changed.
 
         :rtype: Event
         """
@@ -67,15 +70,15 @@ class MavSwarm:
 
     def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
         """
-        Initialize the logger with the desired log level
+        Initialize the logger with the desired log level.
 
-        :param name: The name of the logger
+        :param name: name of the logger
         :type name: str
 
-        :param log_level: Log level of the system logger, defaults to logging.INFO
+        :param log_level: log level of the system logger, defaults to logging.INFO
         :type log_level: int, optional
 
-        :return: Configured logger
+        :return: configured logger
         :rtype: logging.Logger
         """
         logging.basicConfig()
@@ -91,21 +94,21 @@ class MavSwarm:
         source_component: int = 0,
     ) -> bool:
         """
-        Create a new connection using the specified serial port
+        Create a new connection using the specified serial port.
 
-        :param port: The serial port to attempt connection on
+        :param port: serial port to attempt connection on
         :type port: str
 
-        :param baudrate: The serial connection baudrate
+        :param baudrate: serial connection baudrate
         :type baudrate: int
 
-        :param source_system: The system ID for the source system, defaults to 255
+        :param source_system: system ID for the source system, defaults to 255
         :type source_system: int, optional
 
-        :param source_component: The component ID for the source system, defaults to 0
+        :param source_component: component ID for the source system, defaults to 0
         :type source_component: int, optional
 
-        :return: Flag indicating whether connection was successful
+        :return: flag indicating whether connection was successful
         :rtype: bool
         """
         if self.__connection is None:
@@ -135,9 +138,9 @@ class MavSwarm:
 
     def disconnect(self) -> bool:
         """
-        Disconnect from the network
+        Disconnect from the network.
 
-        :return: Flag indicating whether the disconnect attempt was successful
+        :return: flag indicating whether the disconnect attempt was successful
         :rtype: bool
         """
         if self.__connection is not None:
@@ -148,10 +151,10 @@ class MavSwarm:
 
     def send_msg(self, msg: Any) -> None:
         """
-        Send a single message to an agent
+        Send a single message to an agent.
 
-        :param msg: The message to send
-        :type msgs: Any
+        :param msg: message to send
+        :type msgs: pymavswarm message
         """
         if (msg.target_system, msg.target_comp) in self.__connection.devices:
             self.__connection.send_msg_handler(msg)
@@ -160,9 +163,9 @@ class MavSwarm:
 
     def send_msg_package(self, package: MsgPackage) -> None:
         """
-        Send a message package
+        Send a message package.
 
-        :param package: The message package that should be sent
+        :param package: message package that should be sent
         :type package: MsgPackage
         """
         # Warn the user if there are any messages that are intended for non-existent
@@ -171,55 +174,68 @@ class MavSwarm:
             if (msg.target_system, msg.target_comp) not in self.__connection.devices:
                 self.__logger.warning(
                     f"Agent ({msg.target_system, msg.target_comp}) targeted by the "
-                    "message package does not exist in the swarm"
+                    "message package does not exist in the swarm."
                 )
 
-        self.__connection.send_package_handler(package)
+        self.__connection.send_msg_package_handler(package)
 
         return
 
-    def set_param(self, params: list) -> None:
+    def set_param(self, param: Parameter) -> None:
         """
-        Add the params to the connection's outgoing parameter queue
+        Add the params to the connection's outgoing parameter queue.
 
-        :param params: A list of parameters to set/read from agents
-        :type params: list
+        :param param: parameter to set on an agent
+        :type params: Parameter
         """
-        for param in params:
-            # Ensure that the intended agent is in the network
-            if (param.sys_id, param.comp_id) in self.__connection.devices:
-                self.__connection.set_param_handler(param)
+        if (param.sys_id, param.comp_id) in self.__connection.devices:
+            self.__connection.set_param_handler(param)
 
         return
 
-    def read_param(self, params: list) -> None:
+    def set_param_package(self, package: ParameterPackage) -> None:
+        """
+        Send a parameter package.
+
+        :param package: parameter package to send, note that all parameters in the 
+            package should be intended to set a parameter on an agent
+        :type package: ParameterPackage
+        """
+        for param in package.params:
+            if (param.sys_id, param.comp_id) not in self.__connection.devices:
+                self.__logger.warning(
+                    f"Agent ({param.sys_id}, {param.comp_id}) targeted by the"
+                    "parameter package does not exist in the swarm."
+                )
+        
+        return
+
+    def read_param(self, param: Parameter) -> None:
         """
         Read a desired parameter value. Note that, in the current configuration,
         each agent stores the most recent 5 parameter values read in a circular
         buffer. Therefore, when performing a bulk parameter read, ensure that
-        a maximum of five parameters are read at once on the specific agent
+        a maximum of five parameters are read at once on the specific agent.
 
-        :param params: The list of params to read
-        :type params: list
+        :param params: parameter to read from an agent
+        :type params: Parameter
         """
-        for param in params:
-            # Ensure that the intended agent is in the network
-            if (param.sys_id, param.comp_id) in self.__connection.devices:
-                self.__connection.read_param_handler(param)
+        if (param.sys_id, param.comp_id) in self.__connection.devices:
+            self.__connection.read_param_handler(param)
 
         return
 
     def get_agent_by_id(self, sys_id: int, comp_id: int) -> Agent:
         """
-        Get a specific agent by its system ID and component ID
+        Get a specific agent by its system ID and component ID.
 
-        :param sys_id: The system ID of the agent to access
+        :param sys_id: system ID of the agent to access
         :type sys_id: int
 
-        :param comp_id: The component ID of the agent to access
+        :param comp_id: component ID of the agent to access
         :type comp_id: int
 
-        :return: The identified agent if found
+        :return: identified agent, if found
         :rtype: Optional[Agent]
         """
         device_id = (sys_id, comp_id)
@@ -231,12 +247,12 @@ class MavSwarm:
 
     def get_agent_by_name(self, name: str) -> Agent:
         """
-        Get the first agent in the swarm with the specified name
+        Get the first agent in the swarm with the specified name.
 
-        :param name: The name of the agent to access
+        :param name: name of the agent to access
         :type name: str
 
-        :return: The first agent identified with the given name
+        :return: first agent identified with the given name
         :rtype: Optional[Agent]
         """
         for agent in self.__connection.devices.values():

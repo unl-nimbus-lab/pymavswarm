@@ -3504,10 +3504,10 @@ class Connection:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            agent_id = (msg.target_system, msg.target_comp)
+            device_id = (msg.target_system, msg.target_comp)
 
             if device_exists:
-                current_home_pos = self.__devices[agent_id].home_position
+                current_home_pos = self.__devices[device_id].home_position
 
                 self.logger.info(
                     "The initial home position prior to home location reset is as "
@@ -3546,7 +3546,7 @@ class Connection:
                 if device_exists:
                     start_time = time.time()
 
-                    while vars(self.__devices[agent_id].home_position) == vars(
+                    while vars(self.__devices[device_id].home_position) == vars(
                         current_home_pos
                     ):
                         # Signal an update state command
@@ -3572,11 +3572,11 @@ class Connection:
                             "Successfully the reset the home position of Agent "
                             f"({msg.target_system}, {msg.target_comp}) to: "
                             "Latitude: "
-                            f"{self.__devices[agent_id].home_position.latitude}, "
+                            f"{self.__devices[device_id].home_position.latitude}, "
                             "Longitude: "
-                            f"{self.__devices[agent_id].home_position.longitude}, "
+                            f"{self.__devices[device_id].home_position.longitude}, "
                             f"Altitude: "
-                            f"{self.__devices[agent_id].home_position.altitude}"
+                            f"{self.__devices[device_id].home_position.altitude}"
                         )
                     else:
                         self.logger.error(
@@ -3645,10 +3645,10 @@ class Connection:
                 msg.message_result_event.notify(context=msg.context)
                 return False
 
-            agent_id = (msg.target_system, msg.target_comp)
+            device_id = (msg.target_system, msg.target_comp)
 
             if device_exists:
-                current_home_pos = self.__devices[agent_id]
+                current_home_pos = self.__devices[device_id]
 
                 self.logger.info(
                     "The initial home position prior to home location reset is "
@@ -3688,10 +3688,10 @@ class Connection:
                     start_time = time.time()
 
                     while (
-                        self.__devices[agent_id].home_position.latitude != msg.latitude
-                        and self.__devices[agent_id].home_position.longitude
+                        self.__devices[device_id].home_position.latitude != msg.latitude
+                        and self.__devices[device_id].home_position.longitude
                         != msg.longitude
-                        and self.__devices[agent_id].home_position.altitude
+                        and self.__devices[device_id].home_position.altitude
                         != msg.altitude
                     ):
                         # Signal an update state command
@@ -3717,11 +3717,11 @@ class Connection:
                             "Successfully the reset the home position of Agent "
                             f"({msg.target_system}, {msg.target_comp}) to: "
                             "Latitude: "
-                            f"{self.__devices[agent_id].home_position.latitude}, "
+                            f"{self.__devices[device_id].home_position.latitude}, "
                             "Longitude: "
-                            f"{self.__devices[agent_id].home_position.longitude}, "
+                            f"{self.__devices[device_id].home_position.longitude}, "
                             f"Altitude: "
-                            f"{self.__devices[agent_id].home_position.altitude}"
+                            f"{self.__devices[device_id].home_position.altitude}"
                         )
                     else:
                         self.logger.error(
@@ -4058,7 +4058,7 @@ class Connection:
 
         return
 
-    def send_package_handler(self, package: MsgPackage) -> None:
+    def send_msg_package_handler(self, package: MsgPackage) -> None:
         """
         Public method that is accessed by the mavswarm interface to signal the handler
         to send a message package
@@ -4069,7 +4069,7 @@ class Connection:
         # Make sure that a connection is established before attempting to send a message
         if self.__connected:
             handler_t = threading.Thread(
-                target=self.__send_package_handler, args=(package,)
+                target=self.__send_msg_package_handler, args=(package,)
             )
 
             # Send the message
@@ -4077,7 +4077,7 @@ class Connection:
 
         return
 
-    def __send_package_handler(self, package: MsgPackage) -> None:
+    def __send_msg_package_handler(self, package: MsgPackage) -> None:
         """
         Helper function used to send each message in a package and to
         manage each message's success/failure
@@ -4085,7 +4085,6 @@ class Connection:
         :param package: Package of messages to send
         :type package: MsgPackage
         """
-
         def get_msg_success(msg: Any) -> list:
             msg_results = self.__send_msg_handler(msg)
 
