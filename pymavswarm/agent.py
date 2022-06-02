@@ -1,8 +1,8 @@
+from typing import List, Optional, Any
 import monotonic
 from pymavswarm.state import *
 from pymavswarm.event import Event
 from pymavswarm.mission import Mission
-from typing import List, Optional, Any
 
 
 class Agent:

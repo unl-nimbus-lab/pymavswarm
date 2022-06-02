@@ -4,7 +4,7 @@ sys.path.append("..")
 
 import unittest
 from Mission import Mission
-from Waypoint import Waypoint
+from pymavswarm.mission.waypoint import Waypoint
 
 
 class TestMission(unittest.TestCase):

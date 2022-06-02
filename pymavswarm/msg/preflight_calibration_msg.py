@@ -1,9 +1,9 @@
-from pymavswarm.msg.AgentMsg import AgentMsg
+from pymavswarm.msg.agent_msg import AgentMsg
 
 
-class HRLMsg(AgentMsg):
+class PreflightCalibrationMsg(AgentMsg):
     """
-    Signal an HRL command to be executed
+    Signal a pre-flight calibration on a selected agent
     """
 
     def __init__(

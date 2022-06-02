@@ -1,9 +1,9 @@
 import logging
 from typing import Any
 from pymavswarm.event import Event
-from pymavswarm.Agent import Agent
+from pymavswarm.agent import Agent
 from pymavswarm.msg import MsgPackage
-from pymavswarm.Connection import Connection
+from pymavswarm.connection import Connection
 from pymavswarm.param import Parameter, ParameterPackage
 
 
@@ -197,7 +197,7 @@ class MavSwarm:
         """
         Send a parameter package.
 
-        :param package: parameter package to send, note that all parameters in the 
+        :param package: parameter package to send, note that all parameters in the
             package should be intended to set a parameter on an agent
         :type package: ParameterPackage
         """
@@ -207,7 +207,7 @@ class MavSwarm:
                     f"Agent ({param.sys_id}, {param.comp_id}) targeted by the"
                     "parameter package does not exist in the swarm."
                 )
-        
+
         return
 
     def read_param(self, param: Parameter) -> None:

@@ -7,7 +7,7 @@ import threading
 from pymavswarm.msg import *
 from pymavlink import mavutil
 from pymavswarm.state import *
-from pymavswarm.Agent import Agent
+from pymavswarm.agent import Agent
 from pymavswarm.event import Event
 from pymavswarm.msg import responses
 from pymavswarm.param import Parameter

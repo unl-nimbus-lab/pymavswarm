@@ -1,6 +1,6 @@
 import logging
 from typing import Optional
-from pymavswarm.mission.Waypoint import Waypoint
+from pymavswarm.mission.waypoint import Waypoint
 
 
 class Mission:

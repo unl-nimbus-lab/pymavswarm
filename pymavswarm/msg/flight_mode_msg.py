@@ -1,10 +1,9 @@
-from typing import Optional
-from pymavswarm.msg.AgentMsg import AgentMsg
+from pymavswarm.msg.agent_msg import AgentMsg
 
 
-class TakeoffMsg(AgentMsg):
+class FlightModeMsg(AgentMsg):
     """
-    Takeoff to a certain location/altitude
+    Message signaling a flight mode change on an agent
     """
 
     def __init__(
@@ -13,9 +12,6 @@ class TakeoffMsg(AgentMsg):
         target_system: int,
         target_comp: int,
         retry: bool,
-        alt: float = 3.0,
-        lat: Optional[float] = None,
-        lon: Optional[float] = None,
         msg_timeout: float = 5.0,
         ack_timeout: float = 1.0,
         state_timeout: float = 5.0,
@@ -34,15 +30,6 @@ class TakeoffMsg(AgentMsg):
         :param retry: Indicate whether pymavswarm should retry sending the message
             until acknowledgement
         :type retry: bool
-
-        :param alt: The desired takeoff altitude
-        :type alt: float
-
-        :param lat: The desired takeoff latitude (optional)
-        :type lat: Optional[float], optional
-
-        :param lon: The desired takeoff longitude (optional)
-        :type lon: Optional[float], optional
 
         :param msg_timeout: The amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -76,51 +63,5 @@ class TakeoffMsg(AgentMsg):
             state_timeout=state_timeout,
             state_delay=state_delay,
         )
-        self.__altitude = alt
-        self.__latitude = lat
-        self.__longitude = lon
 
         return
-
-    @property
-    def altitude(self) -> float:
-        """
-        The altitude that the agent should takeoff to
-
-        :rtype: float
-        """
-        return self.__altitude
-
-    @property
-    def latitude(self) -> float:
-        """
-        The latitude of the takeoff waypoint
-
-        :rtype: float
-        """
-        return self.__latitude
-
-    @property
-    def longitude(self) -> float:
-        """
-        The longitude of the takeoff waypoint
-
-        :rtype: float
-        """
-        return self.__longitude
-
-    @property
-    def context(self) -> dict:
-        """
-        Get the context of the message
-
-        :rtype: dict
-        """
-        context = super().context
-
-        # Update to include new properties
-        context["latitude"] = self.__latitude
-        context["longitude"] = self.__longitude
-        context["altitude"] = self.__altitude
-
-        return context

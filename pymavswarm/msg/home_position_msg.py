@@ -1,5 +1,5 @@
 from typing import Optional
-from pymavswarm.msg.AgentMsg import AgentMsg
+from pymavswarm.msg.agent_msg import AgentMsg
 
 
 class HomePositionMsg(AgentMsg):

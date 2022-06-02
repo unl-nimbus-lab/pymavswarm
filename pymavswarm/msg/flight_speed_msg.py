@@ -1,13 +1,14 @@
-from pymavswarm.msg.AgentMsg import AgentMsg
+from pymavswarm.msg.agent_msg import AgentMsg
 
 
-class PreflightCalibrationMsg(AgentMsg):
+class FlightSpeedMsg(AgentMsg):
     """
-    Signal a pre-flight calibration on a selected agent
+    Message signaling a change in the flight speed of an agent
     """
 
     def __init__(
         self,
+        speed: float,
         msg_type: str,
         target_system: int,
         target_comp: int,
@@ -18,6 +19,9 @@ class PreflightCalibrationMsg(AgentMsg):
         state_delay: float = 3.0,
     ) -> None:
         """
+        :param speed: The desired speed in m/s
+        :type speed: float
+
         :param msg_type: The sub-message type for a message
         :type msg_type: str
 
@@ -63,5 +67,29 @@ class PreflightCalibrationMsg(AgentMsg):
             state_timeout=state_timeout,
             state_delay=state_delay,
         )
+        self.__speed = speed
 
         return
+
+    @property
+    def speed(self) -> float:
+        """
+        The desired speed in m/s
+
+        :rtype: float
+        """
+        return self.__speed
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the context of the message
+
+        :rtype: dict
+        """
+        context = super().context
+
+        # Update to include new properties
+        context["speed"] = self.__speed
+
+        return context

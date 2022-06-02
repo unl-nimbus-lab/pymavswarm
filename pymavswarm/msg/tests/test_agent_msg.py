@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 
 import unittest
-from AgentMsg import AgentMsg
+from pymavswarm.msg.agent_msg import AgentMsg
 
 
 class TestAgentMsg(unittest.TestCase):

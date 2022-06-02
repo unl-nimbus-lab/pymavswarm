@@ -1,5 +1,5 @@
 """
-The status codes and their respective meanings used for messages
+The status codes and their respective meanings used for messages.
 """
 
 # The message was successfully sent

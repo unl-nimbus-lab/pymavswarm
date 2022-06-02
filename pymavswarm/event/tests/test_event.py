@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 
 import unittest
-from Event import Event
+from pymavswarm.event.event import Event
 
 
 class TestEvent(unittest.TestCase):

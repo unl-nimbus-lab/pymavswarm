@@ -1,9 +1,9 @@
-from pymavswarm.msg.AgentMsg import AgentMsg
+from pymavswarm.msg.agent_msg import AgentMsg
 
 
-class FlightModeMsg(AgentMsg):
+class HRLMsg(AgentMsg):
     """
-    Message signaling a flight mode change on an agent
+    Signal an HRL command to be executed
     """
 
     def __init__(

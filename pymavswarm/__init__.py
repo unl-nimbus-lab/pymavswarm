@@ -1,4 +1,4 @@
-from .MavSwarm import MavSwarm
+from .mavswarm import MavSwarm
 from .msg import *
 from .param import Parameter
-from .Agent import Agent
+from .agent import Agent

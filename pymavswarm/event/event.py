@@ -8,11 +8,7 @@ class Event:
 
     def __init__(self) -> None:
         """
-        :param name: The name of the event (used for logging)
-        :type name: str
-
-        :param log_level: Log level to print, defaults to logging.INFO
-        :type log_level: int, optional
+        Constructor.
         """
         self.__listeners = []
 
@@ -27,26 +23,26 @@ class Event:
         """
         return self.__listeners
 
-    def add_listener(self, fn: Callable) -> None:
+    def add_listener(self, function: Callable) -> None:
         """
         Add a listener to the listeners
 
         :param fn: Function to call on event
         :type fn: function
         """
-        self.__listeners.append(fn)
+        self.__listeners.append(function)
 
         return
 
-    def remove_listener(self, fn: Callable) -> None:
+    def remove_listener(self, function: Callable) -> None:
         """
         Remove a listener
 
         :param fn: Function to remove
         :type fn: function
         """
-        if fn in self.__listeners:
-            self.__listeners.remove(fn)
+        if function in self.__listeners:
+            self.__listeners.remove(function)
 
         return
 

@@ -1,27 +1,27 @@
-from pymavswarm.msg.AgentMsg import AgentMsg
+from typing import Optional
+from pymavswarm.msg.agent_msg import AgentMsg
 
 
-class FlightSpeedMsg(AgentMsg):
+class TakeoffMsg(AgentMsg):
     """
-    Message signaling a change in the flight speed of an agent
+    Takeoff to a certain location/altitude
     """
 
     def __init__(
         self,
-        speed: float,
         msg_type: str,
         target_system: int,
         target_comp: int,
         retry: bool,
+        alt: float = 3.0,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None,
         msg_timeout: float = 5.0,
         ack_timeout: float = 1.0,
         state_timeout: float = 5.0,
         state_delay: float = 3.0,
     ) -> None:
         """
-        :param speed: The desired speed in m/s
-        :type speed: float
-
         :param msg_type: The sub-message type for a message
         :type msg_type: str
 
@@ -34,6 +34,15 @@ class FlightSpeedMsg(AgentMsg):
         :param retry: Indicate whether pymavswarm should retry sending the message
             until acknowledgement
         :type retry: bool
+
+        :param alt: The desired takeoff altitude
+        :type alt: float
+
+        :param lat: The desired takeoff latitude (optional)
+        :type lat: Optional[float], optional
+
+        :param lon: The desired takeoff longitude (optional)
+        :type lon: Optional[float], optional
 
         :param msg_timeout: The amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -67,18 +76,38 @@ class FlightSpeedMsg(AgentMsg):
             state_timeout=state_timeout,
             state_delay=state_delay,
         )
-        self.__speed = speed
+        self.__altitude = alt
+        self.__latitude = lat
+        self.__longitude = lon
 
         return
 
     @property
-    def speed(self) -> float:
+    def altitude(self) -> float:
         """
-        The desired speed in m/s
+        The altitude that the agent should takeoff to
 
         :rtype: float
         """
-        return self.__speed
+        return self.__altitude
+
+    @property
+    def latitude(self) -> float:
+        """
+        The latitude of the takeoff waypoint
+
+        :rtype: float
+        """
+        return self.__latitude
+
+    @property
+    def longitude(self) -> float:
+        """
+        The longitude of the takeoff waypoint
+
+        :rtype: float
+        """
+        return self.__longitude
 
     @property
     def context(self) -> dict:
@@ -90,6 +119,8 @@ class FlightSpeedMsg(AgentMsg):
         context = super().context
 
         # Update to include new properties
-        context["speed"] = self.__speed
+        context["latitude"] = self.__latitude
+        context["longitude"] = self.__longitude
+        context["altitude"] = self.__altitude
 
         return context

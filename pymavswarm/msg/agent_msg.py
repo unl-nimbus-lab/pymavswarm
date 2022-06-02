@@ -3,7 +3,7 @@ from pymavswarm.event import Event
 
 class AgentMsg:
     """
-    Parent class used to construct MAVLink commands
+    Parent class used to construct MAVLink commands.
     """
 
     def __init__(
@@ -18,6 +18,8 @@ class AgentMsg:
         state_delay: float = 3.0,
     ) -> None:
         """
+        Constructor.
+
         :param msg_type: The sub-message type for a message
         :type msg_type: str
 
@@ -81,7 +83,7 @@ class AgentMsg:
     @property
     def msg_type(self) -> str:
         """
-        The sub-message type for a message
+        Sub-message type for a message.
 
         :rtype: str
         """
@@ -90,7 +92,7 @@ class AgentMsg:
     @msg_type.setter
     def msg_type(self, msg_type: str) -> None:
         """
-        msg_type setter
+        msg_type setter.
 
         :param msg_type: Message type
         :type msg_type: str
@@ -101,7 +103,7 @@ class AgentMsg:
     @property
     def target_system(self) -> int:
         """
-        The target system ID
+        Target system ID.
 
         :rtype: int
         """
@@ -110,7 +112,7 @@ class AgentMsg:
     @property
     def target_comp(self) -> int:
         """
-        The target component ID
+        Target component ID.
 
         :rtype: int
         """
@@ -120,7 +122,7 @@ class AgentMsg:
     def retry(self) -> bool:
         """
         Indicate whether pymavswarm should retry sending the message
-        until acknowledgement
+        until acknowledgement.
 
         :rtype: bool
         """
@@ -129,7 +131,7 @@ class AgentMsg:
     @retry.setter
     def retry(self, retry: bool) -> None:
         """
-        retry setter
+        retry setter.
 
         :param retry: Flag
         :type retry: bool
@@ -140,7 +142,7 @@ class AgentMsg:
     @property
     def msg_timeout(self) -> float:
         """
-        The amount of time that pymavswarm should attempt to resend
+        Amount of time that pymavswarm should attempt to resend
         a message if acknowledgement is not received. This is only used when retry
         is set to true.
 
@@ -151,7 +153,7 @@ class AgentMsg:
     @property
     def ack_timeout(self) -> float:
         """
-        The amount of time that pymavswarm should wait to check for an
+        Amount of time that pymavswarm should wait to check for an
         acknowledgement from an agent. This is only used when retry is set to true.
         This should be kept as short as possible to keep agent state information
         up-to-date.
@@ -163,7 +165,7 @@ class AgentMsg:
     @property
     def state_timeout(self) -> float:
         """
-        The amount of time that pymavswarm should wait for a given agent's
+        Amount of time that pymavswarm should wait for a given agent's
         state to change after receiving a mavlink message
 
         :rtype: float
@@ -173,7 +175,7 @@ class AgentMsg:
     @property
     def state_delay(self) -> float:
         """
-        The amount of time that pymavswarm should wait after sending a command
+        Amount of time that pymavswarm should wait after sending a command
         prior to sending another command. This parameter is used for sequence-driven
         commands such as the full takeoff command sequence.
 
@@ -184,7 +186,7 @@ class AgentMsg:
     @property
     def message_result_event(self) -> Event:
         """
-        Event signaling the result of a message send
+        Event signaling the result of a message send.
 
         :rtype: Event
         """
@@ -193,7 +195,7 @@ class AgentMsg:
     @property
     def response(self) -> int:
         """
-        The message response (e.g., SUCCESS)
+        Message response (e.g., SUCCESS).
 
         :rtype: int
         """
@@ -202,7 +204,7 @@ class AgentMsg:
     @response.setter
     def response(self, code: int) -> None:
         """
-        response setter
+        response setter.
 
         :param code: The response code
         :type code: int
@@ -213,7 +215,7 @@ class AgentMsg:
     @property
     def context(self) -> dict:
         """
-        Current context of the message
+        Current context of the message.
 
         :return: Dictionary with the message context
         :rtype: dict

@@ -1,2 +1,2 @@
 from .Mission import Mission
-from .Waypoint import Waypoint
+from .waypoint import Waypoint
