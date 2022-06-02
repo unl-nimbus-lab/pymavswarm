@@ -3,7 +3,7 @@ from pymavswarm.msg.agent_msg import AgentMsg
 
 class FlightModeMsg(AgentMsg):
     """
-    Message signaling a flight mode change on an agent
+    Message signaling a flight mode change on an agent.
     """
 
     def __init__(
@@ -18,6 +18,8 @@ class FlightModeMsg(AgentMsg):
         state_delay: float = 3.0,
     ) -> None:
         """
+        Constructor.
+
         :param msg_type: The sub-message type for a message
         :type msg_type: str
 

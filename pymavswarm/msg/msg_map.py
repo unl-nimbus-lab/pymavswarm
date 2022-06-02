@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class FlightModes:
     """
     Enum class used to enable easy retrieval of the command used by a connection to
-    send a respective flight mode message
+    send a respective flight mode message.
     """
 
     stabilize = "stabilize"
@@ -24,7 +24,7 @@ class FlightModes:
 class SystemCommands:
     """
     Enum class used to enable easy retrieval of the command used by a connection to
-    send a respective system command message
+    send a respective system command message.
     """
 
     arm = "arm"
@@ -37,7 +37,7 @@ class SystemCommands:
 @dataclass
 class PreflightCalibrationCommands:
     """
-    Enum class used to enable sending preflight calibration commands
+    Enum class used to enable sending preflight calibration commands.
     """
 
     gyro_cal = "gyrocal"
@@ -53,7 +53,7 @@ class PreflightCalibrationCommands:
 @dataclass
 class HRLCommands:
     """
-    Enum class used to enable easy retrieval of the command used to send HRL commands
+    Enum class used to enable easy retrieval of the command used to send HRL commands.
     """
 
     start_path_execution = "startpath"
@@ -66,7 +66,7 @@ class HRLCommands:
 class FlightSpeedCommand:
     """
     Enum class used to enable retrieval of the command used to send flight speed change
-    requests
+    requests.
     """
 
     air_speed = "airspeed"
@@ -78,7 +78,7 @@ class FlightSpeedCommand:
 @dataclass
 class MissionCommand:
     """
-    Enum class used to retrieve mission commands
+    Enum class used to retrieve mission commands.
     """
 
     simple_waypoint = "simplewaypoint"
@@ -95,7 +95,7 @@ class MissionCommand:
 class MsgMap:
     """
     Helper class used to provide easy retrieval of the commands used by pymavswarm to
-    send messages
+    send messages.
     """
 
     def __init__(self) -> None:

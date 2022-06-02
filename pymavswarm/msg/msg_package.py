@@ -4,13 +4,15 @@ from pymavswarm.event import Event
 class MsgPackage:
     """
     Wrapper for multiple messages that allows for verification of a group of messages
-    rather than single messages
+    rather than single messages.
     """
 
     def __init__(
         self, msgs: list, retry: bool = False, max_retry_attempts: int = 2
     ) -> None:
         """
+        Constructor.
+
         :param msgs: The list of messages that should be sent as part of the package
         :type msgs: list
 
@@ -48,7 +50,7 @@ class MsgPackage:
     @property
     def msgs(self) -> list:
         """
-        The list of messages in the package
+        List of messages in the package.
 
         :rtype: list
         """
@@ -57,7 +59,7 @@ class MsgPackage:
     @property
     def retry(self) -> bool:
         """
-        Retry sending the messages that failed
+        Retry sending the messages that failed.
 
         :rtype: bool
         """
@@ -66,7 +68,7 @@ class MsgPackage:
     @property
     def msgs_succeeded(self) -> list:
         """
-        The list of msgs in the package that were successfully sent
+        List of msgs in the package that were successfully sent.
 
         :rtype: list
         """
@@ -75,7 +77,7 @@ class MsgPackage:
     @property
     def msgs_failed(self) -> list:
         """
-        The list of msgs in the package that were not successfully sent
+        List of msgs in the package that were not successfully sent.
 
         :rtype: list
         """
@@ -84,8 +86,8 @@ class MsgPackage:
     @property
     def max_retry_attempts(self) -> int:
         """
-        The maximum number of attempts to retry sending any failed messages in a
-        package before considering the package failed
+        Maximum number of attempts to retry sending any failed messages in a
+        package before considering the package failed.
 
         :rtype: int
         """
@@ -94,7 +96,7 @@ class MsgPackage:
     @property
     def package_result_event(self) -> Event:
         """
-        Event indicating the result of the package
+        Event indicating the result of the package.
 
         :rtype: Event
         """
@@ -103,7 +105,7 @@ class MsgPackage:
     @property
     def response(self) -> int:
         """
-        The package response (e.g., SUCCESS)
+        Package response (e.g., SUCCESS).
 
         :rtype: int
         """
@@ -112,7 +114,7 @@ class MsgPackage:
     @response.setter
     def response(self, code: int) -> None:
         """
-        response setter
+        response setter.
 
         :param code: The response code
         :type code: int

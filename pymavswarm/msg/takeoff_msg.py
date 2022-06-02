@@ -4,7 +4,7 @@ from pymavswarm.msg.agent_msg import AgentMsg
 
 class TakeoffMsg(AgentMsg):
     """
-    Takeoff to a certain location/altitude
+    Takeoff to a certain location/altitude.
     """
 
     def __init__(
@@ -22,6 +22,8 @@ class TakeoffMsg(AgentMsg):
         state_delay: float = 3.0,
     ) -> None:
         """
+        Constructor.
+
         :param msg_type: The sub-message type for a message
         :type msg_type: str
 
@@ -85,7 +87,7 @@ class TakeoffMsg(AgentMsg):
     @property
     def altitude(self) -> float:
         """
-        The altitude that the agent should takeoff to
+        Altitude that the agent should takeoff to.
 
         :rtype: float
         """
@@ -94,7 +96,7 @@ class TakeoffMsg(AgentMsg):
     @property
     def latitude(self) -> float:
         """
-        The latitude of the takeoff waypoint
+        Latitude of the takeoff waypoint.
 
         :rtype: float
         """
@@ -103,7 +105,7 @@ class TakeoffMsg(AgentMsg):
     @property
     def longitude(self) -> float:
         """
-        The longitude of the takeoff waypoint
+        Longitude of the takeoff waypoint.
 
         :rtype: float
         """
@@ -112,7 +114,7 @@ class TakeoffMsg(AgentMsg):
     @property
     def context(self) -> dict:
         """
-        Get the context of the message
+        Context of the message.
 
         :rtype: dict
         """

@@ -6,10 +6,10 @@ class HomePositionMsg(AgentMsg):
     """
     Signal a home position reset.
 
-    The home position can be reset to the current location or set to a specific location.
-    Note that if the home location is being reset to the current position, then the location
-    is not required. If the home location is being set to a specific location, all components
-    must be set.
+    The home position can be reset to the current location or set to a specific
+    location. Note that if the home location is being reset to the current position,
+    then the location is not required. If the home location is being set to a specific
+    location, all components must be set.
     """
 
     def __init__(
@@ -27,6 +27,8 @@ class HomePositionMsg(AgentMsg):
         state_delay: float = 3.0,
     ) -> None:
         """
+        Constructor.
+
         :param msg_type: The sub-message type for a message
         :type msg_type: str
 
@@ -90,7 +92,7 @@ class HomePositionMsg(AgentMsg):
     @property
     def altitude(self) -> float:
         """
-        Altitude (m)
+        Altitude (m).
 
         :rtype: float
         """
@@ -99,7 +101,7 @@ class HomePositionMsg(AgentMsg):
     @property
     def latitude(self) -> float:
         """
-        Latitude of the position
+        Latitude of the position.
 
         :rtype: float
         """
@@ -108,7 +110,7 @@ class HomePositionMsg(AgentMsg):
     @property
     def longitude(self) -> float:
         """
-        Longitude of the position
+        Longitude of the position.
 
         :rtype: float
         """
@@ -117,7 +119,7 @@ class HomePositionMsg(AgentMsg):
     @property
     def context(self) -> dict:
         """
-        Get the context of the message
+        Context of the message.
 
         :rtype: dict
         """

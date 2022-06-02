@@ -29,10 +29,16 @@ RUN apt-get update \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
+# Update pip to latest version
+RUN pip3 install --upgrade pip
+
 # Install required Python packages
 RUN pip3 install \
+    monotonic \
     black \
     pylint \
     pymavlink
+
+ENV PATH "${PATH}:/home/developer/.local/bin"
 
 ENV DEBIAN_FRONTEND=dialog

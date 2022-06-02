@@ -3,7 +3,7 @@ from pymavswarm.msg.agent_msg import AgentMsg
 
 class WaypointMsg(AgentMsg):
     """
-    Desired waypoint for an agent to fly to
+    Desired waypoint for an agent to fly to.
     """
 
     def __init__(
@@ -25,6 +25,8 @@ class WaypointMsg(AgentMsg):
         state_delay: float = 3.0,
     ) -> None:
         """
+        Constructor.
+
         :param hold: Time to stay at waypoint for rotary wing (ignored by fixed wing)
         :type hold: float
 
@@ -99,16 +101,16 @@ class WaypointMsg(AgentMsg):
         self.__accept_radius = accept_radius
         self.__pass_radius = pass_radius
         self.__yaw = yaw
-        self.__lat = lat
-        self.__lon = lon
-        self.__alt = alt
+        self.__latitude = lat
+        self.__longitude = lon
+        self.__altitude = alt
 
         return
 
     @property
     def hold(self) -> float:
         """
-        Time to stay at waypoint for rotary wing (ignored by fixed wing)
+        Time to stay at waypoint for rotary wing (ignored by fixed wing).
 
         :rtype: float
         """
@@ -117,7 +119,7 @@ class WaypointMsg(AgentMsg):
     @property
     def accept_radius(self) -> float:
         """
-        If the sphere with this radius (m) is hit, the waypoint counts as reached
+        If the sphere with this radius (m) is hit, the waypoint counts as reached.
 
         :rtype: float
         """
@@ -147,34 +149,34 @@ class WaypointMsg(AgentMsg):
     @property
     def latitude(self) -> float:
         """
-        Latitude of the waypoint
+        Latitude of the waypoint.
 
         :rtype: float
         """
-        return self.__lat
+        return self.__latitude
 
     @property
     def longitude(self) -> float:
         """
-        Longitude of the waypoint
+        Longitude of the waypoint.
 
         :rtype: float
         """
-        return self.__lon
+        return self.__longitude
 
     @property
     def altitude(self) -> float:
         """
-        Altitude of the waypoint
+        Altitude of the waypoint.
 
         :rtype: float
         """
-        return self.__alt
+        return self.__altitude
 
     @property
     def context(self) -> dict:
         """
-        Get the context of the message
+        Context of the message.
 
         :rtype: dict
         """

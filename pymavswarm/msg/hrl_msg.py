@@ -3,7 +3,7 @@ from pymavswarm.msg.agent_msg import AgentMsg
 
 class HRLMsg(AgentMsg):
     """
-    Signal an HRL command to be executed
+    Signal an HRL command to be executed.
     """
 
     def __init__(
@@ -18,6 +18,8 @@ class HRLMsg(AgentMsg):
         state_delay: float = 3.0,
     ) -> None:
         """
+        Constructor.
+
         :param msg_type: The sub-message type for a message
         :type msg_type: str
 

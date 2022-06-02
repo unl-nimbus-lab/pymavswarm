@@ -3,7 +3,7 @@ from pymavswarm.msg.agent_msg import AgentMsg
 
 class FlightSpeedMsg(AgentMsg):
     """
-    Message signaling a change in the flight speed of an agent
+    Message signaling a change in the flight speed of an agent.
     """
 
     def __init__(
@@ -19,6 +19,8 @@ class FlightSpeedMsg(AgentMsg):
         state_delay: float = 3.0,
     ) -> None:
         """
+        Constructor.
+
         :param speed: The desired speed in m/s
         :type speed: float
 
@@ -74,7 +76,7 @@ class FlightSpeedMsg(AgentMsg):
     @property
     def speed(self) -> float:
         """
-        The desired speed in m/s
+        Desired speed in m/s.
 
         :rtype: float
         """
@@ -83,7 +85,7 @@ class FlightSpeedMsg(AgentMsg):
     @property
     def context(self) -> dict:
         """
-        Get the context of the message
+        Context of the message.
 
         :rtype: dict
         """

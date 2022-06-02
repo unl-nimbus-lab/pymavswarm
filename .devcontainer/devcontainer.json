@@ -11,7 +11,9 @@
         "--cap-add=SYS_PTRACE",
         "--security-opt=seccomp:unconfined",
         "--security-opt=apparmor:unconfined",
-        "--volume=/tmp/.X11-unix:/tmp/.X11-unix"
+        "--volume=/tmp/.X11-unix:/tmp/.X11-unix",
+        "--volume=/dev:/dev",
+        "--privileged"
     ],
     "containerEnv": {
         "DISPLAY": "${localEnv:DISPLAY}"
@@ -30,11 +32,26 @@
             "88"
         ],
         "python.linting.pylintEnabled": true,
+        "python.linting.pylintArgs": [
+            "--disable=W0614",
+            "--disable=W0401",
+            "--disable=W1203",
+            "--disable=R1711",
+            "--disable=C0114",
+            "--disable=C0411",
+            "--disable=R0913"
+        ],
         "python.linting.enabled": true,
         "editor.formatOnSave": true,
         "[markdown]": {
             "editor.formatOnSave": true
-        }
+        },
+        "autoDocstring.startOnNewLine": true,
+        "cSpell.words": [
+            "pymavswarm",
+            "rtype",
+            "mavlink"
+        ]
     },
     "extensions": [
         "zachflower.uncrustify",
