@@ -8,7 +8,7 @@ class SystemCommandMsg(AgentMsg):
 
     def __init__(
         self,
-        msg_type: str,
+        command: str,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -21,8 +21,8 @@ class SystemCommandMsg(AgentMsg):
         """
         Constructor.
 
-        :param msg_type: The sub-message type for a message
-        :type msg_type: str
+        :param command: command to execute
+        :type command: str
 
         :param target_system: The target system ID
         :type target_system: int
@@ -61,7 +61,7 @@ class SystemCommandMsg(AgentMsg):
         :type optional_context_props: dict, optional
         """
         super().__init__(
-            msg_type,
+            command,
             target_system,
             target_comp,
             retry,
@@ -72,4 +72,15 @@ class SystemCommandMsg(AgentMsg):
             optional_context_props=optional_context_props,
         )
 
+        self.__command = command
+
         return
+
+    @property
+    def command(self) -> str:
+        """
+        System command to execute.
+
+        :rtype: str
+        """
+        return self.__command

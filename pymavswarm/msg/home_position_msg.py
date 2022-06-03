@@ -14,7 +14,6 @@ class HomePositionMsg(AgentMsg):
 
     def __init__(
         self,
-        msg_type: str,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -29,9 +28,6 @@ class HomePositionMsg(AgentMsg):
     ) -> None:
         """
         Constructor.
-
-        :param msg_type: The sub-message type for a message
-        :type msg_type: str
 
         :param target_system: The target system ID
         :type target_system: int
@@ -79,7 +75,7 @@ class HomePositionMsg(AgentMsg):
         :type optional_context_props: dict, optional
         """
         super().__init__(
-            msg_type,
+            "RESET_HOME",
             target_system,
             target_comp,
             retry,

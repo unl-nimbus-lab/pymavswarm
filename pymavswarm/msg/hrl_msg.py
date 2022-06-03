@@ -8,7 +8,7 @@ class HRLMsg(AgentMsg):
 
     def __init__(
         self,
-        msg_type: str,
+        hrl_command: int,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -20,6 +20,9 @@ class HRLMsg(AgentMsg):
     ) -> None:
         """
         Constructor.
+
+        :param hrl_command: desired hrl swarm state
+        :type hrl_command: int
 
         :param msg_type: The sub-message type for a message
         :type msg_type: str
@@ -61,7 +64,7 @@ class HRLMsg(AgentMsg):
         :type optional_context_props: dict, optional
         """
         super().__init__(
-            msg_type,
+            "HRL_COMMAND",
             target_system,
             target_comp,
             retry,
@@ -72,4 +75,15 @@ class HRLMsg(AgentMsg):
             optional_context_props=optional_context_props,
         )
 
+        self.__hrl_command = hrl_command
+
         return
+
+    @property
+    def hrl_command(self) -> int:
+        """
+        Desired HRL swarm state.
+
+        :rtype: int
+        """
+        return self.__hrl_command

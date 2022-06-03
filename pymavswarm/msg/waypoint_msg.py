@@ -8,14 +8,13 @@ class WaypointMsg(AgentMsg):
 
     def __init__(
         self,
+        lat: float,
+        lon: float,
+        alt: float,
         hold: float,
         accept_radius: float,
         pass_radius: float,
         yaw: float,
-        lat: float,
-        lon: float,
-        alt: float,
-        msg_type: str,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -52,9 +51,6 @@ class WaypointMsg(AgentMsg):
 
         :param alt: Altitude of the waypoint
         :type alt: float
-
-        :param msg_type: The sub-message type for a message
-        :type msg_type: str
 
         :param target_system: The target system ID
         :type target_system: int
@@ -93,7 +89,7 @@ class WaypointMsg(AgentMsg):
         :type optional_context_props: dict, optional
         """
         super().__init__(
-            msg_type,
+            "WAYPOINT",
             target_system,
             target_comp,
             retry,

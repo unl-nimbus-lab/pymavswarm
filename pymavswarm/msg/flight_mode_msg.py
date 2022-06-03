@@ -8,7 +8,7 @@ class FlightModeMsg(AgentMsg):
 
     def __init__(
         self,
-        msg_type: str,
+        flight_mode: str,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -21,7 +21,7 @@ class FlightModeMsg(AgentMsg):
         """
         Constructor.
 
-        :param msg_type: The sub-message type for a message
+        :param flight_mode: desired flight mode
         :type msg_type: str
 
         :param target_system: The target system ID
@@ -61,7 +61,7 @@ class FlightModeMsg(AgentMsg):
         :type optional_context_props: dict, optional
         """
         super().__init__(
-            msg_type,
+            "FLIGHT_MODE",
             target_system,
             target_comp,
             retry,
@@ -71,5 +71,15 @@ class FlightModeMsg(AgentMsg):
             state_delay=state_delay,
             optional_context_props=optional_context_props,
         )
+        self.__flight_mode = flight_mode
 
         return
+
+    @property
+    def flight_mode(self) -> str:
+        """
+        Desired flight mode.
+
+        :rtype: str
+        """
+        return self.__flight_mode

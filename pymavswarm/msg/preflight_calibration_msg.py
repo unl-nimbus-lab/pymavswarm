@@ -8,7 +8,7 @@ class PreflightCalibrationMsg(AgentMsg):
 
     def __init__(
         self,
-        msg_type: str,
+        calibration_type: str,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -21,8 +21,8 @@ class PreflightCalibrationMsg(AgentMsg):
         """
         Constructor.
 
-        :param msg_type: The sub-message type for a message
-        :type msg_type: str
+        :param calibration_type: desired calibration typ
+        :type calibration_type: str
 
         :param target_system: The target system ID
         :type target_system: int
@@ -61,7 +61,7 @@ class PreflightCalibrationMsg(AgentMsg):
         :type optional_context_props: dict, optional
         """
         super().__init__(
-            msg_type,
+            calibration_type,
             target_system,
             target_comp,
             retry,
@@ -72,4 +72,15 @@ class PreflightCalibrationMsg(AgentMsg):
             optional_context_props=optional_context_props,
         )
 
+        self.__calibration_type = calibration_type
+
         return
+
+    @property
+    def calibration_type(self) -> str:
+        """
+        Type of calibration to perform.
+
+        :rtype: str
+        """
+        return self.__calibration_type
