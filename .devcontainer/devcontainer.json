@@ -39,10 +39,23 @@
             "--disable=R1711",
             "--disable=C0114",
             "--disable=C0411",
-            "--disable=R0913"
+            "--disable=R0913",
+            "--disable=W0102",
+            "--disable=C0115",
+            "--disable=C0413",
+            "--disable=R0902",
+            "--disable=R0904",
+            "--disable=C0302",
+            "--disable=C0412",
+            "--disable=E0102",
+            "--disable=W0703"
         ],
         "python.linting.enabled": true,
         "editor.formatOnSave": true,
+        "editor.tabSize": 4,
+        "editor.rulers": [
+            88
+        ],
         "[markdown]": {
             "editor.formatOnSave": true
         },
@@ -50,7 +63,18 @@
         "cSpell.words": [
             "pymavswarm",
             "rtype",
-            "mavlink"
+            "mavlink",
+            "pymavlink",
+            "mavutil"
+        ],
+        "cSpell.allowCompoundWords": true,
+        "cSpell.ignorePaths": [
+            "**/package-lock.json",
+            "**/vscode-extension/**",
+            "**/.git/objects/**",
+            ".vscode",
+            ".vscode-insiders",
+            ".devcontainer/devcontainer.json"
         ]
     },
     "extensions": [

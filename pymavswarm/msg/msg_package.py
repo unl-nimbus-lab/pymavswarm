@@ -8,7 +8,11 @@ class MsgPackage:
     """
 
     def __init__(
-        self, msgs: list, retry: bool = False, max_retry_attempts: int = 2
+        self,
+        msgs: list,
+        retry: bool = False,
+        max_retry_attempts: int = 2,
+        optional_context_props: dict = {},
     ) -> None:
         """
         Constructor.
@@ -23,6 +27,10 @@ class MsgPackage:
         :param max_retry_attempts: The maximum number of attempts that should be made
             at successfully sending any previously failed messages, defaults to 2
         :type max_retry_attempts: int, optional
+
+        :param optional_context_props: optional properties to append to the message
+            context, defaults to {}
+        :type optional_context_props: dict, optional
         """
         self.__msgs = msgs
         self.__retry = retry
@@ -30,6 +38,7 @@ class MsgPackage:
         self.__msgs_failed = []
         self.__max_retry_attempts = max_retry_attempts
         self.__package_result_event = Event()
+        self.__optional_context_props = optional_context_props
         self.__response = None
 
         return
@@ -41,11 +50,14 @@ class MsgPackage:
 
         :rtype: dict
         """
-        return {
+        context = {
             "msgs_succeeded": self.__msgs_succeeded,
             "msgs_failed": self.__msgs_failed,
             "response": self.__response,
         }
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def msgs(self) -> list:

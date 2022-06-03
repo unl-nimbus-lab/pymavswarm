@@ -1,7 +1,7 @@
-from typing import List, Optional, Any
 import monotonic
 from pymavswarm.state import *
 from pymavswarm.event import Event
+from typing import List, Optional, Any
 from pymavswarm.mission import Mission
 
 
@@ -44,7 +44,7 @@ class Agent:
         self.__name = name
 
         """
-        We create additional context properties here so that listeners of the 
+        We create additional context properties here so that listeners of the
         respective property events have information about the parent agent
         """
         context_props = {"sys_id": sys_id, "comp_id": comp_id, "name": name}

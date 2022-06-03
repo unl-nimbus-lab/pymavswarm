@@ -10,7 +10,11 @@ class ParameterPackage:
     """
 
     def __init__(
-        self, params: list, retry: bool = False, max_retry_attempts: int = 2
+        self,
+        params: list,
+        retry: bool = False,
+        max_retry_attempts: int = 2,
+        optional_context_props: dict = {},
     ) -> None:
         """
         Constructor.
@@ -25,6 +29,10 @@ class ParameterPackage:
         :param max_retry_attempts: maximum number of attempts that should be made when
             to retry sending failed parameters, defaults to 2
         :type max_retry_attempts: int, optional
+
+        :param optional_context_props: optional properties to append to the package
+            context, defaults to {}
+        :type optional_context_props: dict, optional
         """
         self.__params = params
         self.__retry = retry
@@ -32,6 +40,7 @@ class ParameterPackage:
         self.__params_succeeded = []
         self.__params_failed = []
         self.__package_result_event = Event()
+        self.__optional_context_props = optional_context_props
         self.__response = None
 
         return
@@ -43,11 +52,14 @@ class ParameterPackage:
 
         :rtype: dict
         """
-        return {
+        context = {
             "params_succeeded": self.__params_succeeded,
             "params_failed": self.__params_failed,
             "response": self.__response,
         }
+        context.update(self.__optional_context_props)
+
+        return context
 
     @property
     def params(self) -> List[Parameter]:

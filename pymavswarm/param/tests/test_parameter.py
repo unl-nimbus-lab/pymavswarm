@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 
 import unittest
-from Parameter import Parameter
+from pymavswarm.param.parameter import Parameter
 
 
 class TestParameter(unittest.TestCase):

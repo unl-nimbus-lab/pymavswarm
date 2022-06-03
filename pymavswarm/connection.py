@@ -179,7 +179,7 @@ class Connection:
                 ].flight_mode.value = mavutil.mode_mapping_bynumber(msg.type)[
                     msg.custom_mode
                 ]
-            except Exception as e:
+            except Exception:
                 # We received an invalid message
                 pass
 
@@ -206,8 +206,8 @@ class Connection:
 
             # Update the device velocity
             if self.__devices[device_tuple].velocity is None:
-                v = Velocity(msg.vx / 100, msg.vy / 100, msg.vz / 100)
-                self.__devices[device_tuple].velocity = v
+                velocity = Velocity(msg.vx / 100, msg.vy / 100, msg.vz / 100)
+                self.__devices[device_tuple].velocity = velocity
             else:
                 self.__devices[device_tuple].velocity.vx = msg.vx / 100
                 self.__devices[device_tuple].velocity.vy = msg.vy / 100
@@ -474,7 +474,10 @@ class Connection:
 
         @self.send_message(["arm"])
         def sender(
-            self, msg: SystemCommandMsg, fn_id: int = 0, device_exists: bool = False
+            self,
+            msg: SystemCommandMsg,
+            function_id: int = 0,
+            device_exists: bool = False,
         ) -> bool:
             """
             Arm an agent
@@ -482,9 +485,9 @@ class Connection:
             :param msg: Arming mesasge
             :type msg: SystemCommandMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -546,7 +549,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -558,7 +563,10 @@ class Connection:
 
         @self.send_message(["disarm"])
         def sender(
-            self, msg: SystemCommandMsg, fn_id: int = 0, device_exists: bool = False
+            self,
+            msg: SystemCommandMsg,
+            function_id: int = 0,
+            device_exists: bool = False,
         ) -> bool:
             """
             Disarm an agent
@@ -566,9 +574,9 @@ class Connection:
             :param msg: Disarm message
             :type msg: SystemCommandMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -630,7 +638,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -642,7 +652,10 @@ class Connection:
 
         @self.send_message(["kill"])
         def sender(
-            self, msg: SystemCommandMsg, fn_id: int = 0, device_exists: bool = False
+            self,
+            msg: SystemCommandMsg,
+            function_id: int = 0,
+            device_exists: bool = False,
         ) -> bool:
             """
             Force disarm an agent
@@ -650,9 +663,9 @@ class Connection:
             :param msg: Kill message
             :type msg: SystemCommandMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -699,7 +712,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -711,7 +726,10 @@ class Connection:
 
         @self.send_message(["reboot"])
         def sender(
-            self, msg: SystemCommandMsg, fn_id: int = 0, device_exists: bool = False
+            self,
+            msg: SystemCommandMsg,
+            function_id: int = 0,
+            device_exists: bool = False,
         ) -> bool:
             """
             Reboot an agent
@@ -719,9 +737,9 @@ class Connection:
             :param msg: Reboot message
             :type msg: SystemCommandMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -768,7 +786,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -780,7 +800,10 @@ class Connection:
 
         @self.send_message(["shutdown"])
         def sender(
-            self, msg: SystemCommandMsg, fn_id: int = 0, device_exists: bool = False
+            self,
+            msg: SystemCommandMsg,
+            function_id: int = 0,
+            device_exists: bool = False,
         ) -> bool:
             """
             Shutdown an agent
@@ -788,9 +811,9 @@ class Connection:
             :param msg: Shutdown message
             :type msg: SystemCommandMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -837,7 +860,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -851,7 +876,7 @@ class Connection:
         def sender(
             self,
             msg: PreflightCalibrationMsg,
-            fn_id: int = 0,
+            function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
             """
@@ -860,9 +885,9 @@ class Connection:
             :param msg: Calibration message
             :type msg: PreflightCalibrationMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -910,7 +935,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -924,7 +951,7 @@ class Connection:
         def sender(
             self,
             msg: PreflightCalibrationMsg,
-            fn_id: int = 0,
+            function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
             """
@@ -933,9 +960,9 @@ class Connection:
             :param msg: Calibration message
             :type msg: PreflightCalibrationMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -984,7 +1011,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -998,7 +1027,7 @@ class Connection:
         def sender(
             self,
             msg: PreflightCalibrationMsg,
-            fn_id: int = 0,
+            function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
             """
@@ -1007,9 +1036,9 @@ class Connection:
             :param msg: Calibration message
             :type msg: PreflightCalibrationMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1056,7 +1085,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1070,7 +1101,7 @@ class Connection:
         def sender(
             self,
             msg: PreflightCalibrationMsg,
-            fn_id: int = 0,
+            function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
             """
@@ -1079,9 +1110,9 @@ class Connection:
             :param msg: Calibration message
             :type msg: PreflightCalibrationMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1130,7 +1161,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1144,7 +1177,7 @@ class Connection:
         def sender(
             self,
             msg: PreflightCalibrationMsg,
-            fn_id: int = 0,
+            function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
             """
@@ -1153,9 +1186,9 @@ class Connection:
             :param msg: Calibration message
             :type msg: PreflightCalibrationMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1203,7 +1236,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1217,7 +1252,7 @@ class Connection:
         def sender(
             self,
             msg: PreflightCalibrationMsg,
-            fn_id: int = 0,
+            function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
             """
@@ -1226,9 +1261,9 @@ class Connection:
             :param msg: Calibration message
             :type msg: PreflightCalibrationMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1277,7 +1312,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1291,7 +1328,7 @@ class Connection:
         def sender(
             self,
             msg: PreflightCalibrationMsg,
-            fn_id: int = 0,
+            function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
             """
@@ -1300,9 +1337,9 @@ class Connection:
             :param msg: Calibration message
             :type msg: PreflightCalibrationMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1351,7 +1388,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1365,7 +1404,7 @@ class Connection:
         def sender(
             self,
             msg: PreflightCalibrationMsg,
-            fn_id: int = 0,
+            function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
             """
@@ -1374,9 +1413,9 @@ class Connection:
             :param msg: Calibration message
             :type msg: PreflightCalibrationMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1425,7 +1464,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1437,7 +1478,7 @@ class Connection:
 
         @self.send_message(["stabilize"])
         def sender(
-            self, msg: FlightModeMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightModeMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set an agent to STABILIZE mode
@@ -1445,9 +1486,9 @@ class Connection:
             :param msg: Flight mode message
             :type msg: FlightModeMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1510,7 +1551,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1522,7 +1565,7 @@ class Connection:
 
         @self.send_message(["acro"])
         def sender(
-            self, msg: FlightModeMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightModeMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set an agent to ACRO mode
@@ -1530,9 +1573,9 @@ class Connection:
             :param msg: Flight mode message
             :type msg: FlightModeMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1592,7 +1635,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1604,7 +1649,7 @@ class Connection:
 
         @self.send_message(["althold"])
         def sender(
-            self, msg: FlightModeMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightModeMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set an agent to ALT_HOLD mode
@@ -1612,9 +1657,9 @@ class Connection:
             :param msg: Flight mode message
             :type msg: FlightModeMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1675,7 +1720,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1687,7 +1734,7 @@ class Connection:
 
         @self.send_message(["auto"])
         def sender(
-            self, msg: FlightModeMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightModeMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set an agent to AUTO mode
@@ -1695,9 +1742,9 @@ class Connection:
             :param msg: Flight mode message
             :type msg: FlightModeMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1757,7 +1804,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1769,7 +1818,7 @@ class Connection:
 
         @self.send_message(["loiter"])
         def sender(
-            self, msg: FlightModeMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightModeMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set an agent to LOITER mode
@@ -1777,9 +1826,9 @@ class Connection:
             :param msg: Flight mode message
             :type msg: FlightModeMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1840,7 +1889,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1852,7 +1903,7 @@ class Connection:
 
         @self.send_message(["rtl"])
         def sender(
-            self, msg: FlightModeMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightModeMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set an agent to RTL mode
@@ -1860,9 +1911,9 @@ class Connection:
             :param msg: Flight mode message
             :type msg: FlightModeMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -1923,7 +1974,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -1935,7 +1988,7 @@ class Connection:
 
         @self.send_message(["land"])
         def sender(
-            self, msg: FlightModeMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightModeMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set an agent to LAND mode
@@ -1943,9 +1996,9 @@ class Connection:
             :param msg: Flight mode message
             :type msg: FlightModeMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2005,16 +2058,21 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
+
+            msg.response = msg_code
+            msg.message_result_event.notify(context=msg.context)
 
             return ack
 
         @self.send_message(["throw"])
         def sender(
-            self, msg: FlightModeMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightModeMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set an agent to THROW mode
@@ -2022,9 +2080,9 @@ class Connection:
             :param msg: Flight mode message
             :type msg: FlightModeMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2085,7 +2143,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2097,7 +2157,7 @@ class Connection:
 
         @self.send_message(["systemid"])
         def sender(
-            self, msg: FlightModeMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightModeMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set an agent to SYSTEMID mode
@@ -2105,9 +2165,9 @@ class Connection:
             :param msg: Flight mode message
             :type msg: FlightModeMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2168,7 +2228,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2180,7 +2242,7 @@ class Connection:
 
         @self.send_message(["guided"])
         def sender(
-            self, msg: FlightModeMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightModeMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set an agent to GUIDED mode
@@ -2188,9 +2250,9 @@ class Connection:
             :param msg: Flight mode message
             :type msg: FlightModeMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2251,7 +2313,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2263,7 +2327,7 @@ class Connection:
 
         @self.send_message(["startpath"])
         def sender(
-            self, msg: HRLMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: HRLMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Start path execution on the respective agent
@@ -2271,9 +2335,9 @@ class Connection:
             :param msg: HRL message
             :type msg: HRLMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2336,7 +2400,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2348,7 +2414,7 @@ class Connection:
 
         @self.send_message(["resetpath"])
         def sender(
-            self, msg: HRLMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: HRLMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Reset path execution on the respective agent
@@ -2356,9 +2422,9 @@ class Connection:
             :param msg: HRL message
             :type msg: HRLMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2421,7 +2487,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2433,7 +2501,7 @@ class Connection:
 
         @self.send_message(["stoppath"])
         def sender(
-            self, msg: HRLMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: HRLMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Start path execution on the respective agent
@@ -2441,9 +2509,9 @@ class Connection:
             :param msg: HRL message
             :type msg: HRLMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2506,7 +2574,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2518,7 +2588,7 @@ class Connection:
 
         @self.send_message(["startlive"])
         def sender(
-            self, msg: HRLMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: HRLMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Start live path execution on the respective agent
@@ -2526,9 +2596,9 @@ class Connection:
             :param msg: HRL message
             :type msg: HRLMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2591,7 +2661,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2603,7 +2675,7 @@ class Connection:
 
         @self.send_message(["airspeed"])
         def sender(
-            self, msg: FlightSpeedMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightSpeedMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set a new airspeed on an agent
@@ -2611,9 +2683,9 @@ class Connection:
             :param msg: Speed message
             :type msg: FlightSpeedMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2660,7 +2732,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2672,7 +2746,7 @@ class Connection:
 
         @self.send_message(["groundspeed"])
         def sender(
-            self, msg: FlightSpeedMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightSpeedMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set a new groundspeed on an agent
@@ -2680,9 +2754,9 @@ class Connection:
             :param msg: Speed message
             :type msg: FlightSpeedMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2729,7 +2803,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2741,7 +2817,7 @@ class Connection:
 
         @self.send_message(["climbspeed"])
         def sender(
-            self, msg: FlightSpeedMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightSpeedMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set a new climbspeed on an agent
@@ -2749,9 +2825,9 @@ class Connection:
             :param msg: Speed message
             :type msg: FlightSpeedMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2798,7 +2874,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2810,7 +2888,7 @@ class Connection:
 
         @self.send_message(["descentspeed"])
         def sender(
-            self, msg: FlightSpeedMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: FlightSpeedMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Set a new descent speed on an agent
@@ -2818,9 +2896,9 @@ class Connection:
             :param msg: Speed message
             :type msg: FlightSpeedMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2867,7 +2945,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2879,7 +2959,7 @@ class Connection:
 
         @self.send_message(["simpletakeoff"])
         def sender(
-            self, msg: TakeoffMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: TakeoffMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Perform a simple takeoff command (just takeoff to a set altitude)
@@ -2890,9 +2970,9 @@ class Connection:
             :param msg: Takeoff message
             :type msg: TakeoffMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -2949,7 +3029,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -2961,7 +3043,7 @@ class Connection:
 
         @self.send_message(["takeoff"])
         def sender(
-            self, msg: TakeoffMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: TakeoffMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Perform a takeoff command (use lat, lon, and alt)
@@ -2972,9 +3054,9 @@ class Connection:
             :param msg: Speed message
             :type msg: TakeoffMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -3030,7 +3112,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3042,7 +3126,7 @@ class Connection:
 
         @self.send_message(["simplefulltakeoff"])
         def sender(
-            self, msg: TakeoffMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: TakeoffMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Command used to signal execution of a full simple takeoff sequence:
@@ -3053,9 +3137,9 @@ class Connection:
             :param msg: Speed message
             :type msg: TakeoffMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -3142,7 +3226,7 @@ class Connection:
 
         @self.send_message(["fulltakeoff"])
         def sender(
-            self, msg: TakeoffMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: TakeoffMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Command used to signal execution of a full takeoff sequence:
@@ -3153,9 +3237,9 @@ class Connection:
             :param msg: Speed message
             :type msg: TakeoffMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -3240,7 +3324,7 @@ class Connection:
 
         @self.send_message(["simplewaypoint"])
         def sender(
-            self, msg: WaypointMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: WaypointMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Perform a simple waypoint command (just lat, lon, and alt)
@@ -3252,9 +3336,9 @@ class Connection:
             :param msg: Waypoint message
             :type msg: WaypointMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -3314,7 +3398,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3326,7 +3412,7 @@ class Connection:
 
         @self.send_message(["waypoint"])
         def sender(
-            self, msg: WaypointMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: WaypointMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Perform a waypoint navigation command
@@ -3338,9 +3424,9 @@ class Connection:
             :param msg: Waypoint message
             :type msg: WaypointMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -3399,7 +3485,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3411,7 +3499,7 @@ class Connection:
 
         @self.send_message(["gethomeposition"])
         def sender(
-            self, msg: AgentMsg, fn_id: int = 0, device_exists: bool = False
+            self, msg: AgentMsg, function_id: int = 0, device_exists: bool = False
         ) -> bool:
             """
             Get the current home position of an agent
@@ -3419,9 +3507,9 @@ class Connection:
             :param msg: Get home position message
             :type msg: AgentMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -3469,7 +3557,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3481,7 +3571,10 @@ class Connection:
 
         @self.send_message(["resethomecurrent"])
         def sender(
-            self, msg: HomePositionMsg, fn_id: int = 0, device_exists: bool = False
+            self,
+            msg: HomePositionMsg,
+            function_id: int = 0,
+            device_exists: bool = False,
         ) -> bool:
             """
             Reset the saved home position of an agent to the current position
@@ -3493,9 +3586,9 @@ class Connection:
             :param msg: Reset home position message
             :type msg: HomePositionMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -3596,7 +3689,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3608,7 +3703,10 @@ class Connection:
 
         @self.send_message(["resethome"])
         def sender(
-            self, msg: HomePositionMsg, fn_id: int = 0, device_exists: bool = False
+            self,
+            msg: HomePositionMsg,
+            function_id: int = 0,
+            device_exists: bool = False,
         ) -> bool:
             """
             Reset the saved home position of an agent to the desired position
@@ -3616,9 +3714,9 @@ class Connection:
             :param msg: Reset home position message
             :type msg: HomePositionMsg
 
-            :param fn_id: The index of the method in the message type function handler
+            :param function_id: The index of the method in the message type function handler
                 list, defaults to 0
-            :type fn_id: int, optional
+            :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
                 is intended for exists in the network, defaults to False
@@ -3739,7 +3837,9 @@ class Connection:
 
             if msg.retry and not ack:
                 if self.__retry_msg_send(
-                    msg, self.__message_senders[msg.msg_type][fn_id], device_exists
+                    msg,
+                    self.__message_senders[msg.msg_type][function_id],
+                    device_exists,
                 ):
                     ack = True
                     msg_code = responses.SUCCESS
@@ -3808,16 +3908,16 @@ class Connection:
         :type msg: Union[list, str]
         """
 
-        def decorator(fn: Callable):
+        def decorator(function: Callable):
             if isinstance(msg, list):
-                for m in msg:
-                    self.add_message_listener(m, fn)
+                for sub_msg in msg:
+                    self.add_message_listener(sub_msg, function)
             else:
-                self.add_message_listener(msg, fn)
+                self.add_message_listener(msg, function)
 
         return decorator
 
-    def add_message_listener(self, msg: str, fn: Callable) -> None:
+    def add_message_listener(self, msg: str, function: Callable) -> None:
         """
         Add a new function to the dictionary of message listeners
         This implementation has been inspired by the following source:
@@ -3827,14 +3927,14 @@ class Connection:
 
         :param msg: The message type to bind the function to
         :type msg: str
-        :param fn: The function to connect
-        :type fn: function
+        :param function: The function to connect
+        :type function: function
         """
         if msg not in self.__message_listeners:
             self.__message_listeners[msg] = []
 
-        if fn not in self.__message_listeners[msg]:
-            self.__message_listeners[msg].append(fn)
+        if function not in self.__message_listeners[msg]:
+            self.__message_listeners[msg].append(function)
 
         return
 
@@ -3846,30 +3946,30 @@ class Connection:
         :type msg: Union[list, str]
         """
 
-        def decorator(fn: Callable):
+        def decorator(function: Callable):
             if isinstance(msg, list):
-                for m in msg:
-                    self.add_message_sender(m, fn)
+                for sub_msg in msg:
+                    self.add_message_sender(sub_msg, function)
             else:
-                self.add_message_sender(msg, fn)
+                self.add_message_sender(msg, function)
 
         return decorator
 
-    def add_message_sender(self, msg: str, fn: Callable) -> None:
+    def add_message_sender(self, msg: str, function: Callable) -> None:
         """
         Add a new function to the dictionary of message senders
 
         :param msg: The message type to connect to the sender
         :type msg: str
 
-        :param fn: The function to connect
-        :type fn: function
+        :param function: The function to connect
+        :type function: function
         """
         if msg not in self.__message_senders:
             self.__message_senders[msg] = []
 
-        if fn not in self.__message_senders[msg]:
-            self.__message_senders[msg].append(fn)
+        if function not in self.__message_senders[msg]:
+            self.__message_senders[msg].append(function)
 
         return
 
@@ -3898,11 +3998,11 @@ class Connection:
         """
         while self.__connected:
             # Update the timeout flag for each device
-            for key in self.__devices:
-                if self.__devices[key].last_heartbeat.value is not None:
-                    self.__devices[key].timeout.value = (
-                        monotonic.monotonic() - self.__devices[key].last_heartbeat.value
-                    ) >= self.__devices[key].timeout_period.value
+            for device in self.__devices.values():
+                if device.last_heartbeat.value is not None:
+                    device.timeout.value = (
+                        monotonic.monotonic() - device.last_heartbeat.value
+                    ) >= device.timeout_period.value
 
             # Read a new message
             try:
@@ -3911,7 +4011,7 @@ class Connection:
                 else:
                     msg = self.master.recv_msg()
                     self.__read_msg_mutex.release()
-            except mavutil.mavlink.MAVError as e:
+            except mavutil.mavlink.MAVError:
                 self.logger.debug("An error occurred on MAVLink message reception")
                 msg = None
             except Exception:
@@ -3926,9 +4026,9 @@ class Connection:
 
             # Apply the respective message handler(s)
             if msg.get_type() in self.__message_listeners:
-                for fn in self.__message_listeners[msg.get_type()]:
+                for function in self.__message_listeners[msg.get_type()]:
                     try:
-                        fn(self, msg)
+                        function(self, msg)
                     except Exception:
                         self.logger.exception(
                             f"Exception in message handler for {msg.get_type()}",
@@ -3937,7 +4037,9 @@ class Connection:
 
         return
 
-    def __retry_msg_send(self, msg: Any, fn: Callable, device_exists: bool) -> bool:
+    def __retry_msg_send(
+        self, msg: Any, function: Callable, device_exists: bool
+    ) -> bool:
         """
         Retry a message send until the an acknowledgement is received or a timeout
         occurs
@@ -3945,8 +4047,8 @@ class Connection:
         :param msg: The message to retry sending
         :type msg: Any
 
-        :param fn: The function to call using the message
-        :type fn: function
+        :param function: The function to call using the message
+        :type function: function
 
         :return: Indicate whether the retry was successful
         :rtype: bool
@@ -3959,13 +4061,13 @@ class Connection:
 
         while time.time() - start_time <= msg.msg_timeout:
             # Reattempt the message send
-            if fn(self, msg, device_exists=device_exists):
+            if function(self, msg, device_exists=device_exists):
                 ack = True
                 break
 
         return ack
 
-    def __retry_param_send(self, param: Any, fn: Callable) -> bool:
+    def __retry_param_send(self, param: Any, function: Callable) -> bool:
         """
         Retry a parameter send until the an acknowledgement is received or a timeout
         occurs
@@ -3973,8 +4075,8 @@ class Connection:
         :param param: The parameter to retry sending
         :type msg: Any
 
-        :param fn: The function to call using the message
-        :type fn: function
+        :param function: The function to call using the message
+        :type function: function
 
         :return: Indicate whether the retry was successful
         :rtype: bool
@@ -3987,7 +4089,7 @@ class Connection:
 
         while time.time() - start_time <= param.msg_timeout:
             # Reattempt the message send
-            if fn(param):
+            if function(param):
                 ack = True
                 break
 
@@ -4025,7 +4127,7 @@ class Connection:
                 if ack_msg["mavpackettype"] == msg_type:
                     ack_success = True
                     break
-            except mavutil.mavlink.MAVError as e:
+            except mavutil.mavlink.MAVError:
                 self.logger.debug("An error occurred on MAVLink message reception")
             except AttributeError:
                 # Catch errors with converting the message to a dict
@@ -4085,6 +4187,7 @@ class Connection:
         :param package: Package of messages to send
         :type package: MsgPackage
         """
+
         def get_msg_success(msg: Any) -> list:
             msg_results = self.__send_msg_handler(msg)
 
@@ -4105,7 +4208,7 @@ class Connection:
 
         # Retry sending the failed messages
         if package.retry and len(package.msgs_failed) > 0:
-            for attempt in range(package.max_retry_attempts):
+            for _ in range(package.max_retry_attempts):
                 # Only retry sending the failed messages
                 if len(package.msgs_failed) > 0:
                     for msg in package.msgs_failed:
@@ -4145,9 +4248,13 @@ class Connection:
         """
         # Helper function used to send the desired command
         if msg.msg_type in self.__message_senders:
-            for fn_id, fn in enumerate(self.__message_senders[msg.msg_type]):
+            for function_id, function in enumerate(
+                self.__message_senders[msg.msg_type]
+            ):
                 try:
-                    if not fn(self, msg, fn_id=fn_id, device_exists=device_exists):
+                    if not function(
+                        self, msg, function_id=function_id, device_exists=device_exists
+                    ):
                         return False
                 except Exception:
                     pass
@@ -4162,7 +4269,7 @@ class Connection:
         :type msg: Any
         """
         # List of the results for each function called by the message
-        msg_fn_results = []
+        msg_function_results = []
 
         try:
             # Send the message if there is a message sender for it
@@ -4179,17 +4286,22 @@ class Connection:
                         "confirm reception of the message."
                     )
 
-                for fn_id, fn in enumerate(self.__message_senders[msg.msg_type]):
+                for function_id, function in enumerate(
+                    self.__message_senders[msg.msg_type]
+                ):
                     # Prevent multiple sends from occurring at once
                     self.__send_msg_mutex.acquire()
 
                     # Result of the particular function called
-                    fn_result = False
+                    function_result = False
 
                     # Execute the command
                     try:
-                        fn_result = fn(
-                            self, msg, fn_id=fn_id, device_exists=device_exists
+                        function_result = function(
+                            self,
+                            msg,
+                            function_id=function_id,
+                            device_exists=device_exists,
                         )
                     except Exception:
                         self.logger.exception(
@@ -4197,15 +4309,17 @@ class Connection:
                             exc_info=True,
                         )
                     finally:
-                        msg_fn_results.append((msg.msg_type, fn_id, fn_result))
+                        msg_function_results.append(
+                            (msg.msg_type, function_id, function_result)
+                        )
                         self.__send_msg_mutex.release()
         except Exception:
             self.logger.exception(
-                f"An error occurred while attempting to send the provided message",
+                "An error occurred while attempting to send the provided message",
                 exc_info=True,
             )
 
-        return msg_fn_results
+        return msg_function_results
 
     def set_param_handler(self, param: Parameter) -> None:
         """
@@ -4237,7 +4351,7 @@ class Connection:
             self.__set_param(param)
         except Exception:
             self.logger.exception(
-                f"An error occurred while attempting to send the provided message",
+                "An error occurred while attempting to send the provided message",
                 exc_info=True,
             )
         finally:
@@ -4268,10 +4382,11 @@ class Connection:
                 param.param_value,
                 9,
             )
-        except Exception as e:
+        except Exception:
             self.logger.error(
                 f"An error occurred while attempting to set {param.param_id} to "
-                f"{param.param_value}"
+                f"{param.param_value}",
+                exc_info=True,
             )
             return False
 
@@ -4333,7 +4448,7 @@ class Connection:
             self.__read_param(param)
         except Exception:
             self.logger.exception(
-                f"An error occurred while attempting to send the provided message"
+                "An error occurred while attempting to send the provided message"
             )
         finally:
             self.__send_msg_mutex.release()
@@ -4354,10 +4469,11 @@ class Connection:
             self.master.mav.param_request_read_send(
                 param.sys_id, param.comp_id, str.encode(param.param_id), -1
             )
-        except Exception as e:
+        except Exception:
             self.logger.exception(
                 f"An exception occurred while attempting to read {param.param_id} "
                 f"from Agent ({param.sys_id}, {param.comp_id})",
+                exc_info=True,
             )
             return False
 

@@ -25,6 +25,7 @@ class HomePositionMsg(AgentMsg):
         ack_timeout: float = 1.0,
         state_timeout: float = 5.0,
         state_delay: float = 3.0,
+        optional_context_props: dict = {},
     ) -> None:
         """
         Constructor.
@@ -72,6 +73,10 @@ class HomePositionMsg(AgentMsg):
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
+
+        :param optional_context_props: optional properties to append to the message
+            context, defaults to {}
+        :type optional_context_props: dict, optional
         """
         super().__init__(
             msg_type,
@@ -82,6 +87,7 @@ class HomePositionMsg(AgentMsg):
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,
+            optional_context_props=optional_context_props,
         )
         self.__altitude = alt
         self.__latitude = lat

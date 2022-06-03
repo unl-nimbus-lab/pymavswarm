@@ -4,7 +4,7 @@ from typing import Union, Optional
 
 class Parameter:
     """
-    A key/value pair that may be sent to an agent to read/write a parameter value
+    A key/value pair that may be sent to an agent to read/write a parameter value.
     """
 
     def __init__(
@@ -16,39 +16,49 @@ class Parameter:
         param_value: Optional[Union[float, int]] = None,
         msg_timeout: float = 3.0,
         ack_timeout: float = 1.0,
+        optional_context_props: dict = {},
     ) -> None:
         """
-        :param sys_id: The system ID of the agent whose parameters should be set/read
+        Constructor.
+
+        :param sys_id: system ID of the agent whose parameters should be set/read
         :type sys_id: int
 
-        :param comp_id: The component ID of the agent whose parameters should be
+        :param comp_id: component ID of the agent whose parameters should be
             set/read
         :type comp_id: int
 
-        :param param_id: The parameter ID that should be set/read
+        :param param_id: parameter ID that should be set/read
         :type param_id: str
 
-        :param retry: Flag indicating whether the system should retry message sending
+        :param retry: flag indicating whether the system should retry message sending
             should acknowledgment fail
         :type retry: bool
 
-        :param msg_timeout: The amount of time that pymavswarm should attempt to resend
+        :param msg_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
             retry is set to true, defaults to 3.0
         :type msg_timeout: float, optional
 
-        :param param_value: The value that the parameter should be set to, defaults to
+        :param param_value: value that the parameter should be set to, defaults to
             None
         :type param_value: Optional[Union[float, int]], optional
 
-        :param ack_timeout: _description_, defaults to 1.0
+        :param ack_timeout: amount of time that pymavswarm should wait for
+            acknowledgement before considering that the system failed to acknowledge
+            the parameter setting/reading, defaults to 1.0
         :type ack_timeout: float, optional
+
+        :param optional_context_props: optional properties to append to the parameter
+            context, defaults to {}
+        :type optional_context_props: dict, optional
         """
         self.__sys_id = sys_id
         self.__comp_id = comp_id
         self.__param_id = param_id
         self.__retry = retry
         self.__param_value = param_value
+        self.__optional_context_props = optional_context_props
 
         if msg_timeout < 0.0 or ack_timeout < 0.0:
             raise ValueError(
@@ -165,7 +175,7 @@ class Parameter:
 
         :rtype: dict
         """
-        return {
+        context = {
             "sys_id": self.__sys_id,
             "comp_id": self.__comp_id,
             "param_id": self.__param_id,
@@ -174,3 +184,6 @@ class Parameter:
             "msg_timeout": self.__msg_timeout,
             "ack_timeout": self.__ack_timeout,
         }
+        context.update(self.__optional_context_props)
+
+        return context

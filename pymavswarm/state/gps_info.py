@@ -1,4 +1,4 @@
-from pymavswarm.state.State import State
+from pymavswarm.state.state import State
 
 
 class GPSInfo(State):

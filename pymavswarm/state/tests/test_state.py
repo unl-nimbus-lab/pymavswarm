@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 
 import unittest
-from State import State
+from pymavswarm.state.state import State
 
 
 class TestState(unittest.TestCase):

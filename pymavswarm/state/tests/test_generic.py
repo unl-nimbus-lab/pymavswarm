@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 
 import unittest
-from Generic import Generic
+from pymavswarm.state.generic import Generic
 
 
 class TestGeneric(unittest.TestCase):
