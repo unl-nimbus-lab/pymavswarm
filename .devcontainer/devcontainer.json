@@ -48,7 +48,9 @@
             "--disable=C0302",
             "--disable=C0412",
             "--disable=E0102",
-            "--disable=W0703"
+            "--disable=W0703",
+            "--disable=R0915",
+            "--disable=R0903"
         ],
         "python.linting.enabled": true,
         "editor.formatOnSave": true,
@@ -65,7 +67,13 @@
             "rtype",
             "mavlink",
             "pymavlink",
-            "mavutil"
+            "mavutil",
+            "mavswarm",
+            "systemid",
+            "mavpackettype",
+            "eeprom",
+            "ahrs",
+            "acro"
         ],
         "cSpell.allowCompoundWords": true,
         "cSpell.ignorePaths": [

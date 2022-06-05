@@ -2,8 +2,8 @@ import logging
 from typing import Any
 from pymavswarm.event import Event
 from pymavswarm.agent import Agent
-from pymavswarm.msg import MsgPackage
 from pymavswarm.connection import Connection
+from pymavswarm.msg import MsgPackage, SupportedMsgs
 from pymavswarm.param import Parameter, ParameterPackage
 
 
@@ -30,6 +30,16 @@ class MavSwarm:
         self.__connection = None
 
         return
+
+    @property
+    def supported_messages(self) -> SupportedMsgs:
+        """
+        Message types that are supported by the pymavswarm interface
+
+        :return: mapping to enable simple configuration of commands
+        :rtype: SupportedMsgs
+        """
+        return SupportedMsgs()
 
     @property
     def agents(self) -> dict:

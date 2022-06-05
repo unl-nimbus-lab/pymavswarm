@@ -1,7 +1,3 @@
-import sys
-
-sys.path.append("..")
-
 import unittest
 from pymavswarm.msg.agent_msg import AgentMsg
 

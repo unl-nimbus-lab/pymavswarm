@@ -1,4 +1,5 @@
 from pymavswarm.msg.agent_msg import AgentMsg
+from pymavswarm.msg.supported_msgs import SupportedMsgs
 
 
 class FlightModeMsg(AgentMsg):
@@ -60,6 +61,12 @@ class FlightModeMsg(AgentMsg):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
+        if flight_mode not in SupportedMsgs.flight_modes.get_supported_types():
+            raise ValueError(
+                f"{flight_mode} is not a supported flight mode. Flight modes supported "
+                f"include: {SupportedMsgs.flight_modes.get_supported_types()}"
+            )
+
         super().__init__(
             "FLIGHT_MODE",
             target_system,
@@ -83,3 +90,16 @@ class FlightModeMsg(AgentMsg):
         :rtype: str
         """
         return self.__flight_mode
+
+    @property
+    def context(self) -> dict:
+        """
+        Update the context to include the flight mode.
+
+        :return: message context
+        :rtype: dict
+        """
+        context = super().context
+        context["flight_mode"] = self.__flight_mode
+
+        return context

@@ -1,4 +1,4 @@
-from .msg_map import MsgMap
+from .supported_msgs import SupportedMsgs
 from .agent_msg import AgentMsg
 from .system_command_msg import SystemCommandMsg
 from .flight_mode_msg import FlightModeMsg

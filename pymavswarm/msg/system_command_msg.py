@@ -1,4 +1,5 @@
 from pymavswarm.msg.agent_msg import AgentMsg
+from pymavswarm.msg.supported_msgs import SupportedMsgs
 
 
 class SystemCommandMsg(AgentMsg):
@@ -60,6 +61,13 @@ class SystemCommandMsg(AgentMsg):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
+        if command not in SupportedMsgs.system_commands.get_supported_types():
+            raise ValueError(
+                f"{command} is not a supported system command. Supported system "
+                "commands include: "
+                f"{SupportedMsgs.system_commands.get_supported_types()}"
+            )
+
         super().__init__(
             command,
             target_system,

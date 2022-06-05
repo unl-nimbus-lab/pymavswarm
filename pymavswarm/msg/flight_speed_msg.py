@@ -1,4 +1,5 @@
 from pymavswarm.msg.agent_msg import AgentMsg
+from pymavswarm.msg.supported_msgs import SupportedMsgs
 
 
 class FlightSpeedMsg(AgentMsg):
@@ -9,6 +10,7 @@ class FlightSpeedMsg(AgentMsg):
     def __init__(
         self,
         speed: float,
+        speed_type: int,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -23,6 +25,9 @@ class FlightSpeedMsg(AgentMsg):
 
         :param speed: The desired speed in m/s
         :type speed: float
+
+        :param speed_type: The type of speed (e.g., air speed) to configure.
+        :type speed_type: int
 
         :param target_system: The target system ID
         :type target_system: int
@@ -60,6 +65,13 @@ class FlightSpeedMsg(AgentMsg):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
+        if speed_type not in SupportedMsgs.flight_speed_commands.get_supported_types():
+            raise ValueError(
+                f"{speed_type} is not a supported speed configuration "
+                "the supported speed configuration types include: "
+                f"{SupportedMsgs.flight_speed_commands.get_supported_types()}"
+            )
+
         super().__init__(
             "FLIGHT_SPEED",
             target_system,
@@ -72,6 +84,7 @@ class FlightSpeedMsg(AgentMsg):
             optional_context_props=optional_context_props,
         )
         self.__speed = speed
+        self.__speed_type = speed_type
 
         return
 
@@ -85,6 +98,15 @@ class FlightSpeedMsg(AgentMsg):
         return self.__speed
 
     @property
+    def speed_type(self) -> int:
+        """
+        The type of speed to configure.
+
+        :rtype: int
+        """
+        return self.__speed_type
+
+    @property
     def context(self) -> dict:
         """
         Context of the message.
@@ -95,5 +117,6 @@ class FlightSpeedMsg(AgentMsg):
 
         # Update to include new properties
         context["speed"] = self.__speed
+        context["speed_type"] = self.__speed_type
 
         return context

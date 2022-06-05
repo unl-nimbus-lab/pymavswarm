@@ -1,4 +1,5 @@
 from pymavswarm.msg.agent_msg import AgentMsg
+from pymavswarm.msg.supported_msgs import SupportedMsgs
 
 
 class HRLMsg(AgentMsg):
@@ -63,6 +64,12 @@ class HRLMsg(AgentMsg):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
+        if hrl_command not in SupportedMsgs.hrl_commands.get_supported_types():
+            raise ValueError(
+                f"{hrl_command} is not a supported HRL command. Supported commands "
+                f"include: {SupportedMsgs.hrl_commands.get_supported_types()}"
+            )
+
         super().__init__(
             "HRL_COMMAND",
             target_system,
@@ -87,3 +94,16 @@ class HRLMsg(AgentMsg):
         :rtype: int
         """
         return self.__hrl_command
+
+    @property
+    def context(self) -> dict:
+        """
+        Update the msg context to include HRL command type.
+
+        :return: message context
+        :rtype: dict
+        """
+        context = super().context
+        context["hrl_command"] = self.__hrl_command
+
+        return context

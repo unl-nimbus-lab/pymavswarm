@@ -74,6 +74,16 @@ class HomePositionMsg(AgentMsg):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
+        if (
+            (lat is not None and (lon is None or alt is None))
+            or (lon is not None and (lat is None or alt is None))
+            or (alt is not None and (lat is None or lon is None))
+        ):
+            raise ValueError(
+                "Ensure that latitude, longitude, and altitude are all set when "
+                "configuring the home position of an agent"
+            )
+
         super().__init__(
             "RESET_HOME",
             target_system,
