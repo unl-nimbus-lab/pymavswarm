@@ -1,4 +1,5 @@
 from collections import deque
+
 from pymavswarm.state import ReadParameter, State
 
 
@@ -22,18 +23,6 @@ class ParameterList(State):
         self.__optional_context_props = optional_context_props
 
         return
-
-    @property
-    def context(self) -> dict:
-        """
-        The current state of the parameter buffer
-
-        :rtype: dict
-        """
-        context = {"parameters": self.__params}
-        context.update(self.__optional_context_props)
-
-        return context
 
     @property
     def max_length(self) -> int:
@@ -88,3 +77,15 @@ class ParameterList(State):
         self.state_changed_event.notify(context=self.context)
 
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        The current state of the parameter buffer
+
+        :rtype: dict
+        """
+        context = {"parameters": self.__params}
+        context.update(self.__optional_context_props)
+
+        return context

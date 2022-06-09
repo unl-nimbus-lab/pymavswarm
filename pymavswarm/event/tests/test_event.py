@@ -1,9 +1,6 @@
-import sys
-
-sys.path.append("..")
-
 import unittest
-from pymavswarm.event.event import Event
+
+from pymavswarm.event import Event
 
 
 class TestEvent(unittest.TestCase):

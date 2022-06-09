@@ -44,24 +44,6 @@ class GPSInfo(State):
         return
 
     @property
-    def context(self) -> dict:
-        """
-        Get the current state as a dictionary for callbacks
-
-        :return: Properties of interested associated with the GPS information
-        :rtype: dict
-        """
-        context = {
-            "eph": self.eph,
-            "epv": self.epv,
-            "fix_type": self.fix_type,
-            "satellites_visible": self.satellites_visible,
-        }
-        context.update(self.__optional_context_props)
-
-        return context
-
-    @property
     def eph(self) -> float:
         """
         GPS HDOP horizontal dilution of position (unitless * 100)
@@ -164,3 +146,21 @@ class GPSInfo(State):
             self.state_changed_event.notify(context=self.context)
 
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the current state as a dictionary for callbacks
+
+        :return: Properties of interested associated with the GPS information
+        :rtype: dict
+        """
+        context = {
+            "eph": self.__eph,
+            "epv": self.__epv,
+            "fix_type": self.__fix_type,
+            "satellites_visible": self.__satellites_visible,
+        }
+        context.update(self.__optional_context_props)
+
+        return context

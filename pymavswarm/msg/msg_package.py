@@ -44,22 +44,6 @@ class MsgPackage:
         return
 
     @property
-    def context(self) -> dict:
-        """
-        Current context of the package.
-
-        :rtype: dict
-        """
-        context = {
-            "msgs_succeeded": self.__msgs_succeeded,
-            "msgs_failed": self.__msgs_failed,
-            "response": self.__response,
-        }
-        context.update(self.__optional_context_props)
-
-        return context
-
-    @property
     def msgs(self) -> list:
         """
         List of messages in the package.
@@ -133,3 +117,19 @@ class MsgPackage:
         """
         self.__response = code
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        Current context of the package.
+
+        :rtype: dict
+        """
+        context = {
+            "msgs_succeeded": self.__msgs_succeeded,
+            "msgs_failed": self.__msgs_failed,
+            "response": self.__response,
+        }
+        context.update(self.__optional_context_props)
+
+        return context

@@ -1,4 +1,5 @@
 from typing import Any
+
 from pymavswarm.state.state import State
 
 
@@ -27,19 +28,6 @@ class Generic(State):
         self.__optional_context_props = optional_context_props
 
         return
-
-    @property
-    def context(self) -> dict:
-        """
-        Get the current state as a dictionary for callbacks
-
-        :return: Current value of the state
-        :rtype: dict
-        """
-        context = {self.__name: self.__value}
-        context.update(self.__optional_context_props)
-
-        return context
 
     @property
     def value(self) -> int:
@@ -75,3 +63,16 @@ class Generic(State):
         :rtype: str
         """
         return self.__name
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the current state as a dictionary for callbacks
+
+        :return: Current value of the state
+        :rtype: dict
+        """
+        context = {self.__name: self.__value}
+        context.update(self.__optional_context_props)
+
+        return context

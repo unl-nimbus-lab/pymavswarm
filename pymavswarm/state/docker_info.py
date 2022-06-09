@@ -1,4 +1,5 @@
 import datetime
+
 from pymavswarm.state.state import State
 
 
@@ -32,19 +33,6 @@ class DockerInfo(State):
         self.__optional_context_props = optional_context_props
 
         return
-
-    @property
-    def context(self) -> dict:
-        """
-        Get the current state as a dictionary for callbacks
-
-        :return: Properties of interested associated with the docker information
-        :rtype: dict
-        """
-        context = {"version": self.__version, "last_update": self.__last_update}
-        context.update(self.__optional_context_props)
-
-        return context
 
     @property
     def version(self) -> str:
@@ -97,3 +85,16 @@ class DockerInfo(State):
             self.state_changed_event.notify(context=self.context)
 
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the current state as a dictionary for callbacks
+
+        :return: Properties of interested associated with the docker information
+        :rtype: dict
+        """
+        context = {"version": self.__version, "last_update": self.__last_update}
+        context.update(self.__optional_context_props)
+
+        return context

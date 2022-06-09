@@ -1,6 +1,7 @@
 import logging
 from typing import Optional
-from pymavswarm.mission.waypoint import Waypoint
+
+from pymavswarm.mission import Waypoint
 
 
 class Mission:
@@ -105,7 +106,7 @@ class Mission:
         """
         try:
             self.__waypoints.pop(index)
-        except IndexError as e:
+        except IndexError:
             self.__logger.exception(
                 f"An attempt was made to remove a waypoint at an invalid index. "
                 f"Mission size: {len(self.__waypoints)}. Index: {index}"

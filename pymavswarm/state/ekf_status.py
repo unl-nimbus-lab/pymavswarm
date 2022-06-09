@@ -64,28 +64,6 @@ class EKFStatus(State):
         return
 
     @property
-    def context(self) -> dict:
-        """
-        Get the current state as a dictionary for callbacks
-
-        :return: Properties of interested associated with the EKF status
-        :rtype: dict
-        """
-        context = {
-            "velocity_variance": self.velocity_variance,
-            "pos_horiz_variance": self.pos_horiz_variance,
-            "pos_vert_variance": self.pos_vert_variance,
-            "compass_variance": self.compass_variance,
-            "terrain_alt_variance": self.terrain_alt_variance,
-            "pos_horiz_abs": self.pos_horiz_abs,
-            "const_pos_mode": self.const_pos_mode,
-            "pred_pos_horiz_abs": self.pred_pos_horiz_abs,
-        }
-        context.update(self.__optional_context_props)
-
-        return context
-
-    @property
     def velocity_variance(self) -> float:
         """
         Velocity variance
@@ -293,3 +271,25 @@ class EKFStatus(State):
             self.state_changed_event.notify(context=self.context)
 
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the current state as a dictionary for callbacks
+
+        :return: Properties of interested associated with the EKF status
+        :rtype: dict
+        """
+        context = {
+            "velocity_variance": self.__velocity_variance,
+            "pos_horiz_variance": self.__pos_horiz_variance,
+            "pos_vert_variance": self.__pos_vert_variance,
+            "compass_variance": self.__compass_variance,
+            "terrain_alt_variance": self.__terrain_alt_variance,
+            "pos_horiz_abs": self.__pos_horiz_abs,
+            "const_pos_mode": self.__const_pos_mode,
+            "pred_pos_horiz_abs": self.__pred_pos_horiz_abs,
+        }
+        context.update(self.__optional_context_props)
+
+        return context

@@ -38,7 +38,6 @@
             "--disable=W1203",
             "--disable=R1711",
             "--disable=C0114",
-            "--disable=C0411",
             "--disable=R0913",
             "--disable=W0102",
             "--disable=C0115",
@@ -53,6 +52,28 @@
             "--disable=R0903"
         ],
         "python.linting.enabled": true,
+        "python.linting.ignorePatterns": [
+            "**/site-packages/**/*.py",
+            ".vscode/*.py",
+            "**/package-lock.json",
+            "**/vscode-extension/**",
+            "**/.git/objects/**",
+            ".vscode",
+            ".vscode-insiders",
+            ".devcontainer/devcontainer.json",
+            "**/tests/runtests.py"
+        ],
+        "python.sortImports.args": [
+            "--profile",
+            "black",
+            "--project",
+            "pymavswarm"
+        ],
+        "[python]": {
+            "editor.codeActionsOnSave": {
+                "source.organizeImports": true
+            }
+        },
         "editor.formatOnSave": true,
         "editor.tabSize": 4,
         "editor.rulers": [
@@ -71,9 +92,15 @@
             "mavswarm",
             "systemid",
             "mavpackettype",
+            "bynumber",
+            "compid",
+            "horiz",
             "eeprom",
             "ahrs",
-            "acro"
+            "acro",
+            "hdop",
+            "vdop",
+            "uart"
         ],
         "cSpell.allowCompoundWords": true,
         "cSpell.ignorePaths": [

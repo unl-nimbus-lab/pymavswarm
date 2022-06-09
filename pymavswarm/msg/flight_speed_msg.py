@@ -1,5 +1,5 @@
-from pymavswarm.msg.agent_msg import AgentMsg
-from pymavswarm.msg.supported_msgs import SupportedMsgs
+from pymavswarm.msg import AgentMsg
+from pymavswarm.msg import SupportedMsgs as supported_msgs
 
 
 class FlightSpeedMsg(AgentMsg):
@@ -65,11 +65,11 @@ class FlightSpeedMsg(AgentMsg):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
-        if speed_type not in SupportedMsgs.flight_speed_commands.get_supported_types():
+        if speed_type not in supported_msgs.flight_speed_commands.get_supported_types():
             raise ValueError(
                 f"{speed_type} is not a supported speed configuration "
                 "the supported speed configuration types include: "
-                f"{SupportedMsgs.flight_speed_commands.get_supported_types()}"
+                f"{supported_msgs.flight_speed_commands.get_supported_types()}"
             )
 
         super().__init__(

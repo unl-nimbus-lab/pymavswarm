@@ -1,4 +1,4 @@
-from pymavswarm.msg.agent_msg import AgentMsg
+from pymavswarm.msg import AgentMsg
 
 
 class WaypointMsg(AgentMsg):

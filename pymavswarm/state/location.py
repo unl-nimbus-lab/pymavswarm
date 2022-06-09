@@ -38,23 +38,6 @@ class Location(State):
         return
 
     @property
-    def context(self) -> dict:
-        """
-        Get the current state as a dictionary for callbacks
-
-        :return: Properties of interested associated with the GPS information
-        :rtype: dict
-        """
-        context = {
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-            "altitude": self.altitude,
-        }
-        context.update(self.__optional_context_props)
-
-        return context
-
-    @property
     def latitude(self) -> float:
         """
         Latitude (WGS84, EGM96 ellipsoid)
@@ -131,3 +114,20 @@ class Location(State):
             self.state_changed_event.notify(context=self.context)
 
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the current state as a dictionary for callbacks
+
+        :return: Properties of interested associated with the GPS information
+        :rtype: dict
+        """
+        context = {
+            "latitude": self.__latitude,
+            "longitude": self.__longitude,
+            "altitude": self.__altitude,
+        }
+        context.update(self.__optional_context_props)
+
+        return context

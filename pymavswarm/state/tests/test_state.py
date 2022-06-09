@@ -1,9 +1,6 @@
-import sys
-
-sys.path.append("..")
-
 import unittest
-from pymavswarm.state.state import State
+
+from pymavswarm.state import State
 
 
 class TestState(unittest.TestCase):
@@ -24,6 +21,12 @@ class TestState(unittest.TestCase):
 
             @property
             def test_prop(self) -> str:
+                """
+                test property.
+
+                :return: test property
+                :rtype: str
+                """
                 return self.__test_prop
 
             @test_prop.setter
@@ -34,7 +37,7 @@ class TestState(unittest.TestCase):
 
         test_class = TestClass()
         total_calls = 0
-        passed_context = None
+        passed_context = {}
 
         # Sample listener to attach to the event
         def test_fn(kwargs) -> None:

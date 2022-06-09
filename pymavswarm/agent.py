@@ -1,7 +1,9 @@
+from typing import Any, List, Optional
+
 import monotonic
-from pymavswarm.state import *
+
+import pymavswarm.state as swarm_state
 from pymavswarm.event import Event
-from typing import List, Optional, Any
 from pymavswarm.mission import Mission
 
 
@@ -50,42 +52,50 @@ class Agent:
         context_props = {"sys_id": sys_id, "comp_id": comp_id, "name": name}
 
         # Mutable
-        self.__attitude = Attitude(optional_context_props=context_props)
-        self.__battery = Battery(optional_context_props=context_props)
-        self.__docker_info = DockerInfo(optional_context_props=context_props)
-        self.__gps_info = GPSInfo(optional_context_props=context_props)
-        self.__location = Location(optional_context_props=context_props)
-        self.__ekf = EKFStatus(optional_context_props=context_props)
-        self.__telemetry = Telemetry(optional_context_props=context_props)
-        self.__velocity = Velocity(optional_context_props=context_props)
-        self.__armed = Generic(False, "armed", optional_context_props=context_props)
-        self.__flight_mode = Generic(
+        self.__attitude = swarm_state.Attitude(optional_context_props=context_props)
+        self.__battery = swarm_state.Battery(optional_context_props=context_props)
+        self.__docker_info = swarm_state.DockerInfo(
+            optional_context_props=context_props
+        )
+        self.__gps_info = swarm_state.GPSInfo(optional_context_props=context_props)
+        self.__location = swarm_state.Location(optional_context_props=context_props)
+        self.__ekf = swarm_state.EKFStatus(optional_context_props=context_props)
+        self.__telemetry = swarm_state.Telemetry(optional_context_props=context_props)
+        self.__velocity = swarm_state.Velocity(optional_context_props=context_props)
+        self.__armed = swarm_state.Generic(
+            False, "armed", optional_context_props=context_props
+        )
+        self.__flight_mode = swarm_state.Generic(
             "None", "flight_mode", optional_context_props=context_props
         )
-        self.__system_status = Generic(
+        self.__system_status = swarm_state.Generic(
             "None", "system_status", optional_context_props=context_props
         )
-        self.__vehicle_type = Generic(
+        self.__vehicle_type = swarm_state.Generic(
             "None", "vehicle_type", optional_context_props=context_props
         )
-        self.__last_heartbeat = Generic(
+        self.__last_heartbeat = swarm_state.Generic(
             monotonic.monotonic(),
             "last_heartbeat",
             optional_context_props=context_props,
         )
-        self.__timeout_period = Generic(
+        self.__timeout_period = swarm_state.Generic(
             timeout_period, "timeout_period", optional_context_props=context_props
         )
-        self.__timeout = Generic(False, "timeout", optional_context_props=context_props)
-        self.__current_waypoint = Generic(
+        self.__timeout = swarm_state.Generic(
+            False, "timeout", optional_context_props=context_props
+        )
+        self.__current_waypoint = swarm_state.Generic(
             0, "current_waypoint", optional_context_props=context_props
         )
         self.__mission = Mission()
-        self.__last_params_read = ParameterList(
+        self.__last_params_read = swarm_state.ParameterList(
             max_length=max_params_stored, optional_context_props=context_props
         )
-        self.__home_position = Location(optional_context_props=context_props)
-        self.__hrl_state = Generic(
+        self.__home_position = swarm_state.Location(
+            optional_context_props=context_props
+        )
+        self.__hrl_state = swarm_state.Generic(
             "None", "hrl_state", optional_context_props=context_props
         )
         self.__custom_events = []
@@ -121,7 +131,7 @@ class Agent:
         return self.__name
 
     @property
-    def attitude(self) -> Attitude:
+    def attitude(self) -> swarm_state.Attitude:
         """
         The current attitude of the agent
 
@@ -130,7 +140,7 @@ class Agent:
         return self.__attitude
 
     @property
-    def battery(self) -> Battery:
+    def battery(self) -> swarm_state.Battery:
         """
         The current battery state of the agent
 
@@ -139,7 +149,7 @@ class Agent:
         return self.__battery
 
     @property
-    def docker_info(self) -> DockerInfo:
+    def docker_info(self) -> swarm_state.DockerInfo:
         """
         Information regarding deployed docker image
 
@@ -148,7 +158,7 @@ class Agent:
         return self.__docker_info
 
     @property
-    def gps_info(self) -> GPSInfo:
+    def gps_info(self) -> swarm_state.GPSInfo:
         """
         Information regarding an agent's GPS
 
@@ -157,7 +167,7 @@ class Agent:
         return self.__gps_info
 
     @property
-    def location(self) -> Location:
+    def location(self) -> swarm_state.Location:
         """
         Current location of an agent
 
@@ -166,7 +176,7 @@ class Agent:
         return self.__location
 
     @property
-    def ekf(self) -> EKFStatus:
+    def ekf(self) -> swarm_state.EKFStatus:
         """
         EKF status of the agent
 
@@ -175,7 +185,7 @@ class Agent:
         return self.__ekf
 
     @property
-    def telemetry(self) -> Telemetry:
+    def telemetry(self) -> swarm_state.Telemetry:
         """
         Telemetry status information
 
@@ -184,7 +194,7 @@ class Agent:
         return self.__telemetry
 
     @property
-    def velocity(self) -> Velocity:
+    def velocity(self) -> swarm_state.Velocity:
         """
         Current velocity of the agent
 
@@ -276,7 +286,7 @@ class Agent:
         return self.__mission
 
     @property
-    def last_params_read(self) -> ParameterList:
+    def last_params_read(self) -> swarm_state.ParameterList:
         """
         Circle buffer containing the most recent parameters read and their values
 
@@ -285,7 +295,7 @@ class Agent:
         return self.__last_params_read
 
     @property
-    def home_position(self) -> Location:
+    def home_position(self) -> swarm_state.Location:
         """
         Home position of the agent
 

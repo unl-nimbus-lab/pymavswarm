@@ -1,8 +1,9 @@
 import logging
 from typing import Any
-from pymavswarm.event import Event
+
 from pymavswarm.agent import Agent
 from pymavswarm.connection import Connection
+from pymavswarm.event import Event
 from pymavswarm.msg import MsgPackage, SupportedMsgs
 from pymavswarm.param import Parameter, ParameterPackage
 

@@ -36,19 +36,6 @@ class Velocity(State):
         return
 
     @property
-    def context(self) -> dict:
-        """
-        Get the current state as a dictionary for callbacks
-
-        :return: Properties of interested associated with the velocity
-        :rtype: dict
-        """
-        context = {"vx": self.vx, "vy": self.vy, "vz": self.vz}
-        context.update(self.__optional_context_props)
-
-        return context
-
-    @property
     def vx(self) -> float:
         """
         Ground X Speed (Latitude, positive north)
@@ -125,3 +112,16 @@ class Velocity(State):
             self.state_changed_event.notify(context=self.context)
 
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the current state as a dictionary for callbacks
+
+        :return: Properties of interested associated with the velocity
+        :rtype: dict
+        """
+        context = {"vx": self.__vx, "vy": self.__vy, "vz": self.__vz}
+        context.update(self.__optional_context_props)
+
+        return context

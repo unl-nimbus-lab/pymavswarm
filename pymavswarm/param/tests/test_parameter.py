@@ -1,9 +1,6 @@
-import sys
-
-sys.path.append("..")
-
 import unittest
-from pymavswarm.param.parameter import Parameter
+
+from pymavswarm.param import Parameter
 
 
 class TestParameter(unittest.TestCase):

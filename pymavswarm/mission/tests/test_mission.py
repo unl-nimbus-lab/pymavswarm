@@ -1,10 +1,6 @@
-import sys
-
-sys.path.append("..")
-
 import unittest
-from Mission import Mission
-from pymavswarm.mission.waypoint import Waypoint
+from pymavswarm.mission import Mission
+from pymavswarm.mission import Waypoint
 
 
 class TestMission(unittest.TestCase):
@@ -13,19 +9,19 @@ class TestMission(unittest.TestCase):
         Test adding a waypoint to the mission
         """
         # Create a new mission
-        ms = Mission()
+        mission = Mission()
 
         # Create a new waypoint
-        wp = Waypoint(0.0, 0.0, 0.0)
+        waypoint = Waypoint(0.0, 0.0, 0.0)
 
         # Add the waypoint
-        ms.add_waypoint(wp)
+        mission.add_waypoint(waypoint)
 
         # Test to make sure that the waypoint was correctly added
-        self.assertIn(wp, ms.waypoints)
+        self.assertIn(waypoint, mission.waypoints)
 
         # Clear waypoints
-        ms.clear_waypoints()
+        mission.clear_waypoints()
 
         return
 
@@ -34,22 +30,22 @@ class TestMission(unittest.TestCase):
         Test removing a waypoint from the mission
         """
         # Create a new mission
-        ms = Mission()
+        mission = Mission()
 
         # Create a new waypoint
-        wp = Waypoint(0.0, 0.0, 0.0)
+        waypoint = Waypoint(0.0, 0.0, 0.0)
 
         # Add the waypoint
-        ms.add_waypoint(wp)
+        mission.add_waypoint(waypoint)
 
         # Remove the waypoint
-        ms.remove_waypoint(wp)
+        mission.remove_waypoint(waypoint)
 
         # Test to make sure that the waypoint was correctly removed
-        self.assertNotIn(wp, ms.waypoints)
+        self.assertNotIn(waypoint, mission.waypoints)
 
         # Clear waypoints
-        ms.clear_waypoints()
+        mission.clear_waypoints()
 
         return
 
@@ -58,22 +54,22 @@ class TestMission(unittest.TestCase):
         Test removing a waypoint from the mission
         """
         # Create a new mission
-        ms = Mission()
+        mission = Mission()
 
         # Create a new waypoint
-        wp = Waypoint(0.0, 0.0, 0.0)
+        waypoint = Waypoint(0.0, 0.0, 0.0)
 
         # Add the waypoint
-        ms.add_waypoint(wp)
+        mission.add_waypoint(waypoint)
 
         # Remove the waypoint
-        ms.remove_waypoint_by_value(0.0, 0.0, 0.0)
+        mission.remove_waypoint_by_value(0.0, 0.0, 0.0)
 
         # Test to make sure that the waypoint was correctly removed
-        self.assertNotIn(wp, ms.waypoints)
+        self.assertNotIn(waypoint, mission.waypoints)
 
         # Clear waypoints
-        ms.clear_waypoints()
+        mission.clear_waypoints()
 
         return
 
@@ -82,27 +78,27 @@ class TestMission(unittest.TestCase):
         Test removing a waypoint from the mission
         """
         # Create a new mission
-        ms = Mission()
+        mission = Mission()
 
         # Create two new waypoints
-        wp = Waypoint(0.0, 0.0, 0.0)
-        wp_2 = Waypoint(0.0, 0.0, 0.0)
+        waypoint_1 = Waypoint(0.0, 0.0, 0.0)
+        waypoint_2 = Waypoint(0.0, 0.0, 0.0)
 
         # Add the waypoints
-        ms.add_waypoint(wp)
-        ms.add_waypoint(wp_2)
+        mission.add_waypoint(waypoint_1)
+        mission.add_waypoint(waypoint_2)
 
-        self.assertEqual(ms.waypoints[0], wp)
+        self.assertEqual(mission.waypoints[0], waypoint_1)
 
         # Remove the waypoint
-        ms.remove_waypoint_by_index(0)
+        mission.remove_waypoint_by_index(0)
 
         # Test to make sure that the waypoint was correctly removed
-        self.assertNotIn(wp, ms.waypoints)
-        self.assertEqual(ms.waypoints[0], wp_2)
+        self.assertNotIn(waypoint_1, mission.waypoints)
+        self.assertEqual(mission.waypoints[0], waypoint_2)
 
         # Clear waypoints
-        ms.clear_waypoints()
+        mission.clear_waypoints()
 
         return
 

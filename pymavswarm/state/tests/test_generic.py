@@ -1,9 +1,6 @@
-import sys
-
-sys.path.append("..")
-
 import unittest
-from pymavswarm.state.generic import Generic
+
+from pymavswarm.state import Generic
 
 
 class TestGeneric(unittest.TestCase):
@@ -24,11 +21,17 @@ class TestGeneric(unittest.TestCase):
 
             @property
             def test_prop(self) -> str:
+                """
+                test property.
+
+                :return: test property
+                :rtype: str
+                """
                 return self.__test_prop
 
         test_class = TestClass()
         total_calls = 0
-        passed_context = None
+        passed_context = {}
 
         # Sample listener to attach to the event
         def test_fn(kwargs) -> None:

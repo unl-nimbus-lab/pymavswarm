@@ -39,23 +39,6 @@ class Battery(State):
         return
 
     @property
-    def context(self) -> dict:
-        """
-        Get the current state as a dictionary for callbacks
-
-        :return: Properties of interest associated with the battery state
-        :rtype: dict
-        """
-        context = {
-            "voltage": self.__voltage,
-            "current": self.__current,
-            "level": self.__level,
-        }
-        context.update(self.__optional_context_props)
-
-        return context
-
-    @property
     def voltage(self) -> float:
         """
         Battery voltage (mV), UINT16_MAX: Voltage not sent by autopilot
@@ -136,3 +119,20 @@ class Battery(State):
             self.state_changed_event.notify(context=self.context)
 
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the current state as a dictionary for callbacks
+
+        :return: Properties of interest associated with the battery state
+        :rtype: dict
+        """
+        context = {
+            "voltage": self.__voltage,
+            "current": self.__current,
+            "level": self.__level,
+        }
+        context.update(self.__optional_context_props)
+
+        return context

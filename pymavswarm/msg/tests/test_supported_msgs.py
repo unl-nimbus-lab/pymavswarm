@@ -1,5 +1,6 @@
 import unittest
-from pymavswarm.msg.supported_msgs import SupportedMsgs
+
+from pymavswarm.msg import SupportedMsgs as supported_msgs
 
 
 class TestSupportedMsgs(unittest.TestCase):
@@ -7,8 +8,6 @@ class TestSupportedMsgs(unittest.TestCase):
         """
         Ensure that we can use the the interface to properly get a supported message
         """
-        supported_msgs = SupportedMsgs
-
         self.assertEqual(supported_msgs.flight_modes.stabilize, "STABILIZE")
 
         return

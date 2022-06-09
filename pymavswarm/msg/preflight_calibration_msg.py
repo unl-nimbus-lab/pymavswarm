@@ -1,5 +1,5 @@
-from pymavswarm.msg.agent_msg import AgentMsg
-from pymavswarm.msg.supported_msgs import SupportedMsgs
+from pymavswarm.msg import AgentMsg
+from pymavswarm.msg import SupportedMsgs as supported_msgs
 
 
 class PreflightCalibrationMsg(AgentMsg):
@@ -63,14 +63,14 @@ class PreflightCalibrationMsg(AgentMsg):
         """
         if (
             calibration_type
-            not in SupportedMsgs.preflight_calibration_commands.get_supported_types()
+            not in supported_msgs.preflight_calibration_commands.get_supported_types()
         ):
             raise ValueError(
                 f"{calibration_type} is not a supported pre-flight calibration type. "
                 "Supported pre-flight calibration types include: "
-                f"{SupportedMsgs.preflight_calibration_commands.get_supported_types()}"
+                f"{supported_msgs.preflight_calibration_commands.get_supported_types()}"
             )
-            
+
         super().__init__(
             calibration_type,
             target_system,
@@ -95,3 +95,16 @@ class PreflightCalibrationMsg(AgentMsg):
         :rtype: str
         """
         return self.__calibration_type
+
+    @property
+    def context(self) -> dict:
+        """
+        Message context.
+
+        :return: current message context
+        :rtype: dict
+        """
+        context = super().context
+        context["calibration_type"] = self.__calibration_type
+
+        return context

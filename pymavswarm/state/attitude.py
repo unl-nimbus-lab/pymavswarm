@@ -51,26 +51,6 @@ class Attitude(State):
         return
 
     @property
-    def context(self) -> dict:
-        """
-        Get the current state as a dictionary for callbacks
-
-        :return: Properties of interest associated with the attitude
-        :rtype: dict
-        """
-        context = {
-            "roll": self.__roll,
-            "pitch": self.__pitch,
-            "yaw": self.__yaw,
-            "roll_speed": self.__roll_speed,
-            "pitch_speed": self.__pitch_speed,
-            "yaw_speed": self.__yaw_speed,
-        }
-        context.update(self.__optional_context_props)
-
-        return context
-
-    @property
     def pitch(self) -> float:
         """
         Pitch angle (-pi..+pi)
@@ -225,3 +205,23 @@ class Attitude(State):
             self.state_changed_event.notify(context=self.context)
 
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the current state as a dictionary for callbacks
+
+        :return: Properties of interest associated with the attitude
+        :rtype: dict
+        """
+        context = {
+            "roll": self.__roll,
+            "pitch": self.__pitch,
+            "yaw": self.__yaw,
+            "roll_speed": self.__roll_speed,
+            "pitch_speed": self.__pitch_speed,
+            "yaw_speed": self.__yaw_speed,
+        }
+        context.update(self.__optional_context_props)
+
+        return context

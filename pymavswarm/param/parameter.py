@@ -1,5 +1,6 @@
+from typing import Optional, Union
+
 from pymavswarm.event import Event
-from typing import Union, Optional
 
 
 class Parameter:

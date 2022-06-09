@@ -1,4 +1,5 @@
 from typing import List
+
 from pymavswarm.event import Event
 from pymavswarm.param import Parameter
 
@@ -44,22 +45,6 @@ class ParameterPackage:
         self.__response = None
 
         return
-
-    @property
-    def context(self) -> dict:
-        """
-        Current context of the package.
-
-        :rtype: dict
-        """
-        context = {
-            "params_succeeded": self.__params_succeeded,
-            "params_failed": self.__params_failed,
-            "response": self.__response,
-        }
-        context.update(self.__optional_context_props)
-
-        return context
 
     @property
     def params(self) -> List[Parameter]:
@@ -134,3 +119,19 @@ class ParameterPackage:
         """
         self.__response = code
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        Current context of the package.
+
+        :rtype: dict
+        """
+        context = {
+            "params_succeeded": self.__params_succeeded,
+            "params_failed": self.__params_failed,
+            "response": self.__response,
+        }
+        context.update(self.__optional_context_props)
+
+        return context

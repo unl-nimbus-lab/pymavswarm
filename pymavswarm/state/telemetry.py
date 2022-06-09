@@ -26,19 +26,6 @@ class Telemetry(State):
         return
 
     @property
-    def context(self) -> dict:
-        """
-        Get the current state as a dictionary for callbacks
-
-        :return: Properties of interested associated with the telemetry
-        :rtype: dict
-        """
-        context = {"drop_rate": self.drop_rate}
-        context.update(self.__optional_context_props)
-
-        return context
-
-    @property
     def drop_rate(self) -> float:
         """
         Communication drop rate, (UART, I2C, SPI, CAN), dropped packets on all links
@@ -64,3 +51,16 @@ class Telemetry(State):
             self.state_changed_event.notify(context=self.context)
 
         return
+
+    @property
+    def context(self) -> dict:
+        """
+        Get the current state as a dictionary for callbacks
+
+        :return: Properties of interested associated with the telemetry
+        :rtype: dict
+        """
+        context = {"drop_rate": self.__drop_rate}
+        context.update(self.__optional_context_props)
+
+        return context

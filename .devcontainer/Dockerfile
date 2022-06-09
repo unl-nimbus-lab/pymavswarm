@@ -37,7 +37,8 @@ RUN pip3 install \
     monotonic \
     black \
     pylint \
-    pymavlink
+    pymavlink \
+    isort
 
 ENV PATH "${PATH}:/home/developer/.local/bin"
 
