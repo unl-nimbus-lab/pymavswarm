@@ -1,7 +1,7 @@
 import logging
 import math
 import time
-from typing import Callable, Union
+from typing import Any, Callable, Tuple, Union
 
 from pymavlink import mavutil
 
@@ -18,11 +18,12 @@ class Senders:
         self.__logger = self.__init_logger(logger_name, log_level=log_level)
         self.__senders = {}
 
-        @self.send_message(["ARM"])
-        @self.timer()
+        @self.__send_message("ARM")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.SystemCommandMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -32,8 +33,8 @@ class Senders:
             :param msg: Arming message
             :type msg: SystemCommandMsg
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: The index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
             :param device_exists: Flag indicating whether the device that the message
@@ -43,7 +44,7 @@ class Senders:
             :return: Indicates whether the message was sent successfully
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -108,11 +109,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["DISARM"])
-        @self.timer()
+        @self.__send_message("DISARM")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.SystemCommandMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -133,7 +135,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -198,11 +200,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["KILL"])
-        @self.timer()
+        @self.__send_message("KILL")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.SystemCommandMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -223,7 +226,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -273,11 +276,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["REBOOT"])
-        @self.timer()
+        @self.__send_message("REBOOT")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.SystemCommandMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -298,7 +302,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -348,11 +352,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["SHUTDOWN"])
-        @self.timer()
+        @self.__send_message("SHUTDOWN")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.SystemCommandMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -373,7 +378,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -423,11 +428,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["ACCELEROMETER_CALIBRATION"])
-        @self.timer()
+        @self.__send_message("ACCELEROMETER_CALIBRATION")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.PreflightCalibrationMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -448,7 +454,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -499,11 +505,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["SIMPLE_ACCELEROMETER_CALIBRATION"])
-        @self.timer()
+        @self.__send_message("SIMPLE_ACCELEROMETER_CALIBRATION")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.PreflightCalibrationMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -524,7 +531,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -576,11 +583,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["AHRS_TRIM"])
-        @self.timer()
+        @self.__send_message("AHRS_TRIM")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.PreflightCalibrationMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -601,7 +609,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -651,11 +659,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["GYROSCOPE_CALIBRATION"])
-        @self.timer()
+        @self.__send_message("GYROSCOPE_CALIBRATION")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.PreflightCalibrationMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -676,7 +685,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -728,11 +737,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["MAGNETOMETER_CALIBRATION"])
-        @self.timer()
+        @self.__send_message("MAGNETOMETER_CALIBRATION")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.PreflightCalibrationMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -753,7 +763,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -804,11 +814,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["GROUND_PRESSURE_CALIBRATION"])
-        @self.timer()
+        @self.__send_message("GROUND_PRESSURE_CALIBRATION")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.PreflightCalibrationMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -829,7 +840,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -881,11 +892,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["AIRSPEED_CALIBRATION"])
-        @self.timer()
+        @self.__send_message("AIRSPEED_CALIBRATION")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.PreflightCalibrationMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -906,7 +918,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -958,11 +970,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["BAROMETER_TEMPERATURE_CALIBRATION"])
-        @self.timer()
+        @self.__send_message("BAROMETER_TEMPERATURE_CALIBRATION")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.PreflightCalibrationMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -983,7 +996,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -1035,11 +1048,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["FLIGHT_MODE"])
-        @self.timer()
+        @self.__send_message("FLIGHT_MODE")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.FlightModeMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -1061,15 +1075,15 @@ class Senders:
             :rtype: bool
             """
             # Reset target
-            self.master.target_system = msg.target_system
-            self.master.target_component = msg.target_comp
+            connection.mavlink_connection.target_system = msg.target_system
+            connection.mavlink_connection.target_component = msg.target_comp
 
             # Verify that the flight mode is supported by the agent
-            if msg.flight_mode not in self.master.mode_mapping():
+            if msg.flight_mode not in connection.mavlink_connection.mode_mapping():
                 self.logger.error(
                     f"The desired flight mode, {msg.flight_mode}, is not a supported "
                     "flight mode. Supported flight modes include: "
-                    f"{self.master.mode_mapping().keys()}"
+                    f"{connection.mavlink_connection.mode_mapping().keys()}"
                 )
                 msg.response = responses.INVALID_PROPERTIES
                 msg.message_result_event.notify(context=msg.context)
@@ -1077,7 +1091,9 @@ class Senders:
                 return False
 
             # Send flight mode
-            self.master.set_mode(self.master.mode_mapping()[msg.flight_mode])
+            connection.mavlink_connection.set_mode(
+                connection.mavlink_connection.mode_mapping()[msg.flight_mode]
+            )
 
             ack = False
             msg_code = responses.ACK_FAILURE
@@ -1138,102 +1154,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["HRL_COMMAND"])
-        @self.timer()
-        def sender(
-            self,
-            msg: swarm_msgs.HRLMsg,
-            function_id: int = 0,
-            device_exists: bool = False,
-        ) -> bool:
-            """
-            Send an HRL command to the swarm.
-
-            :param msg: HRL message
-            :type msg: HRLMsg
-
-            :param function_id: The index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
-
-            :param device_exists: Flag indicating whether the device that the message
-                is intended for exists in the network, defaults to False
-            :type device_exists: bool, optional
-
-            :return: Indicates whether or not the message was successfully sent
-            :rtype: bool
-            """
-            # Reset target
-            self.master.target_system = msg.target_system
-            self.master.target_component = msg.target_comp
-
-            # Send flight mode
-            self.master.mav.named_value_int_send(
-                int(time.time()), str.encode("hrl-state-arg"), msg.hrl_command
-            )
-
-            ack = False
-            msg_code = responses.ACK_FAILURE
-
-            if self.__ack_msg("COMMAND_ACK", timeout=msg.ack_timeout):
-                self.logger.info(
-                    "Successfully acknowledged reception of the HRL command "
-                    f"{msg.hrl_command} sent to Agent ({msg.target_system}, "
-                    f"{msg.target_comp})"
-                )
-                ack = True
-                msg_code = responses.SUCCESS
-
-                if device_exists:
-                    start_time = time.time()
-
-                    while (
-                        not self.__devices[
-                            (msg.target_system, msg.target_comp)
-                        ].hrl_state.value
-                        != msg.hrl_command
-                    ):
-                        if time.time() - start_time >= msg.state_timeout:
-                            ack = False
-                            break
-                    if ack:
-                        self.logger.info(
-                            f"Successfully verified that Agent ({msg.target_system}, "
-                            f"{msg.target_comp}) executed HRL command {msg.hrl_command}"
-                        )
-                    else:
-                        self.logger.error(
-                            f"Failed to verify that Agent ({msg.target_system}, "
-                            f"{msg.target_comp}) executed HRL command {msg.hrl_command}"
-                        )
-                        msg_code = responses.STATE_VALIDATION_FAILURE
-            else:
-                self.logger.error(
-                    "Failed to acknowledge reception of the HRL command "
-                    f"{msg.hrl_command} sent to Agent ({msg.target_system}, "
-                    f"{msg.target_comp})"
-                )
-                msg_code = responses.ACK_FAILURE
-
-            if msg.retry and not ack:
-                if self.__retry_msg_send(
-                    msg,
-                    self.__message_senders[msg.msg_type][function_id],
-                    device_exists,
-                ):
-                    ack = True
-                    msg_code = responses.SUCCESS
-
-            msg.response = msg_code
-            msg.message_result_event.notify(context=msg.context)
-
-            return ack
-
-        @self.send_message(["FLIGHT_SPEED"])
-        @self.timer()
+        @self.__send_message("FLIGHT_SPEED")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.FlightSpeedMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -1254,7 +1180,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
@@ -1306,11 +1232,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["simpletakeoff"])
-        @self.timer()
+        @self.__send_message("simpletakeoff")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.TakeoffMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -1343,7 +1270,7 @@ class Senders:
                 msg.message_result_event.notify(context=msg.context)
                 return False
 
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
@@ -1394,11 +1321,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["takeoff"])
-        @self.timer()
+        @self.__send_message("takeoff")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.TakeoffMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -1431,7 +1359,7 @@ class Senders:
                 msg.message_result_event.notify(context=msg.context)
                 return False
 
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
@@ -1481,11 +1409,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["simplefulltakeoff"])
-        @self.timer()
+        @self.__send_message("simplefulltakeoff")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.TakeoffMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -1585,11 +1514,12 @@ class Senders:
 
             return True
 
-        @self.send_message(["fulltakeoff"])
-        @self.timer()
+        @self.__send_message("fulltakeoff")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.TakeoffMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -1687,11 +1617,12 @@ class Senders:
 
             return True
 
-        @self.send_message(["simplewaypoint"])
-        @self.timer()
+        @self.__send_message("simplewaypoint")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.WaypointMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -1725,7 +1656,7 @@ class Senders:
                 msg.message_result_event.notify(context=msg.context)
                 return False
 
-            self.master.mav.mission_item_send(
+            connection.mavlink_connection.mav.mission_item_send(
                 msg.target_system,
                 msg.target_comp,
                 0,
@@ -1779,11 +1710,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["waypoint"])
-        @self.timer()
+        @self.__send_message("waypoint")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.WaypointMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -1817,7 +1749,7 @@ class Senders:
                 msg.message_result_event.notify(context=msg.context)
                 return False
 
-            self.master.mav.mission_item_send(
+            connection.mavlink_connection.mav.mission_item_send(
                 msg.target_system,
                 msg.target_comp,
                 0,
@@ -1870,11 +1802,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["gethomeposition"])
-        @self.timer()
+        @self.__send_message("gethomeposition")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.AgentMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -1895,7 +1828,7 @@ class Senders:
             :return: Indicates whether or not the message was successfully sent
             :rtype: bool
             """
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
@@ -1946,11 +1879,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["resethomecurrent"])
-        @self.timer()
+        @self.__send_message("resethomecurrent")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.HomePositionMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -1988,7 +1922,7 @@ class Senders:
                 )
 
             # Set the home position to the current location
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_DO_SET_HOME,
@@ -2079,11 +2013,12 @@ class Senders:
 
             return ack
 
-        @self.send_message(["resethome"])
-        @self.timer()
+        @self.__send_message("resethome")
+        @self.__timer()
         def sender(
             self,
             msg: swarm_msgs.HomePositionMsg,
+            connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,
         ) -> bool:
@@ -2135,7 +2070,7 @@ class Senders:
                 )
 
             # Set the home position to the desired location
-            self.master.mav.command_long_send(
+            connection.mavlink_connection.mav.command_long_send(
                 msg.target_system,
                 msg.target_comp,
                 mavutil.mavlink.MAV_CMD_DO_SET_HOME,
@@ -2230,6 +2165,15 @@ class Senders:
 
         return
 
+    @property
+    def senders(self) -> dict:
+        """
+        Methods responsible for handling message sending.
+
+        :rtype: dict
+        """
+        return self.__senders
+
     def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
         """
         Initialize the logger with the desired debug levels
@@ -2248,25 +2192,122 @@ class Senders:
         logger.setLevel(log_level)
         return logger
 
-    def __add_message_sender(self, msg: str, function: Callable) -> None:
+    def __retry_msg_send(
+        self, msg: Any, function: Callable, device_exists: bool
+    ) -> bool:
         """
-        Add a new function to the dictionary of message senders
+        Retry a message send until the an acknowledgement is received or a timeout
+        occurs
 
-        :param msg: The message type to connect to the sender
-        :type msg: str
+        :param msg: The message to retry sending
+        :type msg: Any
 
-        :param function: The function to connect
+        :param function: The function to call using the message
         :type function: function
+
+        :return: Indicate whether the retry was successful
+        :rtype: bool
         """
-        if msg not in self.__senders:
-            self.__senders[msg] = []
+        ack = False
+        start_time = time.time()
 
-        if function not in self.__senders[msg]:
-            self.__senders[msg].append(function)
+        # Don't let the message come back here and create an infinite loop
+        msg.retry = False
 
-        return
+        while time.time() - start_time <= msg.msg_timeout:
+            # Reattempt the message send
+            if function(self, msg, device_exists=device_exists):
+                ack = True
+                break
 
-    def send_message(self, msg: Union[list, str]) -> Callable:
+        return ack
+
+    def __ack_msg(
+        self, msg_type: str, connection: Connection, timeout=1.0
+    ) -> Tuple[bool, Any]:
+        """
+        Helper method used to ensure that a distributed msg is acknowledged
+
+        :param msg_type: The type of message that should be acknowledged
+        :type msg_type: str
+
+        :param timeout: The acceptable time period before the acknowledgement is
+            considered timed out, defaults to 1.0
+        :type timeout: float, optional
+
+        :return: _description_
+        :rtype: Tuple[bool, Any]
+        """
+        # Attempt to acquire the mutex
+        if not connection.read_message_mutex.acquire(timeout=1.0):
+            return False
+
+        # Flag indicating whether the message was acknowledged
+        ack_success = False
+
+        # Start acknowledgement timer
+        start_t = time.time()
+
+        while time.time() - start_t < timeout:
+            # Read a new message
+            try:
+                ack_msg = connection.mavlink_connection.recv_match(
+                    type=msg_type, blocking=False
+                )
+                ack_msg = ack_msg.to_dict()
+
+                if ack_msg["mavpackettype"] == msg_type:
+                    ack_success = True
+                    break
+            except mavutil.mavlink.MAVError:
+                self.__logger.debug("An error occurred on MAVLink message reception")
+            except AttributeError:
+                # Catch errors with converting the message to a dict
+                pass
+            except Exception:
+                # Log any other unexpected exception
+                self.__logger.exception(
+                    "Exception while receiving message: ", exc_info=False
+                )
+
+        # Continue reading status messages
+        connection.read_message_mutex.release()
+
+        return ack_success, ack_msg
+
+    def __send_seq_msg(self, msg: Any, device_exists: bool) -> bool:
+        """
+        Helper function used to handle calling all of the message handlers.
+        This method is used by the sequence commands such as the full takeoff
+        command to provide indication of a function execution result.
+
+        NOTE: THIS IS USED. DO NOT DELETE
+
+        :param msg: The message to send
+        :type msg: Any
+
+        :param device_exists: Flag indicating whether the given device exists in the
+            network
+        :type device_exists: bool
+
+        :return: Indicates whether all of the message senders for a given message
+            successfully sent their respective message
+        :rtype: bool
+        """
+        # Helper function used to send the desired command
+        if msg.msg_type in self.__senders:
+            for function_id, function in enumerate(self.__senders[msg.msg_type]):
+                try:
+                    if not function(
+                        self, msg, function_id=function_id, device_exists=device_exists
+                    ):
+                        return False
+                except Exception:
+                    pass
+
+        return True
+
+    def __send_message(self, msg: Union[list, str]) -> Callable:
         """
         Decorator used to create a sender for a mavlink message
 
@@ -2278,15 +2319,15 @@ class Senders:
         """
 
         def decorator(function: Callable):
-            if isinstance(msg, list):
-                for sub_msg in msg:
-                    self.__add_message_sender(sub_msg, function)
-            else:
-                self.__add_message_sender(msg, function)
+            if msg not in self.__senders:
+                self.__senders[msg] = []
+
+            if function not in self.__senders[msg]:
+                self.__senders[msg].append(function)
 
         return decorator
 
-    def timer(self) -> Callable:
+    def __timer(self) -> Callable:
         """
         Decorator used to log the time that a sender takes to complete. Used for
         debugging purposes.

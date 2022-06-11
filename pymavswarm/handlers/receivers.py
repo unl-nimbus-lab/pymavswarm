@@ -1,4 +1,6 @@
+import functools
 import logging
+import threading
 from typing import Any, Callable, Union
 
 import monotonic
@@ -29,7 +31,7 @@ class Receivers:
         self.__logger = self.__init_logger(logger_name, log_level=log_level)
         self.__receivers = {}
 
-        @self.receive_message(["HEARTBEAT"])
+        @self.receive_message("HEARTBEAT")
         def listener(msg: Any, connection: Connection) -> None:
             """
             Register new devices or update the timeout status of existing agents
@@ -67,7 +69,7 @@ class Receivers:
 
             return
 
-        @self.receive_message(["HEARTBEAT"])
+        @self.receive_message("HEARTBEAT")
         def listener(msg: Any, connection: Connection) -> None:
             """
             Handle general device information contained within a heartbeat
@@ -107,7 +109,7 @@ class Receivers:
 
             return
 
-        @self.receive_message(["GLOBAL_POSITION_INT"])
+        @self.receive_message("GLOBAL_POSITION_INT")
         def listener(msg: Any, connection: Connection) -> None:
             """
             Handle the a GPS position message
@@ -146,7 +148,7 @@ class Receivers:
 
             return
 
-        @self.receive_message(["ATTITUDE"])
+        @self.receive_message("ATTITUDE")
         def listener(msg: Any, connection: Connection) -> None:
             """
             Handle an agent attitude message
@@ -180,7 +182,7 @@ class Receivers:
 
             return
 
-        @self.receive_message(["SYS_STATUS"])
+        @self.receive_message("SYS_STATUS")
         def listener(msg: Any, connection: Connection) -> None:
             """
             Handle the system status message containing battery state
@@ -206,7 +208,7 @@ class Receivers:
 
             return
 
-        @self.receive_message(["GPS_RAW_INT"])
+        @self.receive_message("GPS_RAW_INT")
         def listener(msg: Any, connection: Connection) -> None:
             """
             Handle the GPS status information
@@ -235,7 +237,7 @@ class Receivers:
 
             return
 
-        @self.receive_message(["EKF_STATUS_REPORT"])
+        @self.receive_message("EKF_STATUS_REPORT")
         def listener(msg: Any, connection: Connection) -> None:
             """
             Handle an EKF status message
@@ -292,7 +294,7 @@ class Receivers:
 
             return
 
-        @self.receive_message(["ATTITUDE"])
+        @self.receive_message("ATTITUDE")
         def listener(msg: Any, connection: Connection) -> None:
             """
             Handle an agent attitude message
@@ -326,7 +328,7 @@ class Receivers:
 
             return
 
-        @self.receive_message(["HOME_POSITION"])
+        @self.receive_message("HOME_POSITION")
         def listener(msg: Any, connection: Connection) -> None:
             """
             Handle the home position message
@@ -406,31 +408,31 @@ class Receivers:
         """
 
         def decorator(function: Callable):
-            if isinstance(msg, list):
-                for sub_msg in msg:
-                    self.__add_message_listener(sub_msg, function)
-            else:
-                self.__add_message_listener(msg, function)
+            if msg not in self.__receivers:
+                self.__receivers[msg] = []
+
+            if function not in self.__receivers[msg]:
+                self.__receivers[msg].append(function)
 
         return decorator
 
-    def __add_message_listener(self, msg: str, function: Callable) -> None:
+    def synchronized(self, lock: threading.RLock) -> Callable:
         """
-        Add a new function to the dictionary of message listeners
-        This implementation has been inspired by the following source:
-            * Project: Dronekit
-            * Repository: dronekit
-            * URL: https://github.com/dronekit/dronekit-python
+        Decorator used to wrap a method with a mutex lock and unlock
 
-        :param msg: The message type to bind the function to
-        :type msg: str
-        :param function: The function to connect
-        :type function: function
+        :param lock: lock to use
+        :type lock: threading.RLock
+
+        :return: decorator
+        :rtype: Callable
         """
-        if msg not in self.__receivers:
-            self.__receivers[msg] = []
 
-        if function not in self.__receivers[msg]:
-            self.__receivers[msg].append(function)
+        def decorator(function: Callable):
+            @functools.wraps(function)
+            def synchronized_function(*args, **kwargs):
+                with lock:
+                    return function(*args, **kwargs)
 
-        return
+            return synchronized_function
+
+        return decorator

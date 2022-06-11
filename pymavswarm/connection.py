@@ -1,9 +1,9 @@
 import atexit
-import functools
 import logging
 import threading
 import time
-from typing import Any, Callable, Tuple, Union
+from sqlite3 import connect
+from typing import Any, Callable, List
 
 import monotonic
 from pymavlink import mavutil
@@ -11,8 +11,10 @@ from pymavlink import mavutil
 import pymavswarm.msg as swarm_msgs
 import pymavswarm.state as swarm_state
 from pymavswarm.event import Event
+from pymavswarm.handlers import Receivers, Senders
 from pymavswarm.msg import responses
 from pymavswarm.param import Parameter
+from pymavswarm.plugins import plugins
 
 
 class Connection:
@@ -22,104 +24,60 @@ class Connection:
 
     def __init__(
         self,
-        port: str,
-        baud: int,
-        source_system: int = 255,
-        source_component: int = 0,
-        agent_timeout: float = 30.0,
-        log_level: int = logging.INFO,
         logger_name: str = "connection",
+        log_level: int = logging.INFO,
     ) -> None:
         """
         Constructor.
 
-        :param port: The port over which a connection should be established
-        :type port: str
+        :param logger_name: name of the logger
+        :type logger_name: str, optional
 
-        :param baud: The baudrate that a connection should be established with
-        :type baud: int
-
-        :param source_system: The system ID of the connection, defaults to 255
-        :type source_system: int, optional
-
-        :param source_component: The component ID of the connection, defaults to 0
-        :type source_component: int, optional
-
-        :param agent_timeout: The amount of time allowable between agent heartbeats
-            before an agent is considered timed out, defaults to 30.0
-        :type agent_timeout: float, optional
-
-        :param log_level: The log level of the connection logger, defaults to
+        :param log_level: log level of the connection logger, defaults to
             logging.INFO
         :type debug: int, optional
-
-        :param logger_name: The name of the logger
-        :type logger_name: str, optional
 
         :raises TimeoutError: The system was unable to establish a connection
         """
         self.__logger = self.__init_logger(logger_name, log_level=log_level)
-
-        # Create a new mavlink connection
-        self.__connection = mavutil.mavlink_connection(
-            port,
-            baud=baud,
-            source_system=source_system,
-            source_component=source_component,
-            autoreconnect=True,
-        )
-
-        # Ensure that a connection has been successfully established
-        # Integrate a 2 second timeout
-        resp = self.__connection.wait_heartbeat(timeout=2)
-
-        if resp is None:
-            raise TimeoutError(
-                "The system was unable to establish a connection with the specified"
-                "device within the timeout period"
-            )
-
-        # Class variables
-        self.__connected = True
+        self.__connection = None
+        self.__connected = False
         self.__devices = {}
         self.__device_list_changed = Event()
-        self.__agent_timeout = agent_timeout
+        self.__agent_timeout = 0.0
+        self.__plugins = []
 
-        # Message Handlers
-        self.__message_listeners = {}
-        self.__message_senders = {}
+        # Sender and receiver interfaces
+        self.__senders = Senders()
+        self.__receivers = Receivers()
 
         # Mutexes
-        self.__read_msg_mutex = threading.Lock()
-        self.__send_msg_mutex = threading.Lock()
+        self.__read_msg_mutex = threading.RLock()
+        self.__send_msg_mutex = threading.RLock()
+
+        # Load the plugins
+        self.__load_plugins(plugins)
 
         # Register the exit callback
         atexit.register(self.disconnect)
 
         # Threads
-        self.__heartbeat_t = threading.Thread(target=self.__heartbeat)
+        self.__heartbeat_t = threading.Thread(target=self.__send_heartbeat)
         self.__heartbeat_t.daemon = True
 
         self.__incoming_msg_t = threading.Thread(target=self.__incoming_msg_handler)
         self.__incoming_msg_t.daemon = True
 
-    def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
+        return
+
+    @property
+    def mavlink_connection(self) -> Any:
         """
-        Initialize the logger with the desired debug levels
+        mavlink connection used to send and receive commands
 
-        :param name: The name of the logger
-        :type name: str
-
-        :param log_level: The log level to display, defaults to logging.INFO
-        :type log_level: int, optional
-
-        :return: A newly configured logger
-        :rtype: logging.Logger
+        :rtype: Any
         """
-        logging.basicConfig()
-        logger = logging.getLogger(name)
-        logger.setLevel(log_level)
-        return logger
+        return self.__connection
 
     @property
     def connected(self) -> bool:
@@ -160,28 +118,43 @@ class Connection:
         """
         return self.__device_list_changed
 
-    def synchronized(self, lock: threading.RLock) -> Callable:
+    @property
+    def read_message_mutex(self) -> threading.RLock:
         """
-        Decorator used to wrap a method with a mutex lock and unlock
+        Mutex restricting access to the recv message method.
 
-        :param lock: lock to use
-        :type lock: threading.RLock
-
-        :return: decorator
-        :rtype: Callable
+        :rtype: threading.RLock
         """
+        return self.__read_msg_mutex
 
-        def decorator(function: Callable):
-            @functools.wraps(function)
-            def synchronized_function(*args, **kwargs):
-                with lock:
-                    return function(*args, **kwargs)
+    @property
+    def send_message_mutex(self) -> threading.RLock:
+        """
+        Mutex restricting access to the send message method.
 
-            return synchronized_function
+        :rtype: threading.RLock
+        """
+        return self.__send_msg_mutex
 
-        return decorator
+    def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
+        """
+        Initialize the logger with the desired debug levels
 
-    def __heartbeat(self) -> None:
+        :param name: The name of the logger
+        :type name: str
+
+        :param log_level: The log level to display, defaults to logging.INFO
+        :type log_level: int, optional
+
+        :return: A newly configured logger
+        :rtype: logging.Logger
+        """
+        logging.basicConfig()
+        logger = logging.getLogger(name)
+        logger.setLevel(log_level)
+        return logger
+
+    def __send_heartbeat(self) -> None:
         """
         Function used to sent a heartbeat to the network indicating that the GCS
         is still operating
@@ -200,9 +173,26 @@ class Connection:
 
         return
 
+    def __load_plugins(self, plugin_handlers: List[Callable]) -> None:
+        """
+        Add the plugin handlers to the connection handlers.
+
+        :param plugins: list of plugins to load
+        :type plugins: List[Callable]
+        """
+        # Instantiate each of the plugins
+        self.__plugins = [plugin() for plugin in plugin_handlers]
+
+        # Add the plugin handlers to the primary handlers
+        for plugin in self.__plugins:
+            self.__senders.senders.update(plugin.senders)
+            self.__receivers.receivers.update(plugin.receivers)
+
+        return
+
     def __incoming_msg_handler(self) -> None:
         """
-        Handle incoming messages and distribute them to their respective handlers
+        Handle incoming messages and distribute them to their respective handlers.
         """
         while self.__connected:
             # Update the timeout flag for each device
@@ -233,10 +223,10 @@ class Connection:
                 continue
 
             # Apply the respective message handler(s)
-            if msg.get_type() in self.__message_listeners:
-                for function in self.__message_listeners[msg.get_type()]:
+            if msg.get_type() in self.__receivers.receivers:
+                for function in self.__receivers.receivers[msg.get_type()]:
                     try:
-                        function(self, msg)
+                        function(msg, self)
                     except Exception:
                         self.__logger.exception(
                             f"Exception in message handler for {msg.get_type()}",
@@ -244,36 +234,6 @@ class Connection:
                         )
 
         return
-
-    def __retry_msg_send(
-        self, msg: Any, function: Callable, device_exists: bool
-    ) -> bool:
-        """
-        Retry a message send until the an acknowledgement is received or a timeout
-        occurs
-
-        :param msg: The message to retry sending
-        :type msg: Any
-
-        :param function: The function to call using the message
-        :type function: function
-
-        :return: Indicate whether the retry was successful
-        :rtype: bool
-        """
-        ack = False
-        start_time = time.time()
-
-        # Don't let the message come back here and create an infinite loop
-        msg.retry = False
-
-        while time.time() - start_time <= msg.msg_timeout:
-            # Reattempt the message send
-            if function(self, msg, device_exists=device_exists):
-                ack = True
-                break
-
-        return ack
 
     def __retry_param_send(self, param: Any, function: Callable) -> bool:
         """
@@ -302,54 +262,6 @@ class Connection:
                 break
 
         return ack
-
-    def __ack_msg(self, msg_type: str, timeout=1.0) -> Tuple[bool, Any]:
-        """
-        Helper method used to ensure that a distributed msg is acknowledged
-
-        :param msg_type: The type of message that should be acknowledged
-        :type msg_type: str
-
-        :param timeout: The acceptable time period before the acknowledgement is
-            considered timed out, defaults to 1.0
-        :type timeout: float, optional
-
-        :return: _description_
-        :rtype: Tuple[bool, Any]
-        """
-        if not self.__read_msg_mutex.acquire(timeout=1.0):
-            return False
-
-        # Flag indicating whether the message was acknowledged
-        ack_success = False
-
-        # Start acknowledgement timer
-        start_t = time.time()
-
-        while time.time() - start_t < timeout:
-            # Read a new message
-            try:
-                ack_msg = self.__connection.recv_match(type=msg_type, blocking=False)
-                ack_msg = ack_msg.to_dict()
-
-                if ack_msg["mavpackettype"] == msg_type:
-                    ack_success = True
-                    break
-            except mavutil.mavlink.MAVError:
-                self.__logger.debug("An error occurred on MAVLink message reception")
-            except AttributeError:
-                # Catch errors with converting the message to a dict
-                pass
-            except Exception:
-                # Log any other unexpected exception
-                self.__logger.exception(
-                    "Exception while receiving message: ", exc_info=False
-                )
-
-        # Continue reading status messages
-        self.__read_msg_mutex.release()
-
-        return ack_success, ack_msg
 
     def send_msg_handler(self, msg: Any) -> None:
         """
@@ -434,40 +346,6 @@ class Connection:
             package.package_result_event.notify(context=package.context)
 
         return
-
-    def __send_seq_msg(self, msg: Any, device_exists: bool) -> bool:
-        """
-        Helper function used to handle calling all of the message handlers.
-        This method is used by the sequence commands such as the full takeoff
-        command to provide indication of a function execution result.
-
-        NOTE: THIS IS USED. DO NOT DELETE
-
-        :param msg: The message to send
-        :type msg: Any
-
-        :param device_exists: Flag indicating whether the given device exists in the
-            network
-        :type device_exists: bool
-
-        :return: Indicates whether all of the message senders for a given message
-            successfully sent their respective message
-        :rtype: bool
-        """
-        # Helper function used to send the desired command
-        if msg.msg_type in self.__message_senders:
-            for function_id, function in enumerate(
-                self.__message_senders[msg.msg_type]
-            ):
-                try:
-                    if not function(
-                        self, msg, function_id=function_id, device_exists=device_exists
-                    ):
-                        return False
-                except Exception:
-                    pass
-
-        return True
 
     def __send_msg_handler(self, msg: Any) -> list:
         """
@@ -719,42 +597,83 @@ class Connection:
 
         return ack
 
-    def start_connection(self) -> None:
+    def connect(
+        self,
+        port: str,
+        baud: int,
+        source_system: int = 255,
+        source_component: int = 0,
+        connection_attempt_timeout: float = 2.0,
+        agent_timeout: float = 30.0,
+    ) -> bool:
         """
-        Helper method used to start non-mavlink related connection processes
+        Establish a MAVLink connection.
+
+        :param port: port over which a connection should be established
+        :type port: str
+
+        :param baud: baudrate that a connection should be established with
+        :type baud: int
+
+        :param source_system: system ID of the connection, defaults to 255
+        :type source_system: int, optional
+
+        :param source_component: component ID of the connection, defaults to 0
+        :type source_component: int, optional
+
+        :param connection_attempt_timeout: maximum amount of time allowed to attempt
+            to establish a connection, defaults to 2.0 [s]
+        :type connection_attempt_timeout: float, optional
+
+        :param agent_timeout: amount of time allowable between agent heartbeats
+            before an agent is considered timed out, defaults to 30.0
+        :type agent_timeout: float, optional
+
+        :return: whether or not the connection attempt was successful
+        :rtype: bool
         """
-        self.__start_t()
+        # Create a new mavlink connection
+        self.__connection = mavutil.mavlink_connection(
+            port,
+            baud=baud,
+            source_system=source_system,
+            source_component=source_component,
+            autoreconnect=True,
+        )
 
-        return
+        # Ensure that a connection has been successfully established
+        # Integrate a 2 second timeout
+        resp = self.__connection.wait_heartbeat(timeout=connection_attempt_timeout)
 
-    def __start_t(self) -> None:
-        """
-        Start all threads available to the connection for message reception,
-        message sending, and heartbeat handling
-        """
-        self.__heartbeat_t.start()
-        self.__incoming_msg_t.start()
+        if resp is None:
+            connected = False
+        else:
+            connected = True
 
-        return
+            # Set the agent timeout
+            self.__agent_timeout = agent_timeout
 
-    def __stop_t(self) -> None:
-        """
-        Join all threads
-        """
-        if self.__heartbeat_t is not None:
-            self.__heartbeat_t.join()
+            # Start background threads
+            self.__heartbeat_t.start()
+            self.__incoming_msg_t.start()
 
-        if self.__incoming_msg_t is not None:
-            self.__incoming_msg_t.join()
+        # Update the internal connection state
+        self.__connected = connected
 
-        return
+        return connected
 
     def disconnect(self) -> None:
         """
         Close the connection and disconnect all threads
         """
         self.__connected = False
-        self.__stop_t()
+
+        if self.__heartbeat_t is not None:
+            self.__heartbeat_t.join()
+
+        if self.__incoming_msg_t is not None:
+            self.__incoming_msg_t.join()
+
         self.__devices.clear()
         self.__device_list_changed.listeners.clear()
 
