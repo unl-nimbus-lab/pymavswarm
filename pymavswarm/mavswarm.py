@@ -1,8 +1,8 @@
 import logging
 from typing import Any
 
+from pymavswarm import Connection
 from pymavswarm.agent import Agent
-from pymavswarm.connection import Connection
 from pymavswarm.event import Event
 from pymavswarm.msg import MsgPackage, SupportedMsgs
 from pymavswarm.param import Parameter, ParameterPackage
@@ -28,7 +28,7 @@ class MavSwarm:
         self.__logger = self.__init_logger("mavswarm", log_level=log_level)
 
         # System connection
-        self.__connection = None
+        self.__connection = Connection()
 
         return
 
@@ -45,39 +45,39 @@ class MavSwarm:
     @property
     def agents(self) -> dict:
         """
-        Get the connection devices.
+        Get the connection agents.
 
         Used to provide a layer of abstraction from the connection.
 
         :rtype: dict
         """
         if self.__connection is not None:
-            return self.__connection.devices
+            return self.__connection.agents
         else:
             return {}
 
     @property
     def agents_as_list(self) -> list:
         """
-        Get the connection devices as a list.
+        Get the connection agents as a list.
 
         Used to provide a layer of abstraction from the connection.
 
         :rtype: list
         """
         if self.__connection is not None:
-            return [*self.__connection.devices.values()]
+            return [*self.__connection.agents.values()]
         else:
             return []
 
     @property
-    def device_list_changed(self) -> Event:
+    def agent_list_changed(self) -> Event:
         """
-        Event that signals when the list of devices has changed.
+        Event that signals when the list of agents has changed.
 
         :rtype: Event
         """
-        return self.__connection.device_list_changed
+        return self.__connection.agent_list_changed
 
     def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
         """
@@ -139,7 +139,7 @@ class MavSwarm:
                 # Handle the error message
                 self.__logger.info(
                     "MavSwarm was unable to establish a connection with the "
-                    "specified device",
+                    "specified agent",
                     exc_info=True,
                 )
 
@@ -167,7 +167,7 @@ class MavSwarm:
         :param msg: message to send
         :type msgs: pymavswarm message
         """
-        if (msg.target_system, msg.target_comp) in self.__connection.devices:
+        if (msg.target_system, msg.target_comp) in self.__connection.agents:
             self.__connection.send_msg_handler(msg)
 
         return
@@ -182,7 +182,7 @@ class MavSwarm:
         # Warn the user if there are any messages that are intended for non-existent
         # agents in the swarm
         for msg in package.msgs:
-            if (msg.target_system, msg.target_comp) not in self.__connection.devices:
+            if (msg.target_system, msg.target_comp) not in self.__connection.agents:
                 self.__logger.warning(
                     f"Agent ({msg.target_system, msg.target_comp}) targeted by the "
                     "message package does not exist in the swarm."
@@ -199,7 +199,7 @@ class MavSwarm:
         :param param: parameter to set on an agent
         :type params: Parameter
         """
-        if (param.sys_id, param.comp_id) in self.__connection.devices:
+        if (param.sys_id, param.comp_id) in self.__connection.agents:
             self.__connection.set_param_handler(param)
 
         return
@@ -213,7 +213,7 @@ class MavSwarm:
         :type package: ParameterPackage
         """
         for param in package.params:
-            if (param.sys_id, param.comp_id) not in self.__connection.devices:
+            if (param.sys_id, param.comp_id) not in self.__connection.agents:
                 self.__logger.warning(
                     f"Agent ({param.sys_id}, {param.comp_id}) targeted by the"
                     "parameter package does not exist in the swarm."
@@ -231,7 +231,7 @@ class MavSwarm:
         :param params: parameter to read from an agent
         :type params: Parameter
         """
-        if (param.sys_id, param.comp_id) in self.__connection.devices:
+        if (param.sys_id, param.comp_id) in self.__connection.agents:
             self.__connection.read_param_handler(param)
 
         return
@@ -249,10 +249,10 @@ class MavSwarm:
         :return: identified agent, if found
         :rtype: Optional[Agent]
         """
-        device_id = (sys_id, comp_id)
+        agent_id = (sys_id, comp_id)
 
-        if device_id in self.__connection.devices:
-            return self.__connection.devices[device_id]
+        if agent_id in self.__connection.agents:
+            return self.__connection.agents[agent_id]
 
         return None
 
@@ -266,7 +266,7 @@ class MavSwarm:
         :return: first agent identified with the given name
         :rtype: Optional[Agent]
         """
-        for agent in self.__connection.devices.values():
+        for agent in self.__connection.agents.values():
             if agent.name == name:
                 return agent
 

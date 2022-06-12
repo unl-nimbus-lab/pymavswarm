@@ -2,19 +2,17 @@ import atexit
 import logging
 import threading
 import time
-from sqlite3 import connect
-from typing import Any, Callable, List
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Callable, List, Union
 
 import monotonic
 from pymavlink import mavutil
 
 import pymavswarm.msg as swarm_msgs
-import pymavswarm.state as swarm_state
 from pymavswarm.event import Event
 from pymavswarm.handlers import Receivers, Senders
 from pymavswarm.msg import responses
-from pymavswarm.param import Parameter
-from pymavswarm.plugins import plugins
+from pymavswarm.plugins import supported_plugins
 
 
 class Connection:
@@ -24,11 +22,16 @@ class Connection:
 
     def __init__(
         self,
+        max_workers: int = 5,
         logger_name: str = "connection",
         log_level: int = logging.INFO,
     ) -> None:
         """
         Constructor.
+
+        :param max_workers: maximum number of workers available in the thread pool used
+            to send messages, defaults to 5
+        :type: max_workers: int, optional
 
         :param logger_name: name of the logger
         :type logger_name: str, optional
@@ -40,10 +43,10 @@ class Connection:
         :raises TimeoutError: The system was unable to establish a connection
         """
         self.__logger = self.__init_logger(logger_name, log_level=log_level)
-        self.__connection = None
+        self.__mavlink_connection = None
         self.__connected = False
-        self.__devices = {}
-        self.__device_list_changed = Event()
+        self.__agents = {}
+        self.__agent_list_changed = Event()
         self.__agent_timeout = 0.0
         self.__plugins = []
 
@@ -52,46 +55,53 @@ class Connection:
         self.__receivers = Receivers()
 
         # Mutexes
-        self.__read_msg_mutex = threading.RLock()
-        self.__send_msg_mutex = threading.RLock()
+        self.__read_message_mutex = threading.RLock()
+        self.__send_message_mutex = threading.RLock()
 
         # Load the plugins
-        self.__load_plugins(plugins)
+        self.__load_plugins(supported_plugins)
 
         # Register the exit callback
         atexit.register(self.disconnect)
 
         # Threads
-        self.__heartbeat_t = threading.Thread(target=self.__send_heartbeat)
-        self.__heartbeat_t.daemon = True
+        self.__heartbeat_thread = threading.Thread(target=self.__send_heartbeat)
+        self.__heartbeat_thread.daemon = True
 
-        self.__incoming_msg_t = threading.Thread(target=self.__incoming_msg_handler)
-        self.__incoming_msg_t.daemon = True
+        self.__incoming_message_thread = threading.Thread(
+            target=self.__handle_incoming_message
+        )
+        self.__incoming_message_thread.daemon = True
+
+        # Thread pool for sending messages
+        self.__send_message_thread_pool_executor = ThreadPoolExecutor(
+            max_workers=max_workers
+        )
 
         return
 
     @property
     def mavlink_connection(self) -> Any:
         """
-        mavlink connection used to send and receive commands
+        Mavlink connection used to send and receive commands.
 
         :rtype: Any
         """
-        return self.__connection
+        return self.__mavlink_connection
 
     @property
     def connected(self) -> bool:
         """
-        Flag indicating whether the system currently has a connection
+        Flag indicating whether the system currently has a connection.
 
         :rtype: bool
         """
-        return self.connected
+        return self.__connected
 
     @property
     def agent_timeout(self) -> float:
         """
-        The maximum time that an agent has to send a heartbeat message before it is
+        Maximum time that an agent has to send a heartbeat message before it is
         considered timed out.
 
         :rtype: float
@@ -99,24 +109,24 @@ class Connection:
         return self.__agent_timeout
 
     @property
-    def devices(self) -> dict:
+    def agents(self) -> dict:
         """
-        The current set of recognized devices
+        Current set of recognized agents.
 
         The dict keys are (system ID, component ID) tuples
 
         :rtype: dict
         """
-        return self.__devices
+        return self.__agents
 
     @property
-    def device_list_changed(self) -> Event:
+    def agent_list_changed(self) -> Event:
         """
-        Event indicating that the list of devices had a new device added or removed
+        Event indicating that the list of agents had a new agent added or removed
 
         :rtype: Event
         """
-        return self.__device_list_changed
+        return self.__agent_list_changed
 
     @property
     def read_message_mutex(self) -> threading.RLock:
@@ -125,7 +135,7 @@ class Connection:
 
         :rtype: threading.RLock
         """
-        return self.__read_msg_mutex
+        return self.__read_message_mutex
 
     @property
     def send_message_mutex(self) -> threading.RLock:
@@ -134,11 +144,11 @@ class Connection:
 
         :rtype: threading.RLock
         """
-        return self.__send_msg_mutex
+        return self.__send_message_mutex
 
     def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
         """
-        Initialize the logger with the desired debug levels
+        Initialize the logger with the desired debug levels.
 
         :param name: The name of the logger
         :type name: str
@@ -152,28 +162,10 @@ class Connection:
         logging.basicConfig()
         logger = logging.getLogger(name)
         logger.setLevel(log_level)
+
         return logger
 
-    def __send_heartbeat(self) -> None:
-        """
-        Function used to sent a heartbeat to the network indicating that the GCS
-        is still operating
-        """
-        while self.__connected:
-            self.__connection.mav.heartbeat_send(
-                mavutil.mavlink.MAV_TYPE_GCS,
-                mavutil.mavlink.MAV_AUTOPILOT_INVALID,
-                0,
-                0,
-                0,
-            )
-
-            # Send a heartbeat every 2 seconds
-            time.sleep(2)
-
-        return
-
-    def __load_plugins(self, plugin_handlers: List[Callable]) -> None:
+    def __load_plugins(self, plugins: List[Callable]) -> None:
         """
         Add the plugin handlers to the connection handlers.
 
@@ -181,7 +173,7 @@ class Connection:
         :type plugins: List[Callable]
         """
         # Instantiate each of the plugins
-        self.__plugins = [plugin() for plugin in plugin_handlers]
+        self.__plugins = [plugin() for plugin in plugins]
 
         # Add the plugin handlers to the primary handlers
         for plugin in self.__plugins:
@@ -190,113 +182,83 @@ class Connection:
 
         return
 
-    def __incoming_msg_handler(self) -> None:
+    def __send_heartbeat(self) -> None:
+        """
+        Function used to sent a heartbeat to the network indicating that the GCS
+        is still operating.
+        """
+        while self.__connected:
+            self.__mavlink_connection.mav.heartbeat_send(
+                mavutil.mavlink.MAV_TYPE_GCS,
+                mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                0,
+                0,
+                0,
+            )
+
+            # Send a heartbeat at the recommended 1 Hz interval
+            time.sleep(1)
+
+        return
+
+    def __handle_incoming_message(self) -> None:
         """
         Handle incoming messages and distribute them to their respective handlers.
         """
         while self.__connected:
-            # Update the timeout flag for each device
-            for device in self.__devices.values():
-                if device.last_heartbeat.value is not None:
-                    device.timeout.value = (
-                        monotonic.monotonic() - device.last_heartbeat.value
-                    ) >= device.timeout_period.value
+            # Update the timeout state of an agent
+            for agent in self.__agents.values():
+                if agent.last_heartbeat.value is not None:
+                    agent.timeout.value = (
+                        monotonic.monotonic() - agent.last_heartbeat.value
+                    ) >= agent.timeout_period.value
 
-            # Read a new message
-            try:
-                if not self.__read_msg_mutex.acquire(timeout=1.0):
-                    msg = None
-                else:
-                    msg = self.__connection.recv_msg()
-                    self.__read_msg_mutex.release()
-            except mavutil.mavlink.MAVError:
-                self.__logger.debug("An error occurred on MAVLink message reception")
-                msg = None
-            except Exception:
-                # Log any other unexpected exception
-                self.__logger.exception(
-                    "Exception while receiving message: ", exc_info=True
-                )
-                msg = None
+            message = None
 
-            if not msg:
+            # Attempt to read the message
+            if self.__read_message_mutex.acquire(timeout=0.1):
+                try:
+                    message = self.__mavlink_connection.recv_msg()
+                except Exception:
+                    self.__logger.debug(
+                        "An error occurred on MAVLink message reception", exc_info=True
+                    )
+                finally:
+                    self.__read_message_mutex.release()
+
+            # Continue of the message read was not read properly
+            if not message:
                 continue
 
-            # Apply the respective message handler(s)
-            if msg.get_type() in self.__receivers.receivers:
-                for function in self.__receivers.receivers[msg.get_type()]:
+            # Execute the respective message handler(s)
+            if message.get_type() in self.__receivers.receivers:
+                for function in self.__receivers.receivers[message.get_type()]:
                     try:
-                        function(msg, self)
+                        function(message, self)
                     except Exception:
                         self.__logger.exception(
-                            f"Exception in message handler for {msg.get_type()}",
+                            f"Exception in message handler for {message.get_type()}",
                             exc_info=True,
                         )
 
         return
 
-    def __retry_param_send(self, param: Any, function: Callable) -> bool:
+    def send_message(self, message: Union[Any, swarm_msgs.MsgPackage]) -> None:
         """
-        Retry a parameter send until the an acknowledgement is received or a timeout
-        occurs
+        Send a message.
 
-        :param param: The parameter to retry sending
-        :type msg: Any
-
-        :param function: The function to call using the message
-        :type function: function
-
-        :return: Indicate whether the retry was successful
-        :rtype: bool
+        :param message: message to send
+        :type message: Union[Any, swarm_msgs.MsgPackage]
         """
-        ack = False
-        start_time = time.time()
-
-        # Don't let the message come back here and create an infinite loop
-        param.retry = False
-
-        while time.time() - start_time <= param.msg_timeout:
-            # Reattempt the message send
-            if function(param):
-                ack = True
-                break
-
-        return ack
-
-    def send_msg_handler(self, msg: Any) -> None:
-        """
-        Public method that is accessed by the mavswarm interface to signal the handler
-        to complete message sending
-
-        :param msg: The message to send
-        :type msg: Any
-        """
-        # Make sure that a connection is established before attempting to send a message
         if self.__connected:
-            handler_t = threading.Thread(target=self.__send_msg_handler, args=(msg,))
-
-            # Send the message
-            handler_t.start()
-
-        return
-
-    def send_msg_package_handler(self, package: swarm_msgs.MsgPackage) -> None:
-        """
-        Public method that is accessed by the mavswarm interface to signal the handler
-        to send a message package
-
-        :param package: Package of messages to send
-        :type package: MsgPackage
-        """
-        # Make sure that a connection is established before attempting to send a message
-        if self.__connected:
-            handler_t = threading.Thread(
-                target=self.__send_msg_package_handler, args=(package,)
-            )
-
-            # Send the message
-            handler_t.start()
-
+            if isinstance(message, swarm_msgs.MsgPackage):
+                self.__send_message_thread_pool_executor.submit(
+                    self.__send_msg_package_handler, message
+                )
+            else:
+                self.__send_message_thread_pool_executor.submit(
+                    self.__send_msg_handler, message
+                )
         return
 
     def __send_msg_package_handler(self, package: swarm_msgs.MsgPackage) -> None:
@@ -360,13 +322,13 @@ class Connection:
         try:
             # Send the message if there is a message sender for it
             if msg.msg_type in self.__message_senders:
-                device_exists = False
+                agent_exists = False
 
-                if (msg.target_system, msg.target_comp) in self.__devices:
-                    device_exists = True
+                if (msg.target_system, msg.target_comp) in self.__agents:
+                    agent_exists = True
                 else:
                     self.__logger.info(
-                        "The current set of registered devices does not include Agent "
+                        "The current set of registered agents does not include Agent "
                         f"({msg.target_system, msg.target_comp}). The provided message "
                         "will still be sent; however, the system may not be able to "
                         "confirm reception of the message."
@@ -376,7 +338,7 @@ class Connection:
                     self.__message_senders[msg.msg_type]
                 ):
                     # Prevent multiple sends from occurring at once
-                    self.__send_msg_mutex.acquire()
+                    self.__send_message_mutex.acquire()
 
                     # Result of the particular function called
                     function_result = False
@@ -387,7 +349,7 @@ class Connection:
                             self,
                             msg,
                             function_id=function_id,
-                            device_exists=device_exists,
+                            agent_exists=agent_exists,
                         )
                     except Exception:
                         self.__logger.exception(
@@ -398,7 +360,7 @@ class Connection:
                         msg_function_results.append(
                             (msg.msg_type, function_id, function_result)
                         )
-                        self.__send_msg_mutex.release()
+                        self.__send_message_mutex.release()
         except Exception:
             self.__logger.exception(
                 "An error occurred while attempting to send the provided message",
@@ -406,196 +368,6 @@ class Connection:
             )
 
         return msg_function_results
-
-    def set_param_handler(self, param: Parameter) -> None:
-        """
-        Set the value of a parameter on a given agent
-
-        :param param: The parameter to set
-        :type param: Parameter
-        """
-        # Make sure that a connection is established before attempting to set a param
-        if self.__connected:
-            handler_t = threading.Thread(target=self.__set_param_handler, args=(param,))
-
-            # Set the parameter
-            handler_t.start()
-
-        return
-
-    def __set_param_handler(self, param: Parameter) -> None:
-        """
-        Handle setting parameters on an agent in the network
-
-        :param param: The parameter to set
-        :type param: Parameter
-        """
-        # Prevent multiple sends from occurring at once
-        self.__send_msg_mutex.acquire()
-
-        try:
-            self.__set_param(param)
-        except Exception:
-            self.__logger.exception(
-                "An error occurred while attempting to send the provided message",
-                exc_info=True,
-            )
-        finally:
-            self.__send_msg_mutex.release()
-
-        return
-
-    def __set_param(self, param: Parameter) -> bool:
-        """
-        Set the value of a parameter.
-
-        NOTE: This sets the parameter value in RAM and not to EEPROM. Therefore, on
-        reboot, the parameters will be reset to their default values
-
-        :param param: The parameter to set
-        :type param: Parameter
-
-        :return: Indicates whether the parameter was successfully set
-        :rtype: bool
-        """
-        try:
-            # NOTE: In the current state, we only support float parameter value types
-            #       Additional types may be added in the future
-            self.__connection.mav.param_set_send(
-                param.sys_id,
-                param.comp_id,
-                str.encode(param.param_id),
-                param.param_value,
-                9,
-            )
-        except Exception:
-            self.__logger.error(
-                f"An error occurred while attempting to set {param.param_id} to "
-                f"{param.param_value}",
-                exc_info=True,
-            )
-            return False
-
-        ack = False
-
-        if self.__ack_msg("PARAM_VALUE", timeout=param.ack_timeout)[0]:
-            ack = True
-        else:
-            if param.retry:
-                if self.__retry_param_send(param, self.__set_param):
-                    ack = True
-
-        if ack:
-            self.__logger.info(
-                f"Successfully set {param.param_id} to {param.param_value} on "
-                f"Agent ({param.sys_id}, {param.comp_id})"
-            )
-        else:
-            self.__logger.error(
-                f"Failed to set {param.param_id} to {param.param_value} on Agent "
-                f"({param.sys_id}, {param.comp_id})"
-            )
-
-        return ack
-
-    def read_param_handler(self, param: Parameter) -> None:
-        """
-        Read the value of a parameter
-
-        :param param: The parameter to read
-        :type param: Parameter
-        """
-        # Make sure that a connection is established before attempting to set a param
-        if self.__connected:
-            handler_t = threading.Thread(
-                target=self.__read_param_handler, args=(param,)
-            )
-
-            # Send the message
-            handler_t.start()
-
-        return
-
-    def __read_param_handler(self, param: Parameter) -> None:
-        """
-        Handler responsible for reading requested parameters.
-
-        NOTE: This thread is primarily responsible for handling read requests and
-        verifying that a read was accomplished on the message listener thread. The
-        agent state itself is updated on the message listener thread
-
-        :param param: The parameter to read
-        :type param: Parameter
-        """
-        # Prevent multiple reads from occurring at once
-        self.__send_msg_mutex.acquire()
-
-        try:
-            self.__read_param(param)
-        except Exception:
-            self.__logger.exception(
-                "An error occurred while attempting to send the provided message"
-            )
-        finally:
-            self.__send_msg_mutex.release()
-
-        return
-
-    def __read_param(self, param: Parameter) -> bool:
-        """
-        Read a desired parameter value
-
-        :param param: The parameter to read
-        :type param: Parameter
-
-        :return: Indicates whether the parameter was successfully read
-        :rtype: bool
-        """
-        try:
-            self.__connection.mav.param_request_read_send(
-                param.sys_id, param.comp_id, str.encode(param.param_id), -1
-            )
-        except Exception:
-            self.__logger.exception(
-                f"An exception occurred while attempting to read {param.param_id} "
-                f"from Agent ({param.sys_id}, {param.comp_id})",
-                exc_info=True,
-            )
-            return False
-
-        ack = False
-
-        ack, msg = self.__ack_msg("PARAM_VALUE", timeout=param.ack_timeout)
-
-        if ack:
-            read_param = swarm_state.ReadParameter(
-                msg["param_id"],
-                msg["param_value"],
-                msg["param_type"],
-                msg["param_index"],
-                msg["param_count"],
-            )
-
-            self.__devices[(param.sys_id, param.comp_id)].last_params_read.append(
-                read_param
-            )
-        else:
-            if param.retry:
-                if self.__retry_param_send(param, self.__read_param):
-                    ack = True
-
-        if ack:
-            self.__logger.info(
-                f"Successfully read {param.param_id} from Agent ({param.sys_id}, "
-                f"{param.comp_id}). Value: {msg}"
-            )
-        else:
-            self.__logger.error(
-                f"Failed to read {param.param_id} from Agent ({param.sys_id}, "
-                f"{param.comp_id})"
-            )
-
-        return ack
 
     def connect(
         self,
@@ -633,7 +405,7 @@ class Connection:
         :rtype: bool
         """
         # Create a new mavlink connection
-        self.__connection = mavutil.mavlink_connection(
+        self.__mavlink_connection = mavutil.mavlink_connection(
             port,
             baud=baud,
             source_system=source_system,
@@ -643,7 +415,9 @@ class Connection:
 
         # Ensure that a connection has been successfully established
         # Integrate a 2 second timeout
-        resp = self.__connection.wait_heartbeat(timeout=connection_attempt_timeout)
+        resp = self.__mavlink_connection.wait_heartbeat(
+            timeout=connection_attempt_timeout
+        )
 
         if resp is None:
             connected = False
@@ -654,8 +428,8 @@ class Connection:
             self.__agent_timeout = agent_timeout
 
             # Start background threads
-            self.__heartbeat_t.start()
-            self.__incoming_msg_t.start()
+            self.__heartbeat_thread.start()
+            self.__incoming_message_thread.start()
 
         # Update the internal connection state
         self.__connected = connected
@@ -668,16 +442,16 @@ class Connection:
         """
         self.__connected = False
 
-        if self.__heartbeat_t is not None:
-            self.__heartbeat_t.join()
+        if self.__heartbeat_thread is not None:
+            self.__heartbeat_thread.join()
 
-        if self.__incoming_msg_t is not None:
-            self.__incoming_msg_t.join()
+        if self.__incoming_message_thread is not None:
+            self.__incoming_message_thread.join()
 
-        self.__devices.clear()
-        self.__device_list_changed.listeners.clear()
+        self.__agents.clear()
+        self.__agent_list_changed.listeners.clear()
 
-        if self.__connection is not None:
-            self.__connection.close()
+        if self.__mavlink_connection is not None:
+            self.__mavlink_connection.close()
 
         return
