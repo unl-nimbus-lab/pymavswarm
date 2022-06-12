@@ -440,17 +440,24 @@ class Connection:
         """
         Close the connection and disconnect all threads
         """
+        # Stop the main loop of the threads
         self.__connected = False
 
+        # Join system threads
         if self.__heartbeat_thread is not None:
             self.__heartbeat_thread.join()
 
         if self.__incoming_message_thread is not None:
             self.__incoming_message_thread.join()
 
+        # Shutdown the thread pool executor
+        self.__send_message_thread_pool_executor.shutdown(cancel_futures=True)
+
+        # Clear the agents list
         self.__agents.clear()
         self.__agent_list_changed.listeners.clear()
 
+        # Shutdown the mavlink connection
         if self.__mavlink_connection is not None:
             self.__mavlink_connection.close()
 
