@@ -1,6 +1,6 @@
 import unittest
 
-from pymavswarm.msg import AgentMsg
+from pymavswarm.messages import AgentMessage
 
 
 class TestAgentMsg(unittest.TestCase):
@@ -8,7 +8,7 @@ class TestAgentMsg(unittest.TestCase):
         """
         Test invalid timeout
         """
-        self.assertRaises(ValueError, AgentMsg, "test", 0, 0, False, -1.0)
+        self.assertRaises(ValueError, AgentMessage, "test", 0, 0, False, -1.0)
 
         return
 
@@ -18,7 +18,7 @@ class TestAgentMsg(unittest.TestCase):
         handlers
         """
         # Create a new message
-        msg = AgentMsg("test", 0, 0, False)
+        msg = AgentMessage("test", 0, 0, False)
 
         total_calls = 0
         passed_result = None

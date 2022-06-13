@@ -1,18 +1,26 @@
-from pymavswarm.msg import AgentMsg
-from pymavswarm.msg import SupportedMsgs as supported_msgs
+from typing import Optional
+
+from pymavswarm.messages import AgentMessage
 
 
-class SystemCommandMsg(AgentMsg):
+class HomePositionMessage(AgentMessage):
     """
-    Signal a system-level operation on an agent.
+    Signal a home position reset.
+
+    The home position can be reset to the current location or set to a specific
+    location. Note that if the home location is being reset to the current position,
+    then the location is not required. If the home location is being set to a specific
+    location, all components must be set.
     """
 
     def __init__(
         self,
-        command: str,
         target_system: int,
         target_comp: int,
         retry: bool,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None,
+        alt: Optional[float] = None,
         msg_timeout: float = 5.0,
         ack_timeout: float = 1.0,
         state_timeout: float = 5.0,
@@ -21,9 +29,6 @@ class SystemCommandMsg(AgentMsg):
     ) -> None:
         """
         Constructor.
-
-        :param command: command to execute
-        :type command: str
 
         :param target_system: The target system ID
         :type target_system: int
@@ -34,6 +39,15 @@ class SystemCommandMsg(AgentMsg):
         :param retry: Indicate whether pymavswarm should retry sending the message
             until acknowledgement
         :type retry: bool
+
+        :param lat: The latitude of the home position
+        :type lat: Optional[float], optional
+
+        :param lon: The longitude of the home position
+        :type lon: Optional[float], optional
+
+        :param alt: The altitude of the home position
+        :type: alt: Optional[float], optional
 
         :param msg_timeout: The amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -61,15 +75,18 @@ class SystemCommandMsg(AgentMsg):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
-        if command not in supported_msgs.system_commands.get_supported_types():
+        if (
+            (lat is not None and (lon is None or alt is None))
+            or (lon is not None and (lat is None or alt is None))
+            or (alt is not None and (lat is None or lon is None))
+        ):
             raise ValueError(
-                f"{command} is not a supported system command. Supported system "
-                "commands include: "
-                f"{supported_msgs.system_commands.get_supported_types()}"
+                "Ensure that latitude, longitude, and altitude are all set when "
+                "configuring the home position of an agent"
             )
 
         super().__init__(
-            command,
+            "RESET_HOME",
             target_system,
             target_comp,
             retry,
@@ -79,29 +96,51 @@ class SystemCommandMsg(AgentMsg):
             state_delay=state_delay,
             optional_context_props=optional_context_props,
         )
-
-        self.__command = command
+        self.__altitude = alt
+        self.__latitude = lat
+        self.__longitude = lon
 
         return
 
     @property
-    def command(self) -> str:
+    def altitude(self) -> float:
         """
-        System command to execute.
+        Altitude (m).
 
-        :rtype: str
+        :rtype: float
         """
-        return self.__command
+        return self.__altitude
+
+    @property
+    def latitude(self) -> float:
+        """
+        Latitude of the position.
+
+        :rtype: float
+        """
+        return self.__latitude
+
+    @property
+    def longitude(self) -> float:
+        """
+        Longitude of the position.
+
+        :rtype: float
+        """
+        return self.__longitude
 
     @property
     def context(self) -> dict:
         """
-        Message context.
+        Context of the message.
 
-        :return: current message context
         :rtype: dict
         """
         context = super().context
-        context["command"] = self.__command
+
+        # Update to include new properties
+        context["latitude"] = self.__latitude
+        context["longitude"] = self.__longitude
+        context["altitude"] = self.__altitude
 
         return context

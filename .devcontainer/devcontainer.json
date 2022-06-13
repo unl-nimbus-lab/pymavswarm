@@ -49,7 +49,11 @@
             "--disable=E0102",
             "--disable=W0703",
             "--disable=R0915",
-            "--disable=R0903"
+            "--disable=R0903",
+            "--disable=C0114",
+            "--disable=W1203",
+            "--disable=R1711",
+            "--disable=W0703"
         ],
         "python.linting.enabled": true,
         "python.linting.ignorePatterns": [
@@ -116,10 +120,9 @@
         "zachflower.uncrustify",
         "ms-azuretools.vscode-docker",
         "ms-python.python",
-        "ms-python.pylint",
         "streetsidesoftware.code-spell-checker",
         "yzhang.markdown-all-in-one",
         "njpwerner.autodocstring"
     ],
-    "postCreateCommand": "pip3 install ."
+    "postStartCommand": "pip3 install ."
 }

@@ -1,7 +1,7 @@
 from pymavswarm.event import Event
 
 
-class MsgPackage:
+class MessagePackage:
     """
     Wrapper for multiple messages that allows for verification of a group of messages
     rather than single messages.

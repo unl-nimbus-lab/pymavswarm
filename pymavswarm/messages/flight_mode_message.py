@@ -1,8 +1,8 @@
-from pymavswarm.msg import AgentMsg
-from pymavswarm.msg import SupportedMsgs as supported_msgs
+from pymavswarm.messages import AgentMessage
+from pymavswarm.messages import SupportedMessages as supported_msgs
 
 
-class FlightModeMsg(AgentMsg):
+class FlightModeMessage(AgentMessage):
     """
     Message signaling a flight mode change on an agent.
     """

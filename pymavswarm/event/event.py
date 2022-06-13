@@ -1,9 +1,9 @@
-from typing import Callable, Any
+from typing import Any, Callable
 
 
 class Event:
     """
-    Interface used to represent events and signal event listeners
+    Interface used to represent events and signal event listeners.
     """
 
     def __init__(self) -> None:

@@ -189,7 +189,7 @@ class MissionCommand:
         ]
 
 
-class SupportedMsgs:
+class SupportedMessages:
     """
     Helper class used to provide easy retrieval of the commands used by pymavswarm to
     send messages.

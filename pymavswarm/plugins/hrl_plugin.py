@@ -1,9 +1,9 @@
 import logging
 import time
 
-import pymavswarm.msg as swarm_msgs
+import pymavswarm.messages as swarm_msgs
 from pymavswarm import Connection
-from pymavswarm.msg import responses
+from pymavswarm.messages import responses
 from pymavswarm.plugins import Plugin
 
 
@@ -16,7 +16,7 @@ class HrlPlugin(Plugin):
         @self._send_message("HRL_COMMAND")
         def sender(
             self,
-            msg: swarm_msgs.HRLMsg,
+            msg: swarm_msgs.HRLMessage,
             connection: Connection,
             function_id: int = 0,
             device_exists: bool = False,

@@ -1,15 +1,16 @@
-from pymavswarm.msg import AgentMsg
-from pymavswarm.msg import SupportedMsgs as supported_msgs
+from pymavswarm.messages import AgentMessage
+from pymavswarm.messages import SupportedMessages as supported_msgs
 
 
-class HRLMsg(AgentMsg):
+class FlightSpeedMessage(AgentMessage):
     """
-    Signal an HRL command to be executed.
+    Message signaling a change in the flight speed of an agent.
     """
 
     def __init__(
         self,
-        hrl_command: int,
+        speed: float,
+        speed_type: int,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -22,11 +23,11 @@ class HRLMsg(AgentMsg):
         """
         Constructor.
 
-        :param hrl_command: desired hrl swarm state
-        :type hrl_command: int
+        :param speed: The desired speed in m/s
+        :type speed: float
 
-        :param msg_type: The sub-message type for a message
-        :type msg_type: str
+        :param speed_type: The type of speed (e.g., air speed) to configure.
+        :type speed_type: int
 
         :param target_system: The target system ID
         :type target_system: int
@@ -64,14 +65,15 @@ class HRLMsg(AgentMsg):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
-        if hrl_command not in supported_msgs.hrl_commands.get_supported_types():
+        if speed_type not in supported_msgs.flight_speed_commands.get_supported_types():
             raise ValueError(
-                f"{hrl_command} is not a supported HRL command. Supported commands "
-                f"include: {supported_msgs.hrl_commands.get_supported_types()}"
+                f"{speed_type} is not a supported speed configuration "
+                "the supported speed configuration types include: "
+                f"{supported_msgs.flight_speed_commands.get_supported_types()}"
             )
 
         super().__init__(
-            "HRL_COMMAND",
+            "FLIGHT_SPEED",
             target_system,
             target_comp,
             retry,
@@ -81,29 +83,40 @@ class HRLMsg(AgentMsg):
             state_delay=state_delay,
             optional_context_props=optional_context_props,
         )
-
-        self.__hrl_command = hrl_command
+        self.__speed = speed
+        self.__speed_type = speed_type
 
         return
 
     @property
-    def hrl_command(self) -> int:
+    def speed(self) -> float:
         """
-        Desired HRL swarm state.
+        Desired speed in m/s.
+
+        :rtype: float
+        """
+        return self.__speed
+
+    @property
+    def speed_type(self) -> int:
+        """
+        The type of speed to configure.
 
         :rtype: int
         """
-        return self.__hrl_command
+        return self.__speed_type
 
     @property
     def context(self) -> dict:
         """
-        Update the msg context to include HRL command type.
+        Context of the message.
 
-        :return: message context
         :rtype: dict
         """
         context = super().context
-        context["hrl_command"] = self.__hrl_command
+
+        # Update to include new properties
+        context["speed"] = self.__speed
+        context["speed_type"] = self.__speed_type
 
         return context

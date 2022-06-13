@@ -1,7 +1,7 @@
 from pymavswarm.event import Event
 
 
-class AgentMsg:
+class AgentMessage:
     """
     Parent class used to construct MAVLink commands.
     """

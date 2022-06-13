@@ -4,7 +4,7 @@ from typing import Any
 from pymavswarm import Connection
 from pymavswarm.agent import Agent
 from pymavswarm.event import Event
-from pymavswarm.msg import MsgPackage, SupportedMsgs
+from pymavswarm.messages import MessagePackage, SupportedMessages
 from pymavswarm.param import Parameter, ParameterPackage
 
 
@@ -33,14 +33,14 @@ class MavSwarm:
         return
 
     @property
-    def supported_messages(self) -> SupportedMsgs:
+    def supported_messages(self) -> SupportedMessages:
         """
         Message types that are supported by the pymavswarm interface
 
         :return: mapping to enable simple configuration of commands
         :rtype: SupportedMsgs
         """
-        return SupportedMsgs()
+        return SupportedMessages()
 
     @property
     def agents(self) -> dict:
@@ -172,7 +172,7 @@ class MavSwarm:
 
         return
 
-    def send_msg_package(self, package: MsgPackage) -> None:
+    def send_msg_package(self, package: MessagePackage) -> None:
         """
         Send a message package.
 

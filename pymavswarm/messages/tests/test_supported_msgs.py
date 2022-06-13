@@ -1,6 +1,6 @@
 import unittest
 
-from pymavswarm.msg import SupportedMsgs as supported_msgs
+from pymavswarm.messages import SupportedMessages as supported_msgs
 
 
 class TestSupportedMsgs(unittest.TestCase):

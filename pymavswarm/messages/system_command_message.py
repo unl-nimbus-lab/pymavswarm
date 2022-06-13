@@ -1,15 +1,15 @@
-from pymavswarm.msg import AgentMsg
-from pymavswarm.msg import SupportedMsgs as supported_msgs
+from pymavswarm.messages import AgentMessage
+from pymavswarm.messages import SupportedMessages as supported_msgs
 
 
-class PreflightCalibrationMsg(AgentMsg):
+class SystemCommandMessage(AgentMessage):
     """
-    Signal a pre-flight calibration on a selected agent.
+    Signal a system-level operation on an agent.
     """
 
     def __init__(
         self,
-        calibration_type: str,
+        command: str,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -22,8 +22,8 @@ class PreflightCalibrationMsg(AgentMsg):
         """
         Constructor.
 
-        :param calibration_type: desired calibration typ
-        :type calibration_type: str
+        :param command: command to execute
+        :type command: str
 
         :param target_system: The target system ID
         :type target_system: int
@@ -61,18 +61,15 @@ class PreflightCalibrationMsg(AgentMsg):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
-        if (
-            calibration_type
-            not in supported_msgs.preflight_calibration_commands.get_supported_types()
-        ):
+        if command not in supported_msgs.system_commands.get_supported_types():
             raise ValueError(
-                f"{calibration_type} is not a supported pre-flight calibration type. "
-                "Supported pre-flight calibration types include: "
-                f"{supported_msgs.preflight_calibration_commands.get_supported_types()}"
+                f"{command} is not a supported system command. Supported system "
+                "commands include: "
+                f"{supported_msgs.system_commands.get_supported_types()}"
             )
 
         super().__init__(
-            calibration_type,
+            command,
             target_system,
             target_comp,
             retry,
@@ -83,18 +80,18 @@ class PreflightCalibrationMsg(AgentMsg):
             optional_context_props=optional_context_props,
         )
 
-        self.__calibration_type = calibration_type
+        self.__command = command
 
         return
 
     @property
-    def calibration_type(self) -> str:
+    def command(self) -> str:
         """
-        Type of calibration to perform.
+        System command to execute.
 
         :rtype: str
         """
-        return self.__calibration_type
+        return self.__command
 
     @property
     def context(self) -> dict:
@@ -105,6 +102,6 @@ class PreflightCalibrationMsg(AgentMsg):
         :rtype: dict
         """
         context = super().context
-        context["calibration_type"] = self.__calibration_type
+        context["command"] = self.__command
 
         return context

@@ -1,26 +1,23 @@
-from typing import Optional
-
-from pymavswarm.msg import AgentMsg
+from pymavswarm.messages import AgentMessage
 
 
-class HomePositionMsg(AgentMsg):
+class WaypointMessage(AgentMessage):
     """
-    Signal a home position reset.
-
-    The home position can be reset to the current location or set to a specific
-    location. Note that if the home location is being reset to the current position,
-    then the location is not required. If the home location is being set to a specific
-    location, all components must be set.
+    Desired waypoint for an agent to fly to.
     """
 
     def __init__(
         self,
+        lat: float,
+        lon: float,
+        alt: float,
+        hold: float,
+        accept_radius: float,
+        pass_radius: float,
+        yaw: float,
         target_system: int,
         target_comp: int,
         retry: bool,
-        lat: Optional[float] = None,
-        lon: Optional[float] = None,
-        alt: Optional[float] = None,
         msg_timeout: float = 5.0,
         ack_timeout: float = 1.0,
         state_timeout: float = 5.0,
@@ -29,6 +26,31 @@ class HomePositionMsg(AgentMsg):
     ) -> None:
         """
         Constructor.
+
+        :param hold: Time to stay at waypoint for rotary wing (ignored by fixed wing)
+        :type hold: float
+
+        :param accept_radius: If the sphere with this radius (m) is hit, the waypoint
+            counts as reached
+        :type accept_radius: float
+
+        :param pass_radius: 0 to pass through the WP, if > 0 radius to pass by WP.
+            Positive value for clockwise orbit, negative value for counter-clockwise
+            orbit. Allows trajectory control.
+        :type pass_radius: float
+
+        :param yaw: Desired yaw angle at waypoint (rotary wing). NaN to use the current
+            system yaw heading mode (e.g. yaw towards next waypoint, yaw to home, etc.).
+        :type yaw: float
+
+        :param lat: Latitude of the waypoint
+        :type lat: float
+
+        :param lon: Longitude of the waypoint
+        :type lon: float
+
+        :param alt: Altitude of the waypoint
+        :type alt: float
 
         :param target_system: The target system ID
         :type target_system: int
@@ -39,15 +61,6 @@ class HomePositionMsg(AgentMsg):
         :param retry: Indicate whether pymavswarm should retry sending the message
             until acknowledgement
         :type retry: bool
-
-        :param lat: The latitude of the home position
-        :type lat: Optional[float], optional
-
-        :param lon: The longitude of the home position
-        :type lon: Optional[float], optional
-
-        :param alt: The altitude of the home position
-        :type: alt: Optional[float], optional
 
         :param msg_timeout: The amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -75,18 +88,8 @@ class HomePositionMsg(AgentMsg):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
-        if (
-            (lat is not None and (lon is None or alt is None))
-            or (lon is not None and (lat is None or alt is None))
-            or (alt is not None and (lat is None or lon is None))
-        ):
-            raise ValueError(
-                "Ensure that latitude, longitude, and altitude are all set when "
-                "configuring the home position of an agent"
-            )
-
         super().__init__(
-            "RESET_HOME",
+            "WAYPOINT",
             target_system,
             target_comp,
             retry,
@@ -96,25 +99,59 @@ class HomePositionMsg(AgentMsg):
             state_delay=state_delay,
             optional_context_props=optional_context_props,
         )
-        self.__altitude = alt
+        self.__hold = hold
+        self.__accept_radius = accept_radius
+        self.__pass_radius = pass_radius
+        self.__yaw = yaw
         self.__latitude = lat
         self.__longitude = lon
+        self.__altitude = alt
 
         return
 
     @property
-    def altitude(self) -> float:
+    def hold(self) -> float:
         """
-        Altitude (m).
+        Time to stay at waypoint for rotary wing (ignored by fixed wing).
 
         :rtype: float
         """
-        return self.__altitude
+        return self.__hold
+
+    @property
+    def accept_radius(self) -> float:
+        """
+        If the sphere with this radius (m) is hit, the waypoint counts as reached.
+
+        :rtype: float
+        """
+        return self.__accept_radius
+
+    @property
+    def pass_radius(self) -> float:
+        """
+        0 to pass through the WP, if > 0 radius to pass by WP. Positive value for
+        clockwise orbit, negative value for counter-clockwise orbit. Allows trajectory
+        control.
+
+        :rtype: float
+        """
+        return self.__pass_radius
+
+    @property
+    def yaw(self) -> float:
+        """
+        Desired yaw angle at waypoint (rotary wing). NaN to use the current system yaw
+        heading mode (e.g. yaw towards next waypoint, yaw to home, etc.).
+
+        :rtype: float
+        """
+        return self.__yaw
 
     @property
     def latitude(self) -> float:
         """
-        Latitude of the position.
+        Latitude of the waypoint.
 
         :rtype: float
         """
@@ -123,11 +160,20 @@ class HomePositionMsg(AgentMsg):
     @property
     def longitude(self) -> float:
         """
-        Longitude of the position.
+        Longitude of the waypoint.
 
         :rtype: float
         """
         return self.__longitude
+
+    @property
+    def altitude(self) -> float:
+        """
+        Altitude of the waypoint.
+
+        :rtype: float
+        """
+        return self.__altitude
 
     @property
     def context(self) -> dict:
@@ -139,6 +185,10 @@ class HomePositionMsg(AgentMsg):
         context = super().context
 
         # Update to include new properties
+        context["yaw"] = self.__yaw
+        context["pass_radius"] = self.__pass_radius
+        context["accept_radius"] = self.__accept_radius
+        context["hold"] = self.__hold
         context["latitude"] = self.__latitude
         context["longitude"] = self.__longitude
         context["altitude"] = self.__altitude

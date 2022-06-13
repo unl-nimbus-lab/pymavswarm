@@ -16,8 +16,8 @@ class Agent:
 
     def __init__(
         self,
-        sys_id: int,
-        comp_id: int,
+        system_id: int,
+        component_id: int,
         name: Optional[str] = None,
         timeout_period: float = 30.0,
         max_params_stored: int = 5,
@@ -41,15 +41,15 @@ class Agent:
         :type max_params_stored: int, optional
         """
         # Immutable
-        self.__sys_id = sys_id
-        self.__comp_id = comp_id
+        self.__system_id = system_id
+        self.__component_id = component_id
         self.__name = name
 
         """
         We create additional context properties here so that listeners of the
         respective property events have information about the parent agent
         """
-        context_props = {"sys_id": sys_id, "comp_id": comp_id, "name": name}
+        context_props = {"sys_id": system_id, "comp_id": component_id, "name": name}
 
         # Mutable
         self.__attitude = swarm_state.Attitude(optional_context_props=context_props)
@@ -103,22 +103,22 @@ class Agent:
         return
 
     @property
-    def sys_id(self) -> int:
+    def system_id(self) -> int:
         """
         The system ID of the agent
 
         :rtype: int
         """
-        return self.__sys_id
+        return self.__system_id
 
     @property
-    def comp_id(self) -> int:
+    def component_id(self) -> int:
         """
         The component ID of the agent
 
         :rtype: int
         """
-        return self.__comp_id
+        return self.__component_id
 
     @property
     def name(self) -> str:

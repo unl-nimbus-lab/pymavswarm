@@ -1,6 +1,5 @@
-import functools
 import logging
-import threading
+import time
 from typing import Any, Callable, Union
 
 import monotonic
@@ -31,77 +30,79 @@ class Receivers:
         self.__logger = self.__init_logger(logger_name, log_level=log_level)
         self.__receivers = {}
 
-        @self.receive_message("HEARTBEAT")
-        def listener(msg: Any, connection: Connection) -> None:
+        @self.__receive_message("HEARTBEAT")
+        @self.__timer()
+        def listener(message: Any, connection: Connection) -> None:
             """
-            Register new devices or update the timeout status of existing agents
+            Register new agents or update the timeout status of existing agents
 
-            :param msg: Incoming MAVLink message
-            :type msg: Any
+            :param message: Incoming MAVLink message
+            :type message: Any
             """
             # Make sure that the message isn't from a GCS
-            if msg.get_type() == mavutil.mavlink.MAV_TYPE_GCS:
+            if message.get_type() == mavutil.mavlink.MAV_TYPE_GCS:
                 return
 
-            sys_id = msg.get_srcSystem()
-            comp_id = msg.get_srcComponent()
+            sys_id = message.get_srcSystem()
+            comp_id = message.get_srcComponent()
 
-            device_id = (sys_id, comp_id)
+            agent_id = (sys_id, comp_id)
 
-            # If the device hasn't been seen before, save it
-            if device_id not in connection.devices:
-                # Create and save a new device
-                device = Agent(sys_id, comp_id, timeout_period=connection.agent_timeout)
-                connection.devices[device_id] = device
+            # If the agent hasn't been seen before, save it
+            if agent_id not in connection.agents:
+                # Create and save a new agent
+                agent = Agent(sys_id, comp_id, timeout_period=connection.agent_timeout)
+                connection.agents[agent_id] = agent
 
-                # Notify handlers that the devices changed
-                connection.device_list_changed.notify(agent=device)
+                # Notify handlers that the agents changed
+                connection.agent_list_changed.notify(agent=agent)
             else:
                 # The connection has been restored
-                if connection.devices[device_id].timeout.value:
+                if connection.agents[agent_id].timeout.value:
                     self.__logger.info(
-                        f"Connection to device {sys_id}:{comp_id} has been restored"
+                        f"Connection to agent {sys_id}:{comp_id} has been restored"
                     )
 
             # Update the last heartbeat variable
-            connection.devices[device_id].last_heartbeat.value = monotonic.monotonic()
-            connection.devices[device_id].timeout.value = False
+            connection.agents[agent_id].last_heartbeat.value = monotonic.monotonic()
+            connection.agents[agent_id].timeout.value = False
 
             return
 
-        @self.receive_message("HEARTBEAT")
-        def listener(msg: Any, connection: Connection) -> None:
+        @self.__receive_message("HEARTBEAT")
+        @self.__timer()
+        def listener(message: Any, connection: Connection) -> None:
             """
-            Handle general device information contained within a heartbeat
+            Handle general agent information contained within a heartbeat
 
-            :param msg: Incoming MAVLink message
-            :type msg: Any
+            :param message: Incoming MAVLink message
+            :type message: Any
             """
             # Ignore messages sent by a GCS
-            if msg.type == mavutil.mavlink.MAV_TYPE_GCS:
+            if message.type == mavutil.mavlink.MAV_TYPE_GCS:
                 return
 
-            device_id = (msg.get_srcSystem(), msg.get_srcComponent())
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not device_id in connection.devices:
+            if not agent_id in connection.agents:
                 return
 
-            connection.devices[device_id].armed.value = (
-                msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
+            connection.agents[agent_id].armed.value = (
+                message.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
             ) != 0
 
-            connection.devices[device_id].system_status.value = msg.system_status
-            connection.devices[device_id].vehicle_type.value = msg.type
+            connection.agents[agent_id].system_status.value = message.system_status
+            connection.agents[agent_id].vehicle_type.value = message.type
 
             # Update the last heartbeat
-            connection.devices[device_id].last_heartbeat.value = monotonic.monotonic()
+            connection.agents[agent_id].last_heartbeat.value = monotonic.monotonic()
 
             try:
                 # NOTE: We assume that ArduPilot will be used
-                connection.devices[
-                    device_id
-                ].flight_mode.value = mavutil.mode_mapping_bynumber(msg.type)[
-                    msg.custom_mode
+                connection.agents[
+                    agent_id
+                ].flight_mode.value = mavutil.mode_mapping_bynumber(message.type)[
+                    message.custom_mode
                 ]
             except Exception:
                 # We received an invalid message
@@ -109,256 +110,272 @@ class Receivers:
 
             return
 
-        @self.receive_message("GLOBAL_POSITION_INT")
-        def listener(msg: Any, connection: Connection) -> None:
+        @self.__receive_message("GLOBAL_POSITION_INT")
+        @self.__timer()
+        def listener(message: Any, connection: Connection) -> None:
             """
             Handle the a GPS position message
 
-            :param msg: Incoming MAVLink message
-            :type msg: Any
+            :param message: Incoming MAVLink message
+            :type message: Any
             """
-            device_id = (msg.get_srcSystem(), msg.get_srcComponent())
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not device_id in connection.devices:
+            if not agent_id in connection.agents:
                 return
 
-            # Update the device velocity
-            if connection.devices[device_id].velocity is None:
+            # Update the agent velocity
+            if connection.agents[agent_id].velocity is None:
                 velocity = swarm_state.Velocity(
-                    msg.vx / 100, msg.vy / 100, msg.vz / 100
+                    message.vx / 100, message.vy / 100, message.vz / 100
                 )
-                connection.devices[device_id].velocity = velocity
+                connection.agents[agent_id].velocity = velocity
             else:
-                connection.devices[device_id].velocity.vx = msg.vx / 100
-                connection.devices[device_id].velocity.vy = msg.vy / 100
-                connection.devices[device_id].velocity.vz = msg.vz / 100
+                connection.agents[agent_id].velocity.vx = message.vx / 100
+                connection.agents[agent_id].velocity.vy = message.vy / 100
+                connection.agents[agent_id].velocity.vz = message.vz / 100
 
-            # Update the device location
-            if connection.devices[device_id].location is None:
+            # Update the agent location
+            if connection.agents[agent_id].location is None:
                 loc = swarm_state.Location(
-                    msg.lat / 1.0e7, msg.lon / 1.0e7, msg.relative_alt / 1000
+                    message.lat / 1.0e7,
+                    message.lon / 1.0e7,
+                    message.relative_alt / 1000,
                 )
-                connection.devices[device_id].location = loc
+                connection.agents[agent_id].location = loc
             else:
-                connection.devices[device_id].location.latitude = msg.lat / 1.0e7
-                connection.devices[device_id].location.longitude = msg.lon / 1.0e7
-                connection.devices[device_id].location.altitude = (
-                    msg.relative_alt / 1000
+                connection.agents[agent_id].location.latitude = message.lat / 1.0e7
+                connection.agents[agent_id].location.longitude = message.lon / 1.0e7
+                connection.agents[agent_id].location.altitude = (
+                    message.relative_alt / 1000
                 )
 
             return
 
-        @self.receive_message("ATTITUDE")
-        def listener(msg: Any, connection: Connection) -> None:
+        @self.__receive_message("ATTITUDE")
+        @self.__timer()
+        def listener(message: Any, connection: Connection) -> None:
             """
             Handle an agent attitude message
 
-            :param msg: Incoming MAVLink message
-            :type msg: Any
+            :param message: Incoming MAVLink message
+            :type message: Any
             """
-            device_id = (msg.get_srcSystem(), msg.get_srcComponent())
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not device_id in connection.devices:
+            if not agent_id in connection.agents:
                 return
 
-            # Update the respective devices attitude
-            if connection.devices[device_id].attitude is None:
+            # Update the respective agents attitude
+            if connection.agents[agent_id].attitude is None:
                 att = swarm_state.Attitude(
-                    msg.pitch,
-                    msg.yaw,
-                    msg.roll,
-                    msg.pitchspeed,
-                    msg.yawspeed,
-                    msg.rollspeed,
+                    message.pitch,
+                    message.yaw,
+                    message.roll,
+                    message.pitchspeed,
+                    message.yawspeed,
+                    message.rollspeed,
                 )
-                connection.devices[device_id].attitude = att
+                connection.agents[agent_id].attitude = att
             else:
-                connection.devices[device_id].attitude.pitch = msg.pitch
-                connection.devices[device_id].attitude.roll = msg.roll
-                connection.devices[device_id].attitude.yaw = msg.yaw
-                connection.devices[device_id].attitude.pitch_speed = msg.pitchspeed
-                connection.devices[device_id].attitude.roll_speed = msg.rollspeed
-                connection.devices[device_id].attitude.yaw_speed = msg.yawspeed
+                connection.agents[agent_id].attitude.pitch = message.pitch
+                connection.agents[agent_id].attitude.roll = message.roll
+                connection.agents[agent_id].attitude.yaw = message.yaw
+                connection.agents[agent_id].attitude.pitch_speed = message.pitchspeed
+                connection.agents[agent_id].attitude.roll_speed = message.rollspeed
+                connection.agents[agent_id].attitude.yaw_speed = message.yawspeed
 
             return
 
-        @self.receive_message("SYS_STATUS")
-        def listener(msg: Any, connection: Connection) -> None:
+        @self.__receive_message("SYS_STATUS")
+        @self.__timer()
+        def listener(message: Any, connection: Connection) -> None:
             """
             Handle the system status message containing battery state
 
-            :param msg: Incoming MAVLink message
-            :type msg: Any
+            :param message: Incoming MAVLink message
+            :type message: Any
             """
-            device_id = (msg.get_srcSystem(), msg.get_srcComponent())
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not device_id in connection.devices:
+            if not agent_id in connection.agents:
                 return
 
             # Update the battery information
-            if connection.devices[device_id].battery is None:
+            if connection.agents[agent_id].battery is None:
                 batt = swarm_state.Battery(
-                    msg.voltage_battery, msg.current_battery, msg.battery_remaining
+                    message.voltage_battery,
+                    message.current_battery,
+                    message.battery_remaining,
                 )
-                connection.devices[device_id].battery = batt
+                connection.agents[agent_id].battery = batt
             else:
-                connection.devices[device_id].battery.voltage = msg.voltage_battery
-                connection.devices[device_id].battery.current = msg.current_battery
-                connection.devices[device_id].battery.level = msg.battery_remaining
+                connection.agents[agent_id].battery.voltage = message.voltage_battery
+                connection.agents[agent_id].battery.current = message.current_battery
+                connection.agents[agent_id].battery.level = message.battery_remaining
 
             return
 
-        @self.receive_message("GPS_RAW_INT")
-        def listener(msg: Any, connection: Connection) -> None:
+        @self.__receive_message("GPS_RAW_INT")
+        @self.__timer()
+        def listener(message: Any, connection: Connection) -> None:
             """
             Handle the GPS status information
 
-            :param msg: Incoming MAVLink message
-            :type msg: Any
+            :param message: Incoming MAVLink message
+            :type message: Any
             """
-            device_id = (msg.get_srcSystem(), msg.get_srcComponent())
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not device_id in connection.devices:
+            if not agent_id in connection.agents:
                 return
 
             # Read the GPS status information
-            if connection.devices[device_id].gps_info is None:
+            if connection.agents[agent_id].gps_info is None:
                 info = swarm_state.GPSInfo(
-                    msg.eph, msg.epv, msg.fix_type, msg.satellites_visible
+                    message.eph,
+                    message.epv,
+                    message.fix_type,
+                    message.satellites_visible,
                 )
-                connection.devices[device_id].gps_info = info
+                connection.agents[agent_id].gps_info = info
             else:
-                connection.devices[device_id].gps_info.eph = msg.eph
-                connection.devices[device_id].gps_info.epv = msg.epv
-                connection.devices[device_id].gps_info.fix_type = msg.fix_type
-                connection.devices[
-                    device_id
-                ].gps_info.satellites_visible = msg.satellites_visible
+                connection.agents[agent_id].gps_info.eph = message.eph
+                connection.agents[agent_id].gps_info.epv = message.epv
+                connection.agents[agent_id].gps_info.fix_type = message.fix_type
+                connection.agents[
+                    agent_id
+                ].gps_info.satellites_visible = message.satellites_visible
 
             return
 
-        @self.receive_message("EKF_STATUS_REPORT")
-        def listener(msg: Any, connection: Connection) -> None:
+        @self.__receive_message("EKF_STATUS_REPORT")
+        @self.__timer()
+        def listener(message: Any, connection: Connection) -> None:
             """
             Handle an EKF status message
 
-            :param msg: Incoming MAVLink message
-            :type msg: Any
+            :param message: Incoming MAVLink message
+            :type message: Any
             """
-            device_id = (msg.get_srcSystem(), msg.get_srcComponent())
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not device_id in connection.devices:
+            if not agent_id in connection.agents:
                 return
 
             # Read the EKF Status information
-            if connection.devices[device_id].ekf is None:
+            if connection.agents[agent_id].ekf is None:
                 ekf = swarm_state.EKFStatus(
-                    msg.velocity_variance,
-                    msg.pos_horiz_variance,
-                    msg.pos_vert_variance,
-                    msg.compass_variance,
-                    msg.terrain_alt_variance,
-                    (msg.flags & ardupilotmega.EKF_POS_HORIZ_ABS) > 0,
-                    (msg.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0,
-                    (msg.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0,
+                    message.velocity_variance,
+                    message.pos_horiz_variance,
+                    message.pos_vert_variance,
+                    message.compass_variance,
+                    message.terrain_alt_variance,
+                    (message.flags & ardupilotmega.EKF_POS_HORIZ_ABS) > 0,
+                    (message.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0,
+                    (message.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0,
                 )
-                connection.devices[device_id].ekf = ekf
+                connection.agents[agent_id].ekf = ekf
             else:
                 # Read variance properties
-                connection.devices[
-                    device_id
-                ].ekf.velocity_variance = msg.velocity_variance
-                connection.devices[
-                    device_id
-                ].ekf.pos_horiz_variance = msg.pos_horiz_variance
-                connection.devices[
-                    device_id
-                ].ekf.pos_vert_variance = msg.pos_vert_variance
-                connection.devices[
-                    device_id
-                ].ekf.compass_variance = msg.compass_variance
-                connection.devices[
-                    device_id
-                ].ekf.terrain_alt_variance = msg.terrain_alt_variance
+                connection.agents[
+                    agent_id
+                ].ekf.velocity_variance = message.velocity_variance
+                connection.agents[
+                    agent_id
+                ].ekf.pos_horiz_variance = message.pos_horiz_variance
+                connection.agents[
+                    agent_id
+                ].ekf.pos_vert_variance = message.pos_vert_variance
+                connection.agents[
+                    agent_id
+                ].ekf.compass_variance = message.compass_variance
+                connection.agents[
+                    agent_id
+                ].ekf.terrain_alt_variance = message.terrain_alt_variance
 
                 # Read flags
-                connection.devices[device_id].ekf.pos_horiz_abs = (
-                    msg.flags & ardupilotmega.EKF_POS_HORIZ_ABS
+                connection.agents[agent_id].ekf.pos_horiz_abs = (
+                    message.flags & ardupilotmega.EKF_POS_HORIZ_ABS
                 ) > 0
-                connection.devices[device_id].ekf.const_pos_mode = (
-                    msg.flags & ardupilotmega.EKF_CONST_POS_MODE
+                connection.agents[agent_id].ekf.const_pos_mode = (
+                    message.flags & ardupilotmega.EKF_CONST_POS_MODE
                 ) > 0
-                connection.devices[device_id].ekf.pred_pos_horiz_abs = (
-                    msg.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS
+                connection.agents[agent_id].ekf.pred_pos_horiz_abs = (
+                    message.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS
                 ) > 0
 
             return
 
-        @self.receive_message("ATTITUDE")
-        def listener(msg: Any, connection: Connection) -> None:
+        @self.__receive_message("ATTITUDE")
+        @self.__timer()
+        def listener(message: Any, connection: Connection) -> None:
             """
             Handle an agent attitude message
 
-            :param msg: Incoming MAVLink message
-            :type msg: Any
+            :param message: Incoming MAVLink message
+            :type message: Any
             """
-            device_id = (msg.get_srcSystem(), msg.get_srcComponent())
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not device_id in connection.devices:
+            if not agent_id in connection.agents:
                 return
 
-            # Update the respective device's attitude
-            if connection.devices[device_id].attitude is None:
+            # Update the respective agent's attitude
+            if connection.agents[agent_id].attitude is None:
                 att = swarm_state.Attitude(
-                    msg.pitch,
-                    msg.yaw,
-                    msg.roll,
-                    msg.pitchspeed,
-                    msg.yawspeed,
-                    msg.rollspeed,
+                    message.pitch,
+                    message.yaw,
+                    message.roll,
+                    message.pitchspeed,
+                    message.yawspeed,
+                    message.rollspeed,
                 )
-                connection.devices[device_id].attitude = att
+                connection.agents[agent_id].attitude = att
             else:
-                connection.devices[device_id].attitude.pitch = msg.pitch
-                connection.devices[device_id].attitude.roll = msg.roll
-                connection.devices[device_id].attitude.yaw = msg.yaw
-                connection.devices[device_id].attitude.pitch_speed = msg.pitchspeed
-                connection.devices[device_id].attitude.roll_speed = msg.rollspeed
-                connection.devices[device_id].attitude.yaw_speed = msg.yawspeed
+                connection.agents[agent_id].attitude.pitch = message.pitch
+                connection.agents[agent_id].attitude.roll = message.roll
+                connection.agents[agent_id].attitude.yaw = message.yaw
+                connection.agents[agent_id].attitude.pitch_speed = message.pitchspeed
+                connection.agents[agent_id].attitude.roll_speed = message.rollspeed
+                connection.agents[agent_id].attitude.yaw_speed = message.yawspeed
 
             return
 
-        @self.receive_message("HOME_POSITION")
-        def listener(msg: Any, connection: Connection) -> None:
+        @self.__receive_message("HOME_POSITION")
+        @self.__timer()
+        def listener(message: Any, connection: Connection) -> None:
             """
             Handle the home position message
 
             NOTE: The altitude is provided in MSL, NOT AGL
 
-            :param msg: Incoming MAVLink message
-            :type msg: Any
+            :param message: Incoming MAVLink message
+            :type message: Any
             """
-            device_id = (msg.get_srcSystem(), msg.get_srcComponent())
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
             # Let the heartbeat implementation handle this
-            if not device_id in connection.devices:
+            if not agent_id in connection.agents:
                 return
 
-            # Update the device home location
-            if connection.devices[device_id].home_position is None:
+            # Update the agent home location
+            if connection.agents[agent_id].home_position is None:
                 loc = swarm_state.Location(
-                    msg.latitude / 1.0e7, msg.longitude / 1.0e7, msg.altitude / 1000
+                    message.latitude / 1.0e7,
+                    message.longitude / 1.0e7,
+                    message.altitude / 1000,
                 )
-                connection.devices[device_id].home_position = loc
+                connection.agents[agent_id].home_position = loc
             else:
-                connection.devices[device_id].home_position.latitude = (
-                    msg.latitude / 1.0e7
+                connection.agents[agent_id].home_position.latitude = (
+                    message.latitude / 1.0e7
                 )
-                connection.devices[device_id].home_position.longitude = (
-                    msg.longitude / 1.0e7
+                connection.agents[agent_id].home_position.longitude = (
+                    message.longitude / 1.0e7
                 )
-                connection.devices[device_id].home_position.altitude = (
-                    msg.altitude / 1000
+                connection.agents[agent_id].home_position.altitude = (
+                    message.altitude / 1000
                 )
 
             return
@@ -392,7 +409,7 @@ class Receivers:
         logger.setLevel(log_level)
         return logger
 
-    def receive_message(self, msg: Union[list, str]) -> Callable:
+    def __receive_message(self, message: Union[list, str]) -> Callable:
         """
         Decorator used to create a listener for a mavlink message
         This implementation has been inspired by the following source:
@@ -400,39 +417,40 @@ class Receivers:
             * Repository: dronekit
             * URL: https://github.com/dronekit/dronekit-python
 
-        :param msg: The type of message to watch for
-        :type msg: Union[list, str]
+        :param message: The type of message to watch for
+        :type message: Union[list, str]
 
         :return: decorator
         :rtype: Callable
         """
 
         def decorator(function: Callable):
-            if msg not in self.__receivers:
-                self.__receivers[msg] = []
+            if message not in self.__receivers:
+                self.__receivers[message] = []
 
-            if function not in self.__receivers[msg]:
-                self.__receivers[msg].append(function)
+            if function not in self.__receivers[message]:
+                self.__receivers[message].append(function)
 
         return decorator
 
-    def synchronized(self, lock: threading.RLock) -> Callable:
+    def __timer(self) -> Callable:
         """
-        Decorator used to wrap a method with a mutex lock and unlock
-
-        :param lock: lock to use
-        :type lock: threading.RLock
+        Decorator used to log the time that a sender takes to complete. Used for
+        debugging purposes.
 
         :return: decorator
         :rtype: Callable
         """
 
-        def decorator(function: Callable):
-            @functools.wraps(function)
-            def synchronized_function(*args, **kwargs):
-                with lock:
-                    return function(*args, **kwargs)
+        def decorator(function: Callable) -> Callable:
+            def wrapper(*args):
+                start_t = time.time()
+                response = function(*args)
+                self.__logger.debug(
+                    f"Time taken to execute function: {time.time() - start_t}s"
+                )
+                return response
 
-            return synchronized_function
+            return wrapper
 
         return decorator
