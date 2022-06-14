@@ -14,5 +14,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .receivers import Receivers
-from .senders import Senders
+from .message_receivers import Receivers
+from .message_senders import Senders

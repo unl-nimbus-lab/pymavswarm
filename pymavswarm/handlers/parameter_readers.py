@@ -14,6 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from pymavswarm.param import Parameter
+
+
+class ParameterReaders:
+    """Handlers for reading parameters."""
+
+    def __init__(self) -> None:
+        """
+        Construct a ParameterReaders interface.
+        """
+        return
+
     def read_param_handler(self, param: Parameter) -> None:
         """
         Read the value of a parameter
