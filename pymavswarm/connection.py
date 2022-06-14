@@ -1,3 +1,21 @@
+# pymavswarm is an interface for swarm control and interaction
+# Copyright (C) 2022  Evan Palmer
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+"""Wrapper for a MAVLink connection."""
+
 import atexit
 import logging
 import threading
@@ -16,9 +34,7 @@ from pymavswarm.plugins import supported_plugins
 
 
 class Connection:
-    """
-    Handle interaction with the network and the MAVLink connection.
-    """
+    """Handle interaction with the network and the MAVLink connection."""
 
     def __init__(
         self,
@@ -27,7 +43,7 @@ class Connection:
         log_level: int = logging.INFO,
     ) -> None:
         """
-        Constructor.
+        Construct a new Connection object.
 
         :param max_workers: maximum number of workers available in the thread pool used
             to send messages, defaults to 5
@@ -79,8 +95,11 @@ class Connection:
     @property
     def mavlink_connection(self) -> Any:
         """
-        Mavlink connection used to send and receive commands.
+        Mavlink connection.
 
+        Established MAVLink connection used to send and receive commands.
+
+        :return: mavlink connection
         :rtype: Any
         """
         return self.__mavlink_connection
@@ -88,8 +107,11 @@ class Connection:
     @property
     def connected(self) -> bool:
         """
-        Flag indicating whether the system currently has a connection.
+        Mavlink connection status.
 
+        Flag indicating whether the system currently has an established connection.
+
+        :return: connection status
         :rtype: bool
         """
         return self.__connected
@@ -97,9 +119,12 @@ class Connection:
     @property
     def agent_timeout(self) -> float:
         """
+        Agent timeout duration.
+
         Maximum time that an agent has to send a heartbeat message before it is
         considered timed out.
 
+        :return: agent timeout duration
         :rtype: float
         """
         return self.__agent_timeout
@@ -107,10 +132,11 @@ class Connection:
     @property
     def agents(self) -> dict:
         """
-        Current set of recognized agents.
+        Set of recognized agents.
 
         The dict keys are (system ID, component ID) tuples
 
+        :return: swarm agents
         :rtype: dict
         """
         return self.__agents
@@ -179,9 +205,7 @@ class Connection:
         return
 
     def __send_heartbeat(self) -> None:
-        """
-        Send a heartbeat to the network to indicate that the GCS is still operating.
-        """
+        """Send a GCS heartbeat to the network."""
         while self.__connected:
             self.__mavlink_connection.mav.heartbeat_send(
                 mavutil.mavlink.MAV_TYPE_GCS,
@@ -197,9 +221,7 @@ class Connection:
         return
 
     def __update_agent_timeout_states(self) -> None:
-        """
-        Update the timeout status of each agent in the network.
-        """
+        """Update the timeout status of each agent in the network."""
         for agent in self.__agents.values():
             if agent.last_heartbeat.value is not None:
                 agent.timeout.value = (
@@ -209,9 +231,7 @@ class Connection:
         return
 
     def __receive_message(self) -> None:
-        """
-        Handle incoming messages and distribute them to their respective handlers.
-        """
+        """Handle incoming messages and distribute them to their respective handlers."""
         while self.__connected:
             self.__update_agent_timeout_states()
 
@@ -376,7 +396,7 @@ class Connection:
     def connect(
         self,
         port: str,
-        baud: int,
+        baudrate: int,
         source_system: int = 255,
         source_component: int = 0,
         connection_attempt_timeout: float = 2.0,
@@ -384,6 +404,8 @@ class Connection:
     ) -> bool:
         """
         Establish a MAVLink connection.
+
+        Attempt to establish a MAVLink connection using the provided configurations.
 
         :param port: port over which a connection should be established
         :type port: str
@@ -411,7 +433,7 @@ class Connection:
         # Create a new mavlink connection
         self.__mavlink_connection = mavutil.mavlink_connection(
             port,
-            baud=baud,
+            baud=baudrate,
             source_system=source_system,
             source_component=source_component,
             autoreconnect=True,
@@ -441,9 +463,7 @@ class Connection:
         return connected
 
     def disconnect(self) -> None:
-        """
-        Close the connection and disconnect all threads.
-        """
+        """Close the connection and stop all threads."""
         # Stop the main loop of the threads
         self.__connected = False
 
