@@ -22,6 +22,7 @@ from typing import Any, Callable, Tuple, Union
 from pymavlink import mavutil
 
 import pymavswarm.messages as swarm_messages
+import pymavswarm.utils as swarm_utils
 from pymavswarm import Connection
 from pymavswarm.messages import SupportedMessages as supported_messages
 from pymavswarm.messages import responses
@@ -31,7 +32,7 @@ class Senders:
     def __init__(
         self, logger_name: str = "senders", log_level: int = logging.INFO
     ) -> None:
-        self.__logger = self.__init_logger(logger_name, log_level=log_level)
+        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
         self.__senders = {}
 
         @self.__send_message("ARM")
@@ -2231,24 +2232,6 @@ class Senders:
         """
         return self.__senders
 
-    def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
-        """
-        Initialize the logger with the desired debug levels
-
-        :param name: The name of the logger
-        :type name: str
-
-        :param log_level: The log level to display, defaults to logging.INFO
-        :type log_level: int, optional
-
-        :return: A newly configured logger
-        :rtype: logging.Logger
-        """
-        logging.basicConfig()
-        logger = logging.getLogger(name)
-        logger.setLevel(log_level)
-        return logger
-
     def __retry_message_send(
         self, message: Any, function: Callable, agent_exists: bool
     ) -> bool:
@@ -2278,59 +2261,6 @@ class Senders:
                 break
 
         return ack
-
-    def __ack_message(
-        self, message_type: str, connection: Connection, timeout=1.0
-    ) -> Tuple[bool, Any]:
-        """
-        Helper method used to ensure that a distributed message is acknowledged
-
-        :param message_type: The type of message that should be acknowledged
-        :type message_type: str
-
-        :param timeout: The acceptable time period before the acknowledgement is
-            considered timed out, defaults to 1.0
-        :type timeout: float, optional
-
-        :return: _description_
-        :rtype: Tuple[bool, Any]
-        """
-        # Attempt to acquire the mutex
-        if not connection.read_message_mutex.acquire(timeout=1.0):
-            return False
-
-        # Flag indicating whether the message was acknowledged
-        ack_success = False
-
-        # Start acknowledgement timer
-        start_t = time.time()
-
-        while time.time() - start_t < timeout:
-            # Read a new message
-            try:
-                ack_message = connection.mavlink_connection.recv_match(
-                    type=message_type, blocking=False
-                )
-                ack_message = ack_message.to_dict()
-
-                if ack_message["mavpackettype"] == message_type:
-                    ack_success = True
-                    break
-            except mavutil.mavlink.MAVError:
-                self.__logger.debug("An error occurred on MAVLink message reception")
-            except AttributeError:
-                # Catch errors with converting the message to a dict
-                pass
-            except Exception:
-                # Log any other unexpected exception
-                self.__logger.exception(
-                    "Exception while receiving message: ", exc_info=False
-                )
-
-        # Continue reading status messages
-        connection.read_message_mutex.release()
-
-        return ack_success, ack_message
 
     def __send_seq_message(self, message: Any, agent_exists: bool) -> bool:
         """

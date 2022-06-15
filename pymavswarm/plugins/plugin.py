@@ -17,6 +17,8 @@
 import logging
 from typing import Callable, Union
 
+import pymavswarm.utils as swarm_utils
+
 
 class Plugin:
     """
@@ -29,29 +31,11 @@ class Plugin:
         """
         Constructor.
         """
-        self._logger = self.__init_logger(logger_name, log_level=log_level)
+        self._logger = swarm_utils.init_logger(logger_name, log_level=log_level)
         self.__senders = {}
         self.__receivers = {}
 
         return
-
-    def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
-        """
-        Initialize the logger with the desired debug levels
-
-        :param name: The name of the logger
-        :type name: str
-
-        :param log_level: The log level to display, defaults to logging.INFO
-        :type log_level: int, optional
-
-        :return: A newly configured logger
-        :rtype: logging.Logger
-        """
-        logging.basicConfig()
-        logger = logging.getLogger(name)
-        logger.setLevel(log_level)
-        return logger
 
     @property
     def senders(self) -> dict:

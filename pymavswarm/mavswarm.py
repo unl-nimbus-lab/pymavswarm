@@ -19,6 +19,7 @@
 import logging
 from typing import Any, Optional, Union
 
+import pymavswarm.utils as swarm_utils
 from pymavswarm import Connection
 from pymavswarm.agent import Agent
 from pymavswarm.event import Event
@@ -43,7 +44,7 @@ class MavSwarm:
         """
         super().__init__()
 
-        self.__logger = self.__init_logger("mavswarm", log_level=log_level)
+        self.__logger = swarm_utils.init_logger("mavswarm", log_level=log_level)
         self.__connection = Connection(log_level=log_level)
 
         return
@@ -94,27 +95,6 @@ class MavSwarm:
         :rtype: Event
         """
         return self.__connection.agent_list_changed
-
-    def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
-        """
-        Initialize the logger with the desired log level.
-
-        Construct a logger with basic configurations, the desired name, and the logging
-        level to use for the system.
-
-        :param name: name of the logger
-        :type name: str
-
-        :param log_level: log level of the system logger, defaults to logging.INFO
-        :type log_level: int, optional
-
-        :return: configured logger
-        :rtype: logging.Logger
-        """
-        logging.basicConfig()
-        logger = logging.getLogger(name)
-        logger.setLevel(log_level)
-        return logger
 
     def connect(
         self,
@@ -184,9 +164,8 @@ class MavSwarm:
         :return: flag indicating whether the disconnect attempt was successful
         :rtype: bool
         """
-        if self.__connection is not None:
+        if self.__connection.connected:
             self.__connection.disconnect()
-            self.__connection = None
 
         return True
 
@@ -207,7 +186,7 @@ class MavSwarm:
         # Notify the user if any messages will be sent to an agent that is not in the
         # list of agents.
         if isinstance(message, MessagePackage):
-            for sub_message in message:
+            for sub_message in message.messages:
                 if (
                     sub_message.target_system,
                     sub_message.target_comp,

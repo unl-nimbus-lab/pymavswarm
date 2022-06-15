@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+"""Data class for swarm agent."""
+
 from typing import Any, List, Optional
 
 import monotonic
@@ -21,10 +23,13 @@ import monotonic
 import pymavswarm.state as swarm_state
 from pymavswarm.event import Event
 from pymavswarm.mission import Mission
+from pymavswarm.state.generic import Generic
 
 
 class Agent:
     """
+    Swarm agent.
+
     Agent represents and stores the state of an agent in the network. The
     agent's state is updated as new MAVLink messages are received from the
     associated message
@@ -39,6 +44,8 @@ class Agent:
         max_params_stored: int = 5,
     ) -> None:
         """
+        Construct an agent.
+
         :param sys_id: The system ID of the agent
         :type sys_id: int
 
@@ -61,10 +68,8 @@ class Agent:
         self.__component_id = component_id
         self.__name = name
 
-        """
-        We create additional context properties here so that listeners of the
-        respective property events have information about the parent agent
-        """
+        # We create additional context properties here so that listeners of the
+        # respective property events have information about the parent agent
         context_props = {"sys_id": system_id, "comp_id": component_id, "name": name}
 
         # Mutable
@@ -81,8 +86,8 @@ class Agent:
         self.__armed = swarm_state.Generic(
             False, "armed", optional_context_props=context_props
         )
-        self.__flight_mode = swarm_state.Generic(
-            "None", "flight_mode", optional_context_props=context_props
+        self.__mode = swarm_state.Generic(
+            "None", "mode", optional_context_props=context_props
         )
         self.__system_status = swarm_state.Generic(
             "None", "system_status", optional_context_props=context_props
@@ -114,15 +119,16 @@ class Agent:
         self.__hrl_state = swarm_state.Generic(
             "None", "hrl_state", optional_context_props=context_props
         )
-        self.__custom_events = []
+        self.__custom_events: List[Event] = []
 
         return
 
     @property
     def system_id(self) -> int:
         """
-        The system ID of the agent
+        System ID of the agent.
 
+        :return: system ID
         :rtype: int
         """
         return self.__system_id
@@ -130,27 +136,31 @@ class Agent:
     @property
     def component_id(self) -> int:
         """
-        The component ID of the agent
+        Component ID of the agent.
 
+        :return: component ID
         :rtype: int
         """
         return self.__component_id
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         """
-        The assigned name of an agent. Used to assign more readable names to
-        agents
+        Name of an agent.
 
-        :rtype: str
+        Used to assign more readable names to agents.
+
+        :return: agent name
+        :rtype: Optional[str]
         """
         return self.__name
 
     @property
     def attitude(self) -> swarm_state.Attitude:
         """
-        The current attitude of the agent
+        Attitude of the agent.
 
+        :return: agent's attitude
         :rtype: Attitude
         """
         return self.__attitude
@@ -158,8 +168,9 @@ class Agent:
     @property
     def battery(self) -> swarm_state.Battery:
         """
-        The current battery state of the agent
+        Battery state of the agent.
 
+        :return: agent battery state
         :rtype: Battery
         """
         return self.__battery
@@ -167,8 +178,9 @@ class Agent:
     @property
     def docker_info(self) -> swarm_state.DockerInfo:
         """
-        Information regarding deployed docker image
+        Deployed docker image info.
 
+        :return: agent docker information, if any
         :rtype: DockerInfo
         """
         return self.__docker_info
@@ -176,8 +188,9 @@ class Agent:
     @property
     def gps_info(self) -> swarm_state.GPSInfo:
         """
-        Information regarding an agent's GPS
+        Agent GPS information.
 
+        :return: agent GPS information
         :rtype: GPSInfo
         """
         return self.__gps_info
@@ -185,8 +198,9 @@ class Agent:
     @property
     def location(self) -> swarm_state.Location:
         """
-        Current location of an agent
+        Location of an agent.
 
+        :return: agent location
         :rtype: Location
         """
         return self.__location
@@ -194,8 +208,9 @@ class Agent:
     @property
     def ekf(self) -> swarm_state.EKFStatus:
         """
-        EKF status of the agent
+        EKF status of the agent.
 
+        :return: agent EKF
         :rtype: EKFStatus
         """
         return self.__ekf
@@ -203,8 +218,9 @@ class Agent:
     @property
     def telemetry(self) -> swarm_state.Telemetry:
         """
-        Telemetry status information
+        Telemetry status information.
 
+        :return: telemetry information
         :rtype: Telemetry
         """
         return self.__telemetry
@@ -212,44 +228,49 @@ class Agent:
     @property
     def velocity(self) -> swarm_state.Velocity:
         """
-        Current velocity of the agent
+        Velocity of the agent.
 
+        return: agent velocity
         :rtype: Velocity
         """
         return self.__velocity
 
     @property
-    def armed(self) -> bool:
+    def armed(self) -> Generic:
         """
-        Flag indicating whether the agent is currently armed
+        Arm state of an agent.
 
+        :return: agent's arm state
         :rtype: bool
         """
         return self.__armed
 
     @property
-    def flight_mode(self) -> str:
+    def mode(self) -> Generic:
         """
-        Current flight mode that an agent is operating in
+        Flight mode that an agent is operating in.
 
+        :return: agent's flight mode
         :rtype: str
         """
-        return self.__flight_mode
+        return self.__mode
 
     @property
-    def system_status(self) -> str:
+    def system_status(self) -> Generic:
         """
-        System-level status of an agent
+        System-level status of an agent.
 
+        :return: agent system status
         :rtype: str
         """ ""
         return self.__system_status
 
     @property
-    def vehicle_type(self) -> str:
+    def vehicle_type(self) -> Generic:
         """
-        Type of vehicle that the agent exists as
+        Type of vehicle that the agent exists as.
 
+        :return: agent vehicle type
         :rtype: str
         """
         return self.__vehicle_type
@@ -257,37 +278,39 @@ class Agent:
     @property
     def last_heartbeat(self) -> Any:
         """
-        Timestamp of the last heartbeat message received
+        Timestamp of the last heartbeat message received.
 
-        :return: _description_
+        :return: last heartbeat timestamp
         :rtype: Any
         """
         return self.__last_heartbeat
 
     @property
-    def timeout_period(self) -> float:
+    def timeout_period(self) -> Generic:
         """
-        The amount of time allowable between heartbeat messages before an agent is
-        considered timed out
+        Max time between heartbeat messages.
 
+        :return: max spacing between heartbeat messages
         :rtype: float
         """
         return self.__timeout_period
 
     @property
-    def timeout(self) -> bool:
+    def timeout(self) -> Generic:
         """
-        The current timeout state of the agent
+        Timeout state of the agent.
 
+        :return: whether or not the agent is timed out
         :rtype: bool
         """
         return self.__timeout
 
     @property
-    def current_waypoint(self) -> int:
+    def current_waypoint(self) -> Generic:
         """
-        Index of the current waypoint that an agent is maneuvering to
+        Index of the current waypoint that an agent is maneuvering to.
 
+        :return: current target waypoint
         :rtype: int
         """
         return self.__current_waypoint
@@ -295,8 +318,9 @@ class Agent:
     @property
     def mission(self) -> Mission:
         """
-        Current mission being completed by an agent
+        Mission being completed by an agent.
 
+        :return: agent's mission
         :rtype: Mission
         """
         return self.__mission
@@ -304,8 +328,9 @@ class Agent:
     @property
     def last_params_read(self) -> swarm_state.ParameterList:
         """
-        Circle buffer containing the most recent parameters read and their values
+        Circle buffer containing the most recent parameters read and their values.
 
+        :return: parameters read from the agent
         :rtype: deque
         """
         return self.__last_params_read
@@ -313,16 +338,17 @@ class Agent:
     @property
     def home_position(self) -> swarm_state.Location:
         """
-        Home position of the agent
+        Home position of the agent.
 
+        :return: agent's home position
         :rtype: Location
         """
         return self.__home_position
 
     @property
-    def hrl_state(self) -> str:
+    def hrl_state(self) -> Generic:
         """
-        The current HRL state that the agent is in
+        HRL state that the agent is in.
 
         :rtype: str
         """
@@ -331,8 +357,9 @@ class Agent:
     @property
     def custom_events(self) -> List[Event]:
         """
-        A configurable list that can be used to enable non-default custom events
+        List used to enable non-default custom events.
 
+        :return: list of custom events
         :rtype: List[Event]
         """
         return self.__custom_events
@@ -340,7 +367,7 @@ class Agent:
     @custom_events.setter
     def custom_events(self, events: List[Event]) -> None:
         """
-        custom_events setter
+        Set custom_events.
 
         :param events: The list of custom events
         :type events: List[Event]

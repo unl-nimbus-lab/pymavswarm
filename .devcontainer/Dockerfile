@@ -39,7 +39,8 @@ RUN pip3 install \
     pylint \
     pymavlink \
     isort \
-    pydocstyle
+    pydocstyle \
+    mypy
 
 ENV PATH "${PATH}:/home/developer/.local/bin"
 

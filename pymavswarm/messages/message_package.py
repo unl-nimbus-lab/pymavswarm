@@ -14,11 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Tuple
+
 from pymavswarm.event import Event
 
 
 class MessagePackage:
     """
+    Collection of pymavswarm messages.
+
     Wrapper for multiple messages that allows for verification of a group of messages
     rather than single messages.
     """
@@ -60,7 +64,7 @@ class MessagePackage:
         return
 
     @property
-    def msgs(self) -> list:
+    def messages(self) -> list:
         """
         List of messages in the package.
 
@@ -78,7 +82,7 @@ class MessagePackage:
         return self.__retry
 
     @property
-    def msgs_succeeded(self) -> list:
+    def messages_succeeded(self) -> list:
         """
         List of msgs in the package that were successfully sent.
 
@@ -87,7 +91,7 @@ class MessagePackage:
         return self.__msgs_succeeded
 
     @property
-    def msgs_failed(self) -> list:
+    def messages_failed(self) -> list:
         """
         List of msgs in the package that were not successfully sent.
 
@@ -115,7 +119,7 @@ class MessagePackage:
         return self.__package_result_event
 
     @property
-    def response(self) -> int:
+    def response(self) -> Tuple[int, str]:
         """
         Package response (e.g., SUCCESS).
 
@@ -124,7 +128,7 @@ class MessagePackage:
         return self.__response
 
     @response.setter
-    def response(self, code: int) -> None:
+    def response(self, code: Tuple[int, str]) -> None:
         """
         response setter.
 

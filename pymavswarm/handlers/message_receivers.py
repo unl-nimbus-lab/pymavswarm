@@ -23,6 +23,7 @@ from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega
 
 import pymavswarm.state as swarm_state
+import pymavswarm.utils as swarm_utils
 from pymavswarm import Agent, Connection
 
 
@@ -43,7 +44,7 @@ class Receivers:
         :param log_level: _description_, defaults to logging.INFO
         :type log_level: int, optional
         """
-        self.__logger = self.__init_logger(logger_name, log_level=log_level)
+        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
         self.__receivers = {}
 
         @self.__receive_message("HEARTBEAT")
@@ -406,24 +407,6 @@ class Receivers:
         :rtype: dict
         """
         return self.__receivers
-
-    def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
-        """
-        Initialize the logger with the desired debug levels
-
-        :param name: The name of the logger
-        :type name: str
-
-        :param log_level: The log level to display, defaults to logging.INFO
-        :type log_level: int, optional
-
-        :return: A newly configured logger
-        :rtype: logging.Logger
-        """
-        logging.basicConfig()
-        logger = logging.getLogger(name)
-        logger.setLevel(log_level)
-        return logger
 
     def __receive_message(self, message: Union[list, str]) -> Callable:
         """

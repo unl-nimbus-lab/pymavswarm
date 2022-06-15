@@ -17,6 +17,7 @@
 import logging
 from typing import Optional
 
+import pymavswarm.utils as swarm_utils
 from pymavswarm.mission import Waypoint
 
 
@@ -33,7 +34,7 @@ class Mission:
         :param log_level: The desired debugging level, defaults to logging.INFO
         :type debug: int, optional
         """
-        self.__logger = self.__init_logger("mission", log_level=log_level)
+        self.__logger = swarm_utils.init_logger("mission", log_level=log_level)
         self.__waypoints = waypoints
 
         return
@@ -46,25 +47,6 @@ class Mission:
         :rtype: list
         """
         return self.__waypoints
-
-    def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
-        """
-        Initialize the system logger
-
-        :param name: The name of the logger
-        :type name: str
-
-        :param log_level: The log level to use, defaults to logging.INFO
-        :type log_level: int, optional
-
-        :return: A new logger
-        :rtype: logging.Logger
-        """
-        logging.basicConfig()
-        logger = logging.getLogger(name)
-        logger.setLevel(log_level)
-
-        return logger
 
     def add_waypoint(self, waypoint: Waypoint, index: Optional[int] = None) -> bool:
         """

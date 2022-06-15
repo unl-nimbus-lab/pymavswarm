@@ -14,19 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Wrapper for a MAVLink connection."""
+"""Wrapper for MAVLink connection."""
 
 import atexit
 import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable, List, Union
+from typing import Any, Dict, Tuple, Union
 
 import monotonic
 from pymavlink import mavutil
 
 import pymavswarm.messages as swarm_messages
+import pymavswarm.utils as swarm_utils
+from pymavswarm import Agent
 from pymavswarm.event import Event
 from pymavswarm.handlers import Receivers, Senders
 from pymavswarm.messages import responses
@@ -56,17 +58,19 @@ class Connection:
             logging.INFO
         :type debug: int, optional
         """
-        self.__logger = self.__init_logger(logger_name, log_level=log_level)
+        # pylint: disable=too-many-instance-attributes
+        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
+
         self.__mavlink_connection = None
         self.__connected = False
-        self.__agents = {}
+        self.__agents: Dict[Tuple[int, int], Agent] = {}
         self.__agent_list_changed = Event()
         self.__agent_timeout = 0.0
-        self.__plugins = []
+        self.__plugins: list = []
 
         # Sender and receiver interfaces
-        self.__message_senders = Senders()
-        self.__message_receivers = Receivers()
+        self.__message_senders = Senders(log_level=log_level)
+        self.__message_receivers = Receivers(log_level=log_level)
 
         # Mutexes
         self.__read_message_mutex = threading.RLock()
@@ -97,8 +101,6 @@ class Connection:
         """
         Mavlink connection.
 
-        Established MAVLink connection used to send and receive commands.
-
         :return: mavlink connection
         :rtype: Any
         """
@@ -108,8 +110,6 @@ class Connection:
     def connected(self) -> bool:
         """
         Mavlink connection status.
-
-        Flag indicating whether the system currently has an established connection.
 
         :return: connection status
         :rtype: bool
@@ -144,8 +144,9 @@ class Connection:
     @property
     def agent_list_changed(self) -> Event:
         """
-        Event indicating that the list of agents had a new agent added or removed
+        Event indicating that the list of agents had a new agent added or removed.
 
+        :return: event signaling when the set of agents changes
         :rtype: Event
         """
         return self.__agent_list_changed
@@ -168,26 +169,7 @@ class Connection:
         """
         return self.__send_message_mutex
 
-    def __init_logger(self, name: str, log_level: int = logging.INFO) -> logging.Logger:
-        """
-        Initialize the logger with the desired debug levels.
-
-        :param name: The name of the logger
-        :type name: str
-
-        :param log_level: The log level to display, defaults to logging.INFO
-        :type log_level: int, optional
-
-        :return: A newly configured logger
-        :rtype: logging.Logger
-        """
-        logging.basicConfig()
-        logger = logging.getLogger(name)
-        logger.setLevel(log_level)
-
-        return logger
-
-    def __load_plugins(self, plugins: List[Callable]) -> None:
+    def __load_plugins(self, plugins: list) -> None:
         """
         Add the plugin handlers to the connection handlers.
 
@@ -206,7 +188,7 @@ class Connection:
 
     def __send_heartbeat(self) -> None:
         """Send a GCS heartbeat to the network."""
-        while self.__connected:
+        while self.__connected and self.__mavlink_connection is not None:
             self.__mavlink_connection.mav.heartbeat_send(
                 mavutil.mavlink.MAV_TYPE_GCS,
                 mavutil.mavlink.MAV_AUTOPILOT_INVALID,
@@ -232,7 +214,7 @@ class Connection:
 
     def __receive_message(self) -> None:
         """Handle incoming messages and distribute them to their respective handlers."""
-        while self.__connected:
+        while self.__connected and self.__mavlink_connection is not None:
             self.__update_agent_timeout_states()
 
             message = None
@@ -261,7 +243,8 @@ class Connection:
                         function(message, self)
                     except Exception:
                         self.__logger.exception(
-                            f"Exception in message handler for {message.get_type()}",
+                            "Exception in message handler for %s",
+                            message.get_type(),
                             exc_info=True,
                         )
 
@@ -345,7 +328,8 @@ class Connection:
         # Send the message if there is a message sender for it
         if message.message_type not in self.__message_senders.senders:
             self.__logger.info(
-                f"Attempted to send an unsupported message type: {message.message_type}"
+                "Attempted to send an unsupported message type: %s",
+                message.message_type,
             )
             return False
 
@@ -355,9 +339,10 @@ class Connection:
         else:
             self.__logger.info(
                 "The current set of registered agents does not include Agent "
-                f"({message.target_system, message.target_comp}). The provided message "
-                "will still be sent; however, the system may not be able to "
-                "confirm reception of the message."
+                "(%s, %s}). The provided message will still be sent; however, the "
+                "system may not be able to confirm reception of the message.",
+                message.target_system,
+                message.target_component,
             )
 
         message_success = True
@@ -378,7 +363,8 @@ class Connection:
                     )
                 except Exception:
                     self.__logger.exception(
-                        f"Exception in message sender for {message.message_type}",
+                        "Exception in message sender for %s",
+                        message.message_type,
                         exc_info=True,
                     )
                 finally:
@@ -438,6 +424,9 @@ class Connection:
             source_component=source_component,
             autoreconnect=True,
         )
+
+        if self.__mavlink_connection is None:
+            return False
 
         # Ensure that a connection has been successfully established
         # Integrate a 2 second timeout
