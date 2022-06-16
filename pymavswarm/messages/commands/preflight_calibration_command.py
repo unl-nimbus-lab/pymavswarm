@@ -14,19 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pymavswarm.messages import AgentMessage
-from pymavswarm.messages import SupportedMessages as supported_msgs
+from pymavswarm.messages import AgentCommand
+from pymavswarm.messages import SupportedCommands as supported_msgs
 
 
-class FlightSpeedMessage(AgentMessage):
+class PreflightCalibrationMessage(AgentCommand):
     """
-    Message signaling a change in the flight speed of an agent.
+    Signal a pre-flight calibration on a selected agent.
     """
 
     def __init__(
         self,
-        speed: float,
-        speed_type: int,
+        calibration_type: str,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -39,11 +38,8 @@ class FlightSpeedMessage(AgentMessage):
         """
         Constructor.
 
-        :param speed: The desired speed in m/s
-        :type speed: float
-
-        :param speed_type: The type of speed (e.g., air speed) to configure.
-        :type speed_type: int
+        :param calibration_type: desired calibration typ
+        :type calibration_type: str
 
         :param target_system: The target system ID
         :type target_system: int
@@ -81,58 +77,50 @@ class FlightSpeedMessage(AgentMessage):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
-        if speed_type not in supported_msgs.flight_speed_commands.get_supported_types():
+        if (
+            calibration_type
+            not in supported_msgs.preflight_calibration_commands.get_supported_types()
+        ):
             raise ValueError(
-                f"{speed_type} is not a supported speed configuration "
-                "the supported speed configuration types include: "
-                f"{supported_msgs.flight_speed_commands.get_supported_types()}"
+                f"{calibration_type} is not a supported pre-flight calibration type. "
+                "Supported pre-flight calibration types include: "
+                f"{supported_msgs.preflight_calibration_commands.get_supported_types()}"
             )
 
         super().__init__(
-            "FLIGHT_SPEED",
+            calibration_type,
             target_system,
             target_comp,
             retry,
-            msg_timeout=msg_timeout,
+            message_timeout=msg_timeout,
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,
             optional_context_props=optional_context_props,
         )
-        self.__speed = speed
-        self.__speed_type = speed_type
+
+        self.__calibration_type = calibration_type
 
         return
 
     @property
-    def speed(self) -> float:
+    def calibration_type(self) -> str:
         """
-        Desired speed in m/s.
+        Type of calibration to perform.
 
-        :rtype: float
+        :rtype: str
         """
-        return self.__speed
-
-    @property
-    def speed_type(self) -> int:
-        """
-        The type of speed to configure.
-
-        :rtype: int
-        """
-        return self.__speed_type
+        return self.__calibration_type
 
     @property
     def context(self) -> dict:
         """
-        Context of the message.
+        Message context.
 
+        :return: current message context
         :rtype: dict
         """
         context = super().context
-
-        # Update to include new properties
-        context["speed"] = self.__speed
-        context["speed_type"] = self.__speed_type
+        context["calibration_type"] = self.__calibration_type
 
         return context

@@ -14,18 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pymavswarm.messages import AgentMessage
-from pymavswarm.messages import SupportedMessages as supported_msgs
+from pymavswarm.messages import AgentCommand
+from pymavswarm.messages import SupportedCommands as supported_msgs
 
 
-class SystemCommandMessage(AgentMessage):
+class FlightSpeedMessage(AgentCommand):
     """
-    Signal a system-level operation on an agent.
+    Message signaling a change in the flight speed of an agent.
     """
 
     def __init__(
         self,
-        command: str,
+        speed: float,
+        speed_type: int,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -38,8 +39,11 @@ class SystemCommandMessage(AgentMessage):
         """
         Constructor.
 
-        :param command: command to execute
-        :type command: str
+        :param speed: The desired speed in m/s
+        :type speed: float
+
+        :param speed_type: The type of speed (e.g., air speed) to configure.
+        :type speed_type: int
 
         :param target_system: The target system ID
         :type target_system: int
@@ -77,47 +81,58 @@ class SystemCommandMessage(AgentMessage):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
-        if command not in supported_msgs.system_commands.get_supported_types():
+        if speed_type not in supported_msgs.flight_speed_commands.get_supported_types():
             raise ValueError(
-                f"{command} is not a supported system command. Supported system "
-                "commands include: "
-                f"{supported_msgs.system_commands.get_supported_types()}"
+                f"{speed_type} is not a supported speed configuration "
+                "the supported speed configuration types include: "
+                f"{supported_msgs.flight_speed_commands.get_supported_types()}"
             )
 
         super().__init__(
-            command,
+            "FLIGHT_SPEED",
             target_system,
             target_comp,
             retry,
-            msg_timeout=msg_timeout,
+            message_timeout=msg_timeout,
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,
             optional_context_props=optional_context_props,
         )
-
-        self.__command = command
+        self.__speed = speed
+        self.__speed_type = speed_type
 
         return
 
     @property
-    def command(self) -> str:
+    def speed(self) -> float:
         """
-        System command to execute.
+        Desired speed in m/s.
 
-        :rtype: str
+        :rtype: float
         """
-        return self.__command
+        return self.__speed
+
+    @property
+    def speed_type(self) -> int:
+        """
+        The type of speed to configure.
+
+        :rtype: int
+        """
+        return self.__speed_type
 
     @property
     def context(self) -> dict:
         """
-        Message context.
+        Context of the message.
 
-        :return: current message context
         :rtype: dict
         """
         context = super().context
-        context["command"] = self.__command
+
+        # Update to include new properties
+        context["speed"] = self.__speed
+        context["speed_type"] = self.__speed_type
 
         return context

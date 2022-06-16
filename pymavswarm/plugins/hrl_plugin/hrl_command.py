@@ -14,18 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pymavswarm.messages import AgentMessage
-from pymavswarm.messages import SupportedMessages as supported_msgs
+from pymavswarm.messages import AgentCommand
+from pymavswarm.messages import SupportedCommands as supported_msgs
 
 
-class FlightModeMessage(AgentMessage):
+class HRLMessage(AgentCommand):
     """
-    Message signaling a flight mode change on an agent.
+    Signal an HRL command to be executed.
     """
 
     def __init__(
         self,
-        flight_mode: str,
+        hrl_command: int,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -38,7 +38,10 @@ class FlightModeMessage(AgentMessage):
         """
         Constructor.
 
-        :param flight_mode: desired flight mode
+        :param hrl_command: desired hrl swarm state
+        :type hrl_command: int
+
+        :param msg_type: The sub-message type for a message
         :type msg_type: str
 
         :param target_system: The target system ID
@@ -77,45 +80,46 @@ class FlightModeMessage(AgentMessage):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
-        if flight_mode not in supported_msgs.flight_modes.get_supported_types():
+        if hrl_command not in supported_msgs.hrl_commands.get_supported_types():
             raise ValueError(
-                f"{flight_mode} is not a supported flight mode. Flight modes supported "
-                f"include: {supported_msgs.flight_modes.get_supported_types()}"
+                f"{hrl_command} is not a supported HRL command. Supported commands "
+                f"include: {supported_msgs.hrl_commands.get_supported_types()}"
             )
 
         super().__init__(
-            "FLIGHT_MODE",
+            "HRL_COMMAND",
             target_system,
             target_comp,
             retry,
-            msg_timeout=msg_timeout,
+            message_timeout=msg_timeout,
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,
             optional_context_props=optional_context_props,
         )
-        self.__flight_mode = flight_mode
+
+        self.__hrl_command = hrl_command
 
         return
 
     @property
-    def flight_mode(self) -> str:
+    def hrl_command(self) -> int:
         """
-        Desired flight mode.
+        Desired HRL swarm state.
 
-        :rtype: str
+        :rtype: int
         """
-        return self.__flight_mode
+        return self.__hrl_command
 
     @property
     def context(self) -> dict:
         """
-        Update the context to include the flight mode.
+        Update the msg context to include HRL command type.
 
         :return: message context
         :rtype: dict
         """
         context = super().context
-        context["flight_mode"] = self.__flight_mode
+        context["hrl_command"] = self.__hrl_command
 
         return context

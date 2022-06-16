@@ -18,7 +18,7 @@
 
 import logging
 import time
-from typing import Tuple
+from typing import Optional, Tuple
 
 from pymavlink import mavutil
 
@@ -45,7 +45,9 @@ def init_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
     return logger
 
 
-def ack_message(message_type: str, connection: Connection, timeout=1.0) -> bool:
+def ack_message(
+    packet_type: str, connection: Connection, timeout: float = 1.0
+) -> Tuple[bool, Optional[dict]]:
     """
     Ensure that a distributed message is acknowledged.
 
@@ -56,15 +58,18 @@ def ack_message(message_type: str, connection: Connection, timeout=1.0) -> bool:
         considered timed out, defaults to 1.0
     :type timeout: float, optional
 
-    :return: _description_
+    :return: acknowledgement success, message received indicating success (if any)
     :rtype: Tuple[bool, Any]
     """
     # Attempt to acquire the mutex
     if not connection.read_message_mutex.acquire(timeout=1.0):
-        return False
+        return False, None
 
     # Flag indicating whether the message was acknowledged
     ack_success = False
+
+    # Message received converted to a dictionary
+    message = None
 
     # Start acknowledgement timer
     start_t = time.time()
@@ -72,11 +77,11 @@ def ack_message(message_type: str, connection: Connection, timeout=1.0) -> bool:
     while time.time() - start_t < timeout:
         try:
             message = connection.mavlink_connection.recv_match(
-                type=message_type, blocking=False
+                type=packet_type, blocking=False
             )
             message = message.to_dict()
 
-            if message["mavpackettype"] == message_type:
+            if message["mavpackettype"] == packet_type:
                 ack_success = True
                 break
         except Exception:
@@ -87,4 +92,4 @@ def ack_message(message_type: str, connection: Connection, timeout=1.0) -> bool:
     # Continue reading status messages
     connection.read_message_mutex.release()
 
-    return ack_success
+    return ack_success, message

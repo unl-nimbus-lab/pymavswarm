@@ -57,22 +57,24 @@ class ParameterReader:
         """
         try:
             connection.mavlink_connection.mav.param_request_read_send(
-                param.sys_id, param.comp_id, str.encode(param.param_id), -1
+                param.system_id, param.component_id, str.encode(param.parameter_id), -1
             )
         except Exception:
             self.__logger.exception(
                 "An exception occurred while attempting to read %d "
                 "from Agent (%d, %d)",
-                param.param_id,
-                param.sys_id,
-                param.comp_id,
+                param.parameter_id,
+                param.system_id,
+                param.component_id,
                 exc_info=True,
             )
             return False
 
         ack = False
 
-        ack, msg = self.__ack_msg("PARAM_VALUE", timeout=param.ack_timeout)
+        ack, msg = swarm_utils.ack_message(
+            "PARAM_VALUE", connection, timeout=param.ack_timeout
+        )
 
         if ack:
             read_param = swarm_state.ReadParameter(
@@ -83,9 +85,9 @@ class ParameterReader:
                 msg["param_count"],
             )
 
-            self.__agents[(param.sys_id, param.comp_id)].last_params_read.append(
-                read_param
-            )
+            self.__agents[
+                (param.system_id, param.component_id)
+            ].last_params_read.append(read_param)
         else:
             if param.retry:
                 if self.__retry_param_send(param, self.__read_param):
@@ -93,13 +95,13 @@ class ParameterReader:
 
         if ack:
             self.__logger.info(
-                f"Successfully read {param.param_id} from Agent ({param.sys_id}, "
-                f"{param.comp_id}). Value: {msg}"
+                f"Successfully read {param.parameter_id} from Agent ({param.system_id}, "
+                f"{param.component_id}). Value: {msg}"
             )
         else:
             self.__logger.error(
-                f"Failed to read {param.param_id} from Agent ({param.sys_id}, "
-                f"{param.comp_id})"
+                f"Failed to read {param.parameter_id} from Agent ({param.system_id}, "
+                f"{param.component_id})"
             )
 
         return ack

@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .agent_message import AgentMessage
+from .commands.agent_command import AgentCommand
 from .flight_mode_message import FlightModeMessage
 from .flight_speed_message import FlightSpeedMessage
 from .home_position_message import HomePositionMessage
 from .hrl_message import HRLMessage
-from .message_package import MessagePackage
-from .preflight_calibration_message import PreflightCalibrationMessage
-from .supported_messages import SupportedMessages
-from .system_command_message import SystemCommandMessage
-from .takeoff_message import TakeoffMessage
-from .waypoint_message import WaypointMessage
+from .commands.command_package import MessagePackage
+from .commands.preflight_calibration_command import PreflightCalibrationMessage
+from .commands.supported_commands import SupportedCommands
+from .commands.system_command import SystemCommandMessage
+from .commands.takeoff_command import TakeoffMessage
+from .commands.waypoint_command import WaypointMessage

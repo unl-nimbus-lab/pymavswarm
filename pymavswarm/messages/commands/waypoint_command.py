@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pymavswarm.messages import AgentMessage
+from pymavswarm.messages import AgentCommand
 
 
-class WaypointMessage(AgentMessage):
+class WaypointMessage(AgentCommand):
     """
     Desired waypoint for an agent to fly to.
     """
@@ -109,7 +109,7 @@ class WaypointMessage(AgentMessage):
             target_system,
             target_comp,
             retry,
-            msg_timeout=msg_timeout,
+            message_timeout=msg_timeout,
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,

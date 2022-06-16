@@ -14,18 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pymavswarm.messages import AgentMessage
-from pymavswarm.messages import SupportedMessages as supported_msgs
+from pymavswarm.messages import AgentCommand
+from pymavswarm.messages import SupportedCommands as supported_msgs
 
 
-class HRLMessage(AgentMessage):
+class SystemCommandMessage(AgentCommand):
     """
-    Signal an HRL command to be executed.
+    Signal a system-level operation on an agent.
     """
 
     def __init__(
         self,
-        hrl_command: int,
+        command: str,
         target_system: int,
         target_comp: int,
         retry: bool,
@@ -38,11 +38,8 @@ class HRLMessage(AgentMessage):
         """
         Constructor.
 
-        :param hrl_command: desired hrl swarm state
-        :type hrl_command: int
-
-        :param msg_type: The sub-message type for a message
-        :type msg_type: str
+        :param command: command to execute
+        :type command: str
 
         :param target_system: The target system ID
         :type target_system: int
@@ -80,46 +77,47 @@ class HRLMessage(AgentMessage):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
-        if hrl_command not in supported_msgs.hrl_commands.get_supported_types():
+        if command not in supported_msgs.system_commands.get_supported_types():
             raise ValueError(
-                f"{hrl_command} is not a supported HRL command. Supported commands "
-                f"include: {supported_msgs.hrl_commands.get_supported_types()}"
+                f"{command} is not a supported system command. Supported system "
+                "commands include: "
+                f"{supported_msgs.system_commands.get_supported_types()}"
             )
 
         super().__init__(
-            "HRL_COMMAND",
+            command,
             target_system,
             target_comp,
             retry,
-            msg_timeout=msg_timeout,
+            message_timeout=msg_timeout,
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,
             optional_context_props=optional_context_props,
         )
 
-        self.__hrl_command = hrl_command
+        self.__command = command
 
         return
 
     @property
-    def hrl_command(self) -> int:
+    def command(self) -> str:
         """
-        Desired HRL swarm state.
+        System command to execute.
 
-        :rtype: int
+        :rtype: str
         """
-        return self.__hrl_command
+        return self.__command
 
     @property
     def context(self) -> dict:
         """
-        Update the msg context to include HRL command type.
+        Message context.
 
-        :return: message context
+        :return: current message context
         :rtype: dict
         """
         context = super().context
-        context["hrl_command"] = self.__hrl_command
+        context["command"] = self.__command
 
         return context

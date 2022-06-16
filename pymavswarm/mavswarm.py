@@ -23,7 +23,7 @@ import pymavswarm.utils as swarm_utils
 from pymavswarm import Connection
 from pymavswarm.agent import Agent
 from pymavswarm.event import Event
-from pymavswarm.messages import MessagePackage, SupportedMessages
+from pymavswarm.messages import MessagePackage, SupportedCommands
 from pymavswarm.param import Parameter, ParameterPackage
 
 
@@ -50,14 +50,14 @@ class MavSwarm:
         return
 
     @property
-    def supported_messages(self) -> SupportedMessages:
+    def supported_messages(self) -> SupportedCommands:
         """
         Messages supported by pymavswarm.
 
         :return: mapping to enable simple configuration of commands
         :rtype: SupportedMessages
         """
-        return SupportedMessages()
+        return SupportedCommands()
 
     @property
     def agents(self) -> dict:
@@ -218,7 +218,7 @@ class MavSwarm:
         :param param: parameter to set on an agent
         :type params: Parameter
         """
-        if (param.sys_id, param.comp_id) in self.__connection.agents:
+        if (param.system_id, param.component_id) in self.__connection.agents:
             self.__connection.set_param_handler(param)
 
         return
@@ -232,9 +232,9 @@ class MavSwarm:
         :type package: ParameterPackage
         """
         for param in package.params:
-            if (param.sys_id, param.comp_id) not in self.__connection.agents:
+            if (param.system_id, param.component_id) not in self.__connection.agents:
                 self.__logger.warning(
-                    f"Agent ({param.sys_id}, {param.comp_id}) targeted by the"
+                    f"Agent ({param.system_id}, {param.component_id}) targeted by the"
                     "parameter package does not exist in the swarm."
                 )
 
@@ -250,7 +250,7 @@ class MavSwarm:
         :param params: parameter to read from an agent
         :type params: Parameter
         """
-        if (param.sys_id, param.comp_id) in self.__connection.agents:
+        if (param.system_id, param.component_id) in self.__connection.agents:
             self.__connection.read_param_handler(param)
 
         return

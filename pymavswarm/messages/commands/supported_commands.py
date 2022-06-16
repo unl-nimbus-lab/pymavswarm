@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+"""Supported standard message types."""
+
 from typing import List
 
 
 class FlightModes:
-    """
-    Supported flight modes.
-    """
+    """Supported flight modes."""
 
     stabilize = "STABILIZE"
     acro = "ACRO"
@@ -39,7 +39,7 @@ class FlightModes:
         Get the supported flight modes.
 
         :return: supported flight modes
-        :rtype: _type_
+        :rtype: List[str]
         """
         return [
             FlightModes.stabilize,
@@ -56,9 +56,7 @@ class FlightModes:
 
 
 class SystemCommands:
-    """
-    Supported system-level commands.
-    """
+    """Supported system-level commands."""
 
     arm = "ARM"
     disarm = "DISARM"
@@ -69,7 +67,7 @@ class SystemCommands:
     @staticmethod
     def get_supported_types() -> List[str]:
         """
-        Get the supported system commands
+        Get the supported system commands.
 
         :return: supported system commands
         :rtype: List[str]
@@ -84,9 +82,7 @@ class SystemCommands:
 
 
 class PreflightCalibrationCommands:
-    """
-    Supported pre-flight calibration commands
-    """
+    """Supported pre-flight calibration commands."""
 
     gyro_cal = "GYROSCOPE_CALIBRATION"
     magnetometer_cal = "MAGNETOMETER_CALIBRATION"
@@ -117,36 +113,8 @@ class PreflightCalibrationCommands:
         ]
 
 
-class HRLCommands:
-    """
-    Supported HRL commands.
-    """
-
-    start_path_execution = 0
-    reset_path_execution = 1
-    stop_path_execution = 2
-    start_live_execution = 3
-
-    @staticmethod
-    def get_supported_types() -> List[int]:
-        """
-        Get the supported HRL commands.
-
-        :return: supported HRL commands
-        :rtype: List[int]
-        """
-        return [
-            HRLCommands.start_path_execution,
-            HRLCommands.reset_path_execution,
-            HRLCommands.stop_path_execution,
-            HRLCommands.start_live_execution,
-        ]
-
-
 class FlightSpeedCommand:
-    """
-    Supported flight speed configuration commands.
-    """
+    """Supported flight speed configuration commands."""
 
     air_speed = 0
     ground_speed = 1
@@ -170,9 +138,7 @@ class FlightSpeedCommand:
 
 
 class MissionCommand:
-    """
-    Supported mission commands.
-    """
+    """Supported mission commands."""
 
     simple_waypoint = "SIMPLE_WAYPOINT"
     waypoint = "WAYPOINT"
@@ -185,7 +151,7 @@ class MissionCommand:
     get_home_position = "GET_HOME_POSITION"
 
     @staticmethod
-    def get_supported_types() -> List[int]:
+    def get_supported_types() -> List[str]:
         """
         Get the supported mission commands.
 
@@ -205,15 +171,15 @@ class MissionCommand:
         ]
 
 
-class SupportedMessages:
+class SupportedCommands:
     """
-    Helper class used to provide easy retrieval of the commands used by pymavswarm to
-    send messages.
+    Supported command types.
+
+    Provides an interface for accessing the command types that can be sent to agents.
     """
 
     flight_modes = FlightModes
     system_commands = SystemCommands
     preflight_calibration_commands = PreflightCalibrationCommands
-    hrl_commands = HRLCommands
     flight_speed_commands = FlightSpeedCommand
     mission_commands = MissionCommand

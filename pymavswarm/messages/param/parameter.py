@@ -14,114 +14,118 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+"""Wrapper for a robot parameter read/write request."""
+
 from typing import Optional, Union
 
 from pymavswarm.event import Event
 
 
 class Parameter:
-    """
-    A key/value pair that may be sent to an agent to read/write a parameter value.
-    """
+    """Key/value pair that may be sent to an agent to read/write a parameter value."""
 
     def __init__(
         self,
-        sys_id: int,
-        comp_id: int,
-        param_id: str,
+        system_id: int,
+        component_id: int,
+        parameter_id: str,
         retry: bool,
-        param_value: Optional[Union[float, int]] = None,
-        msg_timeout: float = 3.0,
-        ack_timeout: float = 1.0,
-        optional_context_props: dict = {},
+        parameter_value: Optional[Union[float, int]] = None,
+        message_timeout: float = 3.0,
+        acknowledgement_timeout: float = 1.0,
+        optional_context_properties: Optional[dict] = None,
     ) -> None:
         """
-        Constructor.
+        Create a parameter.
 
-        :param sys_id: system ID of the agent whose parameters should be set/read
-        :type sys_id: int
+        :param system_id: system ID of the agent whose parameters should be set/read
+        :type system_id: int
 
-        :param comp_id: component ID of the agent whose parameters should be
+        :param component_id: component ID of the agent whose parameters should be
             set/read
-        :type comp_id: int
+        :type component_id: int
 
-        :param param_id: parameter ID that should be set/read
-        :type param_id: str
+        :param parameter_id: parameter ID that should be set/read
+        :type parameter_id: str
 
         :param retry: flag indicating whether the system should retry message sending
             should acknowledgment fail
         :type retry: bool
 
-        :param msg_timeout: amount of time that pymavswarm should attempt to resend
+        :param parameter_value: value that the parameter should be set to, defaults to
+            None
+        :type parameter_value: Optional[Union[float, int]], optional
+
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
             retry is set to true, defaults to 3.0
-        :type msg_timeout: float, optional
+        :type message_timeout: float, optional
 
-        :param param_value: value that the parameter should be set to, defaults to
-            None
-        :type param_value: Optional[Union[float, int]], optional
-
-        :param ack_timeout: amount of time that pymavswarm should wait for
+        :param acknowledgement_timeout: amount of time that pymavswarm should wait for
             acknowledgement before considering that the system failed to acknowledge
             the parameter setting/reading, defaults to 1.0
-        :type ack_timeout: float, optional
+        :type acknowledgement_timeout: float, optional
 
         :param optional_context_props: optional properties to append to the parameter
-            context, defaults to {}
-        :type optional_context_props: dict, optional
+            context, defaults to None
+        :type optional_context_properties: Optional[dict], optional
         """
-        self.__sys_id = sys_id
-        self.__comp_id = comp_id
-        self.__param_id = param_id
+        self.__sys_id = system_id
+        self.__comp_id = component_id
+        self.__param_id = parameter_id
         self.__retry = retry
-        self.__param_value = param_value
-        self.__optional_context_props = optional_context_props
+        self.__param_value = parameter_value
+        self.__optional_context_props = optional_context_properties
 
-        if msg_timeout < 0.0 or ack_timeout < 0.0:
+        if message_timeout < 0.0 or acknowledgement_timeout < 0.0:
             raise ValueError(
                 "An invalid timeout or delay was provided. Ensure that "
                 "all timeouts and delays are non-negative"
             )
 
-        self.__msg_timeout = msg_timeout
-        self.__ack_timeout = ack_timeout
+        self.__msg_timeout = message_timeout
+        self.__ack_timeout = acknowledgement_timeout
         self.__parameter_read_result_event = Event()
         self.__parameter_write_result_event = Event()
 
         return
 
     @property
-    def sys_id(self) -> int:
+    def system_id(self) -> int:
         """
-        The system ID of the agent whose param value should be set/read
+        System ID of the agent whose param value should be set/read.
 
+        :return: system ID
         :rtype: int
         """
         return self.__sys_id
 
     @property
-    def comp_id(self) -> int:
+    def component_id(self) -> int:
         """
-        The component ID of the agent whose param value should be set/read
+        Component ID of the agent whose param value should be set/read.
 
+        :return: component ID
         :rtype: int
         """
         return self.__comp_id
 
     @property
-    def param_id(self) -> str:
+    def parameter_id(self) -> str:
         """
-        The ID of the parameter that should be set/read on an agent
+        ID of the parameter that should be set/read on an agent.
 
+        :return: parameter ID
         :rtype: str
         """
         return self.__param_id
 
     @property
-    def param_value(self) -> Union[float, int]:
+    def parameter_value(self) -> Optional[Union[float, int]]:
         """
-        The value that the parameter should be set to
+        Value that the parameter should be set to.
 
+        :return: desired parameter value
         :rtype: Union[float, int]
         """
         return self.__param_value
@@ -129,9 +133,9 @@ class Parameter:
     @property
     def retry(self) -> bool:
         """
-        Flag indicating whether the system should re-attempt parameter setting/reading
-        if the system fails to acknowledge it
+        Retry setting the parameter/reading the parameter if failure.
 
+        :return: flag indicating whether to retry
         :rtype: bool
         """
         return self.__retry
@@ -139,7 +143,7 @@ class Parameter:
     @retry.setter
     def retry(self, retry: bool) -> None:
         """
-        retry setter
+        Set the retry property.
 
         :param retry: Flag
         :type retry: bool

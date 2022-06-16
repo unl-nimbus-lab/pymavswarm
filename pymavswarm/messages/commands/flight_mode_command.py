@@ -16,54 +16,64 @@
 
 from typing import Optional
 
-from pymavswarm.messages import AgentMessage
+from pymavswarm.messages.commands.agent_command import AgentCommand
+from pymavswarm.messages.commands.supported_commands import SupportedCommands
 
 
-class HomePositionMessage(AgentMessage):
-    """
-    Signal a home position reset.
-
-    The home position can be reset to the current location or set to a specific
-    location. Note that if the home location is being reset to the current position,
-    then the location is not required. If the home location is being set to a specific
-    location, all components must be set.
-    """
+class FlightModeCommand(AgentCommand):
+    """Message signaling a flight mode change on an agent."""
 
     def __init__(
         self,
+        message_type: str,
         target_system: int,
-        target_comp: int,
+        target_component: int,
         retry: bool,
-        lat: Optional[float] = None,
-        lon: Optional[float] = None,
-        alt: Optional[float] = None,
-        msg_timeout: float = 5.0,
+        message_timeout: float = 5,
+        ack_timeout: float = 1,
+        state_timeout: float = 5,
+        state_delay: float = 3,
+        optional_context_props: Optional[dict] = None,
+    ) -> None:
+        super().__init__(
+            "FLIGHT_MODE",
+            target_system,
+            target_component,
+            retry,
+            message_timeout,
+            ack_timeout,
+            state_timeout,
+            state_delay,
+            optional_context_props,
+        )
+
+    def __init__(
+        self,
+        flight_mode: str,
+        target_system: int,
+        target_component: int,
+        retry: bool,
+        message_timeout: float = 5.0,
         ack_timeout: float = 1.0,
         state_timeout: float = 5.0,
         state_delay: float = 3.0,
-        optional_context_props: dict = {},
+        optional_context_props: Optional = {},
     ) -> None:
         """
-        Constructor.
+        Create a new flight mode command.
+
+        :param flight_mode: desired flight mode
+        :type msg_type: str
 
         :param target_system: The target system ID
         :type target_system: int
 
-        :param target_comp: The target component ID
-        :type target_comp: int
+        :param target_component: The target component ID
+        :type target_component: int
 
         :param retry: Indicate whether pymavswarm should retry sending the message
             until acknowledgement
         :type retry: bool
-
-        :param lat: The latitude of the home position
-        :type lat: Optional[float], optional
-
-        :param lon: The longitude of the home position
-        :type lon: Optional[float], optional
-
-        :param alt: The altitude of the home position
-        :type: alt: Optional[float], optional
 
         :param msg_timeout: The amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -91,72 +101,45 @@ class HomePositionMessage(AgentMessage):
             context, defaults to {}
         :type optional_context_props: dict, optional
         """
-        if (
-            (lat is not None and (lon is None or alt is None))
-            or (lon is not None and (lat is None or alt is None))
-            or (alt is not None and (lat is None or lon is None))
-        ):
+        if flight_mode not in SupportedCommands.flight_modes.get_supported_types():
             raise ValueError(
-                "Ensure that latitude, longitude, and altitude are all set when "
-                "configuring the home position of an agent"
+                f"{flight_mode} is not a supported flight mode. Flight modes supported "
+                f"include: {SupportedCommands.flight_modes.get_supported_types()}"
             )
 
         super().__init__(
-            "RESET_HOME",
+            "FLIGHT_MODE",
             target_system,
-            target_comp,
+            target_component,
             retry,
-            msg_timeout=msg_timeout,
+            message_timeout=message_timeout,
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,
             optional_context_props=optional_context_props,
         )
-        self.__altitude = alt
-        self.__latitude = lat
-        self.__longitude = lon
+        self.__flight_mode = flight_mode
 
         return
 
     @property
-    def altitude(self) -> float:
+    def flight_mode(self) -> str:
         """
-        Altitude (m).
+        Desired flight mode.
 
-        :rtype: float
+        :rtype: str
         """
-        return self.__altitude
-
-    @property
-    def latitude(self) -> float:
-        """
-        Latitude of the position.
-
-        :rtype: float
-        """
-        return self.__latitude
-
-    @property
-    def longitude(self) -> float:
-        """
-        Longitude of the position.
-
-        :rtype: float
-        """
-        return self.__longitude
+        return self.__flight_mode
 
     @property
     def context(self) -> dict:
         """
-        Context of the message.
+        Update the context to include the flight mode.
 
+        :return: message context
         :rtype: dict
         """
         context = super().context
-
-        # Update to include new properties
-        context["latitude"] = self.__latitude
-        context["longitude"] = self.__longitude
-        context["altitude"] = self.__altitude
+        context["flight_mode"] = self.__flight_mode
 
         return context

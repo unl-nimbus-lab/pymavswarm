@@ -16,10 +16,10 @@
 
 from typing import Optional
 
-from pymavswarm.messages import AgentMessage
+from pymavswarm.messages import AgentCommand
 
 
-class TakeoffMessage(AgentMessage):
+class TakeoffMessage(AgentCommand):
     """
     Takeoff to a certain location/altitude.
     """
@@ -91,7 +91,7 @@ class TakeoffMessage(AgentMessage):
             target_system,
             target_comp,
             retry,
-            msg_timeout=msg_timeout,
+            message_timeout=msg_timeout,
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,

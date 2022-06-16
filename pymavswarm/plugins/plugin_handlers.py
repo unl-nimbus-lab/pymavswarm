@@ -14,23 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+"""Base class for plugins that implement custom handlers."""
+
 import logging
 from typing import Callable, Union
 
 import pymavswarm.utils as swarm_utils
 
 
-class Plugin:
-    """
-    Template for a plugin.
-    """
+class PluginHandlers:
+    """Template for plugin handlers."""
 
     def __init__(
         self, logger_name: str = "plugin", log_level: int = logging.INFO
     ) -> None:
-        """
-        Constructor.
-        """
+        """Create a plugin handlers base class."""
         self._logger = swarm_utils.init_logger(logger_name, log_level=log_level)
         self.__senders = {}
         self.__receivers = {}

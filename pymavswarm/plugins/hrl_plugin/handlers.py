@@ -20,13 +20,24 @@ import time
 import pymavswarm.messages as swarm_msgs
 from pymavswarm import Connection
 from pymavswarm.messages import responses
-from pymavswarm.plugins import Plugin
+from pymavswarm.plugins import PluginHandlers
 
 
-class HrlPlugin(Plugin):
+class HrlHandlers(PluginHandlers):
+    """Handlers for HRL messages."""
+
     def __init__(
         self, logger_name: str = "HRL Plugin", log_level: int = logging.INFO
     ) -> None:
+        """
+        Create a new HRL handler.
+
+        :param logger_name: name of logger, defaults to "HRL Plugin"
+        :type logger_name: str, optional
+
+        :param log_level: logging level, defaults to logging.INFO
+        :type log_level: int, optional
+        """
         super().__init__(logger_name, log_level)
 
         @self._send_message("HRL_COMMAND")

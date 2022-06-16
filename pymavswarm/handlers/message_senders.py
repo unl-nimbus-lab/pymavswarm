@@ -14,28 +14,70 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# type: ignore[no-redef]
+# pylint: disable=function-redefined,unused-argument
+
+"""Methods responsible for sending MAVLink messages."""
+
 import logging
 import math
 import time
-from typing import Any, Callable, Tuple, Union
+from typing import Any, Callable, Dict, List
 
 from pymavlink import mavutil
 
 import pymavswarm.messages as swarm_messages
 import pymavswarm.utils as swarm_utils
 from pymavswarm import Connection
-from pymavswarm.messages import SupportedMessages as supported_messages
+from pymavswarm.messages import SupportedCommands as supported_messages
 from pymavswarm.messages import responses
 
 
 class Senders:
+    """Methods responsible for sending MAVLink messages."""
+
+    # Message types
+    ARM = "ARM"
+    DISARM = "DISARM"
+    KILL = "KILL"
+    REBOOT = "REBOOT"
+    SHUTDOWN = "SHUTDOWN"
+    ACCELEROMETER_CALIBRATION = "ACCELEROMETER_CALIBRATION"
+    SIMPLE_ACCELEROMETER_CALIBRATION = "SIMPLE_ACCELEROMETER_CALIBRATION"
+    AHRS_TRIM = "AHRS_TRIM"
+    GYROSCOPE_CALIBRATION = "GYROSCOPE_CALIBRATION"
+    MAGNETOMETER_CALIBRATION = "MAGNETOMETER_CALIBRATION"
+    GROUND_PRESSURE_CALIBRATION = "GROUND_PRESSURE_CALIBRATION"
+    AIRSPEED_CALIBRATION = "AIRSPEED_CALIBRATION"
+    BAROMETER_TEMPERATURE_CALIBRATION = "BAROMETER_TEMPERATURE_CALIBRATION"
+    FLIGHT_MODE = "FLIGHT_MODE"
+    FLIGHT_SPEED = "FLIGHT_SPEED"
+    SIMPLE_TAKEOFF = "SIMPLE_TAKEOFF"
+    TAKEOFF = "TAKEOFF"
+    SIMPLE_FULL_TAKEOFF = "SIMPLE_FULL_TAKEOFF"
+    FULL_TAKEOFF = "FULL_TAKEOFF"
+    SIMPLE_WAYPOINT = "SIMPLE_WAYPOINT"
+    WAYPOINT = "WAYPOINT"
+    GET_HOME_POSITION = "GET_HOME_POSITION"
+    RESET_HOME_TO_CURRENT = "RESET_HOME_TO_CURRENT"
+    RESET_HOME = "RESET_HOME"
+
     def __init__(
         self, logger_name: str = "senders", log_level: int = logging.INFO
     ) -> None:
-        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
-        self.__senders = {}
+        """
+        Create a new senders object.
 
-        @self.__send_message("ARM")
+        :param logger_name: logger name, defaults to "senders"
+        :type logger_name: str, optional
+
+        :param log_level: logging level, defaults to logging.INFO
+        :type log_level: int, optional
+        """
+        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
+        self.__senders: Dict[str, List[Callable]] = {}
+
+        @self.__send_message(Senders.ARM)
         @self.__timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
@@ -44,20 +86,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Arm an agent
+            Arm an agent.
 
-            :param message: Arming message
+            :param message: arming message
             :type message: SystemCommandMessage
 
-            :param function_id: The index of the method in the message type function
+            :param function_id: index of the method in the message type function
                 handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether the message was sent successfully
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -76,7 +118,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -97,8 +139,9 @@ class Senders:
                             break
                     if ack:
                         self.__logger.info(
-                            f"Successfully verified that Agent ({message.target_system}, "
-                            f"{message.target_comp}) switched to the armed state"
+                            "Successfully verified that Agent ("
+                            f"{message.target_system}, {message.target_component}) "
+                            "switched to the armed state"
                         )
                     else:
                         self.__logger.error(
@@ -127,7 +170,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("DISARM")
+        @self.__send_message(Senders.DISARM)
         @self.__timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
@@ -136,20 +179,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Disarm an agent
+            Disarm an agent.
 
-            :param message: Disarm message
+            :param message: disarm message
             :type message: SystemCommandMessage
 
-            :param function_id: The index of the method in the message type function
+            :param function_id: index of the method in the message type function
                 handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -168,7 +211,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -189,8 +232,9 @@ class Senders:
                             break
                     if ack:
                         self.__logger.info(
-                            f"Successfully verified that Agent ({message.target_system}, "
-                            f"{message.target_comp}) switched to the disarmed state"
+                            f"Successfully verified that Agent ("
+                            f"{message.target_system}, {message.target_comp}) switched "
+                            "to the disarmed state"
                         )
                     else:
                         self.__logger.error(
@@ -219,7 +263,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("KILL")
+        @self.__send_message(Senders.KILL)
         @self.__timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
@@ -228,20 +272,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Force disarm an agent
+            Force disarm an agent.
 
-            :param message: Kill message
+            :param message: kill message
             :type message: SystemCommandMessage
 
-            :param function_id: The index of the method in the message type function
+            :param function_id: index of the method in the message type function
                 handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -260,7 +304,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -296,7 +340,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("REBOOT")
+        @self.__send_message(Senders.REBOOT)
         @self.__timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
@@ -305,20 +349,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Reboot an agent
+            Reboot an agent.
 
-            :param message: Reboot message
+            :param message: reboot message
             :type message: SystemCommandMessage
 
-            :param function_id: The index of the method in the message type function
+            :param function_id: index of the method in the message type function
                 handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -337,7 +381,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -373,7 +417,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("SHUTDOWN")
+        @self.__send_message(Senders.SHUTDOWN)
         @self.__timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
@@ -382,20 +426,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Shutdown an agent
+            Shutdown an agent.
 
-            :param message: Shutdown message
+            :param message: shutdown message
             :type message: SystemCommandMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -414,7 +458,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -450,7 +494,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("ACCELEROMETER_CALIBRATION")
+        @self.__send_message(Senders.ACCELEROMETER_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
@@ -459,20 +503,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Perform a full accelerometer calibration on the selected agent
+            Perform a full accelerometer calibration on the selected agent.
 
-            :param message: Calibration message
+            :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: The index of the method in the message type function
+            :param function_id: index of the method in the message type function
                 handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -491,7 +535,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -510,7 +554,8 @@ class Senders:
             else:
                 self.__logger.error(
                     "Failed to acknowledge reception of the accelerometer calibration "
-                    f"command sent to Agent ({message.target_system}, {message.target_comp})"
+                    f"command sent to Agent ({message.target_system}, "
+                    f"{message.target_comp})"
                 )
                 message_code = responses.ACK_FAILURE
 
@@ -528,7 +573,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("SIMPLE_ACCELEROMETER_CALIBRATION")
+        @self.__send_message(Senders.SIMPLE_ACCELEROMETER_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
@@ -537,20 +582,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Perform a simple accelerometer calibration on the selected agent
+            Perform a simple accelerometer calibration on the selected agent.
 
-            :param message: Calibration message
+            :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: The index of the method in the message type function
+            :param function_id: index of the method in the message type function
                 handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -569,7 +614,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -607,7 +652,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("AHRS_TRIM")
+        @self.__send_message(Senders.AHRS_TRIM)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
@@ -616,20 +661,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Perform an AHRS trim on the selected agent
+            Perform an AHRS trim on the selected agent.
 
-            :param message: Calibration message
+            :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -648,7 +693,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -684,7 +729,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("GYROSCOPE_CALIBRATION")
+        @self.__send_message(Senders.GYROSCOPE_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
@@ -693,20 +738,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Perform a gyroscope calibration on the selected agent
+            Perform a gyroscope calibration on the selected agent.
 
-            :param message: Calibration message
+            :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -725,7 +770,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -763,7 +808,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("MAGNETOMETER_CALIBRATION")
+        @self.__send_message(Senders.MAGNETOMETER_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
@@ -772,20 +817,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Perform a magnetometer calibration on the selected agent
+            Perform a magnetometer calibration on the selected agent.
 
-            :param message: Calibration message
+            :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -804,7 +849,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -823,7 +868,8 @@ class Senders:
             else:
                 self.__logger.error(
                     "Failed to acknowledge reception of the magnetometer calibration "
-                    "command sent to Agent ({message.target_system}, {message.target_comp})"
+                    f"command sent to Agent ({message.target_system}, "
+                    f"{message.target_comp})"
                 )
                 message_code = responses.ACK_FAILURE
 
@@ -841,7 +887,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("GROUND_PRESSURE_CALIBRATION")
+        @self.__send_message(Senders.GROUND_PRESSURE_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
@@ -850,20 +896,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Perform a ground pressure calibration on the selected agent
+            Perform a ground pressure calibration on the selected agent.
 
-            :param message: Calibration message
+            :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -882,7 +928,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -920,7 +966,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("AIRSPEED_CALIBRATION")
+        @self.__send_message(Senders.AIRSPEED_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
@@ -929,20 +975,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Perform airspeed calibration on the selected agent
+            Perform airspeed calibration on the selected agent.
 
-            :param message: Calibration message
+            :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -961,7 +1007,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -999,7 +1045,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("BAROMETER_TEMPERATURE_CALIBRATION")
+        @self.__send_message(Senders.BAROMETER_TEMPERATURE_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
@@ -1008,20 +1054,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Perform a barometer temperature calibration on the selected agent
+            Perform a barometer temperature calibration on the selected agent.
 
-            :param message: Calibration message
+            :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -1040,7 +1086,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -1078,7 +1124,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("FLIGHT_MODE")
+        @self.__send_message(Senders.FLIGHT_MODE)
         @self.__timer()
         def sender(
             message: swarm_messages.FlightModeMessage,
@@ -1089,18 +1135,18 @@ class Senders:
             """
             Set the flight mode of an agent.
 
-            :param message: Flight mode message
+            :param message: flight mode message
             :type message: FlightModeMessage
 
-            :param function_id: The index of the method in the message type function
+            :param function_id: index of the method in the message type function
                 handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             # Reset target
@@ -1110,8 +1156,8 @@ class Senders:
             # Verify that the flight mode is supported by the agent
             if message.flight_mode not in connection.mavlink_connection.mode_mapping():
                 self.__logger.error(
-                    f"The desired flight mode, {message.flight_mode}, is not a supported "
-                    "flight mode. Supported flight modes include: "
+                    f"The desired flight mode, {message.flight_mode}, is not a "
+                    "supported flight mode. Supported flight modes include: "
                     f"{connection.mavlink_connection.mode_mapping().keys()}"
                 )
                 message.response = responses.INVALID_PROPERTIES
@@ -1127,13 +1173,13 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
                     "Successfully acknowledged reception of the flight mode "
-                    f"{message.flight_mode} command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
+                    f"{message.flight_mode} command sent to Agent ("
+                    f"{message.target_system}, {message.target_comp})"
                 )
                 ack = True
                 message_code = responses.SUCCESS
@@ -1152,22 +1198,22 @@ class Senders:
                             break
                     if ack:
                         self.__logger.info(
-                            f"Successfully verified that Agent ({message.target_system}, "
-                            f"{message.target_comp}) switched to the {message.flight_mode} "
-                            "flight mode"
+                            f"Successfully verified that Agent ("
+                            f"{message.target_system}, {message.target_comp}) "
+                            "switched to the {message.flight_mode} flight mode"
                         )
                     else:
                         self.__logger.error(
                             f"Failed to verify that Agent ({message.target_system}, "
-                            f"{message.target_comp}) switched to the {message.flight_mode} "
-                            "flight mode"
+                            f"{message.target_comp}) switched to the "
+                            f"{message.flight_mode} flight mode"
                         )
                         message_code = responses.STATE_VALIDATION_FAILURE
             else:
                 self.__logger.error(
                     "Failed to acknowledge reception of the flight mode "
-                    f"{message.flight_mode} command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
+                    f"{message.flight_mode} command sent to Agent ("
+                    "{message.target_system}, {message.target_comp})"
                 )
                 message_code = responses.ACK_FAILURE
 
@@ -1185,7 +1231,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("FLIGHT_SPEED")
+        @self.__send_message(Senders.FLIGHT_SPEED)
         @self.__timer()
         def sender(
             message: swarm_messages.FlightSpeedMessage,
@@ -1196,18 +1242,18 @@ class Senders:
             """
             Set an agent's flight speed.
 
-            :param message: Speed message
+            :param message: speed message
             :type message: FlightSpeedMessage
 
-            :param function_id: The index of the method in the message type function
+            :param function_id: index of the method in the message type function
                 handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -1226,7 +1272,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -1264,7 +1310,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("SIMPLE_TAKEOFF")
+        @self.__send_message(Senders.SIMPLE_TAKEOFF)
         @self.__timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
@@ -1273,23 +1319,25 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
+            Execute a simple takeoff command (not a full sequence).
+
             Perform a simple takeoff command (just takeoff to a set altitude)
             Note that acknowledgement of this command does not indicate that the
             altitude was reached, but rather that the system will attempt to reach
             the specified altitude
 
-            :param message: Takeoff message
+            :param message: takeoff message
             :type message: TakeoffMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             if (
@@ -1321,7 +1369,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -1358,7 +1406,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("TAKEOFF")
+        @self.__send_message(Senders.TAKEOFF)
         @self.__timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
@@ -1367,23 +1415,25 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
+            Execute a takeoff command (not a full sequence).
+
             Perform a takeoff command (use lat, lon, and alt)
             Note that acknowledgement of this command does not indicate that the
             altitude was reached, but rather that the system will attempt to reach
             the specified altitude
 
-            :param message: Speed message
+            :param message: takeoff message
             :type message: TakeoffMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             if (
@@ -1415,7 +1465,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -1451,7 +1501,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("SIMPLE_FULL_TAKEOFF")
+        @self.__send_message(Senders.SIMPLE_FULL_TAKEOFF)
         @self.__timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
@@ -1460,23 +1510,25 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
+            Execute a simple full takeoff command sequence.
+
             Command used to signal execution of a full simple takeoff sequence:
                 1. Switch to GUIDED mode
                 2. Arm
                 3. Takeoff
 
-            :param message: Speed message
+            :param message: takeoff sequence message
             :type message: TakeoffMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             # Create a new guided mode
@@ -1492,7 +1544,7 @@ class Senders:
             )
 
             # Attempt to switch to GUIDED mode
-            if not self.__send_seq_message(guided_message, agent_exists):
+            if not self.__send_sequence_message(guided_message, agent_exists):
                 self.__logger.error(
                     "Failed to acknowledge reception of the guided command stage "
                     "within the simple full takeoff command sent to Agent "
@@ -1516,7 +1568,7 @@ class Senders:
             )
 
             # Attempt to arm the system
-            if not self.__send_seq_message(arm_message, agent_exists):
+            if not self.__send_sequence_message(arm_message, agent_exists):
                 self.__logger.error(
                     "Failed to acknowledge reception of the arm command stage within "
                     "the simple full takeoff command sent to Agent "
@@ -1534,7 +1586,7 @@ class Senders:
             message.message_type = supported_messages.mission_commands.simple_takeoff
 
             # Attempt to perform takeoff
-            if not self.__send_seq_message(message, agent_exists):
+            if not self.__send_sequence_message(message, agent_exists):
                 self.__logger.error(
                     "Failed to acknowledge reception of the takeoff command stage "
                     "within the simple full takeoff command sent to Agent "
@@ -1555,7 +1607,7 @@ class Senders:
 
             return True
 
-        @self.__send_message("FULL_TAKEOFF")
+        @self.__send_message(Senders.FULL_TAKEOFF)
         @self.__timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
@@ -1564,23 +1616,25 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
+            Execute a full takeoff sequence.
+
             Command used to signal execution of a full takeoff sequence:
                 1. Switch to GUIDED mode
                 2. Arm
                 3. Takeoff
 
-            :param message: Speed message
+            :param message: takeoff message
             :type message: TakeoffMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             # Create a new guided mode
@@ -1596,7 +1650,7 @@ class Senders:
             )
 
             # Attempt to switch to GUIDED mode
-            if not self.__send_seq_message(guided_message, agent_exists):
+            if not self.__send_sequence_message(guided_message, agent_exists):
                 self.__logger.error(
                     "Failed to acknowledge reception of the guided command stage "
                     "within the full takeoff command sent to Agent "
@@ -1620,7 +1674,7 @@ class Senders:
             )
 
             # Attempt to arm the system
-            if not self.__send_seq_message(arm_message, agent_exists):
+            if not self.__send_sequence_message(arm_message, agent_exists):
                 self.__logger.error(
                     "Failed to acknowledge reception of the arm command stage within "
                     f"the full takeoff command sent to Agent ({message.target_system}, "
@@ -1637,12 +1691,12 @@ class Senders:
             message.message_type = supported_messages.mission_commands.takeoff
 
             # Attempt to perform takeoff
-            if not self.__send_seq_message(message, agent_exists):
+            if not self.__send_sequence_message(message, agent_exists):
                 self.__logger.error(
                     "Failed to acknowledge reception of the takeoff command stage "
                     "within the full takeoff command sent to Agent "
-                    f"({message.target_system}, {message.target_comp}). Full takeoff sequence "
-                    "failed."
+                    f"({message.target_system}, {message.target_comp}). Full takeoff "
+                    "sequence failed."
                 )
                 message.response = responses.SEQUENCE_STAGE_FAILURE
                 message.message_result_event.notify(context=message.context)
@@ -1657,7 +1711,7 @@ class Senders:
 
             return True
 
-        @self.__send_message("SIMPLE_WAYPOINT")
+        @self.__send_message(Senders.SIMPLE_WAYPOINT)
         @self.__timer()
         def sender(
             message: swarm_messages.WaypointMessage,
@@ -1666,24 +1720,24 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Perform a simple waypoint command (just lat, lon, and alt)
+            Perform a simple waypoint command (just lat, lon, and alt).
 
-            NOTE: Acknowledgement of this command does not indicate that the
+            Acknowledgement of this command does not indicate that the
             waypoint was reached, but rather that the system will attempt to reach
-            the specified waypoint
+            the specified waypoint.
 
-            :param message: Waypoint message
+            :param message: waypoint message
             :type message: WaypointMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             if (
@@ -1718,7 +1772,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -1755,7 +1809,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("WAYPOINT")
+        @self.__send_message(Senders.WAYPOINT)
         @self.__timer()
         def sender(
             message: swarm_messages.WaypointMessage,
@@ -1764,24 +1818,24 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Perform a waypoint navigation command
+            Perform a waypoint navigation command.
 
-            NOTE: Acknowledgement of this command does not indicate that the
+            Acknowledgement of this command does not indicate that the
             waypoint was reached, but rather that the system will attempt to reach
-            the specified waypoint
+            the specified waypoint.
 
-            :param message: Waypoint message
+            :param message: waypoint message
             :type message: WaypointMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             if (
@@ -1816,7 +1870,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -1852,29 +1906,29 @@ class Senders:
 
             return ack
 
-        @self.__send_message("GET_HOME_POSITION")
+        @self.__send_message(Senders.GET_HOME_POSITION)
         @self.__timer()
         def sender(
-            message: swarm_messages.AgentMessage,
+            message: swarm_messages.AgentCommand,
             connection: Connection,
             function_id: int = 0,
             agent_exists: bool = False,
         ) -> bool:
             """
-            Get the current home position of an agent
+            Get the current home position of an agent.
 
-            :param message: Get home position message
+            :param message: home position request message
             :type message: AgentMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -1893,7 +1947,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -1930,7 +1984,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("RESET_HOME_TO_CURRENT")
+        @self.__send_message(Senders.RESET_HOME_TO_CURRENT)
         @self.__timer()
         def sender(
             message: swarm_messages.HomePositionMessage,
@@ -1939,24 +1993,24 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Reset the saved home position of an agent to the current position
+            Reset the saved home position of an agent to the current position.
 
-            NOTE: Validation of this command can take a while. To ensure that the system
+            Validation of this command can take a while. To ensure that the system
             has sufficient time to verify that the home position was properly reset, it
-            may be necessary to extend the timeout periods
+            may be necessary to extend the timeout periods.
 
-            :param message: Reset home position message
+            :param message: reset home position message
             :type message: HomePositionMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             agent_id = (message.target_system, message.target_comp)
@@ -1989,7 +2043,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -2007,7 +2061,7 @@ class Senders:
                         current_home_pos
                     ):
                         # Signal an update state command
-                        update_home_state_message = swarm_messages.AgentMessage(
+                        update_home_state_message = swarm_messages.AgentCommand(
                             supported_messages.mission_commands.get_home_position,
                             message.target_system,
                             message.target_comp,
@@ -2019,7 +2073,9 @@ class Senders:
                         )
 
                         # Get the updated home position
-                        self.__send_seq_message(update_home_state_message, agent_exists)
+                        self.__send_sequence_message(
+                            update_home_state_message, agent_exists
+                        )
 
                         if time.time() - start_time >= message.state_timeout:
                             ack = False
@@ -2038,9 +2094,9 @@ class Senders:
                     else:
                         self.__logger.error(
                             "Failed to reset the home position of Agent "
-                            f"({message.target_system}, {message.target_comp}) or the current "
-                            "location of the agent has not changed since last updating "
-                            "the home position."
+                            f"({message.target_system}, {message.target_comp}) or the "
+                            "current location of the agent has not changed since last "
+                            "updating the home position."
                         )
                         message_code = responses.STATE_VALIDATION_FAILURE
             else:
@@ -2065,7 +2121,7 @@ class Senders:
 
             return ack
 
-        @self.__send_message("RESET_HOME")
+        @self.__send_message(Senders.RESET_HOME)
         @self.__timer()
         def sender(
             message: swarm_messages.HomePositionMessage,
@@ -2074,20 +2130,20 @@ class Senders:
             agent_exists: bool = False,
         ) -> bool:
             """
-            Reset the saved home position of an agent to the desired position
+            Reset the saved home position of an agent to the desired position.
 
-            :param message: Reset home position message
+            :param message: reset home position message
             :type message: HomePositionMessage
 
-            :param function_id: The index of the method in the message type function handler
-                list, defaults to 0
+            :param function_id: index of the method in the message type function
+                handler list, defaults to 0
             :type function_id: int, optional
 
-            :param agent_exists: Flag indicating whether the agent that the message
+            :param agent_exists: flag indicating whether the agent that the message
                 is intended for exists in the network, defaults to False
             :type agent_exists: bool, optional
 
-            :return: Indicates whether or not the message was successfully sent
+            :return: message send success/fail
             :rtype: bool
             """
             if (
@@ -2142,7 +2198,7 @@ class Senders:
             ack = False
             message_code = responses.ACK_FAILURE
 
-            if self.__ack_message(
+            if swarm_utils.ack_message(
                 "COMMAND_ACK", connection, timeout=message.ack_timeout
             ):
                 self.__logger.info(
@@ -2165,7 +2221,7 @@ class Senders:
                         != message.altitude
                     ):
                         # Signal an update state command
-                        update_home_state_message = swarm_messages.AgentMessage(
+                        update_home_state_message = swarm_messages.AgentCommand(
                             supported_messages.mission_commands.get_home_position,
                             message.target_system,
                             message.target_comp,
@@ -2177,7 +2233,9 @@ class Senders:
                         )
 
                         # Get the updated home position
-                        self.__send_seq_message(update_home_state_message, agent_exists)
+                        self.__send_sequence_message(
+                            update_home_state_message, agent_exists
+                        )
 
                         if time.time() - start_time >= message.state_timeout:
                             ack = False
@@ -2228,6 +2286,7 @@ class Senders:
         """
         Methods responsible for handling message sending.
 
+        :return: list of senders
         :rtype: dict
         """
         return self.__senders
@@ -2236,8 +2295,7 @@ class Senders:
         self, message: Any, function: Callable, agent_exists: bool
     ) -> bool:
         """
-        Retry a message send until the an acknowledgement is received or a timeout
-        occurs
+        Retry a message send until success/timeout.
 
         :param message: The message to retry sending
         :type message: Any
@@ -2262,13 +2320,13 @@ class Senders:
 
         return ack
 
-    def __send_seq_message(self, message: Any, agent_exists: bool) -> bool:
+    def __send_sequence_message(self, message: Any, agent_exists: bool) -> bool:
         """
+        Send a sequence message.
+
         Helper function used to handle calling all of the message handlers.
         This method is used by the sequence commands such as the full takeoff
         command to provide indication of a function execution result.
-
-        NOTE: THIS IS USED. DO NOT DELETE
 
         :param message: The message to send
         :type message: Any
@@ -2299,9 +2357,9 @@ class Senders:
 
         return True
 
-    def __send_message(self, message: Union[list, str]) -> Callable:
+    def __send_message(self, message: str) -> Callable:
         """
-        Decorator used to create a sender for a mavlink message
+        Create a sender for a mavlink message.
 
         :param message: The message type to connect to the sender
         :type message: Union[list, str]
@@ -2321,8 +2379,7 @@ class Senders:
 
     def __timer(self) -> Callable:
         """
-        Decorator used to log the time that a sender takes to complete. Used for
-        debugging purposes.
+        Log the time that a sender takes to complete. Used for debugging purposes.
 
         :return: decorator
         :rtype: Callable

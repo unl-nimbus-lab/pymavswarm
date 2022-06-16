@@ -14,10 +14,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import unittest
+"""Supported HRL commands."""
 
-from test_agent_msg import TestAgentMsg
-from test_supported_msgs import TestSupportedMsgs
+from typing import List
 
-if __name__ == "__main__":
-    unittest.main()
+
+class HRLCommands:
+    """Supported HRL commands."""
+
+    start_path_execution = 0
+    reset_path_execution = 1
+    stop_path_execution = 2
+    start_live_execution = 3
+
+    @staticmethod
+    def get_supported_types() -> List[int]:
+        """
+        Get the supported HRL commands.
+
+        :return: supported HRL commands
+        :rtype: List[int]
+        """
+        return [
+            HRLCommands.start_path_execution,
+            HRLCommands.reset_path_execution,
+            HRLCommands.stop_path_execution,
+            HRLCommands.start_live_execution,
+        ]

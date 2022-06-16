@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# type: ignore[no-redef]
+
+"""Handlers for incoming messages."""
+
 import logging
 import time
 from typing import Any, Callable, Union
@@ -28,9 +32,7 @@ from pymavswarm import Agent, Connection
 
 
 class Receivers:
-    """
-    Collection of methods responsible for processing incoming messages.
-    """
+    """Collection of methods responsible for processing incoming messages."""
 
     def __init__(
         self, logger_name: str = "receivers", log_level: int = logging.INFO

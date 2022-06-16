@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .hrl_plugin import HrlPlugin
-from .plugin import Plugin
+from .plugin_handlers import PluginHandlers
 
 # The list of supported plugins
 # Add your plugin to this list to add support for your new plugin
