@@ -32,6 +32,40 @@ class Parameter(Message):
         ack_timeout: float = 1,
         optional_context_props: Optional[dict] = None,
     ) -> None:
+        """
+        Create a new parameter.
+
+        :param parameter_id: id of the parameter to read/write
+        :type parameter_id: str
+
+        :param target_system: target system ID
+        :type target_system: int
+
+        :param target_component: target component ID
+        :type target_component: int
+
+        :param retry: retry sending the message on failure
+        :type retry: bool
+
+        :param parameter_value: desired parameter value when setting a parameter,
+            defaults to None
+        :type parameter_value: Optional[Union[float, int]], optional
+
+        :param message_timeout: The amount of time that pymavswarm should attempt to
+            resend a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 5.0
+        :type message_timeout: float, optional
+
+        :param ack_timeout: The amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 1.0
+        :type ack_timeout: float, optional
+
+        :param optional_context_props: optional properties to append to the message
+            context, defaults to None
+        :type optional_context_props: Optional[dict], optional
+        """
         super().__init__(
             target_system,
             target_component,
@@ -69,19 +103,13 @@ class Parameter(Message):
     @property
     def context(self) -> dict:
         """
-        The current context of the parameter when an event occurred
+        Context of the parameter when an event occurred.
 
         :rtype: dict
         """
-        context = {
-            "sys_id": self.__sys_id,
-            "comp_id": self.__comp_id,
-            "param_id": self.__param_id,
-            "param_value": self.__param_value,
-            "retry": self.__retry,
-            "msg_timeout": self.__msg_timeout,
-            "ack_timeout": self.__ack_timeout,
-        }
-        context.update(self.__optional_context_props)
+        context = super().context
+
+        context["parameter_id"] = self.__parameter_id
+        context["parameter_value"] = self.__parameter_value
 
         return context

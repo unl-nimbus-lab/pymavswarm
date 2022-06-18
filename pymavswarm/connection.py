@@ -30,7 +30,7 @@ import pymavswarm.messages as swarm_messages
 import pymavswarm.utils as swarm_utils
 from pymavswarm import Agent
 from pymavswarm.event import Event
-from pymavswarm.handlers import Receivers, Senders
+from pymavswarm.handlers import MessageReceivers, Senders
 from pymavswarm.messages import responses
 from pymavswarm.plugins import supported_plugins
 
@@ -70,7 +70,7 @@ class Connection:
 
         # Sender and receiver interfaces
         self.__message_senders = Senders(log_level=log_level)
-        self.__message_receivers = Receivers(log_level=log_level)
+        self.__message_receivers = MessageReceivers(log_level=log_level)
 
         # Mutexes
         self.__read_message_mutex = threading.RLock()

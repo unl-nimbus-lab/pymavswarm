@@ -18,19 +18,18 @@
 # pylint: disable=function-redefined
 
 import logging
-import time
-from typing import Any, Callable, Dict, List, Union
+from typing import Any
 
 import monotonic
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega
 
 import pymavswarm.state as swarm_state
-import pymavswarm.utils as swarm_utils
 from pymavswarm import Agent, Connection
+from pymavswarm.handlers.receivers import Receivers
 
 
-class Receivers:
+class MessageReceivers(Receivers):
     """Collection of methods responsible for processing incoming messages."""
 
     def __init__(
@@ -45,11 +44,10 @@ class Receivers:
         :param log_level: _description_, defaults to logging.INFO
         :type log_level: int, optional
         """
-        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
-        self.__receivers: Dict[str, List[Callable]] = {}
+        super().__init__(logger_name, log_level)
 
-        @self.__receive_message("HEARTBEAT")
-        @self.__timer()
+        @self._receive_message("HEARTBEAT")
+        @self._timer()
         def listener(message: Any, connection: Connection) -> None:
             """
             Register new agents or update the timeout status of existing agents.
@@ -90,8 +88,8 @@ class Receivers:
 
             return
 
-        @self.__receive_message("HEARTBEAT")
-        @self.__timer()
+        @self._receive_message("HEARTBEAT")
+        @self._timer()
         def listener(message: Any, connection: Connection) -> None:
             """
             Handle general agent information contained within a heartbeat.
@@ -135,8 +133,8 @@ class Receivers:
 
             return
 
-        @self.__receive_message("GLOBAL_POSITION_INT")
-        @self.__timer()
+        @self._receive_message("GLOBAL_POSITION_INT")
+        @self._timer()
         def listener(message: Any, connection: Connection) -> None:
             """
             Handle the a GPS position message.
@@ -180,8 +178,8 @@ class Receivers:
 
             return
 
-        @self.__receive_message("ATTITUDE")
-        @self.__timer()
+        @self._receive_message("ATTITUDE")
+        @self._timer()
         def listener(message: Any, connection: Connection) -> None:
             """
             Handle an agent attitude message.
@@ -218,8 +216,8 @@ class Receivers:
 
             return
 
-        @self.__receive_message("SYS_STATUS")
-        @self.__timer()
+        @self._receive_message("SYS_STATUS")
+        @self._timer()
         def listener(message: Any, connection: Connection) -> None:
             """
             Handle the system status message containing battery state.
@@ -250,8 +248,8 @@ class Receivers:
 
             return
 
-        @self.__receive_message("GPS_RAW_INT")
-        @self.__timer()
+        @self._receive_message("GPS_RAW_INT")
+        @self._timer()
         def listener(message: Any, connection: Connection) -> None:
             """
             Handle the GPS status information.
@@ -286,8 +284,8 @@ class Receivers:
 
             return
 
-        @self.__receive_message("EKF_STATUS_REPORT")
-        @self.__timer()
+        @self._receive_message("EKF_STATUS_REPORT")
+        @self._timer()
         def listener(message: Any, connection: Connection) -> None:
             """
             Handle an EKF status message.
@@ -347,8 +345,8 @@ class Receivers:
 
             return
 
-        @self.__receive_message("ATTITUDE")
-        @self.__timer()
+        @self._receive_message("ATTITUDE")
+        @self._timer()
         def listener(message: Any, connection: Connection) -> None:
             """
             Handle an agent attitude message.
@@ -385,8 +383,8 @@ class Receivers:
 
             return
 
-        @self.__receive_message("HOME_POSITION")
-        @self.__timer()
+        @self._receive_message("HOME_POSITION")
+        @self._timer()
         def listener(message: Any, connection: Connection) -> None:
             """
             Handle the home position message.
@@ -427,60 +425,3 @@ class Receivers:
             return
 
         return
-
-    @property
-    def receivers(self) -> Dict[str, List[Callable]]:
-        """
-        Methods used to handle incoming messages.
-
-        :return: message receivers
-        :rtype: Dict[str, List[Callable]]
-        """
-        return self.__receivers
-
-    def __receive_message(self, message: Union[list, str]) -> Callable:
-        """
-        Create a receiver for a MAVLink message.
-
-        Decorator used to create a receiver for a mavlink message
-        This implementation has been inspired by the following source:
-            * Project: Dronekit
-            * Repository: dronekit
-            * URL: https://github.com/dronekit/dronekit-python
-
-        :param message: The type of message to watch for
-        :type message: Union[list, str]
-
-        :return: decorator
-        :rtype: Callable
-        """
-
-        def decorator(function: Callable):
-            if message not in self.__receivers:
-                self.__receivers[message] = []
-
-            if function not in self.__receivers[message]:
-                self.__receivers[message].append(function)
-
-        return decorator
-
-    def __timer(self) -> Callable:
-        """
-        Log the time that a sender takes to complete. Used for debugging purposes.
-
-        :return: decorator
-        :rtype: Callable
-        """
-
-        def decorator(function: Callable) -> Callable:
-            def wrapper(*args):
-                start_t = time.time()
-                response = function(*args)
-                self.__logger.debug(
-                    f"Time taken to execute function: {time.time() - start_t}s"
-                )
-                return response
-
-            return wrapper
-
-        return decorator

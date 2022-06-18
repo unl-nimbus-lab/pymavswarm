@@ -19,19 +19,19 @@
 
 import logging
 import time
-from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Tuple
 
 from pymavlink import mavutil
 
 import pymavswarm.messages as swarm_messages
-import pymavswarm.utils as swarm_utils
+import pymavswarm.state as swarm_state
 from pymavswarm import Connection
+from pymavswarm.handlers.senders import Senders
 from pymavswarm.messages import SupportedCommands as supported_messages
 from pymavswarm.messages import responses
 
 
-class Senders:
+class MessageSenders(Senders):
     """Methods responsible for sending MAVLink messages."""
 
     # Message types
@@ -60,12 +60,13 @@ class Senders:
     RESET_HOME_TO_CURRENT = "RESET_HOME_TO_CURRENT"
     RESET_HOME = "RESET_HOME"
     READ_PARAMETER = "READ_PARAMETER"
+    SET_PARAMETER = "SET_PARAMETER"
 
     def __init__(
-        self, logger_name: str = "senders", log_level: int = logging.INFO
+        self, logger_name: str = "message-senders", log_level: int = logging.INFO
     ) -> None:
         """
-        Create a new senders object.
+        Create a new message senders object.
 
         :param logger_name: logger name, defaults to "senders"
         :type logger_name: str, optional
@@ -73,11 +74,10 @@ class Senders:
         :param log_level: logging level, defaults to logging.INFO
         :type log_level: int, optional
         """
-        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
-        self.__senders: Dict[str, List[Callable]] = {}
+        super().__init__(logger_name, log_level)
 
-        @self.__send_message(Senders.ARM)
-        @self.__timer()
+        @self._send_message(MessageSenders.ARM)
+        @self._timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
             connection: Connection,
@@ -127,7 +127,7 @@ class Senders:
 
                 return ack
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -136,8 +136,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.DISARM)
-        @self.__timer()
+        @self._send_message(MessageSenders.DISARM)
+        @self._timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
             connection: Connection,
@@ -185,7 +185,7 @@ class Senders:
                         break
                 return ack
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -194,8 +194,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.KILL)
-        @self.__timer()
+        @self._send_message(MessageSenders.KILL)
+        @self._timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
             connection: Connection,
@@ -231,7 +231,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -239,8 +239,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.REBOOT)
-        @self.__timer()
+        @self._send_message(MessageSenders.REBOOT)
+        @self._timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
             connection: Connection,
@@ -276,7 +276,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -284,8 +284,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.SHUTDOWN)
-        @self.__timer()
+        @self._send_message(MessageSenders.SHUTDOWN)
+        @self._timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
             connection: Connection,
@@ -321,7 +321,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -329,8 +329,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.ACCELEROMETER_CALIBRATION)
-        @self.__timer()
+        @self._send_message(MessageSenders.ACCELEROMETER_CALIBRATION)
+        @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
@@ -366,7 +366,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -374,8 +374,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.SIMPLE_ACCELEROMETER_CALIBRATION)
-        @self.__timer()
+        @self._send_message(MessageSenders.SIMPLE_ACCELEROMETER_CALIBRATION)
+        @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
@@ -411,7 +411,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -419,8 +419,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.AHRS_TRIM)
-        @self.__timer()
+        @self._send_message(MessageSenders.AHRS_TRIM)
+        @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
@@ -456,7 +456,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -464,8 +464,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.GYROSCOPE_CALIBRATION)
-        @self.__timer()
+        @self._send_message(MessageSenders.GYROSCOPE_CALIBRATION)
+        @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
@@ -501,7 +501,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -509,8 +509,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.MAGNETOMETER_CALIBRATION)
-        @self.__timer()
+        @self._send_message(MessageSenders.MAGNETOMETER_CALIBRATION)
+        @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
@@ -546,7 +546,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -554,8 +554,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.GROUND_PRESSURE_CALIBRATION)
-        @self.__timer()
+        @self._send_message(MessageSenders.GROUND_PRESSURE_CALIBRATION)
+        @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
@@ -591,7 +591,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -599,8 +599,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.AIRSPEED_CALIBRATION)
-        @self.__timer()
+        @self._send_message(MessageSenders.AIRSPEED_CALIBRATION)
+        @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
@@ -636,7 +636,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -644,8 +644,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.BAROMETER_TEMPERATURE_CALIBRATION)
-        @self.__timer()
+        @self._send_message(MessageSenders.BAROMETER_TEMPERATURE_CALIBRATION)
+        @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
@@ -681,7 +681,7 @@ class Senders:
                 3,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -689,10 +689,10 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.FLIGHT_MODE)
-        @self.__timer()
+        @self._send_message(MessageSenders.FLIGHT_MODE)
+        @self._timer()
         def sender(
-            message: swarm_messages.FlightModeMessage,
+            message: swarm_messages.FlightModeCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -744,14 +744,14 @@ class Senders:
 
                 return ack
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message, connection, function_idx, verify_state_changed
             )
 
             return ack, response
 
-        @self.__send_message(Senders.FLIGHT_SPEED)
-        @self.__timer()
+        @self._send_message(MessageSenders.FLIGHT_SPEED)
+        @self._timer()
         def sender(
             message: swarm_messages.FlightSpeedMessage,
             connection: Connection,
@@ -787,7 +787,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -795,8 +795,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.SIMPLE_TAKEOFF)
-        @self.__timer()
+        @self._send_message(MessageSenders.SIMPLE_TAKEOFF)
+        @self._timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
             connection: Connection,
@@ -836,7 +836,7 @@ class Senders:
                 0,
                 message.altitude,
             )
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -844,8 +844,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.TAKEOFF)
-        @self.__timer()
+        @self._send_message(MessageSenders.TAKEOFF)
+        @self._timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
             connection: Connection,
@@ -885,7 +885,7 @@ class Senders:
                 message.longitude,
                 message.altitude,
             )
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -893,8 +893,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.SIMPLE_FULL_TAKEOFF)
-        @self.__timer()
+        @self._send_message(MessageSenders.SIMPLE_FULL_TAKEOFF)
+        @self._timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
             connection: Connection,
@@ -922,7 +922,7 @@ class Senders:
             :rtype: Tuple[bool, Tuple[int, str]]
             """
             # Create a new guided mode
-            guided_message = swarm_messages.FlightModeMessage(
+            guided_message = swarm_messages.FlightModeCommand(
                 supported_messages.flight_modes.guided,
                 message.target_system,
                 message.target_comp,
@@ -934,7 +934,7 @@ class Senders:
             )
 
             # Attempt to switch to GUIDED mode
-            if not self.__send_sequence_message(guided_message, connection):
+            if not self._send_sequence_message(guided_message, connection):
                 return False, responses.SEQUENCE_STAGE_FAILURE
 
             # Create a new arming message to send
@@ -950,7 +950,7 @@ class Senders:
             )
 
             # Attempt to arm the system
-            if not self.__send_sequence_message(arm_message, connection):
+            if not self._send_sequence_message(arm_message, connection):
                 return False, responses.SEQUENCE_STAGE_FAILURE
 
             # Give the agent a chance to fully arm
@@ -960,13 +960,13 @@ class Senders:
             message.message_type = supported_messages.mission_commands.simple_takeoff
 
             # Attempt to perform takeoff
-            if not self.__send_sequence_message(message, connection):
+            if not self._send_sequence_message(message, connection):
                 return False, responses.SEQUENCE_STAGE_FAILURE
 
             return True, responses.SUCCESS
 
-        @self.__send_message(Senders.FULL_TAKEOFF)
-        @self.__timer()
+        @self._send_message(MessageSenders.FULL_TAKEOFF)
+        @self._timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
             connection: Connection,
@@ -994,7 +994,7 @@ class Senders:
             :rtype: Tuple[bool, Tuple[int, str]]
             """
             # Create a new guided mode
-            guided_message = swarm_messages.FlightModeMessage(
+            guided_message = swarm_messages.FlightModeCommand(
                 supported_messages.flight_modes.guided,
                 message.target_system,
                 message.target_comp,
@@ -1006,7 +1006,7 @@ class Senders:
             )
 
             # Attempt to switch to GUIDED mode
-            if not self.__send_sequence_message(guided_message, connection):
+            if not self._send_sequence_message(guided_message, connection):
                 return False, responses.SEQUENCE_STAGE_FAILURE
 
             # Create a new arming message to send
@@ -1022,7 +1022,7 @@ class Senders:
             )
 
             # Attempt to arm the system
-            if not self.__send_sequence_message(arm_message, connection):
+            if not self._send_sequence_message(arm_message, connection):
                 return False, responses.SEQUENCE_STAGE_FAILURE
 
             # Give the agent a chance to fully arm
@@ -1032,13 +1032,13 @@ class Senders:
             message.message_type = supported_messages.mission_commands.takeoff
 
             # Attempt to perform takeoff
-            if not self.__send_sequence_message(message, connection):
+            if not self._send_sequence_message(message, connection):
                 return False, responses.SEQUENCE_STAGE_FAILURE
 
             return True, responses.SUCCESS
 
-        @self.__send_message(Senders.SIMPLE_WAYPOINT)
-        @self.__timer()
+        @self._send_message(MessageSenders.SIMPLE_WAYPOINT)
+        @self._timer()
         def sender(
             message: swarm_messages.WaypointMessage,
             connection: Connection,
@@ -1081,7 +1081,7 @@ class Senders:
                 message.altitude,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -1089,8 +1089,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.WAYPOINT)
-        @self.__timer()
+        @self._send_message(MessageSenders.WAYPOINT)
+        @self._timer()
         def sender(
             message: swarm_messages.WaypointMessage,
             connection: Connection,
@@ -1133,7 +1133,7 @@ class Senders:
                 message.altitude,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -1141,8 +1141,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.GET_HOME_POSITION)
-        @self.__timer()
+        @self._send_message(MessageSenders.GET_HOME_POSITION)
+        @self._timer()
         def sender(
             message: swarm_messages.AgentCommand,
             connection: Connection,
@@ -1175,7 +1175,7 @@ class Senders:
                 0,
             )
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
@@ -1183,8 +1183,8 @@ class Senders:
 
             return ack, response
 
-        @self.__send_message(Senders.RESET_HOME_TO_CURRENT)
-        @self.__timer()
+        @self._send_message(MessageSenders.RESET_HOME_TO_CURRENT)
+        @self._timer()
         def sender(
             message: swarm_messages.HomePositionMessage,
             connection: Connection,
@@ -1250,7 +1250,7 @@ class Senders:
                     )
 
                     # Get the updated home position
-                    self.__send_sequence_message(update_home_state_message, connection)
+                    self._send_sequence_message(update_home_state_message, connection)
 
                     if time.time() - start_time >= message.state_timeout:
                         ack = False
@@ -1258,14 +1258,14 @@ class Senders:
 
                 return ack
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message, connection, function_idx, verify_state_changed
             )
 
             return ack, response
 
-        @self.__send_message(Senders.RESET_HOME)
-        @self.__timer()
+        @self._send_message(MessageSenders.RESET_HOME)
+        @self._timer()
         def sender(
             message: swarm_messages.HomePositionMessage,
             connection: Connection,
@@ -1327,7 +1327,7 @@ class Senders:
                     )
 
                     # Get the updated home position
-                    self.__send_sequence_message(update_home_state_message, connection)
+                    self._send_sequence_message(update_home_state_message, connection)
 
                     if time.time() - start_time >= message.state_timeout:
                         ack = False
@@ -1335,14 +1335,14 @@ class Senders:
 
                 return ack
 
-            ack, response = self.__get_message_response(
+            ack, response, _ = self._get_message_response(
                 message, connection, function_idx, verify_state_changed
             )
 
             return ack, response
 
-        @self.__send_message(Senders.READ_PARAMETER)
-        @self.__timer()
+        @self._send_message(MessageSenders.READ_PARAMETER)
+        @self._timer()
         def sender(
             message: swarm_messages.Parameter,
             connection: Connection,
@@ -1351,238 +1351,80 @@ class Senders:
             """
             Read a parameter value from the target agent.
 
-            :param param: The parameter to read
-            :type param: Parameter
+            The parameter read can be interpretted as a request.
+
+            :param message: parameter to read
+            :type message: Parameter
 
             :param connection: MAVLink connection
             :type connection: Connection
 
-            :return: indicate whether or not the parameter was successfully read
-            :rtype: bool
+            :return: parameter read success, parameter read response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             try:
                 connection.mavlink_connection.mav.param_request_read_send(
-                    param.system_id,
-                    param.component_id,
-                    str.encode(param.parameter_id),
+                    message.target_system,
+                    message.target_component,
+                    str.encode(message.parameter_id),
                     -1,
                 )
             except Exception:
-                # self.__logger.exception(
-                #     "An exception occurred while attempting to read %d "
-                #     "from Agent (%d, %d)",
-                #     param.parameter_id,
-                #     param.system_id,
-                #     param.component_id,
-                #     exc_info=True,
-                # )
-                return False
+                return False, responses.PARAM_READ_FAILURE
 
-            ack = False
-
-            ack, msg = swarm_utils.ack_message(
-                "PARAM_VALUE", connection, timeout=param.ack_timeout
+            ack, response, ack_msg = self._get_message_response(
+                message, connection, function_idx, ack_packet_type="PARAM_VALUE"
             )
 
             if ack:
                 read_param = swarm_state.ReadParameter(
-                    msg["param_id"],
-                    msg["param_value"],
-                    msg["param_type"],
-                    msg["param_index"],
-                    msg["param_count"],
+                    ack_msg["param_id"],
+                    ack_msg["param_value"],
+                    ack_msg["param_type"],
+                    ack_msg["param_index"],
+                    ack_msg["param_count"],
                 )
 
-                self.__agents[
-                    (param.system_id, param.component_id)
+                connection.agents[
+                    (message.target_system, message.target_component)
                 ].last_params_read.append(read_param)
-            else:
-                if param.retry:
-                    if self.__retry_param_send(param, self.__read_param):
-                        ack = True
 
-            if ack:
-                self.__logger.info(
-                    f"Successfully read {param.parameter_id} from Agent ({param.system_id}, "
-                    f"{param.component_id}). Value: {msg}"
+            return ack, response
+
+        @self._send_message(MessageSenders.SET_PARAMETER)
+        @self._timer()
+        def sender(
+            message: swarm_messages.Parameter,
+            connection: Connection,
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
+            """
+            Set a parameter on the target agent.
+
+            :param message: parameter to read
+            :type message: Parameter
+
+            :param connection: MAVLink connection
+            :type connection: Connection
+
+            :return: parameter read success, parameter read response
+            :rtype: Tuple[bool, Tuple[int, str]]
+            """
+            try:
+                # NOTE: In the current state, we only support float parameter value types
+                #       Additional types may be added in the future
+                connection.mav.param_set_send(
+                    message.target_system,
+                    message.target_component,
+                    str.encode(message.parameter_id),
+                    message.parameter_value,
+                    9,
                 )
-            else:
-                self.__logger.error(
-                    f"Failed to read {param.parameter_id} from Agent ({param.system_id}, "
-                    f"{param.component_id})"
-                )
+            except Exception:
+                return False, responses.PARAM_READ_FAILURE
 
-            return ack
-
-    @property
-    def senders(self) -> Dict[str, List[Callable]]:
-        """
-        Get the methods responsible for sending messages.
-
-        :return: list of senders
-        :rtype: dict
-        """
-        return self.__senders
-
-    def __get_message_response(
-        self,
-        message: Any,
-        connection: Connection,
-        function_idx: int,
-        state_verification_function: Optional[Callable] = None,
-    ) -> Tuple[bool, Tuple[int, str]]:
-        """
-        Verify the result of a message and retry sending the message, if desired.
-
-        :param message: message whose response should be captured
-        :type message: Any
-
-        :param connection: MAVLink connection
-        :type connection: Connection
-
-        :param function_idx: index of the function to use when sending the message
-        :type function_idx: int
-
-        :param state_verification_function: function used to verify that the target
-            state was properly modified, defaults to None
-        :type state_verification_function: Optional[Callable], optional
-
-        :return: message acknowledgement, message response
-        :rtype: Tuple[bool, Tuple[int, str]]
-        """
-        ack = False
-        response = responses.ACK_FAILURE
-
-        if swarm_utils.ack_message(
-            "COMMAND_ACK", connection, timeout=message.ack_timeout
-        ):
-            ack = True
-            response = responses.SUCCESS
-
-            if (
-                message.target_system,
-                message.target_comp,
-            ) in connection.agents and state_verification_function is not None:
-                ack = state_verification_function(message, connection)
-
-                if not ack:
-                    response = responses.STATE_VALIDATION_FAILURE
-        else:
-            response = responses.ACK_FAILURE
-
-        if message.retry and not ack:
-            ack, response = self.__retry_message_send(
-                deepcopy(message),
-                connection,
-                self.__senders[message.message_type][function_idx],
+            ack, response, _ = self._get_message_response(
+                message, connection, function_idx, ack_packet_type="PARAM_VALUE"
             )
 
-        return ack, response
-
-    def __retry_message_send(
-        self,
-        message: Any,
-        connection: Connection,
-        function: Callable,
-    ) -> Tuple[bool, Tuple[int, str]]:
-        """
-        Retry a message send until success/timeout.
-
-        :param message: message to retry sending
-        :type message: pymavswarm message
-
-        :param function: function to call using the message
-        :type function: Callable
-
-        :return: message acknowledged, message response
-        :rtype: Tuple[bool, Tuple[int, str]]
-        """
-        ack = False
-        start_time = time.time()
-
-        # Don't let the message come back here and create an infinite loop
-        message.retry = False
-
-        while time.time() - start_time <= message.message_timeout:
-            ack, response = function(self, message, connection)
-
-            if ack:
-                break
-
-        return ack, response
-
-    def __send_sequence_message(self, message: Any, connection: Connection) -> bool:
-        """
-        Send a sequence message.
-
-        Helper function used to handle calling all of the handlers for a message.
-        This method is used by sequence commands (such as the full takeoff
-        command) to provide indication of a function execution result.
-
-        :param message: The message to send
-        :type message: Any
-
-        :return: Indicates whether all of the message senders for a given message
-            successfully sent their respective message
-        :rtype: bool
-        """
-        if message.message_type not in self.__senders:
-            return False
-
-        for function_idx, function in enumerate(self.__senders[message.message_type]):
-            try:
-                success, _ = function(
-                    self,
-                    message,
-                    connection,
-                    function_idx=function_idx,
-                )
-
-                if not success:
-                    return False
-
-            except Exception:
-                return False
-
-        return True
-
-    def __send_message(self, message: str) -> Callable:
-        """
-        Create a sender for a mavlink message.
-
-        :param message: The message type to connect to the sender
-        :type message: Union[list, str]
-
-        :return: decorator
-        :rtype: Callable
-        """
-
-        def decorator(function: Callable):
-            if message not in self.__senders:
-                self.__senders[message] = []
-
-            if function not in self.__senders[message]:
-                self.__senders[message].append(function)
-
-        return decorator
-
-    def __timer(self) -> Callable:
-        """
-        Log the time that a sender takes to complete. Used for debugging purposes.
-
-        :return: decorator
-        :rtype: Callable
-        """
-
-        def decorator(function: Callable) -> Callable:
-            def wrapper(*args):
-                start_t = time.time()
-                response = function(*args)
-                self.__logger.debug(
-                    f"Time taken to execute function: {time.time() - start_t}s"
-                )
-                return response
-
-            return wrapper
-
-        return decorator
+            return ack, response
