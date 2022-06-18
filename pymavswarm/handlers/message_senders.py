@@ -96,7 +96,7 @@ class Senders:
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: bool
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -155,8 +155,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -172,7 +172,7 @@ class Senders:
                 0,
             )
 
-            def verify_state_changed(message, connection: Connection):
+            def verify_state_changed(message: Any, connection: Connection):
                 ack = True
                 start_time = time.time()
 
@@ -213,8 +213,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -258,8 +258,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -303,8 +303,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -348,8 +348,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -393,8 +393,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -438,8 +438,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -483,8 +483,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -528,8 +528,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -573,8 +573,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -618,8 +618,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -663,8 +663,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -708,8 +708,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             # Reset target
             connection.mavlink_connection.target_system = message.target_system
@@ -727,7 +727,7 @@ class Senders:
             )
 
             # Construct a method to use for verifying the state change
-            def verify_state_changed(message, connection: Connection):
+            def verify_state_changed(message: Any, connection: Connection):
                 ack = True
                 start_time = time.time()
 
@@ -769,8 +769,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -819,8 +819,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -868,8 +868,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -917,8 +917,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             # Create a new guided mode
             guided_message = swarm_messages.FlightModeMessage(
@@ -989,8 +989,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             # Create a new guided mode
             guided_message = swarm_messages.FlightModeMessage(
@@ -1060,8 +1060,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.mission_item_send(
                 message.target_system,
@@ -1112,8 +1112,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.mission_item_send(
                 message.target_system,
@@ -1157,8 +1157,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -1206,8 +1206,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             agent_id = (message.target_system, message.target_comp)
 
@@ -1229,7 +1229,7 @@ class Senders:
                 0,
             )
 
-            def verify_state_changed(message, connection: Connection):
+            def verify_state_changed(message: Any, connection: Connection):
                 ack = True
                 start_time = time.time()
 
@@ -1283,8 +1283,8 @@ class Senders:
                 handler list, defaults to 0
             :type function_idx: int, optional
 
-            :return: message send success/fail
-            :rtype: bool
+            :return: message send success/fail, message response
+            :rtype: Tuple[bool, Tuple[int, str]]
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -1341,7 +1341,7 @@ class Senders:
             return ack, response
 
     @property
-    def senders(self) -> dict:
+    def senders(self) -> Dict[str, List[Callable]]:
         """
         Get the methods responsible for sending messages.
 

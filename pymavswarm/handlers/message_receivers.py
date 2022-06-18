@@ -16,9 +16,10 @@
 
 # type: ignore[no-redef]
 # pylint: disable=function-redefined
+
 import logging
 import time
-from typing import Any, Callable, Union
+from typing import Any, Callable, Dict, List, Union
 
 import monotonic
 from pymavlink import mavutil
@@ -36,7 +37,7 @@ class Receivers:
         self, logger_name: str = "receivers", log_level: int = logging.INFO
     ) -> None:
         """
-        Constructor.
+        Make a new receivers object.
 
         :param logger_name: _description_, defaults to "receivers"
         :type logger_name: str, optional
@@ -45,16 +46,19 @@ class Receivers:
         :type log_level: int, optional
         """
         self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
-        self.__receivers = {}
+        self.__receivers: Dict[str, List[Callable]] = {}
 
         @self.__receive_message("HEARTBEAT")
         @self.__timer()
         def listener(message: Any, connection: Connection) -> None:
             """
-            Register new agents or update the timeout status of existing agents
+            Register new agents or update the timeout status of existing agents.
 
             :param message: Incoming MAVLink message
             :type message: Any
+
+            :param connection: MAVLink connection
+            :type connection: Connection
             """
             # Make sure that the message isn't from a GCS
             if message.get_type() == mavutil.mavlink.MAV_TYPE_GCS:
@@ -90,10 +94,13 @@ class Receivers:
         @self.__timer()
         def listener(message: Any, connection: Connection) -> None:
             """
-            Handle general agent information contained within a heartbeat
+            Handle general agent information contained within a heartbeat.
 
             :param message: Incoming MAVLink message
             :type message: Any
+
+            :param connection: MAVLink connection
+            :type connection: Connection
             """
             # Ignore messages sent by a GCS
             if message.type == mavutil.mavlink.MAV_TYPE_GCS:
@@ -115,7 +122,8 @@ class Receivers:
             connection.agents[agent_id].last_heartbeat.value = monotonic.monotonic()
 
             try:
-                # NOTE: We assume that ArduPilot will be used
+                # WARNING: We are currently assuming that ardupilot will be used
+                # this will be changed in a future version
                 connection.agents[
                     agent_id
                 ].flight_mode.value = mavutil.mode_mapping_bynumber(message.type)[
@@ -131,10 +139,13 @@ class Receivers:
         @self.__timer()
         def listener(message: Any, connection: Connection) -> None:
             """
-            Handle the a GPS position message
+            Handle the a GPS position message.
 
             :param message: Incoming MAVLink message
             :type message: Any
+
+            :param connection: MAVLink connection
+            :type connection: Connection
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -173,10 +184,13 @@ class Receivers:
         @self.__timer()
         def listener(message: Any, connection: Connection) -> None:
             """
-            Handle an agent attitude message
+            Handle an agent attitude message.
 
             :param message: Incoming MAVLink message
             :type message: Any
+
+            :param connection: MAVLink connection
+            :type connection: Connection
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -208,10 +222,13 @@ class Receivers:
         @self.__timer()
         def listener(message: Any, connection: Connection) -> None:
             """
-            Handle the system status message containing battery state
+            Handle the system status message containing battery state.
 
             :param message: Incoming MAVLink message
             :type message: Any
+
+            :param connection: MAVLink connection
+            :type connection: Connection
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -237,10 +254,13 @@ class Receivers:
         @self.__timer()
         def listener(message: Any, connection: Connection) -> None:
             """
-            Handle the GPS status information
+            Handle the GPS status information.
 
             :param message: Incoming MAVLink message
             :type message: Any
+
+            :param connection: MAVLink connection
+            :type connection: Connection
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -270,10 +290,13 @@ class Receivers:
         @self.__timer()
         def listener(message: Any, connection: Connection) -> None:
             """
-            Handle an EKF status message
+            Handle an EKF status message.
 
             :param message: Incoming MAVLink message
             :type message: Any
+
+            :param connection: MAVLink connection
+            :type connection: Connection
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -328,10 +351,13 @@ class Receivers:
         @self.__timer()
         def listener(message: Any, connection: Connection) -> None:
             """
-            Handle an agent attitude message
+            Handle an agent attitude message.
 
             :param message: Incoming MAVLink message
             :type message: Any
+
+            :param connection: MAVLink connection
+            :type connection: Connection
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -363,12 +389,15 @@ class Receivers:
         @self.__timer()
         def listener(message: Any, connection: Connection) -> None:
             """
-            Handle the home position message
+            Handle the home position message.
 
-            NOTE: The altitude is provided in MSL, NOT AGL
+            The altitude is provided in MSL, NOT AGL
 
             :param message: Incoming MAVLink message
             :type message: Any
+
+            :param connection: MAVLink connection
+            :type connection: Connection
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -400,17 +429,20 @@ class Receivers:
         return
 
     @property
-    def receivers(self) -> dict:
+    def receivers(self) -> Dict[str, List[Callable]]:
         """
         Methods used to handle incoming messages.
 
-        :rtype: dict
+        :return: message receivers
+        :rtype: Dict[str, List[Callable]]
         """
         return self.__receivers
 
     def __receive_message(self, message: Union[list, str]) -> Callable:
         """
-        Decorator used to create a listener for a mavlink message
+        Create a receiver for a MAVLink message.
+
+        Decorator used to create a receiver for a mavlink message
         This implementation has been inspired by the following source:
             * Project: Dronekit
             * Repository: dronekit
@@ -434,8 +466,7 @@ class Receivers:
 
     def __timer(self) -> Callable:
         """
-        Decorator used to log the time that a sender takes to complete. Used for
-        debugging purposes.
+        Log the time that a sender takes to complete. Used for debugging purposes.
 
         :return: decorator
         :rtype: Callable
