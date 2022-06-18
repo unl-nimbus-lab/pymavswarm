@@ -68,7 +68,7 @@ class MessageSenders(Senders):
         """
         Create a new message senders object.
 
-        :param logger_name: logger name, defaults to "senders"
+        :param logger_name: logger name, defaults to "message-senders"
         :type logger_name: str, optional
 
         :param log_level: logging level, defaults to logging.INFO

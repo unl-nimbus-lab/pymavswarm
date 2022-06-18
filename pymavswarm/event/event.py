@@ -14,34 +14,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any, Callable
+from typing import Any, Callable, List
 
 
 class Event:
-    """
-    Interface used to represent events and signal event listeners.
-    """
+    """Interface used to represent events and signal event listeners."""
 
     def __init__(self) -> None:
-        """
-        Constructor.
-        """
-        self.__listeners = []
+        """Create an event."""
+        self.__listeners: List[Callable] = []
 
         return
 
     @property
     def listeners(self) -> list:
         """
-        The list of methods that are called on the event
+        List of methods that are called on the event.
 
+        :return: callback functions
         :rtype: list
         """
         return self.__listeners
 
     def add_listener(self, function: Callable) -> None:
         """
-        Add a listener to the listeners
+        Add a listener to the list of listeners.
 
         :param fn: Function to call on event
         :type fn: function
@@ -52,7 +49,7 @@ class Event:
 
     def remove_listener(self, function: Callable) -> None:
         """
-        Remove a listener
+        Remove a listener from the list of listeners.
 
         :param fn: Function to remove
         :type fn: function
@@ -63,9 +60,7 @@ class Event:
         return
 
     def notify(self, **kwargs: Any) -> None:
-        """
-        Notify all listeners that the event was triggered
-        """
+        """Notify all listeners that the event was triggered."""
         for listener in self.__listeners:
             if len(kwargs) > 0:
                 listener(kwargs)
