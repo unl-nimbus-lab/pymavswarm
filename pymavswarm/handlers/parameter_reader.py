@@ -13,14 +13,11 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-"""Handler used for reading parameters from an agent."""
-
 import logging
 
 import pymavswarm.utils as swarm_utils
 from pymavswarm import Connection
-from pymavswarm.param import Parameter
+from pymavswarm.messages.param import Parameter
 
 
 class ParameterReader:
@@ -49,7 +46,7 @@ class ParameterReader:
         :param param: The parameter to read
         :type param: Parameter
 
-        :param connection: mavlink connection
+        :param connection: MAVLink connection
         :type connection: Connection
 
         :return: indicate whether or not the parameter was successfully read

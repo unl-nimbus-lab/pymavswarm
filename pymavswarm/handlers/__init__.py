@@ -15,4 +15,4 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .message_receivers import Receivers
-from .message_senders import Senders
+from .command_senders import Senders

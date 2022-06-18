@@ -59,6 +59,7 @@ class Senders:
     GET_HOME_POSITION = "GET_HOME_POSITION"
     RESET_HOME_TO_CURRENT = "RESET_HOME_TO_CURRENT"
     RESET_HOME = "RESET_HOME"
+    READ_PARAMETER = "READ_PARAMETER"
 
     def __init__(
         self, logger_name: str = "senders", log_level: int = logging.INFO
@@ -1339,6 +1340,79 @@ class Senders:
             )
 
             return ack, response
+
+        @self.__send_message(Senders.READ_PARAMETER)
+        @self.__timer()
+        def sender(
+            message: swarm_messages.Parameter,
+            connection: Connection,
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
+            """
+            Read a parameter value from the target agent.
+
+            :param param: The parameter to read
+            :type param: Parameter
+
+            :param connection: MAVLink connection
+            :type connection: Connection
+
+            :return: indicate whether or not the parameter was successfully read
+            :rtype: bool
+            """
+            try:
+                connection.mavlink_connection.mav.param_request_read_send(
+                    param.system_id,
+                    param.component_id,
+                    str.encode(param.parameter_id),
+                    -1,
+                )
+            except Exception:
+                # self.__logger.exception(
+                #     "An exception occurred while attempting to read %d "
+                #     "from Agent (%d, %d)",
+                #     param.parameter_id,
+                #     param.system_id,
+                #     param.component_id,
+                #     exc_info=True,
+                # )
+                return False
+
+            ack = False
+
+            ack, msg = swarm_utils.ack_message(
+                "PARAM_VALUE", connection, timeout=param.ack_timeout
+            )
+
+            if ack:
+                read_param = swarm_state.ReadParameter(
+                    msg["param_id"],
+                    msg["param_value"],
+                    msg["param_type"],
+                    msg["param_index"],
+                    msg["param_count"],
+                )
+
+                self.__agents[
+                    (param.system_id, param.component_id)
+                ].last_params_read.append(read_param)
+            else:
+                if param.retry:
+                    if self.__retry_param_send(param, self.__read_param):
+                        ack = True
+
+            if ack:
+                self.__logger.info(
+                    f"Successfully read {param.parameter_id} from Agent ({param.system_id}, "
+                    f"{param.component_id}). Value: {msg}"
+                )
+            else:
+                self.__logger.error(
+                    f"Failed to read {param.parameter_id} from Agent ({param.system_id}, "
+                    f"{param.component_id})"
+                )
+
+            return ack
 
     @property
     def senders(self) -> Dict[str, List[Callable]]:

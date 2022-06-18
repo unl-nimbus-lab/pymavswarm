@@ -15,13 +15,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .commands.agent_command import AgentCommand
-from .flight_mode_message import FlightModeMessage
-from .flight_speed_message import FlightSpeedMessage
-from .home_position_message import HomePositionMessage
-from .hrl_message import HRLMessage
 from .commands.command_package import MessagePackage
+from .commands.flight_mode_command import FlightModeCommand
+from .commands.flight_speed_command import FlightSpeedMessage
+from .commands.home_position_command import HomePositionMessage
 from .commands.preflight_calibration_command import PreflightCalibrationMessage
 from .commands.supported_commands import SupportedCommands
 from .commands.system_command import SystemCommandMessage
 from .commands.takeoff_command import TakeoffMessage
 from .commands.waypoint_command import WaypointMessage
+from .param.parameter import Parameter

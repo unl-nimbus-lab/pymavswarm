@@ -13,102 +13,38 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-"""Wrapper for a robot parameter read/write request."""
-
 from typing import Optional, Union
 
-from pymavswarm.event import Event
+from pymavswarm.messages.message import Message
 
 
-class Parameter:
+class Parameter(Message):
     """Key/value pair that may be sent to an agent to read/write a parameter value."""
 
     def __init__(
         self,
-        system_id: int,
-        component_id: int,
         parameter_id: str,
+        target_system: int,
+        target_component: int,
         retry: bool,
         parameter_value: Optional[Union[float, int]] = None,
-        message_timeout: float = 3.0,
-        acknowledgement_timeout: float = 1.0,
-        optional_context_properties: Optional[dict] = None,
+        message_timeout: float = 5,
+        ack_timeout: float = 1,
+        optional_context_props: Optional[dict] = None,
     ) -> None:
-        """
-        Create a parameter.
+        super().__init__(
+            target_system,
+            target_component,
+            retry,
+            message_timeout,
+            ack_timeout,
+            optional_context_props,
+        )
 
-        :param system_id: system ID of the agent whose parameters should be set/read
-        :type system_id: int
-
-        :param component_id: component ID of the agent whose parameters should be
-            set/read
-        :type component_id: int
-
-        :param parameter_id: parameter ID that should be set/read
-        :type parameter_id: str
-
-        :param retry: flag indicating whether the system should retry message sending
-            should acknowledgment fail
-        :type retry: bool
-
-        :param parameter_value: value that the parameter should be set to, defaults to
-            None
-        :type parameter_value: Optional[Union[float, int]], optional
-
-        :param message_timeout: amount of time that pymavswarm should attempt to resend
-            a message if acknowledgement is not received. This is only used when
-            retry is set to true, defaults to 3.0
-        :type message_timeout: float, optional
-
-        :param acknowledgement_timeout: amount of time that pymavswarm should wait for
-            acknowledgement before considering that the system failed to acknowledge
-            the parameter setting/reading, defaults to 1.0
-        :type acknowledgement_timeout: float, optional
-
-        :param optional_context_props: optional properties to append to the parameter
-            context, defaults to None
-        :type optional_context_properties: Optional[dict], optional
-        """
-        self.__sys_id = system_id
-        self.__comp_id = component_id
-        self.__param_id = parameter_id
-        self.__retry = retry
-        self.__param_value = parameter_value
-        self.__optional_context_props = optional_context_properties
-
-        if message_timeout < 0.0 or acknowledgement_timeout < 0.0:
-            raise ValueError(
-                "An invalid timeout or delay was provided. Ensure that "
-                "all timeouts and delays are non-negative"
-            )
-
-        self.__msg_timeout = message_timeout
-        self.__ack_timeout = acknowledgement_timeout
-        self.__parameter_read_result_event = Event()
-        self.__parameter_write_result_event = Event()
+        self.__parameter_id = parameter_id
+        self.__parameter_value = parameter_value
 
         return
-
-    @property
-    def system_id(self) -> int:
-        """
-        System ID of the agent whose param value should be set/read.
-
-        :return: system ID
-        :rtype: int
-        """
-        return self.__sys_id
-
-    @property
-    def component_id(self) -> int:
-        """
-        Component ID of the agent whose param value should be set/read.
-
-        :return: component ID
-        :rtype: int
-        """
-        return self.__comp_id
 
     @property
     def parameter_id(self) -> str:
@@ -118,7 +54,7 @@ class Parameter:
         :return: parameter ID
         :rtype: str
         """
-        return self.__param_id
+        return self.__parameter_id
 
     @property
     def parameter_value(self) -> Optional[Union[float, int]]:
@@ -128,66 +64,7 @@ class Parameter:
         :return: desired parameter value
         :rtype: Union[float, int]
         """
-        return self.__param_value
-
-    @property
-    def retry(self) -> bool:
-        """
-        Retry setting the parameter/reading the parameter if failure.
-
-        :return: flag indicating whether to retry
-        :rtype: bool
-        """
-        return self.__retry
-
-    @retry.setter
-    def retry(self, retry: bool) -> None:
-        """
-        Set the retry property.
-
-        :param retry: Flag
-        :type retry: bool
-        """
-        self.__retry = retry
-        return
-
-    @property
-    def msg_timeout(self) -> float:
-        """
-        The period of time that pymavswarm should attempt to re-set a parameter
-        if acknowledgement fails (parameter setting only)
-
-        :rtype: float
-        """
-        return self.__msg_timeout
-
-    @property
-    def ack_timeout(self) -> float:
-        """
-        The amount of time that pymavswarm should wait for acknowledgement before
-        considering that the system failed to acknowledge the parameter setting/reading
-
-        :rtype: float
-        """
-        return self.__ack_timeout
-
-    @property
-    def parameter_read_result_event(self) -> Event:
-        """
-        Event signaling the result of a parameter read result
-
-        :rtype: Event
-        """
-        return self.__parameter_read_result_event
-
-    @property
-    def parameter_write_result_event(self) -> Event:
-        """
-        Event signaling the result of a parameter write result
-
-        :rtype: Event
-        """
-        return self.__parameter_write_result_event
+        return self.__parameter_value
 
     @property
     def context(self) -> dict:
