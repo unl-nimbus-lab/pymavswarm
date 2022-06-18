@@ -14,15 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Utility functions used in the pymavswarm system."""
-
 import logging
-import time
-from typing import Optional, Tuple
-
-from pymavlink import mavutil
-
-from pymavswarm import Connection
 
 
 def init_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
