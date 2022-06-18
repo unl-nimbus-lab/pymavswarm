@@ -22,6 +22,21 @@ from pymavswarm.messages import AgentCommand
 class TakeoffMessage(AgentCommand):
     """
     Takeoff to a certain location/altitude.
+
+    TODO: verify provided values
+
+            if (
+                message.altitude < 0
+                or math.isinf(message.altitude)
+                or math.isnan(message.altitude)
+            ):
+                self.__logger.exception(
+                    f"An invalid takeoff altitude was provided ({message.altitude}). "
+                    "Please send a valid takeoff altitude"
+                )
+                message.response = responses.INVALID_PROPERTIES
+                message.message_result_event.notify(context=message.context)
+                return False
     """
 
     def __init__(

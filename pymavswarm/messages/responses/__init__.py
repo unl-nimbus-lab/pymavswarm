@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Status codes and their respective meanings used for messages."""
-
 # The message was successfully sent
 SUCCESS = (1, "success")
 

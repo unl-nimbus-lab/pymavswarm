@@ -15,9 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # type: ignore[no-redef]
-
-"""Handlers for incoming messages."""
-
+# pylint: disable=function-redefined
 import logging
 import time
 from typing import Any, Callable, Union

@@ -20,6 +20,14 @@ from pymavswarm.messages import AgentCommand
 class WaypointMessage(AgentCommand):
     """
     Desired waypoint for an agent to fly to.
+
+    TODO: Add verification
+
+            if (
+                message.altitude < 0
+                or math.isinf(message.altitude)
+                or math.isnan(message.altitude)
+            ):
     """
 
     def __init__(

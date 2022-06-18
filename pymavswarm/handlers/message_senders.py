@@ -17,12 +17,10 @@
 # type: ignore[no-redef]
 # pylint: disable=function-redefined,unused-argument
 
-"""Methods responsible for sending MAVLink messages."""
-
 import logging
-import math
 import time
-from typing import Any, Callable, Dict, List
+from copy import deepcopy
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from pymavlink import mavutil
 
@@ -82,24 +80,22 @@ class Senders:
         def sender(
             message: swarm_messages.SystemCommandMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Arm an agent.
 
             :param message: arming message
             :type message: SystemCommandMessage
 
-            :param function_id: index of the method in the message type function
+            :param connection: MAVLink connection
+            :type connection: Connection
+
+            :param function_idx: index of the method in the message type function
                 handler list, defaults to 0
-            :type function_id: int, optional
+            :type function_idx: int, optional
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
-
-            :return: message send success/fail
+            :return: message send success/fail, message response
             :rtype: bool
             """
             connection.mavlink_connection.mav.command_long_send(
@@ -115,82 +111,49 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the arm command sent to "
-                    f"Agent ({message.target_system}, {message.target_comp})"
-                )
+            # Construct a method to use for verifying state change
+            def verify_state_changed(message, connection: Connection):
                 ack = True
-                message_code = responses.SUCCESS
+                start_time = time.time()
 
-                if agent_exists:
-                    start_time = time.time()
+                while not connection.agents[
+                    (message.target_system, message.target_comp)
+                ].armed.value:
+                    if time.time() - start_time >= message.state_timeout:
+                        ack = False
+                        break
 
-                    while not connection.agents[
-                        (message.target_system, message.target_comp)
-                    ].armed.value:
-                        if time.time() - start_time >= message.state_timeout:
-                            ack = False
-                            break
-                    if ack:
-                        self.__logger.info(
-                            "Successfully verified that Agent ("
-                            f"{message.target_system}, {message.target_component}) "
-                            "switched to the armed state"
-                        )
-                    else:
-                        self.__logger.error(
-                            f"Failed to verify that Agent ({message.target_system}, "
-                            f"{message.target_comp}) switched to the armed state"
-                        )
-                        message_code = responses.STATE_VALIDATION_FAILURE
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the arm command sent to Agent "
-                    f"({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
+                return ack
 
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+                verify_state_changed,
+            )
 
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.DISARM)
         @self.__timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Disarm an agent.
 
             :param message: disarm message
             :type message: SystemCommandMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -208,82 +171,47 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the disarm command sent "
-                    f"to Agent ({message.target_system}, {message.target_comp})"
-                )
+            def verify_state_changed(message, connection: Connection):
                 ack = True
-                message_code = responses.SUCCESS
+                start_time = time.time()
 
-                if agent_exists:
-                    start_time = time.time()
+                while connection.agents[
+                    (message.target_system, message.target_comp)
+                ].armed.value:
+                    if time.time() - start_time >= message.state_timeout:
+                        ack = False
+                        break
+                return ack
 
-                    while connection.agents[
-                        (message.target_system, message.target_comp)
-                    ].armed.value:
-                        if time.time() - start_time >= message.state_timeout:
-                            ack = False
-                            break
-                    if ack:
-                        self.__logger.info(
-                            f"Successfully verified that Agent ("
-                            f"{message.target_system}, {message.target_comp}) switched "
-                            "to the disarmed state"
-                        )
-                    else:
-                        self.__logger.error(
-                            f"Failed to verify that Agent ({message.target_system}, "
-                            f"{message.target_comp}) switched to the disarmed state"
-                        )
-                        message_code = responses.STATE_VALIDATION_FAILURE
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the disarm command sent to "
-                    f"Agent ({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+                verify_state_changed,
+            )
 
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.KILL)
         @self.__timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Force disarm an agent.
 
             :param message: kill message
             :type message: SystemCommandMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -301,66 +229,34 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    f"Successfully acknowledged reception of the kill command sent to "
-                    f"Agent ({message.target_system}, {message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the kill command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the kill command sent to "
-                    f"Agent ({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.REBOOT)
         @self.__timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Reboot an agent.
 
             :param message: reboot message
             :type message: SystemCommandMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -378,66 +274,34 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the reboot command sent "
-                    f"to Agent ({message.target_system}, {message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the reboot command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the reboot command sent to "
-                    f"Agent ({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.SHUTDOWN)
         @self.__timer()
         def sender(
             message: swarm_messages.SystemCommandMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Shutdown an agent.
 
             :param message: shutdown message
             :type message: SystemCommandMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -455,66 +319,34 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the shutdown command sent "
-                    f"to Agent ({message.target_system}, {message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the shutdown command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the shutdown command sent to "
-                    f"Agent ({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.ACCELEROMETER_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Perform a full accelerometer calibration on the selected agent.
 
             :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -532,68 +364,34 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the accelerometer "
-                    f"calibration command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the accelerometer calibration command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the accelerometer calibration "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.SIMPLE_ACCELEROMETER_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Perform a simple accelerometer calibration on the selected agent.
 
             :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -611,68 +409,34 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the simple accelerometer "
-                    f"calibration command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the simple accelerometer calibration command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the simple accelerometer "
-                    f"calibration command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.AHRS_TRIM)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Perform an AHRS trim on the selected agent.
 
             :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -690,66 +454,34 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    f"Successfully acknowledged reception of the AHRS trim command "
-                    f"sent to Agent ({message.target_system}, {message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the AHRS trim command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the AHRS trim command sent to "
-                    f"Agent ({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.GYROSCOPE_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Perform a gyroscope calibration on the selected agent.
 
             :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -767,68 +499,34 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the gyroscope calibration "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the gyroscope calibration command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the gyroscope calibration "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.MAGNETOMETER_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Perform a magnetometer calibration on the selected agent.
 
             :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -846,68 +544,34 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the magnetometer "
-                    f"calibration command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the magnetometer calibration command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the magnetometer calibration "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.GROUND_PRESSURE_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Perform a ground pressure calibration on the selected agent.
 
             :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -925,68 +589,34 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the ground pressure "
-                    f"calibration command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the ground pressure calibration command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the ground pressure "
-                    f"calibration command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.AIRSPEED_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Perform airspeed calibration on the selected agent.
 
             :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -1004,68 +634,34 @@ class Senders:
                 2,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the airspeed calibration "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the airspeed calibration command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the airspeed calibration "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.BAROMETER_TEMPERATURE_CALIBRATION)
         @self.__timer()
         def sender(
             message: swarm_messages.PreflightCalibrationMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Perform a barometer temperature calibration on the selected agent.
 
             :param message: calibration message
             :type message: PreflightCalibrationMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -1083,68 +679,34 @@ class Senders:
                 0,
                 3,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the barometer "
-                    f"temperature calibration command sent to Agent "
-                    f"({message.target_system}, {message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the barometer temperature calibration command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the barometer temperature "
-                    f"calibration command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.FLIGHT_MODE)
         @self.__timer()
         def sender(
             message: swarm_messages.FlightModeMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Set the flight mode of an agent.
 
             :param message: flight mode message
             :type message: FlightModeMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -1154,104 +716,58 @@ class Senders:
             connection.mavlink_connection.target_component = message.target_comp
 
             # Verify that the flight mode is supported by the agent
+            # Note that we need to perform this check here because it is dependent on
+            # the connection's mode mapping
             if message.flight_mode not in connection.mavlink_connection.mode_mapping():
-                self.__logger.error(
-                    f"The desired flight mode, {message.flight_mode}, is not a "
-                    "supported flight mode. Supported flight modes include: "
-                    f"{connection.mavlink_connection.mode_mapping().keys()}"
-                )
-                message.response = responses.INVALID_PROPERTIES
-                message.message_result_event.notify(context=message.context)
-
-                return False
+                return False, responses.INVALID_PROPERTIES
 
             # Send flight mode
             connection.mavlink_connection.set_mode(
                 connection.mavlink_connection.mode_mapping()[message.flight_mode]
             )
 
-            ack = False
-            message_code = responses.ACK_FAILURE
-
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the flight mode "
-                    f"{message.flight_mode} command sent to Agent ("
-                    f"{message.target_system}, {message.target_comp})"
-                )
+            # Construct a method to use for verifying the state change
+            def verify_state_changed(message, connection: Connection):
                 ack = True
-                message_code = responses.SUCCESS
+                start_time = time.time()
 
-                if agent_exists:
-                    start_time = time.time()
-
-                    while (
-                        connection.agents[
-                            (message.target_system, message.target_comp)
-                        ].flight_mode.value
-                        != message.flight_mode
-                    ):
-                        if time.time() - start_time >= message.state_timeout:
-                            ack = False
-                            break
-                    if ack:
-                        self.__logger.info(
-                            f"Successfully verified that Agent ("
-                            f"{message.target_system}, {message.target_comp}) "
-                            "switched to the {message.flight_mode} flight mode"
-                        )
-                    else:
-                        self.__logger.error(
-                            f"Failed to verify that Agent ({message.target_system}, "
-                            f"{message.target_comp}) switched to the "
-                            f"{message.flight_mode} flight mode"
-                        )
-                        message_code = responses.STATE_VALIDATION_FAILURE
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the flight mode "
-                    f"{message.flight_mode} command sent to Agent ("
-                    "{message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
+                while (
+                    connection.agents[
+                        (message.target_system, message.target_comp)
+                    ].flight_mode.value
+                    != message.flight_mode
                 ):
-                    ack = True
-                    message_code = responses.SUCCESS
+                    if time.time() - start_time >= message.state_timeout:
+                        ack = False
+                        break
 
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
+                return ack
 
-            return ack
+            ack, response = self.__get_message_response(
+                message, connection, function_idx, verify_state_changed
+            )
+
+            return ack, response
 
         @self.__send_message(Senders.FLIGHT_SPEED)
         @self.__timer()
         def sender(
             message: swarm_messages.FlightSpeedMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Set an agent's flight speed.
 
             :param message: speed message
             :type message: FlightSpeedMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -1269,55 +785,22 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the flight speed command "
-                    f"{message.speed_type} sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the flight speed commands."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the flight speed command "
-                    f"{message.speed_type} sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.SIMPLE_TAKEOFF)
         @self.__timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Execute a simple takeoff command (not a full sequence).
 
@@ -1329,30 +812,16 @@ class Senders:
             :param message: takeoff message
             :type message: TakeoffMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
             """
-            if (
-                message.altitude < 0
-                or math.isinf(message.altitude)
-                or math.isnan(message.altitude)
-            ):
-                self.__logger.exception(
-                    f"An invalid takeoff altitude was provided ({message.altitude}). "
-                    "Please send a valid takeoff altitude"
-                )
-                message.response = responses.INVALID_PROPERTIES
-                message.message_result_event.notify(context=message.context)
-                return False
-
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
                 message.target_comp,
@@ -1366,54 +835,21 @@ class Senders:
                 0,
                 message.altitude,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the simple takeoff "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
-
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the simple takeoff command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the simple takeoff command "
-                    f"sent to Agent ({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.TAKEOFF)
         @self.__timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Execute a takeoff command (not a full sequence).
 
@@ -1425,30 +861,16 @@ class Senders:
             :param message: takeoff message
             :type message: TakeoffMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
             """
-            if (
-                message.altitude < 0
-                or math.isinf(message.altitude)
-                or math.isnan(message.altitude)
-            ):
-                self.__logger.exception(
-                    f"An invalid takeoff altitude was provided ({message.altitude}). "
-                    "Please send a valid takeoff altitude"
-                )
-                message.response = responses.INVALID_PROPERTIES
-                message.message_result_event.notify(context=message.context)
-                return False
-
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
                 message.target_comp,
@@ -1462,53 +884,21 @@ class Senders:
                 message.longitude,
                 message.altitude,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the takeoff command sent "
-                    f"to Agent ({message.target_system}, {message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
-
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the takeoff command."
-                    )
-            else:
-                self.__logger.error(
-                    f"Failed to acknowledge reception of the takeoff command sent to "
-                    f"Agent ({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.SIMPLE_FULL_TAKEOFF)
         @self.__timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Execute a simple full takeoff command sequence.
 
@@ -1520,13 +910,12 @@ class Senders:
             :param message: takeoff sequence message
             :type message: TakeoffMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -1544,16 +933,8 @@ class Senders:
             )
 
             # Attempt to switch to GUIDED mode
-            if not self.__send_sequence_message(guided_message, agent_exists):
-                self.__logger.error(
-                    "Failed to acknowledge reception of the guided command stage "
-                    "within the simple full takeoff command sent to Agent "
-                    f"({message.target_system}, {message.target_comp}). Full takeoff "
-                    "sequence failed."
-                )
-                message.response = responses.SEQUENCE_STAGE_FAILURE
-                message.message_result_event.notify(context=message.context)
-                return False
+            if not self.__send_sequence_message(guided_message, connection):
+                return False, responses.SEQUENCE_STAGE_FAILURE
 
             # Create a new arming message to send
             arm_message = swarm_messages.SystemCommandMessage(
@@ -1568,16 +949,8 @@ class Senders:
             )
 
             # Attempt to arm the system
-            if not self.__send_sequence_message(arm_message, agent_exists):
-                self.__logger.error(
-                    "Failed to acknowledge reception of the arm command stage within "
-                    "the simple full takeoff command sent to Agent "
-                    f"({message.target_system}, {message.target_comp}). Full takeoff "
-                    "sequence failed."
-                )
-                message.response = responses.SEQUENCE_STAGE_FAILURE
-                message.message_result_event.notify(context=message.context)
-                return False
+            if not self.__send_sequence_message(arm_message, connection):
+                return False, responses.SEQUENCE_STAGE_FAILURE
 
             # Give the agent a chance to fully arm
             time.sleep(message.state_delay)
@@ -1586,35 +959,18 @@ class Senders:
             message.message_type = supported_messages.mission_commands.simple_takeoff
 
             # Attempt to perform takeoff
-            if not self.__send_sequence_message(message, agent_exists):
-                self.__logger.error(
-                    "Failed to acknowledge reception of the takeoff command stage "
-                    "within the simple full takeoff command sent to Agent "
-                    f"({message.target_system}, {message.target_comp}). Full takeoff "
-                    "sequence failed."
-                )
-                message.response = responses.SEQUENCE_STAGE_FAILURE
-                message.message_result_event.notify(context=message.context)
-                return False
+            if not self.__send_sequence_message(message, connection):
+                return False, responses.SEQUENCE_STAGE_FAILURE
 
-            self.__logger.info(
-                "Successfully sent and acknowledged all steps in the simple full "
-                "takeoff command sequence."
-            )
-
-            message.context.update({"response": responses.SUCCESS})
-            message.message_result_event.notify(context=message.context)
-
-            return True
+            return True, responses.SUCCESS
 
         @self.__send_message(Senders.FULL_TAKEOFF)
         @self.__timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Execute a full takeoff sequence.
 
@@ -1626,13 +982,12 @@ class Senders:
             :param message: takeoff message
             :type message: TakeoffMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -1650,16 +1005,8 @@ class Senders:
             )
 
             # Attempt to switch to GUIDED mode
-            if not self.__send_sequence_message(guided_message, agent_exists):
-                self.__logger.error(
-                    "Failed to acknowledge reception of the guided command stage "
-                    "within the full takeoff command sent to Agent "
-                    f"({message.target_system}, {message.target_comp}). Full takeoff "
-                    "sequence failed."
-                )
-                message.response = responses.SEQUENCE_STAGE_FAILURE
-                message.message_result_event.notify(context=message.context)
-                return False
+            if not self.__send_sequence_message(guided_message, connection):
+                return False, responses.SEQUENCE_STAGE_FAILURE
 
             # Create a new arming message to send
             arm_message = swarm_messages.SystemCommandMessage(
@@ -1674,15 +1021,8 @@ class Senders:
             )
 
             # Attempt to arm the system
-            if not self.__send_sequence_message(arm_message, agent_exists):
-                self.__logger.error(
-                    "Failed to acknowledge reception of the arm command stage within "
-                    f"the full takeoff command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp}). Full takeoff sequence failed."
-                )
-                message.response = responses.SEQUENCE_STAGE_FAILURE
-                message.message_result_event.notify(context=message.context)
-                return False
+            if not self.__send_sequence_message(arm_message, connection):
+                return False, responses.SEQUENCE_STAGE_FAILURE
 
             # Give the agent a chance to fully arm
             time.sleep(message.state_delay)
@@ -1691,34 +1031,18 @@ class Senders:
             message.message_type = supported_messages.mission_commands.takeoff
 
             # Attempt to perform takeoff
-            if not self.__send_sequence_message(message, agent_exists):
-                self.__logger.error(
-                    "Failed to acknowledge reception of the takeoff command stage "
-                    "within the full takeoff command sent to Agent "
-                    f"({message.target_system}, {message.target_comp}). Full takeoff "
-                    "sequence failed."
-                )
-                message.response = responses.SEQUENCE_STAGE_FAILURE
-                message.message_result_event.notify(context=message.context)
-                return False
+            if not self.__send_sequence_message(message, connection):
+                return False, responses.SEQUENCE_STAGE_FAILURE
 
-            self.__logger.info(
-                "Successfully sent and acknowledged all steps in the full takeoff "
-                "command sequence."
-            )
-            message.response = responses.SUCCESS
-            message.message_result_event.notify(context=message.context)
-
-            return True
+            return True, responses.SUCCESS
 
         @self.__send_message(Senders.SIMPLE_WAYPOINT)
         @self.__timer()
         def sender(
             message: swarm_messages.WaypointMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Perform a simple waypoint command (just lat, lon, and alt).
 
@@ -1729,30 +1053,16 @@ class Senders:
             :param message: waypoint message
             :type message: WaypointMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
             """
-            if (
-                message.altitude < 0
-                or math.isinf(message.altitude)
-                or math.isnan(message.altitude)
-            ):
-                self.__logger.exception(
-                    f"An invalid takeoff altitude was provided ({message.altitude}). "
-                    "Please send a valid waypoint altitude"
-                )
-                message.response = responses.INVALID_PROPERTIES
-                message.message_result_event.notify(context=message.context)
-                return False
-
             connection.mavlink_connection.mav.mission_item_send(
                 message.target_system,
                 message.target_comp,
@@ -1769,54 +1079,22 @@ class Senders:
                 message.longitude,
                 message.altitude,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the simple waypoint "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the simple waypoint command."
-                    )
-            else:
-                self.__logger.error(
-                    f"Failed to acknowledge reception of the simple waypoint command "
-                    f"sent to Agent ({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.WAYPOINT)
         @self.__timer()
         def sender(
             message: swarm_messages.WaypointMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Perform a waypoint navigation command.
 
@@ -1827,30 +1105,16 @@ class Senders:
             :param message: waypoint message
             :type message: WaypointMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
             """
-            if (
-                message.altitude < 0
-                or math.isinf(message.altitude)
-                or math.isnan(message.altitude)
-            ):
-                self.__logger.exception(
-                    f"An invalid takeoff altitude was provided ({message.altitude}). "
-                    "Please send a valid waypoint altitude"
-                )
-                message.response = responses.INVALID_PROPERTIES
-                message.message_result_event.notify(context=message.context)
-                return False
-
             connection.mavlink_connection.mav.mission_item_send(
                 message.target_system,
                 message.target_comp,
@@ -1867,66 +1131,31 @@ class Senders:
                 message.longitude,
                 message.altitude,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the waypoint command "
-                    f"sent to Agent ({message.target_system}, {message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the waypoint command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the waypoint command sent to "
-                    f"Agent ({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.GET_HOME_POSITION)
         @self.__timer()
         def sender(
             message: swarm_messages.AgentCommand,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Get the current home position of an agent.
 
             :param message: home position request message
             :type message: AgentMessage
 
-            :param function_id: index of the method in the message type function
+            :param function_idx: index of the method in the message type function
                 handler list, defaults to 0
-            :type function_id: int, optional
-
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
@@ -1944,54 +1173,22 @@ class Senders:
                 0,
                 0,
             )
-            ack = False
-            message_code = responses.ACK_FAILURE
 
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the get home position "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                ack = True
-                message_code = responses.SUCCESS
+            ack, response = self.__get_message_response(
+                message,
+                connection,
+                function_idx,
+            )
 
-                if agent_exists:
-                    self.__logger.info(
-                        "The system does not support verification of state changes for "
-                        "the get home position command."
-                    )
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the get home position command "
-                    f"sent to Agent ({message.target_system}, {message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
-                ):
-                    ack = True
-                    message_code = responses.SUCCESS
-
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
-
-            return ack
+            return ack, response
 
         @self.__send_message(Senders.RESET_HOME_TO_CURRENT)
         @self.__timer()
         def sender(
             message: swarm_messages.HomePositionMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Reset the saved home position of an agent to the current position.
 
@@ -2002,28 +1199,20 @@ class Senders:
             :param message: reset home position message
             :type message: HomePositionMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
             """
             agent_id = (message.target_system, message.target_comp)
 
-            if agent_exists:
+            if agent_id in connection.agents:
                 current_home_pos = connection.agents[agent_id].home_position
-
-                self.__logger.info(
-                    "The initial home position prior to home location reset is as "
-                    f"follows: Latitude: {current_home_pos.latitude}, Longitude: "
-                    f"{current_home_pos.longitude}, Altitude: "
-                    f"{current_home_pos.altitude}"
-                )
 
             # Set the home position to the current location
             connection.mavlink_connection.mav.command_long_send(
@@ -2040,147 +1229,63 @@ class Senders:
                 0,
             )
 
-            ack = False
-            message_code = responses.ACK_FAILURE
-
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the reset home position "
-                    f"to current position command sent to Agent "
-                    f"({message.target_system}, {message.target_comp})"
-                )
+            def verify_state_changed(message, connection: Connection):
                 ack = True
-                message_code = responses.SUCCESS
+                start_time = time.time()
 
-                if agent_exists:
-                    start_time = time.time()
-
-                    while vars(connection.agents[agent_id].home_position) == vars(
-                        current_home_pos
-                    ):
-                        # Signal an update state command
-                        update_home_state_message = swarm_messages.AgentCommand(
-                            supported_messages.mission_commands.get_home_position,
-                            message.target_system,
-                            message.target_comp,
-                            message.retry,
-                            message.message_timeout,
-                            message.ack_timeout,
-                            message.state_timeout,
-                            message.state_delay,
-                        )
-
-                        # Get the updated home position
-                        self.__send_sequence_message(
-                            update_home_state_message, agent_exists
-                        )
-
-                        if time.time() - start_time >= message.state_timeout:
-                            ack = False
-                            break
-                    if ack:
-                        self.__logger.info(
-                            "Successfully the reset the home position of Agent "
-                            f"({message.target_system}, {message.target_comp}) to: "
-                            "Latitude: "
-                            f"{connection.agents[agent_id].home_position.latitude}, "
-                            "Longitude: "
-                            f"{connection.agents[agent_id].home_position.longitude}, "
-                            f"Altitude: "
-                            f"{connection.agents[agent_id].home_position.altitude}"
-                        )
-                    else:
-                        self.__logger.error(
-                            "Failed to reset the home position of Agent "
-                            f"({message.target_system}, {message.target_comp}) or the "
-                            "current location of the agent has not changed since last "
-                            "updating the home position."
-                        )
-                        message_code = responses.STATE_VALIDATION_FAILURE
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the reset home position to "
-                    f"current position command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
+                while vars(connection.agents[agent_id].home_position) == vars(
+                    current_home_pos
                 ):
-                    ack = True
-                    message_code = responses.SUCCESS
+                    # Signal an update state command
+                    update_home_state_message = swarm_messages.AgentCommand(
+                        supported_messages.mission_commands.get_home_position,
+                        message.target_system,
+                        message.target_comp,
+                        message.retry,
+                        message.message_timeout,
+                        message.ack_timeout,
+                        message.state_timeout,
+                        message.state_delay,
+                    )
 
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
+                    # Get the updated home position
+                    self.__send_sequence_message(update_home_state_message, connection)
 
-            return ack
+                    if time.time() - start_time >= message.state_timeout:
+                        ack = False
+                        break
+
+                return ack
+
+            ack, response = self.__get_message_response(
+                message, connection, function_idx, verify_state_changed
+            )
+
+            return ack, response
 
         @self.__send_message(Senders.RESET_HOME)
         @self.__timer()
         def sender(
             message: swarm_messages.HomePositionMessage,
             connection: Connection,
-            function_id: int = 0,
-            agent_exists: bool = False,
-        ) -> bool:
+            function_idx: int = 0,
+        ) -> Tuple[bool, Tuple[int, str]]:
             """
             Reset the saved home position of an agent to the desired position.
 
             :param message: reset home position message
             :type message: HomePositionMessage
 
-            :param function_id: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_id: int, optional
+            :param connection: MAVLink connection
+            :type connection: Connection
 
-            :param agent_exists: flag indicating whether the agent that the message
-                is intended for exists in the network, defaults to False
-            :type agent_exists: bool, optional
+            :param function_idx: index of the method in the message type function
+                handler list, defaults to 0
+            :type function_idx: int, optional
 
             :return: message send success/fail
             :rtype: bool
             """
-            if (
-                message.longitude is None
-                or message.latitude is None
-                or message.altitude is None
-            ):
-                self.__logger.exception(
-                    "Cannot reset the home location to the given location unless the "
-                    "latitude, longitude, and altitude are all provided."
-                )
-                message.response = responses.INVALID_PROPERTIES
-                message.message_result_event.notify(context=message.context)
-                return False
-
-            if message.altitude < 0.0 or message.altitude > 150.0:
-                self.__logger.exception(
-                    "An invalid home position altitude was provided "
-                    f"({message.altitude}). Please set a valid altitude"
-                )
-                message.response = responses.INVALID_PROPERTIES
-                message.message_result_event.notify(context=message.context)
-                return False
-
-            agent_id = (message.target_system, message.target_comp)
-
-            if agent_exists:
-                current_home_pos = connection.agents[agent_id]
-
-                self.__logger.info(
-                    "The initial home position prior to home location reset is "
-                    f"as follows: Latitude: {current_home_pos.latitude}, Longitude: "
-                    f"{current_home_pos.longitude}, Altitude: "
-                    f"{current_home_pos.altitude}"
-                )
-
-            # Set the home position to the desired location
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
                 message.target_comp,
@@ -2195,116 +1300,128 @@ class Senders:
                 message.altitude,
             )
 
-            ack = False
-            message_code = responses.ACK_FAILURE
-
-            if swarm_utils.ack_message(
-                "COMMAND_ACK", connection, timeout=message.ack_timeout
-            ):
-                self.__logger.info(
-                    "Successfully acknowledged reception of the reset home position "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
+            def verify_state_changed(message, connection: Connection):
+                agent_id = (message.target_system, message.target_comp)
                 ack = True
-                message_code = responses.SUCCESS
+                start_time = time.time()
 
-                if agent_exists:
-                    start_time = time.time()
-
-                    while (
-                        connection.agents[agent_id].home_position.latitude
-                        != message.latitude
-                        and connection.agents[agent_id].home_position.longitude
-                        != message.longitude
-                        and connection.agents[agent_id].home_position.altitude
-                        != message.altitude
-                    ):
-                        # Signal an update state command
-                        update_home_state_message = swarm_messages.AgentCommand(
-                            supported_messages.mission_commands.get_home_position,
-                            message.target_system,
-                            message.target_comp,
-                            message.retry,
-                            message.message_timeout,
-                            message.ack_timeout,
-                            message.state_timeout,
-                            message.state_delay,
-                        )
-
-                        # Get the updated home position
-                        self.__send_sequence_message(
-                            update_home_state_message, agent_exists
-                        )
-
-                        if time.time() - start_time >= message.state_timeout:
-                            ack = False
-                            break
-                    if ack:
-                        self.__logger.info(
-                            "Successfully the reset the home position of Agent "
-                            f"({message.target_system}, {message.target_comp}) to: "
-                            "Latitude: "
-                            f"{connection.agents[agent_id].home_position.latitude}, "
-                            "Longitude: "
-                            f"{connection.agents[agent_id].home_position.longitude}, "
-                            f"Altitude: "
-                            f"{connection.agents[agent_id].home_position.altitude}"
-                        )
-                    else:
-                        self.__logger.error(
-                            "Failed to reset the home position of Agent "
-                            f"({message.target_system}, {message.target_comp})"
-                        )
-                        message_code = responses.STATE_VALIDATION_FAILURE
-            else:
-                self.__logger.error(
-                    "Failed to acknowledge reception of the reset home position "
-                    f"command sent to Agent ({message.target_system}, "
-                    f"{message.target_comp})"
-                )
-                message_code = responses.ACK_FAILURE
-
-            if message.retry and not ack:
-                if self.__retry_message_send(
-                    message,
-                    self.__senders[message.message_type][function_id],
-                    agent_exists,
+                while (
+                    connection.agents[agent_id].home_position.latitude
+                    != message.latitude
+                    and connection.agents[agent_id].home_position.longitude
+                    != message.longitude
+                    and connection.agents[agent_id].home_position.altitude
+                    != message.altitude
                 ):
-                    ack = True
-                    message_code = responses.SUCCESS
+                    # Signal an update state command
+                    update_home_state_message = swarm_messages.AgentCommand(
+                        supported_messages.mission_commands.get_home_position,
+                        message.target_system,
+                        message.target_comp,
+                        message.retry,
+                        message.message_timeout,
+                        message.ack_timeout,
+                        message.state_timeout,
+                        message.state_delay,
+                    )
 
-            message.response = message_code
-            message.message_result_event.notify(context=message.context)
+                    # Get the updated home position
+                    self.__send_sequence_message(update_home_state_message, connection)
 
-            return ack
+                    if time.time() - start_time >= message.state_timeout:
+                        ack = False
+                        break
 
-        return
+                return ack
+
+            ack, response = self.__get_message_response(
+                message, connection, function_idx, verify_state_changed
+            )
+
+            return ack, response
 
     @property
     def senders(self) -> dict:
         """
-        Methods responsible for handling message sending.
+        Get the methods responsible for sending messages.
 
         :return: list of senders
         :rtype: dict
         """
         return self.__senders
 
+    def __get_message_response(
+        self,
+        message: Any,
+        connection: Connection,
+        function_idx: int,
+        state_verification_function: Optional[Callable] = None,
+    ) -> Tuple[bool, Tuple[int, str]]:
+        """
+        Verify the result of a message and retry sending the message, if desired.
+
+        :param message: message whose response should be captured
+        :type message: Any
+
+        :param connection: MAVLink connection
+        :type connection: Connection
+
+        :param function_idx: index of the function to use when sending the message
+        :type function_idx: int
+
+        :param state_verification_function: function used to verify that the target
+            state was properly modified, defaults to None
+        :type state_verification_function: Optional[Callable], optional
+
+        :return: message acknowledgement, message response
+        :rtype: Tuple[bool, Tuple[int, str]]
+        """
+        ack = False
+        response = responses.ACK_FAILURE
+
+        if swarm_utils.ack_message(
+            "COMMAND_ACK", connection, timeout=message.ack_timeout
+        ):
+            ack = True
+            response = responses.SUCCESS
+
+            if (
+                message.target_system,
+                message.target_comp,
+            ) in connection.agents and state_verification_function is not None:
+                ack = state_verification_function(message, connection)
+
+                if not ack:
+                    response = responses.STATE_VALIDATION_FAILURE
+        else:
+            response = responses.ACK_FAILURE
+
+        if message.retry and not ack:
+            ack, response = self.__retry_message_send(
+                deepcopy(message),
+                connection,
+                self.__senders[message.message_type][function_idx],
+            )
+
+        return ack, response
+
     def __retry_message_send(
-        self, message: Any, function: Callable, agent_exists: bool
-    ) -> bool:
+        self,
+        message: Any,
+        connection: Connection,
+        function: Callable,
+    ) -> Tuple[bool, Tuple[int, str]]:
         """
         Retry a message send until success/timeout.
 
-        :param message: The message to retry sending
-        :type message: Any
+        :param message: message to retry sending
+        :type message: pymavswarm message
 
-        :param function: The function to call using the message
-        :type function: function
+        :param function: function to call using the message
+        :type function: Callable
 
-        :return: Indicate whether the retry was successful
-        :rtype: bool
+        :return: message acknowledged, message response
+        :rtype: Tuple[bool, Tuple[int, str]]
         """
         ack = False
         start_time = time.time()
@@ -2313,47 +1430,45 @@ class Senders:
         message.retry = False
 
         while time.time() - start_time <= message.message_timeout:
-            # Reattempt the message send
-            if function(self, message, agent_exists=agent_exists):
-                ack = True
+            ack, response = function(self, message, connection)
+
+            if ack:
                 break
 
-        return ack
+        return ack, response
 
-    def __send_sequence_message(self, message: Any, agent_exists: bool) -> bool:
+    def __send_sequence_message(self, message: Any, connection: Connection) -> bool:
         """
         Send a sequence message.
 
-        Helper function used to handle calling all of the message handlers.
-        This method is used by the sequence commands such as the full takeoff
-        command to provide indication of a function execution result.
+        Helper function used to handle calling all of the handlers for a message.
+        This method is used by sequence commands (such as the full takeoff
+        command) to provide indication of a function execution result.
 
         :param message: The message to send
         :type message: Any
-
-        :param agent_exists: Flag indicating whether the given agent exists in the
-            network
-        :type agent_exists: bool
 
         :return: Indicates whether all of the message senders for a given message
             successfully sent their respective message
         :rtype: bool
         """
-        # Helper function used to send the desired command
-        if message.message_type in self.__senders:
-            for function_id, function in enumerate(
-                self.__senders[message.message_type]
-            ):
-                try:
-                    if not function(
-                        self,
-                        message,
-                        function_id=function_id,
-                        agent_exists=agent_exists,
-                    ):
-                        return False
-                except Exception:
-                    pass
+        if message.message_type not in self.__senders:
+            return False
+
+        for function_idx, function in enumerate(self.__senders[message.message_type]):
+            try:
+                success, _ = function(
+                    self,
+                    message,
+                    connection,
+                    function_idx=function_idx,
+                )
+
+                if not success:
+                    return False
+
+            except Exception:
+                return False
 
         return True
 

@@ -27,6 +27,29 @@ class HomePositionMessage(AgentCommand):
     location. Note that if the home location is being reset to the current position,
     then the location is not required. If the home location is being set to a specific
     location, all components must be set.
+
+    TODO:
+            if (
+                message.longitude is None
+                or message.latitude is None
+                or message.altitude is None
+            ):
+                self.__logger.exception(
+                    "Cannot reset the home location to the given location unless the "
+                    "latitude, longitude, and altitude are all provided."
+                )
+                message.response = responses.INVALID_PROPERTIES
+                message.message_result_event.notify(context=message.context)
+                return False
+
+            if message.altitude < 0.0 or message.altitude > 150.0:
+                self.__logger.exception(
+                    "An invalid home position altitude was provided "
+                    f"({message.altitude}). Please set a valid altitude"
+                )
+                message.response = responses.INVALID_PROPERTIES
+                message.message_result_event.notify(context=message.context)
+                return False
     """
 
     def __init__(
