@@ -26,14 +26,11 @@ STATE_VALIDATION_FAILURE = (3, "state validation failure")
 # A stage within a sequence command failed
 SEQUENCE_STAGE_FAILURE = (4, "sequence stage failure")
 
-# The message is configured wrong
-INVALID_PROPERTIES = (5, "invalid message properties")
-
 # Package failed
-PACKAGE_FAILURE = (6, "package failure")
+PACKAGE_FAILURE = (5, "package failure")
 
 # Parameter read failed
-PARAM_READ_FAILURE = (7, "parameter read failure")
+PARAM_READ_FAILURE = (6, "parameter read failure")
 
 # Parameter set failed
-PARAM_SETTING_FAILURE = (8, "parameter setting failure")
+PARAM_SETTING_FAILURE = (7, "parameter setting failure")

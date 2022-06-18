@@ -16,7 +16,7 @@
 
 import unittest
 
-from pymavswarm.event import Event
+from pymavswarm.utils import Event
 
 
 class TestEvent(unittest.TestCase):

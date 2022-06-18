@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Tuple
+from typing import Optional, Tuple
 
-from pymavswarm.event import Event
+from pymavswarm.utils import Event
 
 
 class MessagePackage:
@@ -29,18 +29,18 @@ class MessagePackage:
 
     def __init__(
         self,
-        msgs: list,
+        messages: list,
         retry: bool = False,
         max_retry_attempts: int = 2,
-        optional_context_props: dict = {},
+        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
-        Constructor.
+        Create a message package.
 
-        :param msgs: The list of messages that should be sent as part of the package
-        :type msgs: list
+        :param messages: list of messages that should be sent as part of the package
+        :type messages: list
 
-        :param retry: Flag indicating whether the system should re-attempt sending the
+        :param retry: flag indicating whether the system should re-attempt sending the
             failed messages, defaults to False
         :type retry: bool, optional
 
@@ -49,17 +49,17 @@ class MessagePackage:
         :type max_retry_attempts: int, optional
 
         :param optional_context_props: optional properties to append to the message
-            context, defaults to {}
-        :type optional_context_props: dict, optional
+            context, defaults to None
+        :type optional_context_props: Optional[dict], optional
         """
-        self.__msgs = msgs
+        self.__msgs = messages
         self.__retry = retry
-        self.__msgs_succeeded = []
-        self.__msgs_failed = []
+        self.__msgs_succeeded: list = []
+        self.__msgs_failed: list = []
         self.__max_retry_attempts = max_retry_attempts
         self.__package_result_event = Event()
         self.__optional_context_props = optional_context_props
-        self.__response = None
+        self.__response: Optional[Tuple[int, str]] = None
 
         return
 
@@ -68,6 +68,7 @@ class MessagePackage:
         """
         List of messages in the package.
 
+        :return: package messages
         :rtype: list
         """
         return self.__msgs
@@ -77,6 +78,7 @@ class MessagePackage:
         """
         Retry sending the messages that failed.
 
+        :return: flag
         :rtype: bool
         """
         return self.__retry
@@ -86,6 +88,7 @@ class MessagePackage:
         """
         List of msgs in the package that were successfully sent.
 
+        :return: successful messages
         :rtype: list
         """
         return self.__msgs_succeeded
@@ -95,6 +98,7 @@ class MessagePackage:
         """
         List of msgs in the package that were not successfully sent.
 
+        :return: failed messages
         :rtype: list
         """
         return self.__msgs_failed
@@ -102,9 +106,12 @@ class MessagePackage:
     @property
     def max_retry_attempts(self) -> int:
         """
+        Maximum retry attempts.
+
         Maximum number of attempts to retry sending any failed messages in a
         package before considering the package failed.
 
+        :return: maximum retry attempts
         :rtype: int
         """
         return self.__max_retry_attempts
@@ -114,35 +121,39 @@ class MessagePackage:
         """
         Event indicating the result of the package.
 
+        :return: result event
         :rtype: Event
         """
         return self.__package_result_event
 
     @property
-    def response(self) -> Tuple[int, str]:
+    def response(self) -> Optional[Tuple[int, str]]:
         """
-        Package response (e.g., SUCCESS).
+        Package response.
 
-        :rtype: int
+        :return: response
+        :rtype: Optional[Tuple[int, str]]
         """
         return self.__response
 
     @response.setter
-    def response(self, code: Tuple[int, str]) -> None:
+    def response(self, code: Optional[Tuple[int, str]]) -> None:
         """
-        response setter.
+        Set the package response.
 
         :param code: The response code
-        :type code: int
+        :type code: Optional[Tuple[int, str]]
         """
         self.__response = code
+
         return
 
     @property
     def context(self) -> dict:
         """
-        Current context of the package.
+        Context of the package.
 
+        :return: package context
         :rtype: dict
         """
         context = {
@@ -150,6 +161,8 @@ class MessagePackage:
             "msgs_failed": self.__msgs_failed,
             "response": self.__response,
         }
-        context.update(self.__optional_context_props)
+
+        if self.__optional_context_props is not None:
+            context.update(self.__optional_context_props)
 
         return context

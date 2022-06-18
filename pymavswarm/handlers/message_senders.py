@@ -27,7 +27,6 @@ import pymavswarm.messages as swarm_messages
 import pymavswarm.state as swarm_state
 from pymavswarm import Connection
 from pymavswarm.handlers.senders import Senders
-from pymavswarm.messages import SupportedCommands as supported_messages
 from pymavswarm.messages import responses
 
 
@@ -50,15 +49,12 @@ class MessageSenders(Senders):
     BAROMETER_TEMPERATURE_CALIBRATION = "BAROMETER_TEMPERATURE_CALIBRATION"
     FLIGHT_MODE = "FLIGHT_MODE"
     FLIGHT_SPEED = "FLIGHT_SPEED"
-    SIMPLE_TAKEOFF = "SIMPLE_TAKEOFF"
     TAKEOFF = "TAKEOFF"
-    SIMPLE_FULL_TAKEOFF = "SIMPLE_FULL_TAKEOFF"
-    FULL_TAKEOFF = "FULL_TAKEOFF"
-    SIMPLE_WAYPOINT = "SIMPLE_WAYPOINT"
+    TAKEOFF_SEQUENCE = "TAKEOFF_SEQUENCE"
     WAYPOINT = "WAYPOINT"
     GET_HOME_POSITION = "GET_HOME_POSITION"
+    RESET_HOME_POSITION = "RESET_HOME_POSITION"
     RESET_HOME_TO_CURRENT = "RESET_HOME_TO_CURRENT"
-    RESET_HOME = "RESET_HOME"
     READ_PARAMETER = "READ_PARAMETER"
     SET_PARAMETER = "SET_PARAMETER"
 
@@ -795,55 +791,6 @@ class MessageSenders(Senders):
 
             return ack, response
 
-        @self._send_message(MessageSenders.SIMPLE_TAKEOFF)
-        @self._timer()
-        def sender(
-            message: swarm_messages.TakeoffMessage,
-            connection: Connection,
-            function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
-            """
-            Execute a simple takeoff command (not a full sequence).
-
-            Perform a simple takeoff command (just takeoff to a set altitude)
-            Note that acknowledgement of this command does not indicate that the
-            altitude was reached, but rather that the system will attempt to reach
-            the specified altitude
-
-            :param message: takeoff message
-            :type message: TakeoffMessage
-
-            :param connection: MAVLink connection
-            :type connection: Connection
-
-            :param function_idx: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_idx: int, optional
-
-            :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
-            """
-            connection.mavlink_connection.mav.command_long_send(
-                message.target_system,
-                message.target_comp,
-                mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                message.altitude,
-            )
-            ack, response, _ = self._get_message_response(
-                message,
-                connection,
-                function_idx,
-            )
-
-            return ack, response
-
         @self._send_message(MessageSenders.TAKEOFF)
         @self._timer()
         def sender(
@@ -893,79 +840,7 @@ class MessageSenders(Senders):
 
             return ack, response
 
-        @self._send_message(MessageSenders.SIMPLE_FULL_TAKEOFF)
-        @self._timer()
-        def sender(
-            message: swarm_messages.TakeoffMessage,
-            connection: Connection,
-            function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
-            """
-            Execute a simple full takeoff command sequence.
-
-            Command used to signal execution of a full simple takeoff sequence:
-                1. Switch to GUIDED mode
-                2. Arm
-                3. Takeoff
-
-            :param message: takeoff sequence message
-            :type message: TakeoffMessage
-
-            :param connection: MAVLink connection
-            :type connection: Connection
-
-            :param function_idx: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_idx: int, optional
-
-            :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
-            """
-            # Create a new guided mode
-            guided_message = swarm_messages.FlightModeCommand(
-                supported_messages.flight_modes.guided,
-                message.target_system,
-                message.target_comp,
-                message.retry,
-                message.message_timeout,
-                ack_timeout=message.ack_timeout,
-                state_timeout=message.state_timeout,
-                state_delay=message.state_delay,
-            )
-
-            # Attempt to switch to GUIDED mode
-            if not self._send_sequence_message(guided_message, connection):
-                return False, responses.SEQUENCE_STAGE_FAILURE
-
-            # Create a new arming message to send
-            arm_message = swarm_messages.SystemCommandMessage(
-                supported_messages.system_commands.arm,
-                message.target_system,
-                message.target_comp,
-                message.retry,
-                message.message_timeout,
-                ack_timeout=message.ack_timeout,
-                state_timeout=message.state_timeout,
-                state_delay=message.state_delay,
-            )
-
-            # Attempt to arm the system
-            if not self._send_sequence_message(arm_message, connection):
-                return False, responses.SEQUENCE_STAGE_FAILURE
-
-            # Give the agent a chance to fully arm
-            time.sleep(message.state_delay)
-
-            # Reset the message type to be a simple takeoff command
-            message.message_type = supported_messages.mission_commands.simple_takeoff
-
-            # Attempt to perform takeoff
-            if not self._send_sequence_message(message, connection):
-                return False, responses.SEQUENCE_STAGE_FAILURE
-
-            return True, responses.SUCCESS
-
-        @self._send_message(MessageSenders.FULL_TAKEOFF)
+        @self._send_message(MessageSenders.TAKEOFF_SEQUENCE)
         @self._timer()
         def sender(
             message: swarm_messages.TakeoffMessage,
@@ -1036,58 +911,6 @@ class MessageSenders(Senders):
                 return False, responses.SEQUENCE_STAGE_FAILURE
 
             return True, responses.SUCCESS
-
-        @self._send_message(MessageSenders.SIMPLE_WAYPOINT)
-        @self._timer()
-        def sender(
-            message: swarm_messages.WaypointMessage,
-            connection: Connection,
-            function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
-            """
-            Perform a simple waypoint command (just lat, lon, and alt).
-
-            Acknowledgement of this command does not indicate that the
-            waypoint was reached, but rather that the system will attempt to reach
-            the specified waypoint.
-
-            :param message: waypoint message
-            :type message: WaypointMessage
-
-            :param connection: MAVLink connection
-            :type connection: Connection
-
-            :param function_idx: index of the method in the message type function
-                handler list, defaults to 0
-            :type function_idx: int, optional
-
-            :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
-            """
-            connection.mavlink_connection.mav.mission_item_send(
-                message.target_system,
-                message.target_comp,
-                0,
-                mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
-                mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                message.latitude,
-                message.longitude,
-                message.altitude,
-            )
-
-            ack, response, _ = self._get_message_response(
-                message,
-                connection,
-                function_idx,
-            )
-
-            return ack, response
 
         @self._send_message(MessageSenders.WAYPOINT)
         @self._timer()
@@ -1264,7 +1087,7 @@ class MessageSenders(Senders):
 
             return ack, response
 
-        @self._send_message(MessageSenders.RESET_HOME)
+        @self._send_message(MessageSenders.RESET_HOME_POSITION)
         @self._timer()
         def sender(
             message: swarm_messages.HomePositionMessage,

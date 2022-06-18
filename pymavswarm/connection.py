@@ -29,10 +29,10 @@ from pymavlink import mavutil
 import pymavswarm.messages as swarm_messages
 import pymavswarm.utils as swarm_utils
 from pymavswarm import Agent
-from pymavswarm.event import Event
 from pymavswarm.handlers import MessageReceivers, Senders
 from pymavswarm.messages import responses
 from pymavswarm.plugins import supported_plugins
+from pymavswarm.utils import Event
 
 
 class Connection:

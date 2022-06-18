@@ -15,10 +15,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Optional, Union
 
-from pymavswarm.messages.message import Message
+from pymavswarm.handlers import MessageSenders
+from pymavswarm.messages.agent_message import AgentMessage
 
 
-class Parameter(Message):
+class Parameter(AgentMessage):
     """Key/value pair that may be sent to an agent to read/write a parameter value."""
 
     def __init__(
@@ -66,14 +67,26 @@ class Parameter(Message):
             context, defaults to None
         :type optional_context_props: Optional[dict], optional
         """
-        super().__init__(
-            target_system,
-            target_component,
-            retry,
-            message_timeout,
-            ack_timeout,
-            optional_context_props,
-        )
+        if parameter_value is None:
+            super().__init__(
+                MessageSenders.READ_PARAMETER,
+                target_system,
+                target_component,
+                retry,
+                message_timeout,
+                ack_timeout,
+                optional_context_props=optional_context_props,
+            )
+        else:
+            super().__init__(
+                MessageSenders.SET_PARAMETER,
+                target_system,
+                target_component,
+                retry,
+                message_timeout,
+                ack_timeout,
+                optional_context_props=optional_context_props,
+            )
 
         self.__parameter_id = parameter_id
         self.__parameter_value = parameter_value

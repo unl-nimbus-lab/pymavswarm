@@ -14,24 +14,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
-
-
-def init_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
-    """
-    Initialize the logger with the desired debug levels.
-
-    :param name: The name of the logger
-    :type name: str
-
-    :param log_level: The log level to display, defaults to logging.INFO
-    :type log_level: int, optional
-
-    :return: A newly configured logger
-    :rtype: logging.Logger
-    """
-    logging.basicConfig()
-    logger = logging.getLogger(name)
-    logger.setLevel(log_level)
-
-    return logger
+from .event import Event
+from .logging import init_logger

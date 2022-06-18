@@ -14,15 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Base class for a swarm agent command."""
-
 from typing import Optional
 
 from pymavswarm.messages.message import Message
 
 
-class AgentCommand(Message):
-    """Parent class used to construct MAVLink commands."""
+class AgentMessage(Message):
+    """Base class used to construct MAVLink messages."""
 
     def __init__(
         self,
@@ -37,10 +35,10 @@ class AgentCommand(Message):
         optional_context_props: Optional[dict] = None,
     ) -> None:
         """
-        Create a new agent command.
+        Create a new agent message.
 
-        :param msg_type: sub-message type for a message
-        :type msg_type: str
+        :param message_type: sub-message type for a message
+        :type message_type: str
 
         :param target_system: target system ID
         :type target_system: int
@@ -52,10 +50,10 @@ class AgentCommand(Message):
             until acknowledgement
         :type retry: bool
 
-        :param msg_timeout: amount of time that pymavswarm should attempt to resend
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
             retry is set to true, defaults to 5.0
-        :type msg_timeout: float, optional
+        :type message_timeout: float, optional
 
         :param ack_timeout: amount of time that pymavswarm should wait to check for
             an acknowledgement from an agent. This is only used when retry is set
@@ -76,7 +74,7 @@ class AgentCommand(Message):
 
         :param optional_context_props: optional properties to append to the message
             context, defaults to None
-        :type optional_context_props: dict, optional
+        :type optional_context_props: Optional[dict], optional
         """
         super().__init__(
             target_system,

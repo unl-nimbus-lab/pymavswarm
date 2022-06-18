@@ -22,9 +22,9 @@ from typing import Any, Optional, Union
 import pymavswarm.utils as swarm_utils
 from pymavswarm import Connection
 from pymavswarm.agent import Agent
-from pymavswarm.event import Event
 from pymavswarm.messages import MessagePackage, SupportedCommands
 from pymavswarm.param import Parameter, ParameterPackage
+from pymavswarm.utils import Event
 
 
 class MavSwarm:

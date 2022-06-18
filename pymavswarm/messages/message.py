@@ -14,11 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Base class for pymavswarm messages."""
-
 from typing import Optional
 
-from pymavswarm.event import Event
+from pymavswarm.utils import Event
 
 
 class Message:

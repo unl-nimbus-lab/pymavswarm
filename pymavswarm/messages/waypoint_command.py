@@ -14,42 +14,54 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pymavswarm.messages import AgentCommand
+from typing import Optional
+
+from pymavswarm.handlers import MessageSenders
+from pymavswarm.messages.agent_message import AgentMessage
 
 
-class WaypointMessage(AgentCommand):
-    """
-    Desired waypoint for an agent to fly to.
-
-    TODO: Add verification
-
-            if (
-                message.altitude < 0
-                or math.isinf(message.altitude)
-                or math.isnan(message.altitude)
-            ):
-    """
+class WaypointCommand(AgentMessage):
+    """Desired waypoint for an agent to fly to."""
 
     def __init__(
         self,
         lat: float,
         lon: float,
         alt: float,
-        hold: float,
-        accept_radius: float,
-        pass_radius: float,
-        yaw: float,
         target_system: int,
-        target_comp: int,
+        target_component: int,
         retry: bool,
-        msg_timeout: float = 5.0,
-        ack_timeout: float = 1.0,
-        state_timeout: float = 5.0,
-        state_delay: float = 3.0,
-        optional_context_props: dict = {},
+        hold: float = 0,
+        accept_radius: float = 0,
+        pass_radius: float = 0,
+        yaw: float = 0,
+        message_timeout: float = 5,
+        ack_timeout: float = 1,
+        state_timeout: float = 5,
+        state_delay: float = 3,
+        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
-        Constructor.
+        Create a waypoint command.
+
+        :param lat: Latitude of the waypoint
+        :type lat: float
+
+        :param lon: Longitude of the waypoint
+        :type lon: float
+
+        :param alt: Altitude of the waypoint
+        :type alt: float
+
+        :param target_system: target system ID
+        :type target_system: int
+
+        :param target_component: target component ID
+        :type target_component: int
+
+        :param retry: indicate whether pymavswarm should retry sending the message
+            until acknowledgement
+        :type retry: bool
 
         :param hold: Time to stay at waypoint for rotary wing (ignored by fixed wing)
         :type hold: float
@@ -67,69 +79,51 @@ class WaypointMessage(AgentCommand):
             system yaw heading mode (e.g. yaw towards next waypoint, yaw to home, etc.).
         :type yaw: float
 
-        :param lat: Latitude of the waypoint
-        :type lat: float
-
-        :param lon: Longitude of the waypoint
-        :type lon: float
-
-        :param alt: Altitude of the waypoint
-        :type alt: float
-
-        :param target_system: The target system ID
-        :type target_system: int
-
-        :param target_comp: The target component ID
-        :type target_comp: int
-
-        :param retry: Indicate whether pymavswarm should retry sending the message
-            until acknowledgement
-        :type retry: bool
-
-        :param msg_timeout: The amount of time that pymavswarm should attempt to resend
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
             retry is set to true, defaults to 5.0
-        :type msg_timeout: float, optional
+        :type message_timeout: float, optional
 
-        :param ack_timeout: The amount of time that pymavswarm should wait to check for
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
             an acknowledgement from an agent. This is only used when retry is set
             to true. This should be kept as short as possible to keep agent state
             information up-to-date, defaults to 1.0
         :type ack_timeout: float, optional
 
-        :param state_timeout: The amount of time that pymavswarm should wait for a
+        :param state_timeout: amount of time that pymavswarm should wait for a
             given agent's state to change after receiving a mavlink message, defaults
             to 5.0
         :type state_timeout: float, optional
 
-        :param state_delay: The amount of time that pymavswarm should wait after
+        :param state_delay: amount of time that pymavswarm should wait after
             sending a command prior to sending another command. This parameter is used
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
 
         :param optional_context_props: optional properties to append to the message
-            context, defaults to {}
-        :type optional_context_props: dict, optional
+            context, defaults to None
+        :type optional_context_props: Optional[dict], optional
         """
         super().__init__(
-            "WAYPOINT",
+            MessageSenders.WAYPOINT,
             target_system,
-            target_comp,
+            target_component,
             retry,
-            message_timeout=msg_timeout,
-            ack_timeout=ack_timeout,
-            state_timeout=state_timeout,
-            state_delay=state_delay,
-            optional_context_props=optional_context_props,
+            message_timeout,
+            ack_timeout,
+            state_timeout,
+            state_delay,
+            optional_context_props,
         )
+
+        self.__latitude = lat
+        self.__longitude = lon
+        self.__altitude = alt
         self.__hold = hold
         self.__accept_radius = accept_radius
         self.__pass_radius = pass_radius
         self.__yaw = yaw
-        self.__latitude = lat
-        self.__longitude = lon
-        self.__altitude = alt
 
         return
 
@@ -138,6 +132,7 @@ class WaypointMessage(AgentCommand):
         """
         Time to stay at waypoint for rotary wing (ignored by fixed wing).
 
+        :return: hold time
         :rtype: float
         """
         return self.__hold
@@ -147,6 +142,7 @@ class WaypointMessage(AgentCommand):
         """
         If the sphere with this radius (m) is hit, the waypoint counts as reached.
 
+        :return: acceptance radius
         :rtype: float
         """
         return self.__accept_radius
@@ -154,10 +150,12 @@ class WaypointMessage(AgentCommand):
     @property
     def pass_radius(self) -> float:
         """
-        0 to pass through the WP, if > 0 radius to pass by WP. Positive value for
-        clockwise orbit, negative value for counter-clockwise orbit. Allows trajectory
-        control.
+        0 to pass through the WP, if > 0 radius to pass by WP.
 
+        Positive value for clockwise orbit, negative value for counter-clockwise orbit.
+        Allows trajectory control.
+
+        :return: pass radius
         :rtype: float
         """
         return self.__pass_radius
@@ -165,9 +163,12 @@ class WaypointMessage(AgentCommand):
     @property
     def yaw(self) -> float:
         """
-        Desired yaw angle at waypoint (rotary wing). NaN to use the current system yaw
-        heading mode (e.g. yaw towards next waypoint, yaw to home, etc.).
+        Desired yaw angle at waypoint (rotary wing).
 
+        NaN to use the current system yaw heading mode (e.g. yaw towards next waypoint,
+        yaw to home, etc.).
+
+        :return: yaw
         :rtype: float
         """
         return self.__yaw
@@ -177,6 +178,7 @@ class WaypointMessage(AgentCommand):
         """
         Latitude of the waypoint.
 
+        :return: waypoint latitude
         :rtype: float
         """
         return self.__latitude
@@ -186,6 +188,7 @@ class WaypointMessage(AgentCommand):
         """
         Longitude of the waypoint.
 
+        :return: waypoint longitude
         :rtype: float
         """
         return self.__longitude
@@ -195,6 +198,7 @@ class WaypointMessage(AgentCommand):
         """
         Altitude of the waypoint.
 
+        :return: waypoint altitude
         :rtype: float
         """
         return self.__altitude
@@ -204,6 +208,7 @@ class WaypointMessage(AgentCommand):
         """
         Context of the message.
 
+        :return: message context
         :rtype: dict
         """
         context = super().context

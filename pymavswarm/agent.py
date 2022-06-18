@@ -21,9 +21,9 @@ from typing import Any, List, Optional
 import monotonic
 
 import pymavswarm.state as swarm_state
-from pymavswarm.event import Event
 from pymavswarm.mission import Mission
 from pymavswarm.state.generic import Generic
+from pymavswarm.utils import Event
 
 
 class Agent:
