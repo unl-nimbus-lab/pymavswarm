@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from .agent_message import AgentMessage
 from .change_home_position_command import ChangeHomePositionCommand
 from .flight_mode_command import FlightModeCommand
 from .flight_speed_command import FlightSpeedCommand

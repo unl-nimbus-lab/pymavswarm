@@ -75,7 +75,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.ARM)
         @self._timer()
         def sender(
-            message: swarm_messages.SystemCommandMessage,
+            message: swarm_messages.SystemCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -83,7 +83,7 @@ class MessageSenders(Senders):
             Arm an agent.
 
             :param message: arming message
-            :type message: SystemCommandMessage
+            :type message: SystemCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -97,7 +97,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                 0,
                 1,
@@ -115,7 +115,7 @@ class MessageSenders(Senders):
                 start_time = time.time()
 
                 while not connection.agents[
-                    (message.target_system, message.target_comp)
+                    (message.target_system, message.target_component)
                 ].armed.value:
                     if time.time() - start_time >= message.state_timeout:
                         ack = False
@@ -135,7 +135,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.DISARM)
         @self._timer()
         def sender(
-            message: swarm_messages.SystemCommandMessage,
+            message: swarm_messages.SystemCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -143,7 +143,7 @@ class MessageSenders(Senders):
             Disarm an agent.
 
             :param message: disarm message
-            :type message: SystemCommandMessage
+            :type message: SystemCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -157,7 +157,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                 0,
                 0,
@@ -174,7 +174,7 @@ class MessageSenders(Senders):
                 start_time = time.time()
 
                 while connection.agents[
-                    (message.target_system, message.target_comp)
+                    (message.target_system, message.target_component)
                 ].armed.value:
                     if time.time() - start_time >= message.state_timeout:
                         ack = False
@@ -193,7 +193,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.KILL)
         @self._timer()
         def sender(
-            message: swarm_messages.SystemCommandMessage,
+            message: swarm_messages.SystemCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -201,7 +201,7 @@ class MessageSenders(Senders):
             Force disarm an agent.
 
             :param message: kill message
-            :type message: SystemCommandMessage
+            :type message: SystemCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -215,7 +215,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                 0,
                 0,
@@ -238,7 +238,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.REBOOT)
         @self._timer()
         def sender(
-            message: swarm_messages.SystemCommandMessage,
+            message: swarm_messages.SystemCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -246,7 +246,7 @@ class MessageSenders(Senders):
             Reboot an agent.
 
             :param message: reboot message
-            :type message: SystemCommandMessage
+            :type message: SystemCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -260,7 +260,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                 0,
                 1,
@@ -283,7 +283,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.SHUTDOWN)
         @self._timer()
         def sender(
-            message: swarm_messages.SystemCommandMessage,
+            message: swarm_messages.SystemCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -291,7 +291,7 @@ class MessageSenders(Senders):
             Shutdown an agent.
 
             :param message: shutdown message
-            :type message: SystemCommandMessage
+            :type message: SystemCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -305,7 +305,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                 0,
                 2,
@@ -328,7 +328,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.ACCELEROMETER_CALIBRATION)
         @self._timer()
         def sender(
-            message: swarm_messages.PreflightCalibrationMessage,
+            message: swarm_messages.PreflightCalibrationCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -336,7 +336,7 @@ class MessageSenders(Senders):
             Perform a full accelerometer calibration on the selected agent.
 
             :param message: calibration message
-            :type message: PreflightCalibrationMessage
+            :type message: PreflightCalibrationCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -350,7 +350,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 0,
                 0,
@@ -373,7 +373,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.SIMPLE_ACCELEROMETER_CALIBRATION)
         @self._timer()
         def sender(
-            message: swarm_messages.PreflightCalibrationMessage,
+            message: swarm_messages.PreflightCalibrationCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -381,7 +381,7 @@ class MessageSenders(Senders):
             Perform a simple accelerometer calibration on the selected agent.
 
             :param message: calibration message
-            :type message: PreflightCalibrationMessage
+            :type message: PreflightCalibrationCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -395,7 +395,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 0,
                 0,
@@ -418,7 +418,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.AHRS_TRIM)
         @self._timer()
         def sender(
-            message: swarm_messages.PreflightCalibrationMessage,
+            message: swarm_messages.PreflightCalibrationCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -426,7 +426,7 @@ class MessageSenders(Senders):
             Perform an AHRS trim on the selected agent.
 
             :param message: calibration message
-            :type message: PreflightCalibrationMessage
+            :type message: PreflightCalibrationCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -440,7 +440,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 0,
                 0,
@@ -463,7 +463,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.GYROSCOPE_CALIBRATION)
         @self._timer()
         def sender(
-            message: swarm_messages.PreflightCalibrationMessage,
+            message: swarm_messages.PreflightCalibrationCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -471,7 +471,7 @@ class MessageSenders(Senders):
             Perform a gyroscope calibration on the selected agent.
 
             :param message: calibration message
-            :type message: PreflightCalibrationMessage
+            :type message: PreflightCalibrationCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -485,7 +485,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 0,
                 1,
@@ -508,7 +508,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.MAGNETOMETER_CALIBRATION)
         @self._timer()
         def sender(
-            message: swarm_messages.PreflightCalibrationMessage,
+            message: swarm_messages.PreflightCalibrationCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -516,7 +516,7 @@ class MessageSenders(Senders):
             Perform a magnetometer calibration on the selected agent.
 
             :param message: calibration message
-            :type message: PreflightCalibrationMessage
+            :type message: PreflightCalibrationCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -530,7 +530,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 0,
                 0,
@@ -553,7 +553,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.GROUND_PRESSURE_CALIBRATION)
         @self._timer()
         def sender(
-            message: swarm_messages.PreflightCalibrationMessage,
+            message: swarm_messages.PreflightCalibrationCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -561,7 +561,7 @@ class MessageSenders(Senders):
             Perform a ground pressure calibration on the selected agent.
 
             :param message: calibration message
-            :type message: PreflightCalibrationMessage
+            :type message: PreflightCalibrationCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -575,7 +575,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 0,
                 0,
@@ -598,7 +598,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.AIRSPEED_CALIBRATION)
         @self._timer()
         def sender(
-            message: swarm_messages.PreflightCalibrationMessage,
+            message: swarm_messages.PreflightCalibrationCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -606,7 +606,7 @@ class MessageSenders(Senders):
             Perform airspeed calibration on the selected agent.
 
             :param message: calibration message
-            :type message: PreflightCalibrationMessage
+            :type message: PreflightCalibrationCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -620,7 +620,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 0,
                 0,
@@ -643,7 +643,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.BAROMETER_TEMPERATURE_CALIBRATION)
         @self._timer()
         def sender(
-            message: swarm_messages.PreflightCalibrationMessage,
+            message: swarm_messages.PreflightCalibrationCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -651,7 +651,7 @@ class MessageSenders(Senders):
             Perform a barometer temperature calibration on the selected agent.
 
             :param message: calibration message
-            :type message: PreflightCalibrationMessage
+            :type message: PreflightCalibrationCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -665,7 +665,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
                 0,
                 0,
@@ -712,12 +712,6 @@ class MessageSenders(Senders):
             connection.mavlink_connection.target_system = message.target_system
             connection.mavlink_connection.target_component = message.target_comp
 
-            # Verify that the flight mode is supported by the agent
-            # Note that we need to perform this check here because it is dependent on
-            # the connection's mode mapping
-            if message.flight_mode not in connection.mavlink_connection.mode_mapping():
-                return False, responses.INVALID_PROPERTIES
-
             # Send flight mode
             connection.mavlink_connection.set_mode(
                 connection.mavlink_connection.mode_mapping()[message.flight_mode]
@@ -730,7 +724,7 @@ class MessageSenders(Senders):
 
                 while (
                     connection.agents[
-                        (message.target_system, message.target_comp)
+                        (message.target_system, message.target_component)
                     ].flight_mode.value
                     != message.flight_mode
                 ):
@@ -749,7 +743,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.FLIGHT_SPEED)
         @self._timer()
         def sender(
-            message: swarm_messages.FlightSpeedMessage,
+            message: swarm_messages.FlightSpeedCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -757,7 +751,7 @@ class MessageSenders(Senders):
             Set an agent's flight speed.
 
             :param message: speed message
-            :type message: FlightSpeedMessage
+            :type message: FlightSpeedCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -771,7 +765,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
                 0,
                 message.speed_type,
@@ -794,7 +788,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.TAKEOFF)
         @self._timer()
         def sender(
-            message: swarm_messages.TakeoffMessage,
+            message: swarm_messages.TakeoffCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -807,7 +801,7 @@ class MessageSenders(Senders):
             the specified altitude
 
             :param message: takeoff message
-            :type message: TakeoffMessage
+            :type message: TakeoffCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -821,7 +815,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
                 0,
                 0,
@@ -843,7 +837,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.TAKEOFF_SEQUENCE)
         @self._timer()
         def sender(
-            message: swarm_messages.TakeoffMessage,
+            message: swarm_messages.TakeoffCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -856,7 +850,7 @@ class MessageSenders(Senders):
                 3. Takeoff
 
             :param message: takeoff message
-            :type message: TakeoffMessage
+            :type message: TakeoffCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -870,14 +864,14 @@ class MessageSenders(Senders):
             """
             # Create a new guided mode
             guided_message = swarm_messages.FlightModeCommand(
-                supported_messages.flight_modes.guided,
+                swarm_messages.FlightModeCommand.GUIDED,
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 message.retry,
                 message.message_timeout,
-                ack_timeout=message.ack_timeout,
-                state_timeout=message.state_timeout,
-                state_delay=message.state_delay,
+                message.ack_timeout,
+                message.state_timeout,
+                message.state_delay,
             )
 
             # Attempt to switch to GUIDED mode
@@ -885,15 +879,15 @@ class MessageSenders(Senders):
                 return False, responses.SEQUENCE_STAGE_FAILURE
 
             # Create a new arming message to send
-            arm_message = swarm_messages.SystemCommandMessage(
-                supported_messages.system_commands.arm,
+            arm_message = swarm_messages.SystemCommand(
+                swarm_messages.SystemCommand.ARM,
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 message.retry,
                 message.message_timeout,
-                ack_timeout=message.ack_timeout,
-                state_timeout=message.state_timeout,
-                state_delay=message.state_delay,
+                message.ack_timeout,
+                message.state_timeout,
+                message.state_delay,
             )
 
             # Attempt to arm the system
@@ -904,7 +898,7 @@ class MessageSenders(Senders):
             time.sleep(message.state_delay)
 
             # Reset the message type to be a simple takeoff command
-            message.message_type = supported_messages.mission_commands.takeoff
+            message.message_type = MessageSenders.TAKEOFF
 
             # Attempt to perform takeoff
             if not self._send_sequence_message(message, connection):
@@ -915,7 +909,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.WAYPOINT)
         @self._timer()
         def sender(
-            message: swarm_messages.WaypointMessage,
+            message: swarm_messages.WaypointCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -927,7 +921,7 @@ class MessageSenders(Senders):
             the specified waypoint.
 
             :param message: waypoint message
-            :type message: WaypointMessage
+            :type message: WaypointCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -941,7 +935,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.mission_item_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 0,
                 mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
                 mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
@@ -967,7 +961,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.GET_HOME_POSITION)
         @self._timer()
         def sender(
-            message: swarm_messages.AgentCommand,
+            message: swarm_messages.AgentMessage,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -986,7 +980,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
                 0,
                 0,
@@ -1009,7 +1003,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.RESET_HOME_TO_CURRENT)
         @self._timer()
         def sender(
-            message: swarm_messages.HomePositionMessage,
+            message: swarm_messages.ChangeHomePositionCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -1021,7 +1015,7 @@ class MessageSenders(Senders):
             may be necessary to extend the timeout periods.
 
             :param message: reset home position message
-            :type message: HomePositionMessage
+            :type message: ChangeHomePositionCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -1033,7 +1027,7 @@ class MessageSenders(Senders):
             :return: message send success/fail, message response
             :rtype: Tuple[bool, Tuple[int, str]]
             """
-            agent_id = (message.target_system, message.target_comp)
+            agent_id = (message.target_system, message.target_component)
 
             if agent_id in connection.agents:
                 current_home_pos = connection.agents[agent_id].home_position
@@ -1041,7 +1035,7 @@ class MessageSenders(Senders):
             # Set the home position to the current location
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_DO_SET_HOME,
                 0,
                 1,
@@ -1061,10 +1055,10 @@ class MessageSenders(Senders):
                     current_home_pos
                 ):
                     # Signal an update state command
-                    update_home_state_message = swarm_messages.AgentCommand(
-                        supported_messages.mission_commands.get_home_position,
+                    update_home_state_message = swarm_messages.AgentMessage(
+                        MessageSenders.GET_HOME_POSITION,
                         message.target_system,
-                        message.target_comp,
+                        message.target_component,
                         message.retry,
                         message.message_timeout,
                         message.ack_timeout,
@@ -1090,7 +1084,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.RESET_HOME_POSITION)
         @self._timer()
         def sender(
-            message: swarm_messages.HomePositionMessage,
+            message: swarm_messages.ChangeHomePositionCommand,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -1098,7 +1092,7 @@ class MessageSenders(Senders):
             Reset the saved home position of an agent to the desired position.
 
             :param message: reset home position message
-            :type message: HomePositionMessage
+            :type message: ChangeHomePositionCommand
 
             :param connection: MAVLink connection
             :type connection: Connection
@@ -1112,7 +1106,7 @@ class MessageSenders(Senders):
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
-                message.target_comp,
+                message.target_component,
                 mavutil.mavlink.MAV_CMD_DO_SET_HOME,
                 0,
                 0,
@@ -1125,7 +1119,7 @@ class MessageSenders(Senders):
             )
 
             def verify_state_changed(message, connection: Connection):
-                agent_id = (message.target_system, message.target_comp)
+                agent_id = (message.target_system, message.target_component)
                 ack = True
                 start_time = time.time()
 
@@ -1138,10 +1132,10 @@ class MessageSenders(Senders):
                     != message.altitude
                 ):
                     # Signal an update state command
-                    update_home_state_message = swarm_messages.AgentCommand(
-                        supported_messages.mission_commands.get_home_position,
+                    update_home_state_message = swarm_messages.AgentMessage(
+                        MessageSenders.GET_HOME_POSITION,
                         message.target_system,
-                        message.target_comp,
+                        message.target_component,
                         message.retry,
                         message.message_timeout,
                         message.ack_timeout,
