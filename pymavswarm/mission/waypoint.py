@@ -18,9 +18,7 @@ from typing import Optional
 
 
 class Waypoint:
-    """
-    Waypoint that an agent should fly to.
-    """
+    """Waypoint that an agent should fly to."""
 
     def __init__(
         self,
@@ -31,7 +29,7 @@ class Waypoint:
         groundspeed: Optional[float] = None,
     ) -> None:
         """
-        Constructor.
+        Create a waypoint.
 
         :param latitude: The waypoint's latitude
         :type latitude: float
@@ -63,6 +61,7 @@ class Waypoint:
         """
         Latitude of the waypoint.
 
+        :return: waypoint latitude
         :rtype: float
         """
         return self.__latitude
@@ -72,6 +71,7 @@ class Waypoint:
         """
         Longitude of the waypoint.
 
+        :return: waypoint longitude
         :rtype: float
         """
         return self.__longitude
@@ -81,6 +81,7 @@ class Waypoint:
         """
         Altitude of the waypoint.
 
+        :return: waypoint altitude
         :rtype: float
         """
         return self.__altitude
@@ -90,6 +91,7 @@ class Waypoint:
         """
         Airspeed that the agent should have going through the waypoint.
 
+        :return: agent airspeed at waypoint
         :rtype: Optional[float]
         """
         return self.__airspeed
@@ -99,6 +101,7 @@ class Waypoint:
         """
         Groundspeed that the agent should have when going through the waypoint.
 
+        :return: agent groundspeed at waypoint
         :rtype: Optional[float]
         """
         return self.__groundspeed
