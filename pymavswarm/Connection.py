@@ -1,17 +1,19 @@
-import math
-import time
 import atexit
 import logging
-import monotonic
+import math
 import threading
-from pymavswarm.msg import *
+import time
+from typing import Any, Callable, Tuple, Union
+
+import monotonic
 from pymavlink import mavutil
-from pymavswarm.state import *
+from pymavlink.dialects.v10 import ardupilotmega
+
 from pymavswarm.Agent import Agent
 from pymavswarm.event import Event
+from pymavswarm.msg import *
 from pymavswarm.param import Parameter
-from typing import Any, Callable, Tuple, Union
-from pymavlink.dialects.v10 import ardupilotmega
+from pymavswarm.state import *
 
 
 class Connection:
@@ -578,7 +580,7 @@ class Connection:
                 )
                 ack = True
 
-                if device_exists:
+                if (msg.target_system, msg.target_comp) in self.__devices:
                     start_time = time.time()
 
                     while self.__devices[(msg.target_system, msg.target_comp)].armed:
