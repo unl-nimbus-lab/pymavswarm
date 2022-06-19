@@ -15,61 +15,75 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from typing import Optional
+from typing import List, Optional
 
 import pymavswarm.utils as swarm_utils
 from pymavswarm.mission import Waypoint
 
 
 class Mission:
-    """
-    A set of waypoints that should be executed sequentially by an agent
-    """
+    """Set of waypoints that should be executed sequentially by an agent."""
 
-    def __init__(self, waypoints: list = [], log_level: int = logging.INFO) -> None:
+    def __init__(
+        self,
+        waypoints: Optional[List[Waypoint]] = None,
+        logger_name: str = "mission",
+        log_level: int = logging.INFO,
+    ) -> None:
         """
-        :param waypoints: The set of waypoints to be executed, defaults to []
-        :type waypoints: list, optional
+        Create a new mission.
+
+        :param waypoints: The set of waypoints to be executed, defaults to None
+        :type waypoints: Optional[List[Waypoint]], optional
+
+        :param logger_name: name of the class logger, defaults to "mission"
+        :type logger_name: str, optional
 
         :param log_level: The desired debugging level, defaults to logging.INFO
         :type debug: int, optional
         """
-        self.__logger = swarm_utils.init_logger("mission", log_level=log_level)
+        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
         self.__waypoints = waypoints
 
         return
 
     @property
-    def waypoints(self) -> list:
+    def waypoints(self) -> List[Waypoint]:
         """
-        The set of waypoints included in the mission
+        Set of waypoints included in the mission.
 
-        :rtype: list
+        :return: mission waypoints
+        :rtype: List[Waypoint]
         """
+        if self.__waypoints is None:
+            return []
+
         return self.__waypoints
 
     def add_waypoint(self, waypoint: Waypoint, index: Optional[int] = None) -> bool:
         """
-        Add a waypoint to the mission
+        Add a waypoint to the mission.
 
-        :param waypoint: The new waypoint to add
+        :param waypoint: new waypoint to add
         :type waypoint: Waypoint
 
-        :param index: The index that the waypoint should be placed at in the mission
+        :param index: index that the waypoint should be placed at in the mission
             sequence, defaults to None
         :type index: Optional[int], optional
 
-        :return: Indication of whether the waypoint was inserted successfully
+        :return: whether or not the waypoint was inserted successfully
         :rtype: bool
         """
+        if self.__waypoints is None:
+            self.__waypoints = []
+
         if index is not None:
             try:
-                self.__waypoints.insert(index)
+                self.__waypoints.insert(index, waypoint)
             except IndexError:
                 self.__logger.exception(
-                    "An attempt was made to insert a waypoint at "
-                    f"an invalid index. Mission size: {len(self.__waypoints)}. "
-                    f"Index: {index}"
+                    "An attempt was made to insert a waypoint at an invalid index. "
+                    f"Mission size: {len(self.__waypoints)}. Index: {index}"
                 )
                 return False
         else:
@@ -79,14 +93,17 @@ class Mission:
 
     def remove_waypoint(self, waypoint: Waypoint) -> bool:
         """
-        Remove the provided waypoint from the list of waypoints
+        Remove the provided waypoint from the list of waypoints.
 
-        :param waypoint: Waypoint to remove
+        :param waypoint: waypoint to remove
         :type waypoint: Waypoint
 
-        :return: Flag indicating whether the waypoint was successfully removed
+        :return: flag indicating whether the waypoint was successfully removed
         :rtype: bool
         """
+        if self.__waypoints is None:
+            return False
+
         if waypoint in self.__waypoints:
             self.__waypoints.remove(waypoint)
 
@@ -94,21 +111,20 @@ class Mission:
 
     def remove_waypoint_by_index(self, index: int) -> bool:
         """
-        Remove the waypoint at the given index
+        Remove the waypoint at the given index.
 
-        :param index: The index of the waypoint in the mission that should be removed
+        :param index: index of the waypoint in the mission that should be removed
         :type index: int
 
-        :return: Indication of whether the waypoint was removed successfully
+        :return: whether or not the waypoint was removed successfully
         :rtype: bool
         """
+        if self.__waypoints is None:
+            return False
+
         try:
             self.__waypoints.pop(index)
         except IndexError:
-            self.__logger.exception(
-                f"An attempt was made to remove a waypoint at an invalid index. "
-                f"Mission size: {len(self.__waypoints)}. Index: {index}"
-            )
             return False
 
         return True
@@ -117,21 +133,23 @@ class Mission:
         self, latitude: float, longitude: float, altitude: float
     ) -> bool:
         """
-        Remove all waypoints that have the specified latitude, longitude, and altitude
-        values
+        Remove all waypoints that are located at the provided geographic location.
 
-        :param latitude: Waypoint's latitude
+        :param latitude: waypoint's latitude
         :type latitude: float
 
-        :param longitude: Waypoint's longitude
+        :param longitude: waypoint's longitude
         :type longitude: float
 
-        :param altitude: Waypoint's altitude
+        :param altitude: waypoint's altitude
         :type altitude: float
 
-        :return: Indication of whether the waypoint was removed properly
+        :return: whether or not the waypoint was removed properly
         :rtype: bool
         """
+        if self.__waypoints is None:
+            return False
+
         for waypoint in self.__waypoints:
             if (
                 waypoint.latitude == latitude
@@ -143,9 +161,8 @@ class Mission:
         return True
 
     def clear_waypoints(self) -> None:
-        """
-        Remove all waypoints from the mission
-        """
-        self.__waypoints.clear()
+        """Remove all waypoints from the mission."""
+        if self.__waypoints is not None:
+            self.__waypoints.clear()
 
         return
