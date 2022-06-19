@@ -31,20 +31,20 @@ class Waypoint:
         """
         Create a waypoint.
 
-        :param latitude: The waypoint's latitude
+        :param latitude: waypoint's latitude
         :type latitude: float
 
-        :param longitude: The waypoint's longitude
+        :param longitude: waypoint's longitude
         :type longitude: float
 
-        :param altitude: The waypoint's altitude
+        :param altitude: waypoint's altitude
         :type altitude: float
 
-        :param airspeed: Target airspeed of the agent when passing through the waypoint,
+        :param airspeed: target airspeed of the agent when passing through the waypoint,
             defaults to None
         :type airspeed: Optional[float], optional
 
-        :param groundspeed: Target groundspeed of the agent when passing through the
+        :param groundspeed: target groundspeed of the agent when passing through the
             waypoint, defaults to None
         :type groundspeed: Optional[float], optional
         """
