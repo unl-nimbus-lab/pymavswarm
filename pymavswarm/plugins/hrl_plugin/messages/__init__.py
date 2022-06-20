@@ -14,30 +14,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Supported HRL commands."""
-
-from typing import List
-
-
-class HRLCommands:
-    """Supported HRL commands."""
-
-    start_path_execution = 0
-    reset_path_execution = 1
-    stop_path_execution = 2
-    start_live_execution = 3
-
-    @staticmethod
-    def get_supported_types() -> List[int]:
-        """
-        Get the supported HRL commands.
-
-        :return: supported HRL commands
-        :rtype: List[int]
-        """
-        return [
-            HRLCommands.start_path_execution,
-            HRLCommands.reset_path_execution,
-            HRLCommands.stop_path_execution,
-            HRLCommands.start_live_execution,
-        ]
+from .hrl_command import HRLCommand

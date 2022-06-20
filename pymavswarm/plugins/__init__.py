@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .hrl_plugin import HrlPlugin
-from .plugin_handlers import PluginHandlers
+from .hrl_plugin.hrl_senders import HrlSenders
 
-# The list of supported plugins
-# Add your plugin to this list to add support for your new plugin
-# If there is a plugin that isn't used, the plugin may be commented out
-supported_plugins = [HrlPlugin]
+# Append your plugin's senders class to this list to register it
+plugin_senders = [HrlSenders]
+
+# Append your plugin's receivers class to this list to register it
+plugin_receivers = []
