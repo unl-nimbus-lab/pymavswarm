@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pymavswarm.state.state import State
 
 
 class EKFStatus(State):
-    """
-    EKF Flags indicating EKF status (True if healthy)
-    """
+    """Agent EKF status."""
 
     def __init__(
         self,
@@ -32,29 +32,31 @@ class EKFStatus(State):
         pos_horiz_abs: float = 0.0,
         const_pos_mode: float = 0.0,
         pred_pos_horiz_abs: float = 0.0,
-        optional_context_props: dict = {},
+        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
-        :param velocity_variance: Velocity variance, defaults to 0.0
+        Create an EKF status.
+
+        :param velocity_variance: velocity variance, defaults to 0.0
         :type velocity_variance: float, optional
 
-        :param pos_horiz_variance: Horizontal position variance, defaults to 0.0
+        :param pos_horiz_variance: horizontal position variance, defaults to 0.0
         :type pos_horiz_variance: float, optional
 
-        :param pos_vert_variance: Vertical position variance, defaults to 0.0
+        :param pos_vert_variance: vertical position variance, defaults to 0.0
         :type pos_vert_variance: float, optional
 
-        :param compass_variance: Compass variance, defaults to 0.0
+        :param compass_variance: compass variance, defaults to 0.0
         :type compass_variance: float, optional
 
-        :param terrain_alt_variance: Terrain altitude variance, defaults to 0.0
+        :param terrain_alt_variance: terrain altitude variance, defaults to 0.0
         :type terrain_alt_variance: float, optional
 
-        :param pos_horiz_abs: Flags, EKF's Horizontal position (absolute) estimate is
+        :param pos_horiz_abs: flags, EKF's Horizontal position (absolute) estimate is
             good, defaults to 0.0
         :type pos_horiz_abs: float, optional
 
-        :param const_pos_mode: Flags, EKF is in constant position mode and does not
+        :param const_pos_mode: flags, EKF is in constant position mode and does not
             know  it's absolute or relative position, defaults to 0.0
         :type const_pos_mode: float, optional
 
@@ -62,10 +64,11 @@ class EKFStatus(State):
             estimate is good, defaults to 0.0
         :type pred_pos_horiz_abs: float, optional
 
-        :param optional_context_props: Optional properties to add to the context
-        :type optional_context_props: dict, optional
+        :param optional_context_props: optional properties to add to the EKF status
+            context, defaults to None
+        :type optional_context_props: Optional[dict], optional
         """
-        super().__init__()
+        super().__init__(optional_context_props)
 
         self.__velocity_variance = velocity_variance
         self.__pos_horiz_variance = pos_horiz_variance
@@ -75,15 +78,15 @@ class EKFStatus(State):
         self.__pos_horiz_abs = pos_horiz_abs
         self.__const_pos_mode = const_pos_mode
         self.__pred_pos_horiz_abs = pred_pos_horiz_abs
-        self.__optional_context_props = optional_context_props
 
         return
 
     @property
     def velocity_variance(self) -> float:
         """
-        Velocity variance
+        Velocity variance.
 
+        :return: variance
         :rtype: float
         """
         return self.__velocity_variance
@@ -91,9 +94,9 @@ class EKFStatus(State):
     @velocity_variance.setter
     def velocity_variance(self, variance: float) -> None:
         """
-        velocity_variance setter
+        Set the velocity variance.
 
-        :param variance: Velocity variance
+        :param variance: velocity variance
         :type variance: float
         """
         prev_velocity_variance = self.__velocity_variance
@@ -108,8 +111,9 @@ class EKFStatus(State):
     @property
     def pos_horiz_variance(self) -> float:
         """
-        Horizontal position variance
+        Horizontal position variance.
 
+        :return: position variance
         :rtype: float
         """
         return self.__pos_horiz_variance
@@ -117,9 +121,9 @@ class EKFStatus(State):
     @pos_horiz_variance.setter
     def pos_horiz_variance(self, variance: float) -> None:
         """
-        pos_horiz_variance setter
+        Set the horizontal position variance.
 
-        :param variance: Horizontal position variance
+        :param variance: horizontal position variance
         :type variance: float
         """
         prev_pov_horiz_variance = self.__pos_horiz_variance
@@ -134,8 +138,9 @@ class EKFStatus(State):
     @property
     def pos_vert_variance(self) -> float:
         """
-        Vertical position variance
+        Vertical position variance.
 
+        :return: position variance
         :rtype: float
         """
         return self.__pos_vert_variance
@@ -143,9 +148,9 @@ class EKFStatus(State):
     @pos_vert_variance.setter
     def pos_vert_variance(self, variance: float) -> None:
         """
-        pos_vert_variance setter
+        Set the vertical position variance.
 
-        :param variance: Vertical position variance
+        :param variance: vertical position variance
         :type variance: float
         """
         prev_pos_vert_variance = self.__pos_vert_variance
@@ -160,8 +165,9 @@ class EKFStatus(State):
     @property
     def compass_variance(self) -> float:
         """
-        Compass variance
+        Compass variance.
 
+        :return: variance
         :rtype: float
         """
         return self.__compass_variance
@@ -169,9 +175,9 @@ class EKFStatus(State):
     @compass_variance.setter
     def compass_variance(self, variance: float) -> None:
         """
-        compass_variance setter
+        Set the compass variance.
 
-        :param variance: Compass variance
+        :param variance: compass variance
         :type variance: float
         """
         prev_compass_variance = self.__compass_variance
@@ -186,8 +192,9 @@ class EKFStatus(State):
     @property
     def terrain_alt_variance(self) -> float:
         """
-        Terrain altitude variance
+        Terrain altitude variance.
 
+        :return: variance
         :rtype: float
         """
         return self.__terrain_alt_variance
@@ -195,9 +202,9 @@ class EKFStatus(State):
     @terrain_alt_variance.setter
     def terrain_alt_variance(self, variance: float) -> None:
         """
-        terrain_alt_variance setter
+        Set the terrain altitude variance.
 
-        :param variance: Terrain altitude variance
+        :param variance: terrain altitude variance
         :type variance: float
         """
         prev_terrain_alt_variance = self.__terrain_alt_variance
@@ -212,8 +219,11 @@ class EKFStatus(State):
     @property
     def pos_horiz_abs(self) -> float:
         """
-        Flags, EKF's Horizontal position (absolute) estimate is good
+        EKF Flags.
 
+        EKF's Horizontal position (absolute) estimate is good.
+
+        :return: flags
         :rtype: float
         """
         return self.__pos_horiz_abs
@@ -221,9 +231,9 @@ class EKFStatus(State):
     @pos_horiz_abs.setter
     def pos_horiz_abs(self, flags: float) -> None:
         """
-        pos_horiz_abs setter
+        Set the horizontal position flags.
 
-        :param flags: EKF flags
+        :param flags: flags
         :type flags: float
         """
         prev_pos_horiz_abs = self.__pos_horiz_abs
@@ -238,9 +248,12 @@ class EKFStatus(State):
     @property
     def const_pos_mode(self) -> float:
         """
-        Flags, EKF is in constant position mode and does not know it's absolute or
-        relative position
+        EKF Flags.
 
+        EKF is in constant position mode and does not know it's absolute or
+        relative position.
+
+        :return: flags
         :rtype: float
         """
         return self.__const_pos_mode
@@ -248,9 +261,9 @@ class EKFStatus(State):
     @const_pos_mode.setter
     def const_pos_mode(self, flags: float) -> None:
         """
-        const_pos_mode setter
+        Set the constant position mode flags.
 
-        :param flags: EKF flags
+        :param flags: flags
         :type flags: float
         """
         prev_const_pos_mode = self.__const_pos_mode
@@ -265,8 +278,11 @@ class EKFStatus(State):
     @property
     def pred_pos_horiz_abs(self) -> float:
         """
-        EKF's predicted horizontal position (absolute) estimate is good
+        EKF flags.
 
+        EKF's predicted horizontal position (absolute) estimate is good.
+
+        :return: flags
         :rtype: float
         """
         return self.__pred_pos_horiz_abs
@@ -274,9 +290,9 @@ class EKFStatus(State):
     @pred_pos_horiz_abs.setter
     def pred_pos_horiz_abs(self, pred: float) -> None:
         """
-        pred_pos_horiz_abs setter
+        Set the predicted horizontal position flags.
 
-        :param pred: Predicted position
+        :param pred: flags
         :type pred: float
         """
         prev_pred_pos_horiz_abs = self.__pred_pos_horiz_abs
@@ -291,21 +307,20 @@ class EKFStatus(State):
     @property
     def context(self) -> dict:
         """
-        Get the current state as a dictionary for callbacks
+        EKF status context.
 
-        :return: Properties of interested associated with the EKF status
+        :return: context
         :rtype: dict
         """
-        context = {
-            "velocity_variance": self.__velocity_variance,
-            "pos_horiz_variance": self.__pos_horiz_variance,
-            "pos_vert_variance": self.__pos_vert_variance,
-            "compass_variance": self.__compass_variance,
-            "terrain_alt_variance": self.__terrain_alt_variance,
-            "pos_horiz_abs": self.__pos_horiz_abs,
-            "const_pos_mode": self.__const_pos_mode,
-            "pred_pos_horiz_abs": self.__pred_pos_horiz_abs,
-        }
-        context.update(self.__optional_context_props)
+        context = super().context
+
+        context["velocity_variance"] = self.__velocity_variance
+        context["pos_horiz_variance"] = self.__pos_horiz_variance
+        context["pos_vert_variance"] = self.__pos_vert_variance
+        context["compass_variance"] = self.__compass_variance
+        context["terrain_alt_variance"] = self.__terrain_alt_variance
+        context["pos_horiz_abs"] = self.__pos_horiz_abs
+        context["const_pos_mode"] = self.__const_pos_mode
+        context["pred_pos_horiz_abs"] = self.__pred_pos_horiz_abs
 
         return context

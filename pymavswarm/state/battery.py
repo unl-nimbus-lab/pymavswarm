@@ -14,51 +14,56 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pymavswarm.state.state import State
 
 
 class Battery(State):
-    """
-    Agent battery state
-    """
+    """Agent battery state."""
 
     def __init__(
         self,
         voltage: float = 0.0,
         current: float = 0.0,
         level: float = 0.0,
-        optional_context_props: dict = {},
+        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
-        :param voltage: Battery voltage (mV), UINT16_MAX: Voltage not sent by autopilot,
+        Create a battery state instance.
+
+        :param voltage: battery voltage [mV], UINT16_MAX: voltage not sent by autopilot,
             defaults to 0.0
         :type voltage: float, optional
 
-        :param current: Battery current (cA), -1: Current not sent by autopilot,
+        :param current: battery current [cA], -1: current not sent by autopilot,
             defaults to 0.0
         :type current: float, optional
 
-        :param level: Battery energy remaining (%), -1: Battery remaining energy not
+        :param level: battery energy remaining [%], -1: battery remaining energy not
             sent by autopilot, defaults to 0.0
         :type level: float, optional
 
-        :param optional_context_props: Optional properties to add to the context
-        :type optional_context_props: dict, optional
+        :param optional_context_props: optional properties to add to the battery
+            context, defaults to None
+        :type optional_context_props: Optional[dict], optional
         """
-        super().__init__()
+        super().__init__(optional_context_props)
 
         self.__voltage = voltage
         self.__current = current
         self.__level = level
-        self.__optional_context_props = optional_context_props
 
         return
 
     @property
     def voltage(self) -> float:
         """
-        Battery voltage (mV), UINT16_MAX: Voltage not sent by autopilot
+        Battery voltage [mV].
 
+        UINT16_MAX: Voltage not sent by autopilot.
+
+        :return: voltage
         :rtype: float
         """
         return self.__voltage
@@ -66,9 +71,9 @@ class Battery(State):
     @voltage.setter
     def voltage(self, voltage: float) -> None:
         """
-        voltage setter
+        Set the voltage.
 
-        :param voltage: Battery voltage (mV)
+        :param voltage: battery voltage [mV]
         :type voltage: float
         """
         prev_voltage = self.__voltage
@@ -83,8 +88,11 @@ class Battery(State):
     @property
     def current(self) -> float:
         """
-        Battery current (cA), -1: Current not sent by autopilot
+        Battery current [cA].
 
+        -1: Current not sent by autopilot.
+
+        :return: current
         :rtype: float
         """
         return self.__current
@@ -92,9 +100,9 @@ class Battery(State):
     @current.setter
     def current(self, current: float) -> None:
         """
-        current setter
+        Set the battery current.
 
-        :param current: Battery current (cA)
+        :param current: battery current [cA]
         :type current: float
         """
         prev_current = self.__current
@@ -112,8 +120,9 @@ class Battery(State):
     @property
     def level(self) -> float:
         """
-        Battery energy remaining (%), -1: Battery remaining energy not
-        sent by autopilot, defaults to 0.0
+        Battery energy remaining [%].
+
+        -1: Battery remaining energy not sent by autopilot.
 
         :rtype: float
         """
@@ -122,9 +131,9 @@ class Battery(State):
     @level.setter
     def level(self, level: float) -> None:
         """
-        level setter
+        Set the battery level.
 
-        :param level: Battery level (%)
+        :param level: battery level [%]
         :type level: float
         """
         prev_level = self.__level
@@ -139,16 +148,15 @@ class Battery(State):
     @property
     def context(self) -> dict:
         """
-        Get the current state as a dictionary for callbacks
+        Battery context.
 
-        :return: Properties of interest associated with the battery state
+        :return: context
         :rtype: dict
         """
-        context = {
-            "voltage": self.__voltage,
-            "current": self.__current,
-            "level": self.__level,
-        }
-        context.update(self.__optional_context_props)
+        context = super().context
+
+        context["voltage"] = self.__voltage
+        context["current"] = self.__current
+        context["level"] = self.__level
 
         return context

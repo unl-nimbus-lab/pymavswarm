@@ -15,46 +15,48 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import datetime
+from typing import Optional
 
 from pymavswarm.state.state import State
 
 
 class DockerInfo(State):
-    """
-    State of the Docker image deployed on an agent
-    """
+    """Information related to the agent's deployed Docker image."""
 
     def __init__(
         self,
         version: str = "0.0.0",
         last_update: datetime.datetime = datetime.datetime(datetime.MINYEAR, 1, 1),
-        optional_context_props: dict = {},
+        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
-        :param version: Current version of the Docker image deployed on an agent,
+        Create a new docker info instance.
+
+        :param version: version of the Docker image deployed on an agent,
             defaults to "0.0.0"
         :type version: str, optional
 
-        :param last_update: The date on which the Docker image deployed on the agent
+        :param last_update: date that the Docker image deployed on the agent
             was last updated, defaults to 1/1/1
         :type last_update: datetime.datetime, optional
 
-        :param optional_context_props: Optional properties to add to the context
-        :type optional_context_props: dict, optional
+        :param optional_context_props: optional properties to add to the DockerInfo
+            context, defaults to None
+        :type optional_context_props: Optional[dict], optional
         """
-        super().__init__()
+        super().__init__(optional_context_props)
 
         self.__version = version
         self.__last_update = last_update
-        self.__optional_context_props = optional_context_props
 
         return
 
     @property
     def version(self) -> str:
         """
-        The current version of the Docker image deployed on the agent
+        Docker image version deployed on an agent.
 
+        :return: docker image version
         :rtype: str
         """
         return self.__version
@@ -62,9 +64,9 @@ class DockerInfo(State):
     @version.setter
     def version(self, version: str) -> None:
         """
-        version setter
+        Set the Docker image version.
 
-        :param version: Docker image version
+        :param version: image version
         :type version: str
         """
         prev_version = self.__version
@@ -77,20 +79,21 @@ class DockerInfo(State):
         return
 
     @property
-    def last_update(self) -> str:
+    def last_update(self) -> datetime.datetime:
         """
-        The date that the image was last updated
+        Date that the image was last updated.
 
+        :return: last update date
         :rtype: str
         """
         return self.__last_update
 
     @last_update.setter
-    def last_update(self, date: str) -> None:
+    def last_update(self, date: datetime.datetime) -> None:
         """
-        last_update setter
+        Set the date that the image was last updated.
 
-        :param date: Date that the agent's image was last updated
+        :param date: date that the agent's image was last updated
         :type date: str
         """
         prev_last_update = self.__last_update
@@ -105,12 +108,14 @@ class DockerInfo(State):
     @property
     def context(self) -> dict:
         """
-        Get the current state as a dictionary for callbacks
+        Docker info context.
 
-        :return: Properties of interested associated with the docker information
+        :return: context
         :rtype: dict
         """
-        context = {"version": self.__version, "last_update": self.__last_update}
-        context.update(self.__optional_context_props)
+        context = super().context
+
+        context["version"] = self.__version
+        context["last_update"] = self.__last_update
 
         return context

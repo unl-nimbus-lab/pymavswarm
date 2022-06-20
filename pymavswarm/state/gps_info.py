@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pymavswarm.state.state import State
 
 
 class GPSInfo(State):
-    """
-    GPS information associated with an agent
-    """
+    """GPS information associated with an agent."""
 
     def __init__(
         self,
@@ -28,9 +28,11 @@ class GPSInfo(State):
         epv: float = 0.0,
         fix_type: int = 0,
         satellites_visible: int = 0,
-        optional_context_props: dict = {},
+        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
+        Create a GPSInfo object.
+
         :param eph: GPS HDOP horizontal dilution of position (unitless * 100).
             If unknown, set to: UINT16_MAX, defaults to 0.0
         :type eph: float, optional
@@ -42,28 +44,29 @@ class GPSInfo(State):
         :param fix_type: GPS fix type (GPS_FIX_TYPE), defaults to 0
         :type fix_type: int, optional
 
-        :param satellites_visible: Number of satellites visible. If unknown, set to
+        :param satellites_visible: number of satellites visible. If unknown, set to
             UINT8_MAX, defaults to 0
         :type satellites_visible: int, optional
 
-        :param optional_context_props: Optional properties to add to the context
-        :type optional_context_props: dict, optional
+        :param optional_context_props: properties to add to the context, defaults to
+            None
+        :type optional_context_props: Optional[dict], optional
         """
-        super().__init__()
+        super().__init__(optional_context_props)
 
         self.__eph = eph
         self.__epv = epv
         self.__fix_type = fix_type
         self.__satellites_visible = satellites_visible
-        self.__optional_context_props = optional_context_props
 
         return
 
     @property
     def eph(self) -> float:
         """
-        GPS HDOP horizontal dilution of position (unitless * 100)
+        GPS HDOP horizontal dilution of position (unitless * 100).
 
+        :return: dilution
         :rtype: float
         """
         return self.__eph
@@ -71,9 +74,11 @@ class GPSInfo(State):
     @eph.setter
     def eph(self, dilution: float) -> None:
         """
-        eph setter
+        Set the EPH.
 
-        :param dilution: If unknown, set to: UINT16_MAX
+        If unknown, set to: UINT16_MAX.
+
+        :param dilution: dilution
         :type dilution: float
         """
         prev_eph = self.__eph
@@ -88,8 +93,11 @@ class GPSInfo(State):
     @property
     def epv(self) -> float:
         """
-        GPS VDOP vertical dilution of position (unitless * 100)
+        GPS VDOP vertical dilution of position (unitless * 100).
 
+        If unknown, set to: UINT16_MAX.
+
+        :return: dilution
         :rtype: float
         """
         return self.__epv
@@ -97,9 +105,9 @@ class GPSInfo(State):
     @epv.setter
     def epv(self, dilution: float) -> None:
         """
-        epv setter
+        Set the EPV.
 
-        :param dilution: If unknown, set to: UINT16_MAX
+        :param dilution: dilution
         :type dilution: float
         """
         prev_epv = self.__epv
@@ -114,8 +122,11 @@ class GPSInfo(State):
     @property
     def fix_type(self) -> int:
         """
-        GPS fix type (GPS_FIX_TYPE)
+        GPS fix type.
 
+        (GPS_FIX_TYPE)
+
+        :return: fix type
         :rtype: int
         """
         return self.__fix_type
@@ -123,9 +134,9 @@ class GPSInfo(State):
     @fix_type.setter
     def fix_type(self, gps_fix_type: int) -> None:
         """
-        fix_type setter
+        Set the GPS fix type.
 
-        :param gps_fix_type: GPS_FIX_TYPE
+        :param gps_fix_type: fix type
         :type gps_fix_type: int
         """
         prev_fix_type = self.__fix_type
@@ -140,8 +151,9 @@ class GPSInfo(State):
     @property
     def satellites_visible(self) -> int:
         """
-        Number of satellites visible
+        Total number of satellites visible.
 
+        :return: satellites visible
         :rtype: int
         """
         return self.__satellites_visible
@@ -149,9 +161,11 @@ class GPSInfo(State):
     @satellites_visible.setter
     def satellites_visible(self, satellites: int) -> None:
         """
-        satellites_visible setter
+        Set the number of satellites visible.
 
-        :param satellites: If unknown, set to UINT8_MAX
+        If unknown, set to UINT8_MAX.
+
+        :param satellites: number of satellites
         :type satellites: int
         """
         prev_satellites_visible = self.__satellites_visible
@@ -166,17 +180,16 @@ class GPSInfo(State):
     @property
     def context(self) -> dict:
         """
-        Get the current state as a dictionary for callbacks
+        GPS info context.
 
-        :return: Properties of interested associated with the GPS information
+        :return: context
         :rtype: dict
         """
-        context = {
-            "eph": self.__eph,
-            "epv": self.__epv,
-            "fix_type": self.__fix_type,
-            "satellites_visible": self.__satellites_visible,
-        }
-        context.update(self.__optional_context_props)
+        context = super().context
+
+        context["eph"] = self.__eph
+        context["epv"] = self.__epv
+        context["fix_type"] = self.__fix_type
+        context["satellites_visible"] = self.__satellites_visible
 
         return context

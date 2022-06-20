@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pymavswarm.state.state import State
 
 
 class Attitude(State):
-    """
-    Attitude of an agent
-    """
+    """Attitude of an agent."""
 
     def __init__(
         self,
@@ -30,31 +30,34 @@ class Attitude(State):
         pitch_speed: float = 0.0,
         yaw_speed: float = 0.0,
         roll_speed: float = 0.0,
-        optional_context_props: dict = {},
+        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
-        :param pitch: Pitch angle (-pi..+pi), defaults to 0.0
+        Create a new attitude state instance.
+
+        :param pitch: pitch angle [-pi..+pi], defaults to 0.0
         :type pitch: float, optional
 
-        :param yaw: Yaw angle (-pi..+pi), defaults to 0.0
+        :param yaw: yaw angle [-pi..+pi], defaults to 0.0
         :type yaw: float, optional
 
-        :param roll: Roll angle (-pi..+pi), defaults to 0.0
+        :param roll: roll angle [-pi..+pi], defaults to 0.0
         :type roll: float, optional
 
-        :param pitch_speed: Pitch angular speed (rad/s), defaults to 0.0
+        :param pitch_speed: pitch angular speed [rad/s], defaults to 0.0
         :type pitch_speed: float, optional
 
-        :param yaw_speed: Yaw angular speed (rad/s), defaults to 0.0
+        :param yaw_speed: yaw angular speed [rad/s], defaults to 0.0
         :type yaw_speed: float, optional
 
-        :param roll_speed: Roll angular speed (rad/s), defaults to [], defaults to 0.0
+        :param roll_speed: roll angular speed [rad/s], defaults to 0.0
         :type roll_speed: float, optional
 
-        :param optional_context_props: Optional properties to add to the context
-        :type optional_context_props: dict, optional
+        :param optional_context_props: optional properties to add to the context,
+            defaults to None
+        :type optional_context_props: Optional[dict], optional
         """
-        super().__init__()
+        super().__init__(optional_context_props)
 
         self.__pitch = pitch
         self.__yaw = yaw
@@ -62,15 +65,15 @@ class Attitude(State):
         self.__pitch_speed = pitch_speed
         self.__yaw_speed = yaw_speed
         self.__roll_speed = roll_speed
-        self.__optional_context_props = optional_context_props
 
         return
 
     @property
     def pitch(self) -> float:
         """
-        Pitch angle (-pi..+pi)
+        Pitch angle [-pi..+pi].
 
+        :return: pitch
         :rtype: float
         """
         return self.__pitch
@@ -78,9 +81,9 @@ class Attitude(State):
     @pitch.setter
     def pitch(self, angle: float) -> None:
         """
-        pitch setter
+        Set the pitch.
 
-        :param angle: Angle in rad
+        :param angle: pitch angle [rad]
         :type angle: float
         """
         prev_pitch = self.__pitch
@@ -95,8 +98,9 @@ class Attitude(State):
     @property
     def yaw(self) -> float:
         """
-        Yaw angle (-pi..+pi)
+        Yaw angle [-pi..+pi].
 
+        :return: yaw
         :rtype: float
         """
         return self.__yaw
@@ -104,9 +108,9 @@ class Attitude(State):
     @yaw.setter
     def yaw(self, angle: float) -> None:
         """
-        yaw setter
+        Set the yaw.
 
-        :param angle: Angle in rad
+        :param angle: yaw angle [rad]
         :type angle: float
         """
         prev_yaw = self.__yaw
@@ -121,8 +125,9 @@ class Attitude(State):
     @property
     def roll(self) -> float:
         """
-        Roll angle (-pi..+pi)
+        Roll angle [-pi..+pi].
 
+        :return: roll
         :rtype: float
         """
         return self.__roll
@@ -130,9 +135,9 @@ class Attitude(State):
     @roll.setter
     def roll(self, angle: float) -> None:
         """
-        roll setter
+        Set the roll.
 
-        :param angle: Angle in rad
+        :param angle: roll angle [rad]
         :type angle: float
         """
         prev_roll = self.__roll
@@ -147,8 +152,9 @@ class Attitude(State):
     @property
     def pitch_speed(self) -> float:
         """
-        Pitch angular speed (rad/s)
+        Pitch angular speed [rad/s].
 
+        :return: pitch speed
         :rtype: float
         """
         return self.__pitch_speed
@@ -156,9 +162,9 @@ class Attitude(State):
     @pitch_speed.setter
     def pitch_speed(self, rate: float) -> None:
         """
-        pitch_speed setter
+        Set the pitch speed.
 
-        :param rate: Rate in rad/s
+        :param rate: pitch speed [rad/s]
         :type rate: float
         """
         prev_pitch_speed = self.__pitch_speed
@@ -173,8 +179,9 @@ class Attitude(State):
     @property
     def roll_speed(self) -> float:
         """
-        Roll angular speed (rad/s)
+        Roll angular speed [rad/s].
 
+        :return: roll speed
         :rtype: float
         """
         return self.__roll_speed
@@ -182,9 +189,9 @@ class Attitude(State):
     @roll_speed.setter
     def roll_speed(self, rate: float) -> None:
         """
-        roll_speed setter
+        Set the roll speed.
 
-        :param rate: Rate in rad/s
+        :param rate: roll speed [rad/s]
         :type rate: float
         """
         prev_roll_speed = self.__roll_speed
@@ -199,8 +206,9 @@ class Attitude(State):
     @property
     def yaw_speed(self) -> float:
         """
-        Yaw angular speed (rad/s)
+        Yaw angular speed [rad/s].
 
+        :return: yaw speed
         :rtype: float
         """
         return self.__yaw_speed
@@ -208,9 +216,9 @@ class Attitude(State):
     @yaw_speed.setter
     def yaw_speed(self, rate: float) -> None:
         """
-        yaw_speed setter
+        Set the yaw speed.
 
-        :param rate: Rate in rad/s
+        :param rate: yaw speed [rad/s]
         :type rate: float
         """
         prev_yaw_speed = self.__yaw_speed
@@ -225,19 +233,18 @@ class Attitude(State):
     @property
     def context(self) -> dict:
         """
-        Get the current state as a dictionary for callbacks
+        Attitude context.
 
-        :return: Properties of interest associated with the attitude
+        :return: context
         :rtype: dict
         """
-        context = {
-            "roll": self.__roll,
-            "pitch": self.__pitch,
-            "yaw": self.__yaw,
-            "roll_speed": self.__roll_speed,
-            "pitch_speed": self.__pitch_speed,
-            "yaw_speed": self.__yaw_speed,
-        }
-        context.update(self.__optional_context_props)
+        context = super().context
+
+        context["roll"] = self.__roll
+        context["pitch"] = self.__pitch
+        context["yaw"] = self.__yaw
+        context["roll_speed"] = self.__roll_speed
+        context["pitch_speed"] = self.__pitch_speed
+        context["yaw_speed"] = self.__yaw_speed
 
         return context

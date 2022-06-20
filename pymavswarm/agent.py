@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Data class for swarm agent."""
-
 from typing import Any, List, Optional
 
 import monotonic
@@ -32,7 +30,7 @@ class Agent:
 
     Agent represents and stores the state of an agent in the network. The
     agent's state is updated as new MAVLink messages are received from the
-    associated message
+    associated message.
     """
 
     def __init__(

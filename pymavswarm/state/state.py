@@ -14,24 +14,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from abc import ABC
+from typing import Optional
+
 from pymavswarm.utils import Event
 
 
-class State:
-    """
-    Parent class used to provide relationship between state objects
-    """
+class State(ABC):
+    """Base state class."""
 
-    def __init__(self) -> None:
+    def __init__(self, optional_context_props: Optional[dict] = None) -> None:
+        """Create a state object."""
+        super().__init__()
+
         self.__state_changed_event = Event()
+        self.__optional_context_props = optional_context_props
 
         return
 
     @property
     def state_changed_event(self) -> Event:
         """
-        Indicates that the current property values of a state class have changed
+        Event signaling state changes.
 
+        :return: state change event
         :rtype: Event
         """
         return self.__state_changed_event
@@ -39,8 +45,14 @@ class State:
     @property
     def context(self) -> dict:
         """
-        Get the current properties of a state object
+        State context.
 
+        :return: context
         :rtype: dict
         """
-        raise NotImplementedError("This method has not been implemented")
+        context = {}
+
+        if self.__optional_context_props is not None:
+            context.update(self.__optional_context_props)
+
+        return context

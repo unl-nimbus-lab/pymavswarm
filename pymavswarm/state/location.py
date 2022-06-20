@@ -14,50 +14,53 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pymavswarm.state.state import State
 
 
 class Location(State):
-    """
-    GPS location
-    """
+    """Agent GPS location."""
 
     def __init__(
         self,
         latitude: float = 0.0,
         longitude: float = 0.0,
         altitude: float = 0.0,
-        optional_context_props: dict = {},
+        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
-        :param latitude: Latitude (WGS84, EGM96 ellipsoid), defaults to 0.0
+        Create a new location object.
+
+        :param latitude: latitude [WGS84, EGM96 ellipsoid], defaults to 0.0
         :type latitude: float, optional
 
-        :param longitude: Longitude (WGS84, EGM96 ellipsoid), defaults to 0.0
+        :param longitude: longitude [WGS84, EGM96 ellipsoid], defaults to 0.0
         :type longitude: float, optional
 
-        :param altitude: Altitude (MSL). Positive for up. Note that virtually all GPS
+        :param altitude: altitude [MSL]. Positive for up. Note that virtually all GPS
             modules provide the MSL altitude in addition to the WGS84 altitude,
             defaults to 0.0
         :type altitude: float, optional
 
-        :param optional_context_props: Optional properties to add to the context
-        :type optional_context_props: dict, optional
+        :param optional_context_props: properties to add to the location context,
+            defaults to None
+        :type optional_context_props: Optional[dict], optional
         """
-        super().__init__()
+        super().__init__(optional_context_props)
 
         self.__latitude = latitude
         self.__longitude = longitude
         self.__altitude = altitude
-        self.__optional_context_props = optional_context_props
 
         return
 
     @property
     def latitude(self) -> float:
         """
-        Latitude (WGS84, EGM96 ellipsoid)
+        Latitude [WGS84, EGM96 ellipsoid].
 
+        :return: latitude
         :rtype: float
         """
         return self.__latitude
@@ -65,9 +68,9 @@ class Location(State):
     @latitude.setter
     def latitude(self, lat: float) -> None:
         """
-        latitude setter
+        Set the latitude.
 
-        :param lat: Latitude (degE7)
+        :param lat: latitude [degE7]
         :type lat: float
         """
         prev_latitude = self.__latitude
@@ -82,8 +85,9 @@ class Location(State):
     @property
     def longitude(self) -> float:
         """
-        Longitude (WGS84, EGM96 ellipsoid)
+        Longitude [WGS84, EGM96 ellipsoid].
 
+        :return: longitude
         :rtype: float
         """
         return self.__longitude
@@ -91,9 +95,9 @@ class Location(State):
     @longitude.setter
     def longitude(self, lon: float) -> None:
         """
-        longitude setter
+        Set the longitude.
 
-        :param lon: Longitude (degE7)
+        :param lon: longitude [degE7]
         :type lon: float
         """
         prev_longitude = self.__longitude
@@ -108,8 +112,11 @@ class Location(State):
     @property
     def altitude(self) -> float:
         """
-        Altitude (MSL). Positive for up.
+        Altitude [MSL].
 
+        Positive for up.
+
+        :return: altitude
         :rtype: float
         """
         return self.__altitude
@@ -117,9 +124,9 @@ class Location(State):
     @altitude.setter
     def altitude(self, alt: float) -> None:
         """
-        altitude setter
+        Set the altitude.
 
-        :param alt: Altitude (MSL, mm)
+        :param alt: altitude [MSL, mm]
         :type alt: float
         """
         prev_altitude = self.__altitude
@@ -134,16 +141,15 @@ class Location(State):
     @property
     def context(self) -> dict:
         """
-        Get the current state as a dictionary for callbacks
+        Location context.
 
-        :return: Properties of interested associated with the GPS information
+        :return: context
         :rtype: dict
         """
-        context = {
-            "latitude": self.__latitude,
-            "longitude": self.__longitude,
-            "altitude": self.__altitude,
-        }
-        context.update(self.__optional_context_props)
+        context = super().context
+
+        context["altitude"] = self.__altitude
+        context["latitude"] = self.__latitude
+        context["longitude"] = self.__longitude
 
         return context

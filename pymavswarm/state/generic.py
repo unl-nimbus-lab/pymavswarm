@@ -14,42 +14,43 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any
+from typing import Any, Optional
 
 from pymavswarm.state.state import State
 
 
 class Generic(State):
-    """
-    Generic state object used to provide observer capabilities to basic types
-    """
+    """Generic state object used to provide observer capabilities to basic types."""
 
     def __init__(
-        self, value: Any, name: str, optional_context_props: dict = {}
+        self, name: str, value: Any, optional_context_props: Optional[dict] = None
     ) -> None:
         """
-        :param value: Value to initialize the state as
-        :type value: Any
+        Create a generic state object.
 
-        :param name: The name of the state value to provide when getting the context
+        :param name: name of the state value to provide when getting the context
         :type name: str
 
-        :param optional_context_props: Optional properties to add to the context
-        :type optional_context_props: dict, optional
+        :param value: value to initialize the state as
+        :type value: Any
+
+        :param optional_context_props: properties to add to the context, defaults to
+            None
+        :type optional_context_props: Optional[dict], optional
         """
-        super().__init__()
+        super().__init__(optional_context_props)
 
         self.__value = value
         self.__name = name
-        self.__optional_context_props = optional_context_props
 
         return
 
     @property
     def value(self) -> int:
         """
-        The current value of the state property
+        Value of the state property.
 
+        :return: state value
         :rtype: int
         """
         return self.__value
@@ -57,9 +58,9 @@ class Generic(State):
     @value.setter
     def value(self, value: int) -> None:
         """
-        value setter
+        Set the state value.
 
-        :param value: The desired state value
+        :param value: desired state value
         :type value: int
         """
         prev_value = self.__value
@@ -74,8 +75,9 @@ class Generic(State):
     @property
     def name(self) -> str:
         """
-        The name associated with the state to provide when retrieving the context
+        Name associated with the state to provide when retrieving the context.
 
+        :return: name
         :rtype: str
         """
         return self.__name
@@ -83,12 +85,13 @@ class Generic(State):
     @property
     def context(self) -> dict:
         """
-        Get the current state as a dictionary for callbacks
+        State context.
 
-        :return: Current value of the state
+        :return: context
         :rtype: dict
         """
-        context = {self.__name: self.__value}
-        context.update(self.__optional_context_props)
+        context = super().context
+
+        context[self.__name] = self.__value
 
         return context
