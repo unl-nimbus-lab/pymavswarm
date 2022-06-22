@@ -16,25 +16,27 @@
 
 import unittest
 
-from pymavswarm.messages import AgentCommand
+from pymavswarm.messages import AgentMessage
 
 
-class TestAgentMsg(unittest.TestCase):
+class TestAgentMessage(unittest.TestCase):
+    """Test the AgentMessage class."""
+
     def test_invalid_timeout_init(self) -> None:
-        """
-        Test invalid timeout
-        """
-        self.assertRaises(ValueError, AgentCommand, "test", 0, 0, False, -1.0)
+        """Test invalid timeout."""
+        self.assertRaises(ValueError, AgentMessage, "test", 0, 0, False, -1.0)
 
         return
 
     def test_message_result_event(self) -> None:
         """
+        Verify event notification.
+
         Test the message_result_event to evaluate whether the event properly notifies
-        handlers
+        handlers.
         """
         # Create a new message
-        msg = AgentCommand("test", 0, 0, False)
+        msg = AgentMessage("test", 0, 0, False)
 
         total_calls = 0
         passed_result = None
@@ -50,13 +52,13 @@ class TestAgentMsg(unittest.TestCase):
             return
 
         # Register the listener
-        msg.message_result_event.add_listener(test_fn)
+        msg.result_event.add_listener(test_fn)
 
         # Test values
         result = False
 
         # Signal the event
-        msg.message_result_event.notify(result=result, context=msg.context)
+        msg.result_event.notify(result=result, context=msg.context)
 
         # Verify that all properties were passed successfully
         self.assertEqual(total_calls, 1)

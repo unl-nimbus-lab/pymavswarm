@@ -19,7 +19,6 @@ import time
 from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from pymavswarm import Connection
 from pymavswarm.messages import responses
 from pymavswarm.utils import init_logger
 
@@ -54,7 +53,7 @@ class Senders:
         return self.__senders
 
     def _ack_message(
-        self, packet_type: str, connection: Connection, timeout: float = 1.0
+        self, packet_type: str, connection, timeout: float = 1.0
     ) -> Tuple[bool, Optional[dict]]:
         """
         Ensure that a distributed message is acknowledged.
@@ -105,7 +104,7 @@ class Senders:
     def _get_message_response(
         self,
         message: Any,
-        connection: Connection,
+        connection,
         function_idx: int,
         ack_packet_type: str = "COMMAND_ACK",
         state_verification_function: Optional[Callable] = None,
@@ -162,7 +161,7 @@ class Senders:
     def _retry_message_send(
         self,
         message: Any,
-        connection: Connection,
+        connection,
         function: Callable,
     ) -> Tuple[bool, Tuple[int, str], Optional[dict]]:
         """
@@ -191,7 +190,7 @@ class Senders:
 
         return ack, response, ack_msg
 
-    def _send_sequence_message(self, message: Any, connection: Connection) -> bool:
+    def _send_sequence_message(self, message: Any, connection) -> bool:
         """
         Send a sequence message.
 

@@ -19,7 +19,7 @@ from typing import Any, List, Optional
 import monotonic
 
 import pymavswarm.state as swarm_state
-from pymavswarm.mission import Mission
+from pymavswarm.mission import SwarmMission
 from pymavswarm.state.generic import Generic
 from pymavswarm.utils import Event
 
@@ -107,7 +107,7 @@ class Agent:
         self.__current_waypoint = swarm_state.Generic(
             0, "current_waypoint", optional_context_props=context_props
         )
-        self.__mission = Mission()
+        self.__mission = SwarmMission()
         self.__last_params_read = swarm_state.ParameterList(
             max_length=max_params_stored, optional_context_props=context_props
         )
@@ -314,7 +314,7 @@ class Agent:
         return self.__current_waypoint
 
     @property
-    def mission(self) -> Mission:
+    def mission(self) -> SwarmMission:
         """
         Mission being completed by an agent.
 

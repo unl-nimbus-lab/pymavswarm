@@ -20,10 +20,10 @@ from pymavswarm.utils import Event
 
 
 class TestEvent(unittest.TestCase):
+    """Test the Event class."""
+
     def test_add_listener(self) -> None:
-        """
-        Test adding a listener function to the event listeners
-        """
+        """Test adding a listener function to the event listeners."""
         # Create a new event
         event = Event()
 
@@ -40,9 +40,7 @@ class TestEvent(unittest.TestCase):
         return
 
     def test_remove_listener(self) -> None:
-        """
-        Test removing an existing listener function
-        """
+        """Test removing an existing listener function."""
         # Create a new event
         event = Event()
 
@@ -61,9 +59,7 @@ class TestEvent(unittest.TestCase):
         return
 
     def test_notify_no_args(self) -> None:
-        """
-        Test notifying a function without arguments
-        """
+        """Test notifying a function without arguments."""
         # Create a new event
         event = Event()
 
@@ -89,9 +85,7 @@ class TestEvent(unittest.TestCase):
         return
 
     def test_notify_multiple_args(self) -> None:
-        """
-        Test notifying a function with arguments
-        """
+        """Test notifying a function with arguments."""
         # Create a new event
         event = Event()
 

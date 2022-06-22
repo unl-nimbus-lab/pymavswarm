@@ -44,22 +44,22 @@ class Generic(State):
         return
 
     @property
-    def value(self) -> int:
+    def value(self) -> Any:
         """
         Value of the state property.
 
         :return: state value
-        :rtype: int
+        :rtype: Any
         """
         return self.__value
 
     @value.setter
-    def value(self, value: int) -> None:
+    def value(self, value: Any) -> None:
         """
         Set the state value.
 
         :param value: desired state value
-        :type value: int
+        :type value: Any
         """
         prev_value = self.__value
         self.__value = value

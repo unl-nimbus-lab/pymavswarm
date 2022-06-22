@@ -20,25 +20,34 @@ from pymavswarm.state import State
 
 
 class TestState(unittest.TestCase):
+    """Test the State class."""
+
     def test_state_changed_event(self) -> None:
-        """
-        Test whether the system properly notifies callbacks on property changes
-        """
+        """Test whether the system properly notifies callbacks on property changes."""
         # Create an example class to test property change signals
         class TestClass(State):
+            """Test class."""
+
             def __init__(self) -> None:
+                """Test constructor."""
                 super().__init__()
 
                 self.__test_prop = "test"
 
             @property
             def context(self) -> dict:
+                """
+                Test context.
+
+                :return: context
+                :rtype: dict
+                """
                 return {"value": self.__test_prop}
 
             @property
             def test_prop(self) -> str:
                 """
-                test property.
+                Test property.
 
                 :return: test property
                 :rtype: str
@@ -47,8 +56,15 @@ class TestState(unittest.TestCase):
 
             @test_prop.setter
             def test_prop(self, value: str) -> None:
+                """
+                Set the test property.
+
+                :param value: value to set the property to
+                :type value: str
+                """
                 self.__test_prop = value
                 self.state_changed_event.notify(context=self.context)
+
                 return
 
         test_class = TestClass()

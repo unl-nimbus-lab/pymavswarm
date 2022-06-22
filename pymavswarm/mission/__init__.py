@@ -14,5 +14,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .swarm_mission import Mission
+from .swarm_mission import SwarmMission
 from .waypoint import Waypoint

@@ -25,7 +25,6 @@ from pymavlink import mavutil
 
 import pymavswarm.messages as swarm_messages
 import pymavswarm.state as swarm_state
-from pymavswarm import Connection
 from pymavswarm.handlers.senders import Senders
 from pymavswarm.messages import responses
 
@@ -75,7 +74,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.SystemCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -109,7 +108,7 @@ class MessageSenders(Senders):
             )
 
             # Construct a method to use for verifying state change
-            def verify_state_changed(message, connection: Connection):
+            def verify_state_changed(message, connection):
                 ack = True
                 start_time = time.time()
 
@@ -135,7 +134,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.SystemCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -168,7 +167,7 @@ class MessageSenders(Senders):
                 0,
             )
 
-            def verify_state_changed(message: Any, connection: Connection):
+            def verify_state_changed(message: Any, connection):
                 ack = True
                 start_time = time.time()
 
@@ -193,7 +192,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.SystemCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -238,7 +237,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.SystemCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -283,7 +282,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.SystemCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -328,7 +327,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -373,7 +372,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -418,7 +417,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -463,7 +462,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -508,7 +507,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -553,7 +552,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -598,7 +597,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -643,7 +642,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.PreflightCalibrationCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -688,7 +687,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.FlightModeCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -717,7 +716,7 @@ class MessageSenders(Senders):
             )
 
             # Construct a method to use for verifying the state change
-            def verify_state_changed(message: Any, connection: Connection):
+            def verify_state_changed(message: Any, connection):
                 ack = True
                 start_time = time.time()
 
@@ -743,7 +742,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.FlightSpeedCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -788,7 +787,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.TakeoffCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -837,7 +836,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.TakeoffCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -909,7 +908,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.WaypointCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -961,7 +960,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.AgentMessage,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -1003,7 +1002,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.ChangeHomePositionCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -1046,7 +1045,7 @@ class MessageSenders(Senders):
                 0,
             )
 
-            def verify_state_changed(message: Any, connection: Connection):
+            def verify_state_changed(message: Any, connection):
                 ack = True
                 start_time = time.time()
 
@@ -1084,7 +1083,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.ChangeHomePositionCommand,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -1117,7 +1116,7 @@ class MessageSenders(Senders):
                 message.altitude,
             )
 
-            def verify_state_changed(message, connection: Connection):
+            def verify_state_changed(message, connection):
                 agent_id = (message.target_system, message.target_component)
                 ack = True
                 start_time = time.time()
@@ -1161,7 +1160,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.ParameterMessage,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """
@@ -1211,7 +1210,7 @@ class MessageSenders(Senders):
         @self._timer()
         def sender(
             message: swarm_messages.ParameterMessage,
-            connection: Connection,
+            connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
             """

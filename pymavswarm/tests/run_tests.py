@@ -16,18 +16,11 @@
 
 import unittest
 
-from pymavswarm.messages import SupportedCommands as supported_msgs
-
-
-class TestSupportedMsgs(unittest.TestCase):
-    def test_get_command(self) -> None:
-        """
-        Ensure that we can use the the interface to properly get a supported message
-        """
-        self.assertEqual(supported_msgs.flight_modes.stabilize, "STABILIZE")
-
-        return
-
+from pymavswarm.tests.test_agent_message import TestAgentMessage
+from pymavswarm.tests.test_event import TestEvent
+from pymavswarm.tests.test_generic import TestGeneric
+from pymavswarm.tests.test_mission import TestMission
+from pymavswarm.tests.test_state import TestState
 
 if __name__ == "__main__":
     unittest.main()

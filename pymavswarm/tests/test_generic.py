@@ -20,15 +20,18 @@ from pymavswarm.state import Generic
 
 
 class TestGeneric(unittest.TestCase):
+    """Test the Generic class."""
+
     def test_state_changed_event(self) -> None:
-        """
-        Test whether the system properly notifies callbacks on property changes
-        """
+        """Test whether the system properly notifies callbacks on property changes."""
         test_prop_name = "test"
 
         # Create an example class to test property change signals
         class TestClass:
+            """Test class."""
+
             def __init__(self) -> None:
+                """Test constructor."""
                 super().__init__()
 
                 self.__test_prop = Generic("random", test_prop_name)
@@ -36,9 +39,9 @@ class TestGeneric(unittest.TestCase):
                 return
 
             @property
-            def test_prop(self) -> str:
+            def test_prop(self) -> Generic:
                 """
-                test property.
+                Test property.
 
                 :return: test property
                 :rtype: str

@@ -25,7 +25,7 @@ from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega
 
 import pymavswarm.state as swarm_state
-from pymavswarm import Agent, Connection
+from pymavswarm.agent import Agent
 from pymavswarm.handlers.receivers import Receivers
 
 
@@ -47,7 +47,7 @@ class MessageReceivers(Receivers):
 
         @self._receive_message("HEARTBEAT")
         @self._timer()
-        def listener(message: Any, connection: Connection) -> None:
+        def listener(message: Any, connection) -> None:
             """
             Register new agents or update the timeout status of existing agents.
 
@@ -89,7 +89,7 @@ class MessageReceivers(Receivers):
 
         @self._receive_message("HEARTBEAT")
         @self._timer()
-        def listener(message: Any, connection: Connection) -> None:
+        def listener(message: Any, connection) -> None:
             """
             Handle general agent information contained within a heartbeat.
 
@@ -134,7 +134,7 @@ class MessageReceivers(Receivers):
 
         @self._receive_message("GLOBAL_POSITION_INT")
         @self._timer()
-        def listener(message: Any, connection: Connection) -> None:
+        def listener(message: Any, connection) -> None:
             """
             Handle the a GPS position message.
 
@@ -179,7 +179,7 @@ class MessageReceivers(Receivers):
 
         @self._receive_message("ATTITUDE")
         @self._timer()
-        def listener(message: Any, connection: Connection) -> None:
+        def listener(message: Any, connection) -> None:
             """
             Handle an agent attitude message.
 
@@ -217,7 +217,7 @@ class MessageReceivers(Receivers):
 
         @self._receive_message("SYS_STATUS")
         @self._timer()
-        def listener(message: Any, connection: Connection) -> None:
+        def listener(message: Any, connection) -> None:
             """
             Handle the system status message containing battery state.
 
@@ -249,7 +249,7 @@ class MessageReceivers(Receivers):
 
         @self._receive_message("GPS_RAW_INT")
         @self._timer()
-        def listener(message: Any, connection: Connection) -> None:
+        def listener(message: Any, connection) -> None:
             """
             Handle the GPS status information.
 
@@ -285,7 +285,7 @@ class MessageReceivers(Receivers):
 
         @self._receive_message("EKF_STATUS_REPORT")
         @self._timer()
-        def listener(message: Any, connection: Connection) -> None:
+        def listener(message: Any, connection) -> None:
             """
             Handle an EKF status message.
 
@@ -346,7 +346,7 @@ class MessageReceivers(Receivers):
 
         @self._receive_message("ATTITUDE")
         @self._timer()
-        def listener(message: Any, connection: Connection) -> None:
+        def listener(message: Any, connection) -> None:
             """
             Handle an agent attitude message.
 
@@ -384,7 +384,7 @@ class MessageReceivers(Receivers):
 
         @self._receive_message("HOME_POSITION")
         @self._timer()
-        def listener(message: Any, connection: Connection) -> None:
+        def listener(message: Any, connection) -> None:
             """
             Handle the home position message.
 

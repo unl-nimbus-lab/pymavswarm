@@ -18,10 +18,10 @@ import logging
 from typing import List, Optional
 
 import pymavswarm.utils as swarm_utils
-from pymavswarm.mission import Waypoint
+from pymavswarm.mission.waypoint import Waypoint
 
 
-class Mission:
+class SwarmMission:
     """Set of waypoints that should be executed sequentially by an agent."""
 
     def __init__(

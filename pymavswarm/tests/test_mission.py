@@ -16,16 +16,16 @@
 
 import unittest
 
-from pymavswarm.mission import Mission, Waypoint
+from pymavswarm.mission import SwarmMission, Waypoint
 
 
 class TestMission(unittest.TestCase):
+    """Test the Mission class."""
+
     def test_add_waypoint(self) -> None:
-        """
-        Test adding a waypoint to the mission
-        """
+        """Test adding a waypoint to the mission."""
         # Create a new mission
-        mission = Mission()
+        mission = SwarmMission()
 
         # Create a new waypoint
         waypoint = Waypoint(0.0, 0.0, 0.0)
@@ -42,11 +42,9 @@ class TestMission(unittest.TestCase):
         return
 
     def test_remove_waypoint(self) -> None:
-        """
-        Test removing a waypoint from the mission
-        """
+        """Test removing a waypoint from the mission."""
         # Create a new mission
-        mission = Mission()
+        mission = SwarmMission()
 
         # Create a new waypoint
         waypoint = Waypoint(0.0, 0.0, 0.0)
@@ -66,11 +64,9 @@ class TestMission(unittest.TestCase):
         return
 
     def test_remove_waypoint_by_value(self) -> None:
-        """
-        Test removing a waypoint from the mission
-        """
+        """Test removing a waypoint from the mission."""
         # Create a new mission
-        mission = Mission()
+        mission = SwarmMission()
 
         # Create a new waypoint
         waypoint = Waypoint(0.0, 0.0, 0.0)
@@ -90,11 +86,9 @@ class TestMission(unittest.TestCase):
         return
 
     def test_remove_waypoint_by_index(self) -> None:
-        """
-        Test removing a waypoint from the mission
-        """
+        """Test removing a waypoint from the mission by index."""
         # Create a new mission
-        mission = Mission()
+        mission = SwarmMission()
 
         # Create two new waypoints
         waypoint_1 = Waypoint(0.0, 0.0, 0.0)
