@@ -14,58 +14,60 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from pymavswarm.state.state import State
 
 
 class Velocity(State):
-    """
-    Velocity state
-    """
+    """Velocity state."""
 
     def __init__(
         self,
         vx: float = 0.0,
         vy: float = 0.0,
         vz: float = 0.0,
-        optional_context_props: dict = {},
+        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
-        :param vx: Ground X Speed (Latitude, positive north), defaults to 0.0
+        Create a new velocity object.
+
+        :param vx: ground x speed [Latitude, positive north], defaults to 0.0
         :type vx: float, optional
 
-        :param vy: Ground Y Speed (Longitude, positive east), defaults to 0.0
+        :param vy: ground y speed [Longitude, positive east], defaults to 0.0
         :type vy: float, optional
 
-        :param vz: Ground Z Speed (Altitude, positive down), defaults to 0.0
+        :param vz: ground z speed [Altitude, positive down], defaults to 0.0
         :type vz: float, optional
 
-        :param optional_context_props: Optional properties to add to the context
+        :param optional_context_props: optional properties to add to the context
         :type optional_context_props: dict, optional
         """
-        super().__init__()
+        super().__init__(optional_context_props)
 
         self.__vx = vx
         self.__vy = vy
         self.__vz = vz
-        self.__optional_context_props = optional_context_props
 
         return
 
     @property
-    def vx(self) -> float:
+    def velocity_x(self) -> float:
         """
-        Ground X Speed (Latitude, positive north)
+        Ground X Speed [Latitude, positive north].
 
+        :return: velocity x component
         :rtype: float
         """
         return self.__vx
 
-    @vx.setter
-    def vx(self, vel: float) -> None:
+    @velocity_x.setter
+    def velocity_x(self, vel: float) -> None:
         """
-        vx setter
+        Set the velocity's x component.
 
-        :param vel: X speed (cm/s)
+        :param vel: x speed [cm/s]
         :type vel: float
         """
         prev_vx = self.__vx
@@ -78,20 +80,21 @@ class Velocity(State):
         return
 
     @property
-    def vy(self) -> float:
+    def velocity_y(self) -> float:
         """
-        Ground Y Speed (Longitude, positive east)
+        Ground Y Speed [Longitude, positive east].
 
+        :return: velocity y component
         :rtype: float
         """
         return self.__vy
 
-    @vy.setter
-    def vy(self, vel: float) -> None:
+    @velocity_y.setter
+    def velocity_y(self, vel: float) -> None:
         """
-        vy setter
+        Set the velocity's y component.
 
-        :param vel: Y speed (cm/s)
+        :param vel: y speed [cm/s]
         :type vel: float
         """
         prev_vy = self.__vy
@@ -104,20 +107,21 @@ class Velocity(State):
         return
 
     @property
-    def vz(self) -> float:
+    def velocity_z(self) -> float:
         """
-        Ground Z Speed (Altitude, positive down)
+        Ground Z Speed [Altitude, positive down].
 
+        :return: velocity z component
         :rtype: float
         """
         return self.__vz
 
-    @vz.setter
-    def vz(self, vel: float) -> None:
+    @velocity_z.setter
+    def velocity_z(self, vel: float) -> None:
         """
-        vz setter
+        Set the velocity's z component.
 
-        :param vel: Z speed (cm/s)
+        :param vel: z speed [cm/s]
         :type vel: float
         """
         prev_vz = self.__vz
@@ -132,12 +136,15 @@ class Velocity(State):
     @property
     def context(self) -> dict:
         """
-        Get the current state as a dictionary for callbacks
+        Velocity context.
 
-        :return: Properties of interested associated with the velocity
+        :return: context
         :rtype: dict
         """
-        context = {"vx": self.__vx, "vy": self.__vy, "vz": self.__vz}
-        context.update(self.__optional_context_props)
+        context = super().context
+
+        context["vx"] = self.__vx
+        context["vy"] = self.__vy
+        context["vz"] = self.__vz
 
         return context

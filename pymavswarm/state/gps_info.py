@@ -36,18 +36,14 @@ class GPSInfo(State):
         :param eph: GPS HDOP horizontal dilution of position (unitless * 100).
             If unknown, set to: UINT16_MAX, defaults to 0.0
         :type eph: float, optional
-
         :param epv: GPS VDOP vertical dilution of position (unitless * 100). If
             unknown, set to: UINT16_MAX, defaults to 0.0
         :type epv: float, optional
-
         :param fix_type: GPS fix type (GPS_FIX_TYPE), defaults to 0
         :type fix_type: int, optional
-
         :param satellites_visible: number of satellites visible. If unknown, set to
             UINT8_MAX, defaults to 0
         :type satellites_visible: int, optional
-
         :param optional_context_props: properties to add to the context, defaults to
             None
         :type optional_context_props: Optional[dict], optional

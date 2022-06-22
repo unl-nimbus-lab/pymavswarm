@@ -30,10 +30,9 @@ class Receivers:
         """
         Make a new receivers object.
 
-        :param logger_name: _description_, defaults to "receivers"
+        :param logger_name: name of the logger, defaults to "receivers"
         :type logger_name: str, optional
-
-        :param log_level: _description_, defaults to logging.INFO
+        :param log_level: logging level, defaults to logging.INFO
         :type log_level: int, optional
         """
         self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)

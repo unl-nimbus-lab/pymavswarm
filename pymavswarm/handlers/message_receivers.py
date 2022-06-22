@@ -40,7 +40,6 @@ class MessageReceivers(Receivers):
 
         :param logger_name: logger name, defaults to "message-receivers"
         :type logger_name: str, optional
-
         :param log_level: log level, defaults to logging.INFO
         :type log_level: int, optional
         """

@@ -35,11 +35,9 @@ class DockerInfo(State):
         :param version: version of the Docker image deployed on an agent,
             defaults to "0.0.0"
         :type version: str, optional
-
         :param last_update: date that the Docker image deployed on the agent
             was last updated, defaults to 1/1/1
         :type last_update: datetime.datetime, optional
-
         :param optional_context_props: optional properties to add to the DockerInfo
             context, defaults to None
         :type optional_context_props: Optional[dict], optional

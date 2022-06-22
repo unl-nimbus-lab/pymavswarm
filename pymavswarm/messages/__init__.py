@@ -19,7 +19,7 @@ from .change_home_position_command import ChangeHomePositionCommand
 from .flight_mode_command import FlightModeCommand
 from .flight_speed_command import FlightSpeedCommand
 from .message_package import MessagePackage
-from .parameter import Parameter
+from .parameter_message import ParameterMessage
 from .preflight_calibration_command import PreflightCalibrationCommand
 from .system_command import SystemCommand
 from .takeoff_command import TakeoffCommand

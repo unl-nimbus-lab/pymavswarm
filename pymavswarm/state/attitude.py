@@ -37,22 +37,16 @@ class Attitude(State):
 
         :param pitch: pitch angle [-pi..+pi], defaults to 0.0
         :type pitch: float, optional
-
         :param yaw: yaw angle [-pi..+pi], defaults to 0.0
         :type yaw: float, optional
-
         :param roll: roll angle [-pi..+pi], defaults to 0.0
         :type roll: float, optional
-
         :param pitch_speed: pitch angular speed [rad/s], defaults to 0.0
         :type pitch_speed: float, optional
-
         :param yaw_speed: yaw angular speed [rad/s], defaults to 0.0
         :type yaw_speed: float, optional
-
         :param roll_speed: roll angular speed [rad/s], defaults to 0.0
         :type roll_speed: float, optional
-
         :param optional_context_props: optional properties to add to the context,
             defaults to None
         :type optional_context_props: Optional[dict], optional

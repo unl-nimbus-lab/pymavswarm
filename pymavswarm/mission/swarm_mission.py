@@ -35,10 +35,8 @@ class Mission:
 
         :param waypoints: The set of waypoints to be executed, defaults to None
         :type waypoints: Optional[List[Waypoint]], optional
-
         :param logger_name: name of the class logger, defaults to "mission"
         :type logger_name: str, optional
-
         :param log_level: The desired debugging level, defaults to logging.INFO
         :type debug: int, optional
         """

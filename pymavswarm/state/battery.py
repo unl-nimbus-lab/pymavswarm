@@ -35,15 +35,12 @@ class Battery(State):
         :param voltage: battery voltage [mV], UINT16_MAX: voltage not sent by autopilot,
             defaults to 0.0
         :type voltage: float, optional
-
         :param current: battery current [cA], -1: current not sent by autopilot,
             defaults to 0.0
         :type current: float, optional
-
         :param level: battery energy remaining [%], -1: battery remaining energy not
             sent by autopilot, defaults to 0.0
         :type level: float, optional
-
         :param optional_context_props: optional properties to add to the battery
             context, defaults to None
         :type optional_context_props: Optional[dict], optional

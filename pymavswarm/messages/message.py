@@ -36,20 +36,15 @@ class Message:
 
         :param target_system: target system ID
         :type target_system: int
-
         :param target_component: target component ID
         :type target_component: int
-
         :param retry: flag indicating whether to retry sending until timeout/success
         :type retry: bool
-
         :param message_timeout: max time to successfully send a message, defaults to
             5.0 [s]
         :type message_timeout: float, optional
-
         :param ack_timeout: max time to wait for an acknowledgement, defaults to 1.0 [s]
         :type ack_timeout: float, optional
-
         :param optional_context_props: optional properties to append to the message
             context, defaults to None
         :type optional_context_props: Optional[dict], optional

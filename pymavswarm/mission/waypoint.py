@@ -33,17 +33,13 @@ class Waypoint:
 
         :param latitude: waypoint's latitude
         :type latitude: float
-
         :param longitude: waypoint's longitude
         :type longitude: float
-
         :param altitude: waypoint's altitude
         :type altitude: float
-
         :param airspeed: target airspeed of the agent when passing through the waypoint,
             defaults to None
         :type airspeed: Optional[float], optional
-
         :param groundspeed: target groundspeed of the agent when passing through the
             waypoint, defaults to None
         :type groundspeed: Optional[float], optional

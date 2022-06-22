@@ -34,15 +34,12 @@ class Location(State):
 
         :param latitude: latitude [WGS84, EGM96 ellipsoid], defaults to 0.0
         :type latitude: float, optional
-
         :param longitude: longitude [WGS84, EGM96 ellipsoid], defaults to 0.0
         :type longitude: float, optional
-
         :param altitude: altitude [MSL]. Positive for up. Note that virtually all GPS
             modules provide the MSL altitude in addition to the WGS84 altitude,
             defaults to 0.0
         :type altitude: float, optional
-
         :param optional_context_props: properties to add to the location context,
             defaults to None
         :type optional_context_props: Optional[dict], optional

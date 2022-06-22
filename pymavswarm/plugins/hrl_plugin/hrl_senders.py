@@ -57,14 +57,11 @@ class HrlSenders(Senders):
 
             :param message: arming message
             :type message: HRLCommand
-
             :param connection: MAVLink connection
             :type connection: Connection
-
             :param function_idx: index of the method in the message type function
                 handler list, defaults to 0
             :type function_idx: int, optional
-
             :return: message send success/fail, message response
             :rtype: Tuple[bool, Tuple[int, str]]
             """

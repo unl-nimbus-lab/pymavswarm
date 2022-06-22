@@ -39,15 +39,12 @@ class MessagePackage:
 
         :param messages: list of messages that should be sent as part of the package
         :type messages: list
-
         :param retry: flag indicating whether the system should re-attempt sending the
             failed messages, defaults to False
         :type retry: bool, optional
-
         :param max_retry_attempts: The maximum number of attempts that should be made
             at successfully sending any previously failed messages, defaults to 2
         :type max_retry_attempts: int, optional
-
         :param optional_context_props: optional properties to append to the message
             context, defaults to None
         :type optional_context_props: Optional[dict], optional

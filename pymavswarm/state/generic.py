@@ -30,10 +30,8 @@ class Generic(State):
 
         :param name: name of the state value to provide when getting the context
         :type name: str
-
         :param value: value to initialize the state as
         :type value: Any
-
         :param optional_context_props: properties to add to the context, defaults to
             None
         :type optional_context_props: Optional[dict], optional

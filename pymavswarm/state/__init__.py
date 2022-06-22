@@ -22,7 +22,7 @@ from .generic import Generic
 from .gps_info import GPSInfo
 from .location import Location
 from .parameter_list import ParameterList
-from .read_parameter import ReadParameter
+from .parameter import Parameter
 from .state import State
 from .telemetry import Telemetry
 from .velocity import Velocity

@@ -66,7 +66,6 @@ class MessageSenders(Senders):
 
         :param logger_name: logger name, defaults to "message-senders"
         :type logger_name: str, optional
-
         :param log_level: logging level, defaults to logging.INFO
         :type log_level: int, optional
         """
@@ -1161,7 +1160,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.READ_PARAMETER)
         @self._timer()
         def sender(
-            message: swarm_messages.Parameter,
+            message: swarm_messages.ParameterMessage,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:
@@ -1194,7 +1193,7 @@ class MessageSenders(Senders):
             )
 
             if ack:
-                read_param = swarm_state.ReadParameter(
+                read_param = swarm_state.Parameter(
                     ack_msg["param_id"],
                     ack_msg["param_value"],
                     ack_msg["param_type"],
@@ -1211,7 +1210,7 @@ class MessageSenders(Senders):
         @self._send_message(MessageSenders.SET_PARAMETER)
         @self._timer()
         def sender(
-            message: swarm_messages.Parameter,
+            message: swarm_messages.ParameterMessage,
             connection: Connection,
             function_idx: int = 0,
         ) -> Tuple[bool, Tuple[int, str]]:

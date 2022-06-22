@@ -46,61 +46,47 @@ class WaypointCommand(AgentMessage):
 
         :param lat: Latitude of the waypoint
         :type lat: float
-
         :param lon: Longitude of the waypoint
         :type lon: float
-
         :param alt: Altitude of the waypoint
         :type alt: float
-
         :param target_system: target system ID
         :type target_system: int
-
         :param target_component: target component ID
         :type target_component: int
-
         :param retry: indicate whether pymavswarm should retry sending the message
             until acknowledgement
         :type retry: bool
-
         :param hold: Time to stay at waypoint for rotary wing (ignored by fixed wing)
         :type hold: float
-
         :param accept_radius: If the sphere with this radius (m) is hit, the waypoint
             counts as reached
         :type accept_radius: float
-
         :param pass_radius: 0 to pass through the WP, if > 0 radius to pass by WP.
             Positive value for clockwise orbit, negative value for counter-clockwise
             orbit. Allows trajectory control.
         :type pass_radius: float
-
         :param yaw: Desired yaw angle at waypoint (rotary wing). NaN to use the current
             system yaw heading mode (e.g. yaw towards next waypoint, yaw to home, etc.).
         :type yaw: float
-
         :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
             retry is set to true, defaults to 5.0
         :type message_timeout: float, optional
-
         :param ack_timeout: amount of time that pymavswarm should wait to check for
             an acknowledgement from an agent. This is only used when retry is set
             to true. This should be kept as short as possible to keep agent state
             information up-to-date, defaults to 1.0
         :type ack_timeout: float, optional
-
         :param state_timeout: amount of time that pymavswarm should wait for a
             given agent's state to change after receiving a mavlink message, defaults
             to 5.0
         :type state_timeout: float, optional
-
         :param state_delay: amount of time that pymavswarm should wait after
             sending a command prior to sending another command. This parameter is used
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
-
         :param optional_context_props: optional properties to append to the message
             context, defaults to None
         :type optional_context_props: Optional[dict], optional

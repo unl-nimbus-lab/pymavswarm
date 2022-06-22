@@ -35,7 +35,6 @@ class Senders:
 
         :param logger_name: logger name, defaults to "senders"
         :type logger_name: str, optional
-
         :param log_level: logging level, defaults to logging.INFO
         :type log_level: int, optional
         """

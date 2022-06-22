@@ -19,7 +19,7 @@ from pymavswarm.handlers import MessageSenders
 from pymavswarm.messages.agent_message import AgentMessage
 
 
-class Parameter(AgentMessage):
+class ParameterMessage(AgentMessage):
     """Key/value pair that may be sent to an agent to read/write a parameter value."""
 
     def __init__(
@@ -34,35 +34,28 @@ class Parameter(AgentMessage):
         optional_context_props: Optional[dict] = None,
     ) -> None:
         """
-        Create a new parameter.
+        Create a new parameter message.
 
         :param parameter_id: id of the parameter to read/write
         :type parameter_id: str
-
         :param target_system: target system ID
         :type target_system: int
-
         :param target_component: target component ID
         :type target_component: int
-
         :param retry: retry sending the message on failure
         :type retry: bool
-
         :param parameter_value: desired parameter value when setting a parameter,
             defaults to None
         :type parameter_value: Optional[Union[float, int]], optional
-
         :param message_timeout: The amount of time that pymavswarm should attempt to
             resend a message if acknowledgement is not received. This is only used when
             retry is set to true, defaults to 5.0
         :type message_timeout: float, optional
-
         :param ack_timeout: The amount of time that pymavswarm should wait to check for
             an acknowledgement from an agent. This is only used when retry is set
             to true. This should be kept as short as possible to keep agent state
             information up-to-date, defaults to 1.0
         :type ack_timeout: float, optional
-
         :param optional_context_props: optional properties to append to the message
             context, defaults to None
         :type optional_context_props: Optional[dict], optional

@@ -39,31 +39,23 @@ class EKFStatus(State):
 
         :param velocity_variance: velocity variance, defaults to 0.0
         :type velocity_variance: float, optional
-
         :param pos_horiz_variance: horizontal position variance, defaults to 0.0
         :type pos_horiz_variance: float, optional
-
         :param pos_vert_variance: vertical position variance, defaults to 0.0
         :type pos_vert_variance: float, optional
-
         :param compass_variance: compass variance, defaults to 0.0
         :type compass_variance: float, optional
-
         :param terrain_alt_variance: terrain altitude variance, defaults to 0.0
         :type terrain_alt_variance: float, optional
-
         :param pos_horiz_abs: flags, EKF's Horizontal position (absolute) estimate is
             good, defaults to 0.0
         :type pos_horiz_abs: float, optional
-
         :param const_pos_mode: flags, EKF is in constant position mode and does not
             know  it's absolute or relative position, defaults to 0.0
         :type const_pos_mode: float, optional
-
         :param pred_pos_horiz_abs: EKF's predicted horizontal position (absolute)
             estimate is good, defaults to 0.0
         :type pred_pos_horiz_abs: float, optional
-
         :param optional_context_props: optional properties to add to the EKF status
             context, defaults to None
         :type optional_context_props: Optional[dict], optional
