@@ -82,30 +82,30 @@ class Agent:
         self.__telemetry = swarm_state.Telemetry(optional_context_props=context_props)
         self.__velocity = swarm_state.Velocity(optional_context_props=context_props)
         self.__armed = swarm_state.Generic(
-            False, "armed", optional_context_props=context_props
+            "armed", False, optional_context_props=context_props
         )
         self.__mode = swarm_state.Generic(
-            "None", "mode", optional_context_props=context_props
+            "mode", None, optional_context_props=context_props
         )
         self.__system_status = swarm_state.Generic(
-            "None", "system_status", optional_context_props=context_props
+            "system_status", None, optional_context_props=context_props
         )
         self.__vehicle_type = swarm_state.Generic(
-            "None", "vehicle_type", optional_context_props=context_props
+            "vehicle_type", None, optional_context_props=context_props
         )
         self.__last_heartbeat = swarm_state.Generic(
-            monotonic.monotonic(),
             "last_heartbeat",
+            monotonic.monotonic(),
             optional_context_props=context_props,
         )
         self.__timeout_period = swarm_state.Generic(
-            timeout_period, "timeout_period", optional_context_props=context_props
+            "timeout_period", timeout_period, optional_context_props=context_props
         )
         self.__timeout = swarm_state.Generic(
-            False, "timeout", optional_context_props=context_props
+            "timeout", False, optional_context_props=context_props
         )
         self.__current_waypoint = swarm_state.Generic(
-            0, "current_waypoint", optional_context_props=context_props
+            "current_waypoint", 0, optional_context_props=context_props
         )
         self.__mission = SwarmMission()
         self.__last_params_read = swarm_state.ParameterList(
@@ -115,7 +115,7 @@ class Agent:
             optional_context_props=context_props
         )
         self.__hrl_state = swarm_state.Generic(
-            "None", "hrl_state", optional_context_props=context_props
+            "hrl_state", None, optional_context_props=context_props
         )
         self.__custom_events: List[Event] = []
 

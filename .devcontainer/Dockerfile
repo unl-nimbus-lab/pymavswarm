@@ -1,6 +1,44 @@
-FROM python:3
+###################################################################
+# Base Stage: Includes only the packages required for production
+###################################################################
+FROM python:3 as base
 
 ENV DEBIAN_FRONTEND=noninteractive
+
+# Update pip to latest version
+RUN pip3 install --upgrade pip
+
+# Install all required Python packages
+RUN pip3 install \
+    monotonic \
+    pymavlink
+
+
+###################################################################
+# Development Stage: Creates a development environment
+###################################################################
+FROM base as development
+
+# Install dev apt packages
+RUN apt-get update \
+    && apt-get -y install --no-install-recommends \
+    apt-utils \
+    python3-dev \
+    nano \
+    vim \
+    git \
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install debugging/linting Python packages
+RUN pip3 install \
+    black \
+    pylint \
+    pymavlink \
+    isort \
+    pydocstyle \
+    mypy
 
 ARG USERNAME=developer
 ARG USER_UID=1000
@@ -13,35 +51,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && apt-get install -y sudo \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
-    && rm -rf /var/lib/apt/lists/* \
-    && echo "source /usr/share/bash-completion/completions/git" >> /home/$USERNAME/.bashrc \
-    && echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc
-
-# Install apt packages
-RUN apt-get update \
-    && apt-get -y install --no-install-recommends \
-    software-properties-common \
-    apt-utils \
-    python3-dev \
-    gcc \
-    git \
-    && apt-get autoremove -y \
-    && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Update pip to latest version
-RUN pip3 install --upgrade pip
-
-# Install required Python packages
-RUN pip3 install \
-    monotonic \
-    black \
-    pylint \
-    pymavlink \
-    isort \
-    pydocstyle \
-    mypy
-
-ENV PATH "${PATH}:/home/developer/.local/bin"
-
-ENV DEBIAN_FRONTEND=dialog
+# Add the .local/bin directory to the path
+ENV PATH "${PATH}:/home/$USERNAME/.local/bin"

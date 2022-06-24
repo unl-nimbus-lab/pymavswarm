@@ -1,25 +1,42 @@
 # pymavswarm
 
 ## Introduction
-`pymavswarm` is a Python library implemented to enable interaction with robotic swarms using the MAVLink protocol. This library supports reading MAVLink messages sent from multiple agents in a swarm and sending MAVLink messages to agents within the swarm. Such functionality ultimately enables development of new swarm applications such as ground control stations.
+
+`pymavswarm` is a Python library implemented to enable interaction with robotic
+swarms using the MAVLink protocol. This library supports reading MAVLink
+messages sent from multiple agents in a swarm and sending MAVLink messages to
+agents within the swarm. Such functionality ultimately enables development of
+new swarm applications such as ground control stations.
 
 ## Dependencies
-`pymavswarm` depends on Python versions 3.9 or greater. Ensure that this dependency is met prior to installation.
+
+`pymavswarm` depends on Python versions 3.9 or greater. Ensure that this
+dependency is met prior to installation.
 
 ## Installation
-`pymavswarm` must currently be installed manually. To do so, refer to the steps below:
+
+`pymavswarm` must currently be installed manually. To do so, refer to the steps
+below:
+
 1. Clone this repository
 2. Navigate to the `pymavswarm/` repository directory
+
 ```bash
 cd path/to/pymavswarm/
 ```
+
 3. Install the `pymavswarm` Python package
+
 ```bash
 pip3 install .
 ```
 
 ## Getting Started
-`pymavswarm` has been implemented to enable easy interfacing with robotic swarms. Refer to the following code snippet for a simple example to get started with the library. For more comprehensive documentation and examples, checkout the project Wiki.
+
+`pymavswarm` has been implemented to enable easy interfacing with robotic
+swarms. Refer to the following code snippet for a simple example to get started
+with the library. For more comprehensive documentation and examples, checkout
+the project Wiki.
 
 ```python
 from pymavswarm import MavSwarm, SystemCommandMsg, MsgMap
@@ -41,11 +58,15 @@ mavswarm.send_msg(msgs)
 
 # Read the current state of the swarm agents
 for agent in mavswarm.get_agents():
-    print(f'Latitude: {agent.location.latitude} Longitude: {agent.location.longitude}')
+    print(
+        f'Latitude: {agent.location.latitude} '
+        f'Longitude: {agent.location.longitude}'
+    )
 
 # Close the pymavswarm connection
 mavswarm.disconnect()
 ```
 
 ## License
+
 `pymavswarm` is released under the GNU General Public License v3 or later
