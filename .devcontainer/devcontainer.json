@@ -28,6 +28,15 @@
     "python.linting.mypyEnabled": true,
     "python.formatting.provider": "black",
     "python.formatting.blackPath": "/usr/local/bin/black",
+    "python.testing.unittestArgs": [
+      "-v",
+      "-s",
+      "./pymavswarm",
+      "-p",
+      "test*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true,
     "python.sortImports.args": [
       "--profile",
       "black",
@@ -61,7 +70,8 @@
     "njpwerner.autodocstring",
     "ms-python.vscode-pylance",
     "DavidAnson.vscode-markdownlint",
-    "esbenp.prettier-vscode"
+    "esbenp.prettier-vscode",
+    "LittleFoxTeam.vscode-python-test-adapter"
   ],
-  "postStartCommand": "pip3 install ."
+  "postStartCommand": "pip3 install -e ."
 }

@@ -14,24 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Wrapper for MAVLink connection."""
-
 import atexit
 import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import monotonic
 from pymavlink import mavutil
 
 import pymavswarm.messages as swarm_messages
+import pymavswarm.plugins as swarm_plugins
 import pymavswarm.utils as swarm_utils
 from pymavswarm import Agent
-from pymavswarm.handlers import MessageReceivers, Senders
+from pymavswarm.handlers import MessageReceivers, MessageSenders
 from pymavswarm.messages import responses
-from pymavswarm.plugins import supported_plugins
 from pymavswarm.utils import Event
 
 
@@ -66,10 +64,13 @@ class Connection:
         self.__agents: Dict[Tuple[int, int], Agent] = {}
         self.__agent_list_changed = Event()
         self.__agent_timeout = 0.0
-        self.__plugins: list = []
+        self.__plugin_senders: list = []
+        self.__plugin_receivers: list = []
+        self.__source_system: Optional[int] = None
+        self.__source_component: Optional[int] = None
 
         # Sender and receiver interfaces
-        self.__message_senders = Senders(log_level=log_level)
+        self.__message_senders = MessageSenders(log_level=log_level)
         self.__message_receivers = MessageReceivers(log_level=log_level)
 
         # Mutexes
@@ -77,7 +78,9 @@ class Connection:
         self.__send_message_mutex = threading.RLock()
 
         # Load the plugins
-        self.__load_plugins(supported_plugins)
+        self.__load_plugins(
+            swarm_plugins.plugin_senders, swarm_plugins.plugin_receivers
+        )
 
         # Register the exit callback
         atexit.register(self.disconnect)
@@ -152,7 +155,27 @@ class Connection:
         return self.__agent_list_changed
 
     @property
-    def read_message_mutex(self) -> threading.RLock:
+    def source_system(self) -> Optional[int]:
+        """
+        System ID of the source system.
+
+        :return: system ID
+        :rtype: Optional[int]
+        """
+        return self.__source_system
+
+    @property
+    def source_component(self) -> Optional[int]:
+        """
+        Component ID of the source system.
+
+        :return: component ID
+        :rtype: Optional[int]
+        """
+        return self.__source_component
+
+    @property
+    def _read_message_mutex(self) -> threading.RLock:
         """
         Mutex restricting access to the recv message method.
 
@@ -161,7 +184,7 @@ class Connection:
         return self.__read_message_mutex
 
     @property
-    def send_message_mutex(self) -> threading.RLock:
+    def _send_message_mutex(self) -> threading.RLock:
         """
         Mutex restricting access to the send message method.
 
@@ -169,7 +192,7 @@ class Connection:
         """
         return self.__send_message_mutex
 
-    def __load_plugins(self, plugins: list) -> None:
+    def __load_plugins(self, senders: list, receivers: list) -> None:
         """
         Add the plugin handlers to the connection handlers.
 
@@ -177,12 +200,15 @@ class Connection:
         :type plugins: List[Callable]
         """
         # Instantiate each of the plugins
-        self.__plugins = [plugin() for plugin in plugins]
+        self.__plugin_senders = [sender() for sender in senders]
+        self.__plugin_receivers = [receiver() for receiver in receivers]
 
         # Add the plugin handlers to the primary handlers
-        for plugin in self.__plugins:
-            self.__message_senders.senders.update(plugin.senders)
-            self.__message_receivers.receivers.update(plugin.receivers)
+        for sender in self.__plugin_senders:
+            self.__message_senders.senders.update(sender.senders)
+
+        for receiver in self.__plugin_receivers:
+            self.__message_receivers.receivers.update(receiver.receivers)
 
         return
 
@@ -233,7 +259,7 @@ class Connection:
                     self.__read_message_mutex.release()
 
             # Continue if the message read was not read properly
-            if not message:
+            if message is None:
                 continue
 
             # Execute the respective message handler(s)
@@ -243,8 +269,7 @@ class Connection:
                         function(message, self)
                     except Exception:
                         self.__logger.exception(
-                            "Exception in message handler for %s",
-                            message.get_type(),
+                            f"Exception in message handler for {message.get_type()}",
                             exc_info=True,
                         )
 
@@ -325,11 +350,10 @@ class Connection:
         :return: message success
         :rtype: bool
         """
-        # Send the message if there is a message sender for it
+        # Don't send messages that don't have handlers
         if message.message_type not in self.__message_senders.senders:
             self.__logger.info(
-                "Attempted to send an unsupported message type: %s",
-                message.message_type,
+                f"Attempted to send an unsupported message type: {message.message_type}"
             )
             return False
 
@@ -339,10 +363,9 @@ class Connection:
         else:
             self.__logger.info(
                 "The current set of registered agents does not include Agent "
-                "(%s, %s}). The provided message will still be sent; however, the "
-                "system may not be able to confirm reception of the message.",
-                message.target_system,
-                message.target_component,
+                f"({message.target_system}, {message.target_component}). The provided "
+                "message will still be sent; however, the system may not be able to "
+                "confirm reception of the message.",
             )
 
         message_success = True
@@ -352,7 +375,7 @@ class Connection:
             self.__message_senders.senders[message.message_type]
         ):
             with self.__send_message_mutex:
-                function_result = False
+                ack = False
 
                 try:
                     function_result = function(
@@ -363,8 +386,7 @@ class Connection:
                     )
                 except Exception:
                     self.__logger.exception(
-                        "Exception in message sender for %s",
-                        message.message_type,
+                        f"Exception in message sender for {message.message_type}",
                         exc_info=True,
                     )
                 finally:
@@ -372,12 +394,6 @@ class Connection:
                         message_success = False
 
         return message_success
-
-    def read_parameter(self):
-        return
-
-    def set_parameter(self):
-        return
 
     def connect(
         self,

@@ -14,10 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""User-level interface for swarm control."""
-
 import logging
-from typing import Any, Optional, Union
+from typing import Any, Optional, Tuple, Union
 
 import pymavswarm.utils as swarm_utils
 from pymavswarm import Connection
@@ -48,16 +46,6 @@ class MavSwarm:
         self.__connection = Connection(log_level=log_level)
 
         return
-
-    @property
-    def supported_messages(self) -> SupportedCommands:
-        """
-        Messages supported by pymavswarm.
-
-        :return: mapping to enable simple configuration of commands
-        :rtype: SupportedMessages
-        """
-        return SupportedCommands()
 
     @property
     def agents(self) -> dict:
@@ -254,6 +242,14 @@ class MavSwarm:
             self.__connection.read_param_handler(param)
 
         return
+
+    def get_agents(
+        self,
+        exclude_gcs: bool = True,
+        ignore_component_ids: Optional[List[int]] = None,
+        ignore_system_ids: Optional[List[int]] = None,
+    ) -> List[Agent]:
+        pass
 
     def get_agent_by_id(self, system_id: int, component_id: int) -> Optional[Agent]:
         """
