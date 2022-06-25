@@ -14,12 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .agent_message import AgentMessage
-from .change_home_position_command import ChangeHomePositionCommand
-from .flight_mode_command import FlightModeCommand
-from .flight_speed_command import FlightSpeedCommand
-from .parameter_message import ParameterMessage
-from .preflight_calibration_command import PreflightCalibrationCommand
-from .system_command import SystemCommand
-from .takeoff_command import TakeoffCommand
-from .waypoint_command import WaypointCommand
+# The message was successfully sent
+SUCCESS = (1, "success")
+
+# The message was not acknowledged
+ACK_FAILURE = (2, "acknowledgement failure")
+
+# The state change that the message was attempting to accomplish was not verified
+STATE_VALIDATION_FAILURE = (3, "state validation failure")
+
+# A stage within a sequence command failed
+SEQUENCE_STAGE_FAILURE = (4, "sequence stage failure")
+
+# Parameter read failed
+PARAM_READ_FAILURE = (5, "parameter read failure")
+
+# Parameter set failed
+PARAM_SETTING_FAILURE = (6, "parameter setting failure")
+
+# The provided message is not supported
+UNSUPPORTED_MESSAGE_TYPE = (7, "unsupported message type")
+
+# Exception
+EXCEPTION = (8, "an exception occurred on message send")

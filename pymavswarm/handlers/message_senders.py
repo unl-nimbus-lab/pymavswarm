@@ -19,14 +19,14 @@
 
 import logging
 import time
-from typing import Any, Tuple
+from typing import Any
 
 from pymavlink import mavutil
 
 import pymavswarm.messages as swarm_messages
 import pymavswarm.state as swarm_state
 from pymavswarm.handlers.senders import Senders
-from pymavswarm.messages import responses
+from pymavswarm.messages.response import Response, message_results
 
 
 class MessageSenders(Senders):
@@ -57,18 +57,14 @@ class MessageSenders(Senders):
     READ_PARAMETER = "READ_PARAMETER"
     SET_PARAMETER = "SET_PARAMETER"
 
-    def __init__(
-        self, logger_name: str = "message-senders", log_level: int = logging.INFO
-    ) -> None:
+    def __init__(self, log_level: int = logging.INFO) -> None:
         """
         Create a new message senders object.
 
-        :param logger_name: logger name, defaults to "message-senders"
-        :type logger_name: str, optional
         :param log_level: logging level, defaults to logging.INFO
         :type log_level: int, optional
         """
-        super().__init__(logger_name, log_level)
+        super().__init__(__name__, log_level)
 
         @self._send_message(MessageSenders.ARM)
         @self._timer()
@@ -76,7 +72,7 @@ class MessageSenders(Senders):
             message: swarm_messages.SystemCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Arm an agent.
 
@@ -91,7 +87,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -121,14 +117,20 @@ class MessageSenders(Senders):
 
                 return ack
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
                 verify_state_changed,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.DISARM)
         @self._timer()
@@ -136,7 +138,7 @@ class MessageSenders(Senders):
             message: swarm_messages.SystemCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Disarm an agent.
 
@@ -151,7 +153,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -179,14 +181,20 @@ class MessageSenders(Senders):
                         break
                 return ack
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
                 verify_state_changed,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.KILL)
         @self._timer()
@@ -194,7 +202,7 @@ class MessageSenders(Senders):
             message: swarm_messages.SystemCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Force disarm an agent.
 
@@ -209,7 +217,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -225,13 +233,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.REBOOT)
         @self._timer()
@@ -239,7 +253,7 @@ class MessageSenders(Senders):
             message: swarm_messages.SystemCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Reboot an agent.
 
@@ -254,7 +268,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -270,13 +284,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.SHUTDOWN)
         @self._timer()
@@ -284,7 +304,7 @@ class MessageSenders(Senders):
             message: swarm_messages.SystemCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Shutdown an agent.
 
@@ -299,7 +319,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -315,13 +335,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.ACCELEROMETER_CALIBRATION)
         @self._timer()
@@ -329,7 +355,7 @@ class MessageSenders(Senders):
             message: swarm_messages.PreflightCalibrationCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Perform a full accelerometer calibration on the selected agent.
 
@@ -344,7 +370,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -360,13 +386,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.SIMPLE_ACCELEROMETER_CALIBRATION)
         @self._timer()
@@ -374,7 +406,7 @@ class MessageSenders(Senders):
             message: swarm_messages.PreflightCalibrationCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Perform a simple accelerometer calibration on the selected agent.
 
@@ -389,7 +421,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -405,13 +437,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.AHRS_TRIM)
         @self._timer()
@@ -419,7 +457,7 @@ class MessageSenders(Senders):
             message: swarm_messages.PreflightCalibrationCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Perform an AHRS trim on the selected agent.
 
@@ -434,7 +472,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -450,13 +488,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.GYROSCOPE_CALIBRATION)
         @self._timer()
@@ -464,7 +508,7 @@ class MessageSenders(Senders):
             message: swarm_messages.PreflightCalibrationCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Perform a gyroscope calibration on the selected agent.
 
@@ -479,7 +523,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -495,13 +539,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.MAGNETOMETER_CALIBRATION)
         @self._timer()
@@ -509,7 +559,7 @@ class MessageSenders(Senders):
             message: swarm_messages.PreflightCalibrationCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Perform a magnetometer calibration on the selected agent.
 
@@ -524,7 +574,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -540,13 +590,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.GROUND_PRESSURE_CALIBRATION)
         @self._timer()
@@ -554,7 +610,7 @@ class MessageSenders(Senders):
             message: swarm_messages.PreflightCalibrationCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Perform a ground pressure calibration on the selected agent.
 
@@ -569,7 +625,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -585,13 +641,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.AIRSPEED_CALIBRATION)
         @self._timer()
@@ -599,7 +661,7 @@ class MessageSenders(Senders):
             message: swarm_messages.PreflightCalibrationCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Perform airspeed calibration on the selected agent.
 
@@ -614,7 +676,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -630,13 +692,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.BAROMETER_TEMPERATURE_CALIBRATION)
         @self._timer()
@@ -644,7 +712,7 @@ class MessageSenders(Senders):
             message: swarm_messages.PreflightCalibrationCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Perform a barometer temperature calibration on the selected agent.
 
@@ -659,7 +727,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -675,13 +743,19 @@ class MessageSenders(Senders):
                 3,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.FLIGHT_MODE)
         @self._timer()
@@ -689,7 +763,7 @@ class MessageSenders(Senders):
             message: swarm_messages.FlightModeCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Set the flight mode of an agent.
 
@@ -704,7 +778,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             # Reset target
             connection.mavlink_connection.target_system = message.target_system
@@ -732,11 +806,17 @@ class MessageSenders(Senders):
 
                 return ack
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message, connection, function_idx, verify_state_changed
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.FLIGHT_SPEED)
         @self._timer()
@@ -744,7 +824,7 @@ class MessageSenders(Senders):
             message: swarm_messages.FlightSpeedCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Set an agent's flight speed.
 
@@ -759,7 +839,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -775,13 +855,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.TAKEOFF)
         @self._timer()
@@ -789,7 +875,7 @@ class MessageSenders(Senders):
             message: swarm_messages.TakeoffCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Execute a takeoff command (not a full sequence).
 
@@ -809,7 +895,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -824,13 +910,19 @@ class MessageSenders(Senders):
                 message.longitude,
                 message.altitude,
             )
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.TAKEOFF_SEQUENCE)
         @self._timer()
@@ -838,7 +930,7 @@ class MessageSenders(Senders):
             message: swarm_messages.TakeoffCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Execute a full takeoff sequence.
 
@@ -858,7 +950,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             # Create a new guided mode
             guided_message = swarm_messages.FlightModeCommand(
@@ -874,7 +966,13 @@ class MessageSenders(Senders):
 
             # Attempt to switch to GUIDED mode
             if not self._send_sequence_message(guided_message, connection):
-                return False, responses.SEQUENCE_STAGE_FAILURE
+                return Response(
+                    message.target_system,
+                    message.target_component,
+                    message.message_type,
+                    False,
+                    message_results.SEQUENCE_STAGE_FAILURE,
+                )
 
             # Create a new arming message to send
             arm_message = swarm_messages.SystemCommand(
@@ -890,7 +988,13 @@ class MessageSenders(Senders):
 
             # Attempt to arm the system
             if not self._send_sequence_message(arm_message, connection):
-                return False, responses.SEQUENCE_STAGE_FAILURE
+                return Response(
+                    message.target_system,
+                    message.target_component,
+                    message.message_type,
+                    False,
+                    message_results.SEQUENCE_STAGE_FAILURE,
+                )
 
             # Give the agent a chance to fully arm
             time.sleep(message.state_delay)
@@ -900,9 +1004,21 @@ class MessageSenders(Senders):
 
             # Attempt to perform takeoff
             if not self._send_sequence_message(message, connection):
-                return False, responses.SEQUENCE_STAGE_FAILURE
+                return Response(
+                    message.target_system,
+                    message.target_component,
+                    message.message_type,
+                    False,
+                    message_results.SEQUENCE_STAGE_FAILURE,
+                )
 
-            return True, responses.SUCCESS
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                True,
+                message_results.SUCCESS,
+            )
 
         @self._send_message(MessageSenders.WAYPOINT)
         @self._timer()
@@ -910,7 +1026,7 @@ class MessageSenders(Senders):
             message: swarm_messages.WaypointCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Perform a waypoint navigation command.
 
@@ -929,7 +1045,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.mission_item_send(
                 message.target_system,
@@ -948,13 +1064,19 @@ class MessageSenders(Senders):
                 message.altitude,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.GET_HOME_POSITION)
         @self._timer()
@@ -962,7 +1084,7 @@ class MessageSenders(Senders):
             message: swarm_messages.AgentMessage,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Get the current home position of an agent.
 
@@ -974,7 +1096,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -990,13 +1112,19 @@ class MessageSenders(Senders):
                 0,
             )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message,
                 connection,
                 function_idx,
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.RESET_HOME_TO_CURRENT)
         @self._timer()
@@ -1004,7 +1132,7 @@ class MessageSenders(Senders):
             message: swarm_messages.ChangeHomePositionCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Reset the saved home position of an agent to the current position.
 
@@ -1023,7 +1151,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             agent_id = (message.target_system, message.target_component)
 
@@ -1073,11 +1201,17 @@ class MessageSenders(Senders):
 
                 return ack
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message, connection, function_idx, verify_state_changed
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.RESET_HOME_POSITION)
         @self._timer()
@@ -1085,7 +1219,7 @@ class MessageSenders(Senders):
             message: swarm_messages.ChangeHomePositionCommand,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Reset the saved home position of an agent to the desired position.
 
@@ -1100,7 +1234,7 @@ class MessageSenders(Senders):
             :type function_idx: int, optional
 
             :return: message send success/fail, message response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             connection.mavlink_connection.mav.command_long_send(
                 message.target_system,
@@ -1150,11 +1284,17 @@ class MessageSenders(Senders):
 
                 return ack
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message, connection, function_idx, verify_state_changed
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.READ_PARAMETER)
         @self._timer()
@@ -1162,7 +1302,7 @@ class MessageSenders(Senders):
             message: swarm_messages.ParameterMessage,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Read a parameter value from the target agent.
 
@@ -1175,7 +1315,7 @@ class MessageSenders(Senders):
             :type connection: Connection
 
             :return: parameter read success, parameter read response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             try:
                 connection.mavlink_connection.mav.param_request_read_send(
@@ -1185,13 +1325,19 @@ class MessageSenders(Senders):
                     -1,
                 )
             except Exception:
-                return False, responses.PARAM_READ_FAILURE
+                return Response(
+                    message.target_system,
+                    message.target_component,
+                    message.message_type,
+                    False,
+                    message_results.PARAM_READ_FAILURE,
+                )
 
-            ack, response, ack_msg = self._get_message_response(
+            result, code, ack_msg = self._get_message_response(
                 message, connection, function_idx, ack_packet_type="PARAM_VALUE"
             )
 
-            if ack:
+            if result:
                 read_param = swarm_state.Parameter(
                     ack_msg["param_id"],
                     ack_msg["param_value"],
@@ -1204,7 +1350,13 @@ class MessageSenders(Senders):
                     (message.target_system, message.target_component)
                 ].last_params_read.append(read_param)
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )
 
         @self._send_message(MessageSenders.SET_PARAMETER)
         @self._timer()
@@ -1212,7 +1364,7 @@ class MessageSenders(Senders):
             message: swarm_messages.ParameterMessage,
             connection,
             function_idx: int = 0,
-        ) -> Tuple[bool, Tuple[int, str]]:
+        ) -> Response:
             """
             Set a parameter on the target agent.
 
@@ -1223,7 +1375,7 @@ class MessageSenders(Senders):
             :type connection: Connection
 
             :return: parameter read success, parameter read response
-            :rtype: Tuple[bool, Tuple[int, str]]
+            :rtype: Response
             """
             try:
                 # NOTE: In the current state, we only support float parameter value types
@@ -1236,10 +1388,22 @@ class MessageSenders(Senders):
                     9,
                 )
             except Exception:
-                return False, responses.PARAM_READ_FAILURE
+                return Response(
+                    message.target_system,
+                    message.target_component,
+                    message.message_type,
+                    False,
+                    message_results.PARAM_SETTING_FAILURE,
+                )
 
-            ack, response, _ = self._get_message_response(
+            result, code, _ = self._get_message_response(
                 message, connection, function_idx, ack_packet_type="PARAM_VALUE"
             )
 
-            return ack, response
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                result,
+                code,
+            )

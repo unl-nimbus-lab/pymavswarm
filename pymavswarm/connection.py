@@ -18,18 +18,17 @@ import atexit
 import logging
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, Optional, Tuple, Union
+from concurrent.futures import Future, ThreadPoolExecutor
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import monotonic
 from pymavlink import mavutil
 
-import pymavswarm.messages as swarm_messages
 import pymavswarm.plugins as swarm_plugins
 import pymavswarm.utils as swarm_utils
 from pymavswarm import Agent
 from pymavswarm.handlers import MessageReceivers, MessageSenders
-from pymavswarm.messages import responses
+from pymavswarm.messages.response import Response, message_results
 from pymavswarm.utils import Event
 
 
@@ -39,7 +38,6 @@ class Connection:
     def __init__(
         self,
         max_workers: int = 5,
-        logger_name: str = "connection",
         log_level: int = logging.INFO,
     ) -> None:
         """
@@ -48,16 +46,12 @@ class Connection:
         :param max_workers: maximum number of workers available in the thread pool used
             to send messages, defaults to 5
         :type: max_workers: int, optional
-
-        :param logger_name: name of the logger
-        :type logger_name: str, optional
-
         :param log_level: log level of the connection logger, defaults to
             logging.INFO
         :type debug: int, optional
         """
         # pylint: disable=too-many-instance-attributes
-        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
+        self.__logger = swarm_utils.init_logger(__name__, log_level=log_level)
 
         self.__mavlink_connection = None
         self.__connected = False
@@ -120,19 +114,6 @@ class Connection:
         return self.__connected
 
     @property
-    def agent_timeout(self) -> float:
-        """
-        Agent timeout duration.
-
-        Maximum time that an agent has to send a heartbeat message before it is
-        considered timed out.
-
-        :return: agent timeout duration
-        :rtype: float
-        """
-        return self.__agent_timeout
-
-    @property
     def agents(self) -> dict:
         """
         Set of recognized agents.
@@ -173,6 +154,19 @@ class Connection:
         :rtype: Optional[int]
         """
         return self.__source_component
+
+    @property
+    def _agent_timeout(self) -> float:
+        """
+        Agent timeout duration.
+
+        Maximum time that an agent has to send a heartbeat message before it is
+        considered timed out.
+
+        :return: agent timeout duration
+        :rtype: float
+        """
+        return self.__agent_timeout
 
     @property
     def _read_message_mutex(self) -> threading.RLock:
@@ -275,7 +269,7 @@ class Connection:
 
         return
 
-    def send_message(self, message: Union[Any, swarm_messages.MessagePackage]) -> bool:
+    def send_message(self, message: Union[Any, List[Any]]) -> Future:
         """
         Send a message.
 
@@ -283,64 +277,34 @@ class Connection:
         :type message: Union[Any, swarm_messages.MessagePackage]
         """
         if self.__connected:
-            if isinstance(message, swarm_messages.MessagePackage):
+            if isinstance(message, list):
                 future = self.__send_message_thread_pool_executor.submit(
-                    self.__send_message_package, message
+                    self.__send_message_list, message
                 )
             else:
                 future = self.__send_message_thread_pool_executor.submit(
-                    self.__send_message, message
+                    self.__send_message, message  # type: ignore
                 )
 
-        result = False
+        return future
 
-        try:
-            result = future.result()
-        except Exception:
-            pass
-
-        return result
-
-    def __send_message_package(self, package: swarm_messages.MessagePackage) -> bool:
+    def __send_message_list(self, messages: List[Any]) -> List[Response]:
         """
-        Send a message package.
+        Send a list of messages.
 
-        :param package: package of messages to send
-        :type package: MessagePackage
+        :param messages:
+        :type messages: List[Any]
+        :return: list of message responses
+        :rtype: List[Response]
         """
-        # Initial attempt at sending each message in the package
-        for message in package.messages:
-            if not self.__send_message(message):
-                package.messages_failed.append(message)
-            else:
-                package.messages_succeeded.append(message)
+        responses: List[Response] = []
 
-        # Retry sending the failed messages
-        if package.retry and len(package.messages_failed) > 0:
-            for _ in range(package.max_retry_attempts):
-                # Only retry sending the failed messages
-                if len(package.messages_failed) > 0:
-                    for message in package.messages_failed:
-                        if self.__send_message(message):
-                            package.messages_failed.remove(message)
-                            package.messages_succeeded.append(message)
-                else:
-                    break
+        for message in messages:
+            responses.append(self.__send_message(message))
 
-        # The package send is considered successful if there are no messages that
-        # failed
-        package_success = len(package.messages_failed) == 0
+        return responses
 
-        if package_success:
-            package.response = responses.SUCCESS
-            package.package_result_event.notify(context=package.context)
-        else:
-            package.response = responses.PACKAGE_FAILURE
-            package.package_result_event.notify(context=package.context)
-
-        return package_success
-
-    def __send_message(self, message: Any) -> bool:
+    def __send_message(self, message: Any) -> Response:
         """
         Send a message to an agent in the network.
 
@@ -348,19 +312,23 @@ class Connection:
         :type message: Any
 
         :return: message success
-        :rtype: bool
+        :rtype: Response
         """
         # Don't send messages that don't have handlers
         if message.message_type not in self.__message_senders.senders:
             self.__logger.info(
                 f"Attempted to send an unsupported message type: {message.message_type}"
             )
-            return False
+            return Response(
+                message.target_system,
+                message.target_component,
+                message.message_type,
+                False,
+                message_results.UNSUPPORTED_MESSAGE_TYPE,
+            )
 
         # Determine whether the agent has been recognized
-        if (message.target_system, message.target_comp) in self.__agents:
-            agent_exists = True
-        else:
+        if (message.target_system, message.target_comp) not in self.__agents:
             self.__logger.info(
                 "The current set of registered agents does not include Agent "
                 f"({message.target_system}, {message.target_component}). The provided "
@@ -368,32 +336,31 @@ class Connection:
                 "confirm reception of the message.",
             )
 
-        message_success = True
-
         # Call each handler for the message
         for function_id, function in enumerate(
             self.__message_senders.senders[message.message_type]
         ):
             with self.__send_message_mutex:
-                ack = False
-
                 try:
-                    function_result = function(
+                    response: Response = function(
                         message,
                         self,
                         function_id=function_id,
-                        agent_exists=agent_exists,
                     )
                 except Exception:
                     self.__logger.exception(
                         f"Exception in message sender for {message.message_type}",
                         exc_info=True,
                     )
-                finally:
-                    if not function_result:
-                        message_success = False
+                    response = Response(
+                        message.target_system,
+                        message.target_component,
+                        message.message_type,
+                        False,
+                        message_results.EXCEPTION,
+                    )
 
-        return message_success
+        return response
 
     def connect(
         self,

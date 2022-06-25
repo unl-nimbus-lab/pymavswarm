@@ -31,19 +31,14 @@ class HrlSenders(Senders):
 
     HRL_COMMAND = "HRL_COMMAND"
 
-    def __init__(
-        self, logger_name: str = "hrl-senders", log_level: int = logging.INFO
-    ) -> None:
+    def __init__(self, log_level: int = logging.INFO) -> None:
         """
         Create a new HRL senders object.
-
-        :param logger_name: logger name, defaults to "hrl-senders"
-        :type logger_name: str, optional
 
         :param log_level: logging level, defaults to logging.INFO
         :type log_level: int, optional
         """
-        super().__init__(logger_name, log_level)
+        super().__init__(__name__, log_level)
 
         @self._send_message(HrlSenders.HRL_COMMAND)
         @self._timer()

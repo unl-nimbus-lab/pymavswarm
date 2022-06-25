@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional
-
 from pymavswarm.messages.agent_message import AgentMessage
 from pymavswarm.plugins.hrl_plugin.hrl_senders import HrlSenders
 
@@ -38,7 +36,6 @@ class HRLCommand(AgentMessage):
         ack_timeout: float = 1,
         state_timeout: float = 5,
         state_delay: float = 3,
-        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
         Create an HRL command.
@@ -70,9 +67,6 @@ class HRLCommand(AgentMessage):
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
-        :param optional_context_props: optional properties to append to the message
-            context, defaults to None
-        :type optional_context_props: Optional[dict], optional
         """
         super().__init__(
             HrlSenders.HRL_COMMAND,
@@ -83,7 +77,6 @@ class HRLCommand(AgentMessage):
             ack_timeout,
             state_timeout,
             state_delay,
-            optional_context_props,
         )
 
         self.__hrl_command = hrl_command
@@ -99,16 +92,3 @@ class HRLCommand(AgentMessage):
         :rtype: int
         """
         return self.__hrl_command
-
-    @property
-    def context(self) -> dict:
-        """
-        Message context.
-
-        :return: message context
-        :rtype: dict
-        """
-        context = super().context
-        context["hrl_command"] = self.__hrl_command
-
-        return context

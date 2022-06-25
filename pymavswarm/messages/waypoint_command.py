@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional
-
 from pymavswarm.handlers import MessageSenders
 from pymavswarm.messages.agent_message import AgentMessage
 
@@ -39,7 +37,6 @@ class WaypointCommand(AgentMessage):
         ack_timeout: float = 1,
         state_timeout: float = 5,
         state_delay: float = 3,
-        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
         Create a waypoint command.
@@ -87,9 +84,6 @@ class WaypointCommand(AgentMessage):
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
-        :param optional_context_props: optional properties to append to the message
-            context, defaults to None
-        :type optional_context_props: Optional[dict], optional
         """
         super().__init__(
             MessageSenders.WAYPOINT,
@@ -100,7 +94,6 @@ class WaypointCommand(AgentMessage):
             ack_timeout,
             state_timeout,
             state_delay,
-            optional_context_props,
         )
 
         self.__latitude = lat
@@ -188,24 +181,3 @@ class WaypointCommand(AgentMessage):
         :rtype: float
         """
         return self.__altitude
-
-    @property
-    def context(self) -> dict:
-        """
-        Context of the message.
-
-        :return: message context
-        :rtype: dict
-        """
-        context = super().context
-
-        # Update to include new properties
-        context["yaw"] = self.__yaw
-        context["pass_radius"] = self.__pass_radius
-        context["accept_radius"] = self.__accept_radius
-        context["hold"] = self.__hold
-        context["latitude"] = self.__latitude
-        context["longitude"] = self.__longitude
-        context["altitude"] = self.__altitude
-
-        return context

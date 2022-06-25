@@ -14,10 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional
-
-from pymavswarm.utils import Event
-
 
 class Message:
     """Parent class used to construct MAVLink messages."""
@@ -29,7 +25,6 @@ class Message:
         retry: bool,
         message_timeout: float = 5.0,
         ack_timeout: float = 1.0,
-        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
         Create a MAVLink message wrapper.
@@ -45,14 +40,10 @@ class Message:
         :type message_timeout: float, optional
         :param ack_timeout: max time to wait for an acknowledgement, defaults to 1.0 [s]
         :type ack_timeout: float, optional
-        :param optional_context_props: optional properties to append to the message
-            context, defaults to None
-        :type optional_context_props: Optional[dict], optional
         """
         self.__target_system = target_system
         self.__target_component = target_component
         self.__retry = retry
-        self.__optional_context_props = optional_context_props
 
         if message_timeout < 0.0 or ack_timeout < 0.0:
             raise ValueError(
@@ -62,8 +53,6 @@ class Message:
 
         self.__msg_timeout = message_timeout
         self.__ack_timeout = ack_timeout
-        self.__result_event = Event()
-        self.__response: Optional[int] = None
 
         return
 
@@ -127,56 +116,3 @@ class Message:
         :rtype: float
         """
         return self.__ack_timeout
-
-    @property
-    def result_event(self) -> Event:
-        """
-        Event signaling the result of a message.
-
-        :return: result event
-        :rtype: Event
-        """
-        return self.__result_event
-
-    @property
-    def response(self) -> Optional[int]:
-        """
-        Message response.
-
-        :return: response code
-        :rtype: int
-        """
-        return self.__response
-
-    @response.setter
-    def response(self, code: Optional[int]) -> None:
-        """
-        Set the response code.
-
-        :param code: response code
-        :type code: int
-        """
-        self.__response = code
-        return
-
-    @property
-    def context(self) -> dict:
-        """
-        Context of the message.
-
-        :return: dictionary with the message context
-        :rtype: dict
-        """
-        context = {
-            "target_system": self.__target_system,
-            "target_component": self.__target_component,
-            "retry": self.__retry,
-            "msg_timeout": self.__msg_timeout,
-            "ack_timeout": self.__ack_timeout,
-            "response": self.__response,
-        }
-
-        if self.__optional_context_props is not None:
-            context.update(self.__optional_context_props)
-
-        return context

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List, Optional
+from typing import List
 
 from pymavswarm.handlers import MessageSenders
 from pymavswarm.messages.agent_message import AgentMessage
@@ -61,7 +61,6 @@ class PreflightCalibrationCommand(AgentMessage):
         ack_timeout: float = 1,
         state_timeout: float = 5,
         state_delay: float = 3,
-        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
         Create a pre-flight calibration command.
@@ -93,9 +92,6 @@ class PreflightCalibrationCommand(AgentMessage):
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
-        :param optional_context_props: optional properties to append to the message
-            context, defaults to None
-        :type optional_context_props: Optional[dict], optional
         :raises ValueError: invalid pre-flight calibration type
         """
         if calibration_type not in PreflightCalibrationCommand.get_calibration_types():
@@ -114,7 +110,6 @@ class PreflightCalibrationCommand(AgentMessage):
             ack_timeout,
             state_timeout,
             state_delay,
-            optional_context_props,
         )
 
         self.__calibration_type = calibration_type
@@ -130,16 +125,3 @@ class PreflightCalibrationCommand(AgentMessage):
         :rtype: str
         """
         return self.__calibration_type
-
-    @property
-    def context(self) -> dict:
-        """
-        Message context.
-
-        :return: current message context
-        :rtype: dict
-        """
-        context = super().context
-        context["calibration_type"] = self.__calibration_type
-
-        return context

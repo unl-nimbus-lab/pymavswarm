@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List, Optional
+from typing import List
 
 from pymavswarm.handlers import MessageSenders
 from pymavswarm.messages.agent_message import AgentMessage
@@ -49,7 +49,6 @@ class FlightSpeedCommand(AgentMessage):
         ack_timeout: float = 1,
         state_timeout: float = 5,
         state_delay: float = 3,
-        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
         Create a flight speed command.
@@ -83,9 +82,6 @@ class FlightSpeedCommand(AgentMessage):
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
-        :param optional_context_props: optional properties to append to the message
-            context, defaults to None
-        :type optional_context_props: Optional[dict], optional
         """
         if speed_command_type not in FlightSpeedCommand.get_speed_command_types():
             raise ValueError(
@@ -103,7 +99,6 @@ class FlightSpeedCommand(AgentMessage):
             ack_timeout=ack_timeout,
             state_timeout=state_timeout,
             state_delay=state_delay,
-            optional_context_props=optional_context_props,
         )
         self.__speed = speed
         self.__speed_command_type = speed_command_type
@@ -129,18 +124,3 @@ class FlightSpeedCommand(AgentMessage):
         :rtype: int
         """
         return self.__speed_command_type
-
-    @property
-    def context(self) -> dict:
-        """
-        Context of the message.
-
-        :rtype: dict
-        """
-        context = super().context
-
-        # Update to include new properties
-        context["speed"] = self.__speed
-        context["speed_type"] = self.__speed_command_type
-
-        return context

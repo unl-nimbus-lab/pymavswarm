@@ -32,18 +32,14 @@ from pymavswarm.handlers.receivers import Receivers
 class MessageReceivers(Receivers):
     """Collection of methods responsible for processing incoming messages."""
 
-    def __init__(
-        self, logger_name: str = "message-receivers", log_level: int = logging.INFO
-    ) -> None:
+    def __init__(self, log_level: int = logging.INFO) -> None:
         """
         Make a new receivers object.
 
-        :param logger_name: logger name, defaults to "message-receivers"
-        :type logger_name: str, optional
         :param log_level: log level, defaults to logging.INFO
         :type log_level: int, optional
         """
-        super().__init__(logger_name, log_level)
+        super().__init__(__name__, log_level)
 
         @self._receive_message("HEARTBEAT")
         @self._timer()

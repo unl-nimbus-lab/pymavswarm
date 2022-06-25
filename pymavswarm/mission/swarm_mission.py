@@ -27,7 +27,6 @@ class SwarmMission:
     def __init__(
         self,
         waypoints: Optional[List[Waypoint]] = None,
-        logger_name: str = "mission",
         log_level: int = logging.INFO,
     ) -> None:
         """
@@ -35,12 +34,10 @@ class SwarmMission:
 
         :param waypoints: The set of waypoints to be executed, defaults to None
         :type waypoints: Optional[List[Waypoint]], optional
-        :param logger_name: name of the class logger, defaults to "mission"
-        :type logger_name: str, optional
         :param log_level: The desired debugging level, defaults to logging.INFO
         :type debug: int, optional
         """
-        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
+        self.__logger = swarm_utils.init_logger(__name__, log_level=log_level)
         self.__waypoints = waypoints
 
         return

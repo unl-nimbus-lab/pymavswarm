@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional
-
 from pymavswarm.messages.message import Message
 
 
@@ -32,7 +30,6 @@ class AgentMessage(Message):
         ack_timeout: float = 1.0,
         state_timeout: float = 5.0,
         state_delay: float = 3.0,
-        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
         Create a new agent message.
@@ -64,9 +61,6 @@ class AgentMessage(Message):
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
-        :param optional_context_props: optional properties to append to the message
-            context, defaults to None
-        :type optional_context_props: Optional[dict], optional
         """
         super().__init__(
             target_system,
@@ -74,7 +68,6 @@ class AgentMessage(Message):
             retry,
             message_timeout,
             ack_timeout,
-            optional_context_props,
         )
         self.__msg_type = message_type
 
@@ -136,20 +129,3 @@ class AgentMessage(Message):
         :rtype: float
         """
         return self.__state_delay
-
-    @property
-    def context(self) -> dict:
-        """
-        Message context.
-
-        :return: Dictionary with the message context
-        :rtype: dict
-        """
-        context = super().context
-
-        # Update the message context with the base command context
-        context["message_type"] = self.__msg_type
-        context["state_timeout"] = self.__state_timeout
-        context["state_delay"] = self.__state_delay
-
-        return context

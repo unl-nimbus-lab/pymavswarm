@@ -19,7 +19,7 @@ import time
 from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from pymavswarm.messages import responses
+from pymavswarm.messages.response import message_results
 from pymavswarm.utils import init_logger
 
 
@@ -27,12 +27,12 @@ class Senders:
     """Base class used to implement message senders."""
 
     def __init__(
-        self, logger_name: str = "senders", log_level: int = logging.INFO
+        self, logger_name: str = __name__, log_level: int = logging.INFO
     ) -> None:
         """
         Create a new senders object.
 
-        :param logger_name: logger name, defaults to "senders"
+        :param logger_name: logger name, defaults to __name__
         :type logger_name: str, optional
         :param log_level: logging level, defaults to logging.INFO
         :type log_level: int, optional
@@ -125,18 +125,18 @@ class Senders:
             state was properly modified, defaults to None
         :type state_verification_function: Optional[Callable], optional
 
-        :return: message acknowledgement, message response
+        :return: message acknowledgement, message code, acknowledgement message
         :rtype: Tuple[bool, Tuple[int, str], Optional[dict]]
         """
         ack = False
-        response = responses.ACK_FAILURE
+        code = message_results.ACK_FAILURE
 
         ack, ack_msg = self._ack_message(
             ack_packet_type, connection, timeout=message.ack_timeout
         )
 
         if ack:
-            response = responses.SUCCESS
+            code = message_results.SUCCESS
 
             if (
                 message.target_system,
@@ -145,18 +145,18 @@ class Senders:
                 ack = state_verification_function(message, connection)
 
                 if not ack:
-                    response = responses.STATE_VALIDATION_FAILURE
+                    code = message_results.STATE_VALIDATION_FAILURE
         else:
-            response = responses.ACK_FAILURE
+            code = message_results.ACK_FAILURE
 
         if message.retry and not ack:
-            ack, response, ack_msg = self._retry_message_send(
+            ack, code, ack_msg = self._retry_message_send(
                 deepcopy(message),
                 connection,
                 self.__senders[message.message_type][function_idx],
             )
 
-        return ack, response, ack_msg
+        return ack, code, ack_msg
 
     def _retry_message_send(
         self,

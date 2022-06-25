@@ -31,7 +31,6 @@ class ParameterMessage(AgentMessage):
         parameter_value: Optional[Union[float, int]] = None,
         message_timeout: float = 5,
         ack_timeout: float = 1,
-        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
         Create a new parameter message.
@@ -56,9 +55,6 @@ class ParameterMessage(AgentMessage):
             to true. This should be kept as short as possible to keep agent state
             information up-to-date, defaults to 1.0
         :type ack_timeout: float, optional
-        :param optional_context_props: optional properties to append to the message
-            context, defaults to None
-        :type optional_context_props: Optional[dict], optional
         """
         if parameter_value is None:
             super().__init__(
@@ -68,7 +64,6 @@ class ParameterMessage(AgentMessage):
                 retry,
                 message_timeout,
                 ack_timeout,
-                optional_context_props=optional_context_props,
             )
         else:
             super().__init__(
@@ -78,7 +73,6 @@ class ParameterMessage(AgentMessage):
                 retry,
                 message_timeout,
                 ack_timeout,
-                optional_context_props=optional_context_props,
             )
 
         self.__parameter_id = parameter_id
@@ -105,17 +99,3 @@ class ParameterMessage(AgentMessage):
         :rtype: Union[float, int]
         """
         return self.__parameter_value
-
-    @property
-    def context(self) -> dict:
-        """
-        Context of the parameter when an event occurred.
-
-        :rtype: dict
-        """
-        context = super().context
-
-        context["parameter_id"] = self.__parameter_id
-        context["parameter_value"] = self.__parameter_value
-
-        return context

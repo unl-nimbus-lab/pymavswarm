@@ -40,7 +40,6 @@ class ChangeHomePositionCommand(AgentMessage):
         ack_timeout: float = 1,
         state_timeout: float = 5,
         state_delay: float = 3,
-        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
         Create a command to change the home position of an agent.
@@ -76,9 +75,6 @@ class ChangeHomePositionCommand(AgentMessage):
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
-        :param optional_context_props: optional properties to append to the message
-            context, defaults to None
-        :type optional_context_props: Optional[dict], optional
         """
         if lat == 0 and lon == 0 and alt == 0:
             super().__init__(
@@ -90,7 +86,6 @@ class ChangeHomePositionCommand(AgentMessage):
                 ack_timeout,
                 state_timeout,
                 state_delay,
-                optional_context_props,
             )
         else:
             super().__init__(
@@ -102,7 +97,6 @@ class ChangeHomePositionCommand(AgentMessage):
                 ack_timeout,
                 state_timeout,
                 state_delay,
-                optional_context_props,
             )
 
         self.__altitude = alt
@@ -140,20 +134,3 @@ class ChangeHomePositionCommand(AgentMessage):
         :rtype: Optional[float]
         """
         return self.__longitude
-
-    @property
-    def context(self) -> dict:
-        """
-        Context of the message.
-
-        :return: message context
-        :rtype: dict
-        """
-        context = super().context
-
-        # Update to include new properties
-        context["latitude"] = self.__latitude
-        context["longitude"] = self.__longitude
-        context["altitude"] = self.__altitude
-
-        return context

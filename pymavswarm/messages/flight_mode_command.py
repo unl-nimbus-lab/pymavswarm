@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List, Optional
+from typing import List
 
 from pymavswarm.handlers import MessageSenders
 from pymavswarm.messages.agent_message import AgentMessage
@@ -65,7 +65,6 @@ class FlightModeCommand(AgentMessage):
         ack_timeout: float = 1,
         state_timeout: float = 5,
         state_delay: float = 3,
-        optional_context_props: Optional[dict] = None,
     ) -> None:
         """
         Create a new flight mode command.
@@ -97,9 +96,6 @@ class FlightModeCommand(AgentMessage):
             for sequence-driven commands such as the full takeoff command sequence,
             defaults to 3.0
         :type state_delay: float, optional
-        :param optional_context_props: optional properties to append to the message
-            context, defaults to None
-        :type optional_context_props: Optional[dict], optional
         """
         super().__init__(
             MessageSenders.FLIGHT_MODE,
@@ -110,7 +106,6 @@ class FlightModeCommand(AgentMessage):
             ack_timeout,
             state_timeout,
             state_delay,
-            optional_context_props,
         )
 
         if flight_mode not in FlightModeCommand.get_supported_flight_modes():
@@ -129,16 +124,3 @@ class FlightModeCommand(AgentMessage):
         :rtype: str
         """
         return self.__flight_mode
-
-    @property
-    def context(self) -> dict:
-        """
-        Flight mode command context.
-
-        :return: message context
-        :rtype: dict
-        """
-        context = super().context
-        context["flight_mode"] = self.__flight_mode
-
-        return context

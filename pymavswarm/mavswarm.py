@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from typing import Any, Optional, Tuple, Union
+from typing import Any, List, Optional, Union
 
 import pymavswarm.utils as swarm_utils
 from pymavswarm import Connection
@@ -249,6 +249,27 @@ class MavSwarm:
         ignore_component_ids: Optional[List[int]] = None,
         ignore_system_ids: Optional[List[int]] = None,
     ) -> List[Agent]:
+        pass
+
+    def takeoff(self):
+        pass
+
+    def land(self):
+        pass
+
+    def change_mode(self):
+        pass
+
+    def set_parameter(self):
+        pass
+
+    def read_parameter(self):
+        pass
+
+    def arm(self):
+        pass
+
+    def disarm(self):
         pass
 
     def get_agent_by_id(self, system_id: int, component_id: int) -> Optional[Agent]:

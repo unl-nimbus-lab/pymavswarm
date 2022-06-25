@@ -25,12 +25,12 @@ class Receivers:
     """Base class used to implement message receivers."""
 
     def __init__(
-        self, logger_name: str = "receivers", log_level: int = logging.INFO
+        self, logger_name: str = __name__, log_level: int = logging.INFO
     ) -> None:
         """
         Make a new receivers object.
 
-        :param logger_name: name of the logger, defaults to "receivers"
+        :param logger_name: name of the logger, defaults to __name__
         :type logger_name: str, optional
         :param log_level: logging level, defaults to logging.INFO
         :type log_level: int, optional
