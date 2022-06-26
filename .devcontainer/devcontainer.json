@@ -61,7 +61,15 @@
       },
       "editor.defaultFormatter": "ms-azuretools.vscode-docker"
     },
-    "autoDocstring.startOnNewLine": false
+    "autoDocstring.startOnNewLine": false,
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/bower_components": true,
+      "**/*.code-search": true,
+      "**/build": true,
+      "**/install": true,
+      "**/log": true
+    }
   },
   "extensions": [
     "ms-azuretools.vscode-docker",

@@ -14,14 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import atexit
 import logging
-from typing import Any, List, Optional, Union
+import threading
+import time
+from concurrent.futures import Future, ThreadPoolExecutor
+from typing import Callable, Dict, List, Optional, Tuple, Union
+
+import monotonic
+from pymavlink import mavutil
 
 import pymavswarm.utils as swarm_utils
 from pymavswarm import Connection
 from pymavswarm.agent import Agent
-from pymavswarm.messages import MessagePackage, SupportedCommands
-from pymavswarm.param import Parameter, ParameterPackage
+from pymavswarm.handlers import MessageReceivers
+from pymavswarm.messages.message_wrapper import MessageWrapper
+from pymavswarm.messages.response import Response, message_results
 from pymavswarm.utils import Event
 
 
@@ -33,65 +41,53 @@ class MavSwarm:
     configuring agents.
     """
 
-    def __init__(self, log_level: int = logging.INFO) -> None:
+    def __init__(
+        self,
+        max_workers: int = 5,
+        log_level: int = logging.INFO,
+    ) -> None:
         """
         Construct MavSwarm interface.
 
+        :param max_workers: maximum number of workers available in the thread pool used
+            to send messages, defaults to 5
+        :type: max_workers: int, optional
         :param log_level: log level of the system, defaults to logging.INFO
         :type log_level: int, optional
         """
         super().__init__()
 
-        self.__logger = swarm_utils.init_logger("mavswarm", log_level=log_level)
+        self.__logger = swarm_utils.init_logger(__name__, log_level=log_level)
         self.__connection = Connection(log_level=log_level)
+        self.__agents: Dict[Tuple[int, int], Agent] = {}
+        self.__agent_list_changed = Event()
+
+        self.__message_receivers = MessageReceivers(log_level=log_level)
+
+        # Mutexes
+        self.__read_message_mutex = threading.RLock()
+        self.__send_message_mutex = threading.RLock()
+
+        self.__incoming_message_thread = threading.Thread(target=self.__receive_message)
+        self.__incoming_message_thread.daemon = True
+
+        # Thread pool for sending messages
+        self.__send_message_thread_pool_executor = ThreadPoolExecutor(
+            max_workers=max_workers
+        )
+
+        # Register the exit callback
+        atexit.register(self.disconnect)
 
         return
-
-    @property
-    def agents(self) -> dict:
-        """
-        Agents in the swarm.
-
-        Provided as a dictionary where the key is the (system ID, component ID) of the
-        agent.
-
-        :return: dictionary with swarm agents
-        :rtype: dict
-        """
-        return self.__connection.agents
-
-    @property
-    def agents_as_list(self) -> list:
-        """
-        Get the swarm agents as a list.
-
-        Provides the set of agents as a list of agents.
-
-        :return: list of swarm agents
-        :rtype: list
-        """
-        return [*self.__connection.agents.values()]
-
-    @property
-    def agent_list_changed(self) -> Event:
-        """
-        Event that signals when the list of agents has changed.
-
-        Used to trigger functionality when the list of agents changes.
-
-        :return: event signaling that the set of agents changed
-        :rtype: Event
-        """
-        return self.__connection.agent_list_changed
 
     def connect(
         self,
         port: str,
         baudrate: int,
-        source_system: int = 255,
-        source_component: int = 0,
-        connection_attempt_timeout: float = 2.0,
-        agent_timeout: float = 30.0,
+        source_system: int,
+        source_component: int,
+        connection_attempt_timeout: float,
     ) -> bool:
         """
         Connect to the network.
@@ -100,214 +96,1476 @@ class MavSwarm:
 
         :param port: serial port to attempt connection on
         :type port: str
-
         :param baudrate: serial connection baudrate
         :type baudrate: int
-
         :param source_system: system ID for the source system, defaults to 255
         :type source_system: int, optional
-
         :param source_component: component ID for the source system, defaults to 0
         :type source_component: int, optional
-
         :param connection_attempt_timeout: maximum time taken to establish a connection,
             defaults to 2.0 [s]
         :type connection_attempt_timeout: float, optional
-
-        :param agent_timeout: amount of time an agent has to send a message before
-            being considered timed-out, defaults to 30.0 [s]
-        :type agent_timeout: float, optional
-
         :return: flag indicating whether connection was successful
         :rtype: bool
         """
-        if not self.__connection.connected:
-            try:
-                return self.__connection.connect(
-                    port,
-                    baudrate,
-                    source_system=source_system,
-                    source_component=source_component,
-                    connection_attempt_timeout=connection_attempt_timeout,
-                    agent_timeout=agent_timeout,
-                )
-            except Exception:
-                # Handle the error message
-                self.__logger.info(
-                    "MavSwarm was unable to establish a connection with the "
-                    "specified agent",
-                    exc_info=True,
-                )
+        if not self.__connection.connect(
+            port, baudrate, source_system, source_component, connection_attempt_timeout
+        ):
+            return False
 
-                return False
+        # Start threads
+        self.__incoming_message_thread.start()
 
         return True
 
-    def disconnect(self) -> bool:
+    def disconnect(self) -> None:
+        """Disconnect from the MAVLink network and shutdown all services."""
+        self.__connection.disconnect()
+
+        if self.__incoming_message_thread is not None:
+            self.__incoming_message_thread.join()
+
+        # Shutdown the thread pool executor
+        self.__send_message_thread_pool_executor.shutdown(cancel_futures=True)
+
+        # Clear the agents list
+        self.__agents.clear()
+        self.__agent_list_changed.listeners.clear()
+
+        return
+
+    def arm(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
         """
-        Disconnect from the network.
+        Arm the desired agent(s).
 
-        Disconnect from the MAVLink network and reset the connection state.
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
 
-        :return: flag indicating whether the disconnect attempt was successful
-        :rtype: bool
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
         """
-        if self.__connection.connected:
-            self.__connection.disconnect()
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
 
-        return True
+            return mavlink_message
 
-    def send_message(self, message: Union[Any, MessagePackage]) -> bool:
+        # Construct a method to use for verifying state change
+        def verify_state_changed(
+            message: MessageWrapper,
+            agents: Dict[Tuple[int, int], Agent],
+        ):
+            ack = True
+            start_time = time.time()
+
+            while not agents[
+                (message.target_system, message.target_component)
+            ].armed.value:
+                if time.time() - start_time >= message.state_timeout:
+                    ack = False
+                    break
+
+            return ack
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+            state_verification_function=verify_state_changed,
+        )
+
+    def disarm(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
         """
-        Send a message to an agent.
+        Disarm the desired agent(s).
 
-        Send a message or message package to the target agent(s) over the MAVLink
-        connection. If the target agent(s) are not in the network, the message will
-        still be sent but may not be properly acknowledged or verified.
+        Disarm each agent in the swarm. If specific agent IDs are provided, disarm only
+        the agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry disarming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        # Construct a method to use for verifying state change
+        def verify_state_changed(
+            message: MessageWrapper,
+            agents: Dict[Tuple[int, int], Agent],
+        ):
+            ack = True
+            start_time = time.time()
+
+            while agents[(message.target_system, message.target_component)].armed.value:
+                if time.time() - start_time >= message.state_timeout:
+                    ack = False
+                    break
+
+            return ack
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+            state_verification_function=verify_state_changed,
+        )
+
+    def reboot(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Reboot the desired agent(s).
+
+        Reboot each agent in the swarm. If specific agent IDs are provided, reboot only
+        the agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry rebooting an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def shutdown(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Shutdown the desired agent(s).
+
+        Shutdown each agent in the swarm. If specific agent IDs are provided, reboot
+        only the agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry rebooting an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+                    0,
+                    2,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def set_mode(
+        self,
+        mode: Union[str, int],
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        """
+        Set the flight mode on the desired agent(s).
+
+        If specific agent IDs are provided, set the flight mode of only the agents with
+        the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry setting the flight mode of an agent on failure, defaults to
+            False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Optional[Future]
+        """
+        if isinstance(mode, str):
+            if mode not in self.__connection.mavlink_connection.mode_mapping():
+                self.__logger.exception(
+                    f"Attempted to set an invalid flight mode: {mode}"
+                )
+                return None
+
+            mode = self.__connection.mavlink_connection.mode_mapping()[mode]
+
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_DO_SET_MODE,
+                    0,
+                    mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                    mode,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def set_airspeed(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def set_groundspeed(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def takeoff(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def read_parameter(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def set_parameter(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def set_home_position(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def goto(self):
+        pass
+
+    def create_cluster(self):
+        pass
+
+    def get_filtered_agents(self):
+        pass
+
+    def get_filtered_agent_ids(self):
+        pass
+
+    def send_debug_message(self):
+        pass
+
+    def gyroscope_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def magnetometer_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def ground_pressure_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def airspeed_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def barometer_temperature_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def accelerometer_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def ahrs_trim(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Arm the desired agent(s).
+
+        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
+        agents with the specified IDs.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        # Create a helper method to get a message wrapper
+        def get_mavlink_message(agent_id: Tuple[int, int]):
+            mavlink_message = (
+                self.__connection.mavlink_connection.mav.command_long_encode(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
+
+            return mavlink_message
+
+        return self.__construct_and_send_message_wrappers(
+            agent_ids,
+            retry,
+            message_timeout,
+            ack_timeout,
+            get_mavlink_message,
+        )
+
+    def __construct_and_send_message_wrappers(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+        retry: bool,
+        message_timeout: float,
+        ack_timeout: float,
+        mavlink_message_generator: Callable,
+        state_verification_function: Optional[Callable] = None,
+    ) -> Future:
+        """
+        Construct a message wrapper for each of the target agents and send the messages.
+
+        :param agent_ids: _description_
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]]
+        :param retry: _description_
+        :type retry: bool
+        :param message_timeout: _description_
+        :type message_timeout: float
+        :param ack_timeout: _description_
+        :type ack_timeout: float
+        :param mavlink_message_generator: _description_
+        :type mavlink_message_generator: Callable
+        :param state_verification_function: _description_, defaults to None
+        :type state_verification_function: Optional[Callable], optional
+        :return: _description_
+        :rtype: Future
+        """
+        target_agents: List[Tuple[int, int]] = []
+
+        if agent_ids is None:
+            target_agents = self.get_filtered_agent_ids()
+        else:
+            if isinstance(agent_ids, list):
+                target_agents = agent_ids
+            else:
+                target_agents = [agent_ids]
+
+        messages: List[MessageWrapper] = []
+
+        for agent_id in target_agents:
+            messages.append(
+                MessageWrapper(
+                    agent_id[0],
+                    agent_id[1],
+                    mavlink_message_generator(agent_id),
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    retry,
+                    message_timeout=message_timeout,
+                    ack_timeout=ack_timeout,
+                )
+            )
+        return self.__send_command(messages, state_verification_function)
+
+    def __send_command(
+        self,
+        message: Union[MessageWrapper, List[MessageWrapper]],
+        state_verification_function: Optional[Callable] = None,
+    ) -> Future:
+        """
+        Send a message.
 
         :param message: message to send
-        :type messages: pymavswarm message or package
-
-        :return: whether or not the message was successfully sent
-        :rtype: bool
+        :type message: Union[Any, List[Any]]
+        :param state_verification_function: function used to verify that the target
+            state was properly modified, defaults to None
+        :type state_verification_function: Optional[Callable], optional
+        :return: future message response
+        :rtype: Future
         """
-        # Notify the user if any messages will be sent to an agent that is not in the
-        # list of agents.
-        if isinstance(message, MessagePackage):
-            for sub_message in message.messages:
-                if (
-                    sub_message.target_system,
-                    sub_message.target_comp,
-                ) not in self.__connection.agents:
-                    self.__logger.warning(
-                        "Agent (%s, %s) targeted by the message package does not "
-                        "exist in the swarm.",
-                        sub_message.target_system,
-                        sub_message.target_comp,
-                    )
-        else:
+        if self.__connection.connected:
+            if isinstance(message, list):
+                future = self.__send_message_thread_pool_executor.submit(
+                    self.__send_command_list_handler,
+                    message,
+                    state_verification_function,
+                )
+            else:
+                future = self.__send_message_thread_pool_executor.submit(
+                    self.__send_message_handler,  # type: ignore
+                    message,
+                    state_verification_function,
+                )
+
+        return future
+
+    def __send_command_list_handler(
+        self,
+        messages: List[MessageWrapper],
+        state_verification_function: Optional[Callable] = None,
+    ) -> List[Response]:
+        """
+        Send a list of commands.
+
+        :param messages: list of messages to send
+        :type messages: List[Message]
+        :param state_verification_function: function used to verify that the target
+            state was properly modified, defaults to None
+        :type state_verification_function: Optional[Callable], optional
+        :return: list of message responses
+        :rtype: List[Response]
+        """
+        responses: List[Response] = []
+
+        for message in messages:
+            responses.append(
+                self.__send_command_handler(message, state_verification_function)
+            )
+
+        return responses
+
+    def __send_command_handler(
+        self,
+        message: MessageWrapper,
+        state_verification_function: Optional[Callable] = None,
+    ) -> Response:
+        """
+        Send a MAVLink command.
+
+        :param message: MAVLink message wrapper
+        :type message: Message
+        :param state_verification_function: function used to verify that the target
+            state was properly modified, defaults to None
+        :type state_verification_function: Optional[Callable], optional
+        :return: message response
+        :rtype: Response
+        """
+        # Determine whether the agent has been recognized
+        if (message.target_system, message.target_component) not in self.__agents:
+            self.__logger.info(
+                "The current set of registered agents does not include Agent "
+                f"({message.target_system}, {message.target_component}). The provided "
+                "message will still be sent; however, the system may not be able to "
+                "confirm reception of the message.",
+            )
+
+        with self.__send_message_mutex:
+            try:
+                self.__connection.mavlink_connection.mav.send(message.mavlink_message)
+
+                result, code, _ = self.__get_message_result(
+                    message, state_verification_function=state_verification_function
+                )
+            except Exception:
+                self.__logger.exception(
+                    f"Exception occurred while sending message: {message.message_type}",
+                    exc_info=True,
+                )
+                return Response(
+                    message.target_system,
+                    message.target_component,
+                    message.message_type,
+                    False,
+                    message_results.EXCEPTION,
+                )
+
+        return Response(
+            message.target_system,
+            message.target_component,
+            message.message_type,
+            result,
+            code,
+        )
+
+    def __get_message_result(
+        self,
+        message: MessageWrapper,
+        ack_packet_type: str = "COMMAND_ACK",
+        state_verification_function: Optional[Callable] = None,
+    ) -> Tuple[bool, Tuple[int, str], Optional[dict]]:
+        """
+        Verify the result of a message and retry sending the message, if desired.
+
+        :param message: message whose response should be captured
+        :type message: Any
+        :param state_verification_function: function used to verify that the target
+            state was properly modified, defaults to None
+        :type state_verification_function: Optional[Callable], optional
+        :return: message acknowledgement, message code, acknowledgement message
+        :rtype: Tuple[bool, Tuple[int, str], Optional[dict]]
+        """
+        ack = False
+        code = message_results.ACK_FAILURE
+
+        ack, ack_msg = self.__ack_message(ack_packet_type, timeout=message.ack_timeout)
+
+        if ack:
+            code = message_results.SUCCESS
+
             if (
                 message.target_system,
-                message.target_comp,
-            ) not in self.__connection.agents:
-                self.__logger.warning(
-                    "Agent (%s, %s) targeted by the message does not exist in the "
-                    "swarm.",
-                    message.target_system,
-                    message.target_comp,
+                message.target_component,
+            ) in self.__agents and state_verification_function is not None:
+                ack = state_verification_function(message)
+
+                if not ack:
+                    code = message_results.STATE_VALIDATION_FAILURE
+        else:
+            code = message_results.ACK_FAILURE
+
+        if message.retry and not ack:
+            # Disable retry to prevent creating an infinite loop
+            message.retry = False
+
+            start_time = time.time()
+
+            while time.time() - start_time <= message.message_timeout:
+                self.__connection.mavlink_connection.mav.send(message.mavlink_message)
+
+                ack, code, ack_msg = self.__get_message_result(
+                    message, ack_packet_type, state_verification_function
                 )
 
-        return self.__connection.send_message(message)
+                if ack:
+                    break
 
-    def set_param(self, param: Parameter) -> None:
+        return ack, code, ack_msg
+
+    def __ack_message(
+        self, packet_type: str, timeout: float = 0.5
+    ) -> Tuple[bool, Optional[dict]]:
         """
-        Add the params to the connection's outgoing parameter queue.
+        Ensure that a distributed message is acknowledged.
 
-        :param param: parameter to set on an agent
-        :type params: Parameter
+        :param message_type: The type of message that should be acknowledged
+        :type message_type: str
+        :param timeout: The acceptable time period before the acknowledgement is
+            considered timed out, defaults to 1.0
+        :type timeout: float, optional
+        :return: acknowledgement success, message received indicating success (if any)
+        :rtype: Tuple[bool, Any]
         """
-        if (param.system_id, param.component_id) in self.__connection.agents:
-            self.__connection.set_param_handler(param)
+        # Attempt to acquire the mutex
+        if not self.__read_message_mutex.acquire(timeout=1.0):
+            return False, None
 
-        return
+        # Flag indicating whether the message was acknowledged
+        ack_success = False
 
-    def set_param_package(self, package: ParameterPackage) -> None:
-        """
-        Send a parameter package.
+        # Message received converted to a dictionary
+        message = None
 
-        :param package: parameter package to send, note that all parameters in the
-            package should be intended to set a parameter on an agent
-        :type package: ParameterPackage
-        """
-        for param in package.params:
-            if (param.system_id, param.component_id) not in self.__connection.agents:
-                self.__logger.warning(
-                    f"Agent ({param.system_id}, {param.component_id}) targeted by the"
-                    "parameter package does not exist in the swarm."
+        # Start acknowledgement timer
+        start_t = time.time()
+
+        while time.time() - start_t < timeout:
+            try:
+                message = self.__connection.mavlink_connection.recv_match(
+                    type=packet_type, blocking=False
                 )
+                message = message.to_dict()
+
+                if message["mavpackettype"] == packet_type:
+                    ack_success = True
+                    break
+            except Exception:
+                # This is a catch-all to ensure that the system continues attempting
+                # acknowledgement
+                continue
+
+        # Continue reading status messages
+        self.__read_message_mutex.release()
+
+        return ack_success, message
+
+    def __update_agent_timeout_states(self) -> None:
+        """Update the timeout status of each agent in the network."""
+        for agent in self.__agents.values():
+            if agent.last_heartbeat.value is not None:
+                agent.timeout.value = (
+                    monotonic.monotonic() - agent.last_heartbeat.value
+                ) >= agent.timeout_period.value
 
         return
 
-    def read_param(self, param: Parameter) -> None:
-        """
-        Read a desired parameter value. Note that, in the current configuration,
-        each agent stores the most recent 5 parameter values read in a circular
-        buffer. Therefore, when performing a bulk parameter read, ensure that
-        a maximum of five parameters are read at once on the specific agent.
+    def __receive_message(self) -> None:
+        """Handle incoming messages and distribute them to their respective handlers."""
+        while (
+            self.__connection.connected
+            and self.__connection.mavlink_connection is not None
+        ):
+            self.__update_agent_timeout_states()
 
-        :param params: parameter to read from an agent
-        :type params: Parameter
-        """
-        if (param.system_id, param.component_id) in self.__connection.agents:
-            self.__connection.read_param_handler(param)
+            message = None
+
+            # Attempt to read the message
+            # Note that a timeout has been integrated. Consequently not ALL messages
+            # may be received from an agent
+            if self.__read_message_mutex.acquire(timeout=0.1):
+                try:
+                    message = self.__connection.mavlink_connection.recv_msg()
+                except Exception:
+                    self.__logger.debug(
+                        "An error occurred on MAVLink message reception", exc_info=True
+                    )
+                finally:
+                    self.__read_message_mutex.release()
+
+            # Continue if the message read was not read properly
+            if message is None:
+                continue
+
+            # Execute the respective message handler(s)
+            if message.get_type() in self.__message_receivers.receivers:
+                for function in self.__message_receivers.receivers[message.get_type()]:
+                    try:
+                        function(message, self.__agents)
+                    except Exception:
+                        self.__logger.exception(
+                            f"Exception in message handler for {message.get_type()}",
+                            exc_info=True,
+                        )
 
         return
-
-    def get_agents(
-        self,
-        exclude_gcs: bool = True,
-        ignore_component_ids: Optional[List[int]] = None,
-        ignore_system_ids: Optional[List[int]] = None,
-    ) -> List[Agent]:
-        pass
-
-    def takeoff(self):
-        pass
-
-    def land(self):
-        pass
-
-    def change_mode(self):
-        pass
-
-    def set_parameter(self):
-        pass
-
-    def read_parameter(self):
-        pass
-
-    def arm(self):
-        pass
-
-    def disarm(self):
-        pass
-
-    def get_agent_by_id(self, system_id: int, component_id: int) -> Optional[Agent]:
-        """
-        Get an agent by its ID.
-
-        Get the agent from the swarm that has the provided system ID and component ID.
-
-        :param sys_id: system ID of the agent to access
-        :type sys_id: int
-
-        :param comp_id: component ID of the agent to access
-        :type comp_id: int
-
-        :return: identified agent, if found
-        :rtype: Optional[Agent]
-        """
-        agent_id = (system_id, component_id)
-
-        if agent_id not in self.__connection.agents:
-            return None
-
-        return self.__connection.agents[agent_id]
-
-    def get_agent_by_name(self, name: str) -> Optional[Agent]:
-        """
-        Get an agent by its name.
-
-        Get the first agent in the swarm with the specified name.
-
-        :param name: name of the agent to access
-        :type name: str
-
-        :return: first agent identified with the given name
-        :rtype: Optional[Agent]
-        """
-        for agent in self.__connection.agents.values():
-            if agent.name == name:
-                return agent
-
-        return None
