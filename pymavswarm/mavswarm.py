@@ -81,6 +81,36 @@ class MavSwarm:
 
         return
 
+    @property
+    def agents(self) -> List[Agent]:
+        """
+        List of agents in the swarm.
+
+        :return: swarm agents
+        :rtype: List[Agent]
+        """
+        return [*self.__agents.values()]
+
+    @property
+    def agent_list_changed(self) -> Event:
+        """
+        Event signalling that the list of agents in the swarm has changed.
+
+        :return: event
+        :rtype: Event
+        """
+        return self.__agent_list_changed
+
+    @property
+    def connected(self) -> bool:
+        """
+        Flag indicating whether there is an active MAVLink connection.
+
+        :return: flag
+        :rtype: bool
+        """
+        return self.__connection.connected
+
     def connect(
         self,
         port: str,
@@ -151,7 +181,7 @@ class MavSwarm:
             this may be a single agent ID or a list of agent IDs, defaults to None
         :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
             optional
-        :param retry: retry arming an agent on failure, defaults to False
+        :param retry: retry sending message on failure, defaults to False
         :type retry: bool, optional
         :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -228,7 +258,7 @@ class MavSwarm:
             this may be a single agent ID or a list of agent IDs, defaults to None
         :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
             optional
-        :param retry: retry disarming an agent on failure, defaults to False
+        :param retry: retry sending message on failure, defaults to False
         :type retry: bool, optional
         :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -299,11 +329,13 @@ class MavSwarm:
         Reboot each agent in the swarm. If specific agent IDs are provided, reboot only
         the agents with the specified IDs.
 
+        State verification is not provided for this command.
+
         :param agent_ids: (system ID, component ID) of each agent that should be armed,
             this may be a single agent ID or a list of agent IDs, defaults to None
         :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
             optional
-        :param retry: retry rebooting an agent on failure, defaults to False
+        :param retry: retry sending message on failure, defaults to False
         :type retry: bool, optional
         :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -358,11 +390,13 @@ class MavSwarm:
         Shutdown each agent in the swarm. If specific agent IDs are provided, reboot
         only the agents with the specified IDs.
 
+        State verification is not provided for this command.
+
         :param agent_ids: (system ID, component ID) of each agent that should be armed,
             this may be a single agent ID or a list of agent IDs, defaults to None
         :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
             optional
-        :param retry: retry rebooting an agent on failure, defaults to False
+        :param retry: retry sending message on failure, defaults to False
         :type retry: bool, optional
         :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -418,12 +452,13 @@ class MavSwarm:
         If specific agent IDs are provided, set the flight mode of only the agents with
         the specified IDs.
 
+        :param mode: desired flight mode to switch into
+        :type mode: Union[str, int]
         :param agent_ids: (system ID, component ID) of each agent that should be armed,
             this may be a single agent ID or a list of agent IDs, defaults to None
         :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
             optional
-        :param retry: retry setting the flight mode of an agent on failure, defaults to
-            False
+        :param retry: retry sending message on failure, defaults to False
         :type retry: bool, optional
         :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -466,32 +501,56 @@ class MavSwarm:
 
             return mavlink_message
 
+        # Construct a method to use for verifying the state change
+        def verify_state_changed(
+            message: MessageWrapper,
+            agents: Dict[Tuple[int, int], Agent],
+        ):
+            ack = True
+            start_time = time.time()
+
+            while (
+                agents[(message.target_system, message.target_component)].mode.value
+                != mode
+            ):
+                if time.time() - start_time >= message.state_timeout:
+                    ack = False
+                    break
+
+            return ack
+
         return self.__construct_and_send_message_wrappers(
             agent_ids,
             retry,
             message_timeout,
             ack_timeout,
             get_mavlink_message,
+            state_verification_function=verify_state_changed,
         )
 
     def set_airspeed(
         self,
+        speed: float,
         agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Future:
         """
-        Arm the desired agent(s).
+        Change airspeed.
 
-        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
-        agents with the specified IDs.
+        Change the speed of each agent in the swarm. If specific agent IDs are provided,
+        change the speed of only the agents with the specified IDs.
 
+        State verification is not provided for this command.
+
+        :param speed: desired airspeed [m/s]
+        :type speed: float
         :param agent_ids: (system ID, component ID) of each agent that should be armed,
             this may be a single agent ID or a list of agent IDs, defaults to None
         :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
             optional
-        :param retry: retry arming an agent on failure, defaults to False
+        :param retry: retry sending message on failure, defaults to False
         :type retry: bool, optional
         :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -511,11 +570,11 @@ class MavSwarm:
                 self.__connection.mavlink_connection.mav.command_long_encode(
                     agent_id[0],
                     agent_id[1],
-                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-                    0,
-                    1,
+                    mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
                     0,
                     0,
+                    speed,
+                    -1,
                     0,
                     0,
                     0,
@@ -535,22 +594,27 @@ class MavSwarm:
 
     def set_groundspeed(
         self,
+        speed: float,
         agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Future:
         """
-        Arm the desired agent(s).
+        Change groundspeed.
 
-        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
-        agents with the specified IDs.
+        Change the speed of each agent in the swarm. If specific agent IDs are provided,
+        change the speed of only the agents with the specified IDs.
 
+        State verification is not provided for this command.
+
+        :param speed: desired groundspeed [m/s]
+        :type speed: float
         :param agent_ids: (system ID, component ID) of each agent that should be armed,
             this may be a single agent ID or a list of agent IDs, defaults to None
         :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
             optional
-        :param retry: retry arming an agent on failure, defaults to False
+        :param retry: retry sending message on failure, defaults to False
         :type retry: bool, optional
         :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -570,11 +634,11 @@ class MavSwarm:
                 self.__connection.mavlink_connection.mav.command_long_encode(
                     agent_id[0],
                     agent_id[1],
-                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
                     0,
                     1,
-                    0,
-                    0,
+                    speed,
+                    -1,
                     0,
                     0,
                     0,
@@ -594,22 +658,26 @@ class MavSwarm:
 
     def takeoff(
         self,
+        altitude: float,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
         agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Future:
         """
-        Arm the desired agent(s).
+        Execute a takeoff command (not a full sequence).
 
-        Arm each agent in the swarm. If specific agent IDs are provided, arm only the
-        agents with the specified IDs.
+        Note that acknowledgement of this command does not indicate that the
+        altitude was reached, but rather that the system will attempt to reach
+        the specified altitude.
 
         :param agent_ids: (system ID, component ID) of each agent that should be armed,
             this may be a single agent ID or a list of agent IDs, defaults to None
         :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
             optional
-        :param retry: retry arming an agent on failure, defaults to False
+        :param retry: retry sending message on failure, defaults to False
         :type retry: bool, optional
         :param message_timeout: amount of time that pymavswarm should attempt to resend
             a message if acknowledgement is not received. This is only used when
@@ -623,21 +691,29 @@ class MavSwarm:
         :return: future to be populated with a message response
         :rtype: Future
         """
+        if latitude is None or longitude is None:
+            self.__logger.info(
+                "Latitude and longitude were not provided for the takeoff command. "
+                "Attempting to takeoff to the desired altitude."
+            )
+            latitude = 0
+            longitude = 0
+
         # Create a helper method to get a message wrapper
         def get_mavlink_message(agent_id: Tuple[int, int]):
             mavlink_message = (
                 self.__connection.mavlink_connection.mav.command_long_encode(
                     agent_id[0],
                     agent_id[1],
-                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-                    0,
-                    1,
+                    mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
                     0,
                     0,
                     0,
                     0,
                     0,
-                    0,
+                    latitude,
+                    longitude,
+                    altitude,
                 )
             )
 
@@ -650,6 +726,66 @@ class MavSwarm:
             ack_timeout,
             get_mavlink_message,
         )
+
+    def takeoff_sequence(
+        self,
+        altitude: float,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+        state_transition_delay: float = 5.0,
+    ) -> Future:
+        """
+        Execute a full takeoff sequence.
+
+        Command used to signal execution of a full takeoff sequence:
+            1. Switch to GUIDED mode
+            2. Arm
+            3. Takeoff
+
+        The result of this command does not indicate whether the agent successfully
+        took of to the desired altitude, but rather indicates whether or not the message
+        acknowledged.
+
+        :param agent_ids: (system ID, component ID) of each agent that should be armed,
+            this may be a single agent ID or a list of agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry sending message on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: amount of time that pymavswarm should attempt to resend
+            a message if acknowledgement is not received. This is only used when
+            retry is set to true, defaults to 2.5
+        :type message_timeout: float, optional
+        :param ack_timeout: amount of time that pymavswarm should wait to check for
+            an acknowledgement from an agent. This is only used when retry is set
+            to true. This should be kept as short as possible to keep agent state
+            information up-to-date, defaults to 0.5
+        :type ack_timeout: float, optional
+        :return: future to be populated with a message response
+        :rtype: Future
+        """
+        if latitude is None or longitude is None:
+            self.__logger.info(
+                "Latitude and longitude were not provided for the takeoff command. "
+                "Attempting to takeoff to the desired altitude."
+            )
+            latitude = 0
+            longitude = 0
+
+        guided_future = self.set_mode("GUIDED")
+
+        if guided_future is None:
+            pass
+
+        while not guided_future.done():
+            pass
+
+        if not guided_future.result().result:
+            pass
 
     def read_parameter(
         self,
@@ -769,6 +905,9 @@ class MavSwarm:
             get_mavlink_message,
         )
 
+    def get_home_position(self):
+        pass
+
     def set_home_position(
         self,
         agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
@@ -827,21 +966,6 @@ class MavSwarm:
             ack_timeout,
             get_mavlink_message,
         )
-
-    def goto(self):
-        pass
-
-    def create_cluster(self):
-        pass
-
-    def get_filtered_agents(self):
-        pass
-
-    def get_filtered_agent_ids(self):
-        pass
-
-    def send_debug_message(self):
-        pass
 
     def gyroscope_calibration(
         self,
@@ -1255,6 +1379,150 @@ class MavSwarm:
             ack_timeout,
             get_mavlink_message,
         )
+
+    def goto(self):
+        pass
+
+    def send_debug_message(self):
+        pass
+
+    def create_cluster(self):
+        pass
+
+    def get_agent_by_id(self, agent_id: Tuple[int, int]) -> Optional[Agent]:
+        """
+        Get the agent with the specified ID (system ID, component ID).
+
+        :param agent_id: (system ID, component ID)
+        :type agent_id: Tuple[int, int]
+        :return: agent, if found
+        :rtype: Optional[Agent]
+        """
+        if agent_id in self.__agents:
+            return self.__agents[agent_id]
+
+        return None
+
+    def get_agent_by_name(self, name: str) -> Optional[Agent]:
+        """
+        Get an agent by its name.
+
+        Get the first agent in the swarm with the specified name.
+
+        :param name: name of the agent to access
+        :type name: str
+        :return: first agent identified with the given name
+        :rtype: Optional[Agent]
+        """
+        for agent in self.__agents.values():
+            if agent.name == name:
+                return agent
+
+        return None
+
+    def get_filtered_agents(
+        self,
+        ignore_gcs: bool = True,
+        ignore_agent_ids: Optional[List[Tuple[int, int]]] = None,
+        ignore_system_ids: Optional[List[int]] = None,
+        ignore_comp_ids: Optional[List[int]] = None,
+    ) -> List[Agent]:
+        """
+        Get a filtered list of agents.
+
+        :param ignore_gcs: ignore the ground control station agent, defaults to True
+        :type ignore_gcs: bool, optional
+        :param ignore_agent_ids: list of agent IDs to ignore, defaults to None
+        :type ignore_agent_ids: Optional[List[Tuple[int, int]]], optional
+        :param ignore_system_ids: list of system IDs to ignore, defaults to None
+        :type ignore_system_ids: Optional[List[int]], optional
+        :param ignore_comp_ids: list of component IDs to ignore, defaults to None
+        :type ignore_comp_ids: Optional[List[int]], optional
+        :return: list of filtered agents
+        :rtype: List[Agent]
+        """
+        agents: List[Agent] = []
+
+        for agent in self.__agents.values():
+            # Check if the agent is the GCS
+            if ignore_gcs:
+                if (
+                    agent.system_id == self.__connection.source_system
+                    and agent.component_id == self.__connection.source_component
+                ):
+                    continue
+
+            # Check if the agent is in the list of agent IDs to ignore
+            if ignore_agent_ids is not None:
+                if (agent.system_id, agent.component_id) in ignore_agent_ids:
+                    continue
+
+            # Check if the agent's system ID is in the list of system IDs to ignore
+            if ignore_system_ids is not None:
+                if agent.system_id in ignore_system_ids:
+                    continue
+
+            # Check if the agent's component ID is in the list of component IDs to
+            # ignore
+            if ignore_comp_ids is not None:
+                if agent.component_id in ignore_comp_ids:
+                    continue
+
+            agents.append(agent)
+
+        return agents
+
+    def get_filtered_agent_ids(
+        self,
+        ignore_gcs: bool = True,
+        ignore_agent_ids: Optional[List[Tuple[int, int]]] = None,
+        ignore_system_ids: Optional[List[int]] = None,
+        ignore_comp_ids: Optional[List[int]] = None,
+    ) -> List[Tuple[int, int]]:
+        """
+        Get a filtered list of agent IDs.
+
+        :param ignore_gcs: ignore the ground control station agent, defaults to True
+        :type ignore_gcs: bool, optional
+        :param ignore_agent_ids: list of agent IDs to ignore, defaults to None
+        :type ignore_agent_ids: Optional[List[Tuple[int, int]]], optional
+        :param ignore_system_ids: list of system IDs to ignore, defaults to None
+        :type ignore_system_ids: Optional[List[int]], optional
+        :param ignore_comp_ids: list of component IDs to ignore, defaults to None
+        :type ignore_comp_ids: Optional[List[int]], optional
+        :return: list of filtered agents
+        :rtype: List[Tuple[int, int]]
+        """
+        agents: List[Tuple[int, int]] = []
+
+        for agent in self.__agents.values():
+            # Check if the agent is the GCS
+            if ignore_gcs:
+                if (
+                    agent.system_id == self.__connection.source_system
+                    and agent.component_id == self.__connection.source_component
+                ):
+                    continue
+
+            # Check if the agent is in the list of agent IDs to ignore
+            if ignore_agent_ids is not None:
+                if (agent.system_id, agent.component_id) in ignore_agent_ids:
+                    continue
+
+            # Check if the agent's system ID is in the list of system IDs to ignore
+            if ignore_system_ids is not None:
+                if agent.system_id in ignore_system_ids:
+                    continue
+
+            # Check if the agent's component ID is in the list of component IDs to
+            # ignore
+            if ignore_comp_ids is not None:
+                if agent.component_id in ignore_comp_ids:
+                    continue
+
+            agents.append((agent.system_id, agent.component_id))
+
+        return agents
 
     def __construct_and_send_message_wrappers(
         self,

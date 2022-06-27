@@ -2,7 +2,7 @@
 
 ## Introduction
 
-`pymavswarm` is a Python library implemented to enable interaction with robotic
+`pymavswarm` is a Python library implemented to enable interaction with drone
 swarms using the MAVLink protocol. This library supports reading MAVLink
 messages sent from multiple agents in a swarm and sending MAVLink messages to
 agents within the swarm. Such functionality ultimately enables development of
@@ -33,13 +33,15 @@ pip3 install .
 
 ## Getting Started
 
-`pymavswarm` has been implemented to enable easy interfacing with robotic
+`pymavswarm` has been implemented to enable easy interfacing with drone
 swarms. Refer to the following code snippet for a simple example to get started
-with the library. For more comprehensive documentation and examples, checkout
-the project Wiki.
+with the library. Additional examples may be found in the `pymavswarm/examples`.
+directory.
 
 ```python
-from pymavswarm import MavSwarm, SystemCommandMsg, MsgMap
+import time
+
+from pymavswarm import MavSwarm
 
 # Create a new pymavswarm interface
 mavswarm = MavSwarm()
@@ -47,21 +49,18 @@ mavswarm = MavSwarm()
 # Establish a connection with a USB telemetry device
 mavswarm.connect('/dev/ttyUSB0', 115200, 255, 0)
 
-# Create a list of messages to send to the respective agents
-msgs = []
+# Wait for the swarm to be populated
+while not mavswarm.agents:
+    pass
 
-# Send an arming message to Agent (2, 1)
-msgs.append(SystemCommandMsg(MsgMap().system_commands.arm, 2, 1, True))
+# Arm each agent in the swarm
+mavswarm.arm()
 
-# Send the desired messages and require that the messages be acknowledged
-mavswarm.send_msg(msgs)
+# Briefly delay to allow all agents to arm
+time.sleep(5.0)
 
-# Read the current state of the swarm agents
-for agent in mavswarm.get_agents():
-    print(
-        f'Latitude: {agent.location.latitude} '
-        f'Longitude: {agent.location.longitude}'
-    )
+# Disarm each agent in the swarm
+mavswarm.disarm()
 
 # Close the pymavswarm connection
 mavswarm.disconnect()

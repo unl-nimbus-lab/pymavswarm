@@ -38,7 +38,8 @@ RUN pip3 install \
     pymavlink \
     isort \
     pydocstyle \
-    mypy
+    mypy \
+    bandit
 
 ARG USERNAME=developer
 ARG USER_UID=1000
