@@ -25,9 +25,12 @@ def main():
     # Create a new MavSwarm instance
     mavswarm = MavSwarm()
 
-    # Ground control station identifier
-    gcs_system_id = 255
-    gcs_component_id = 0
+# Attempt to connect
+# send messages to all agents except for RSPi, which has sys_id=4 and comp_id=2
+# read ardupilot documention site for more: https://ardupilot.org/dev/docs/companion-computers.html
+# Ground control station identifier
+    gcs_system_id = 4
+    gcs_component_id = 2
 
     # Attempt to connect
     if mavswarm.connect(
@@ -47,51 +50,37 @@ def main():
     while not mavswarm.agents:
         print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
-
+        
+    
     # Get all agents excluding the ground control station and non-flight controller
     # devices (devices that don't have a component ID of 1)
+    # NOTE: I had to put an "or" in the place of the "and" on line 62 to get the if condition running properly. It wouldn't reach (4,1) otherwise
     agents = [
         agent
         for agent in mavswarm.agents
-        if agent.sys_id != gcs_system_id
-        and agent.comp_id != gcs_component_id
-        and agent.comp_id == 1
+        if ((agent.sys_id != gcs_system_id
+        or agent.comp_id != gcs_component_id)
+        and agent.comp_id == 1)
     ]
-
-    # Arm each agent in the network
+    
+    # Print the number of agents in agents:
+    print(f"Number of agents in agents: {len(agents)} \n")
+    
     for agent in agents:
-        mavswarm.send_msg(
-            [
-                SystemCommandMsg(
-                    MsgMap().system_commands.arm,
-                    agent.sys_id,
-                    agent.comp_id,
-                    retry=False,
-                )
-            ]
+        # Print these values out
+        print(
+            f"Flight mode: {agent.flight_mode} \n"
+            f"Arm state: {agent.armed} \n"
+            f"System ID: {agent.sys_id} \ncomp_id: {agent.comp_id} \n"
         )
-
-    # # Delay for a bit so that we can see the agent(s) arm
-    time.sleep(5)
-
-    # Disarm each agent
-    for agent in agents:
-        mavswarm.send_msg(
-            [
-                SystemCommandMsg(
-                    MsgMap().system_commands.disarm,
-                    agent.sys_id,
-                    agent.comp_id,
-                    retry=False,
-                )
-            ]
-        )
-
-    # Disconnect
-    mavswarm.disconnect()
-
+    
+    # Delay for a bit so that we can see the agent post mode-change
+    time.sleep(15)
+    
+    #Disconnect 
+    mavswarm.disconnect
+    
     return
-
 
 if __name__ == "__main__":
     main()
