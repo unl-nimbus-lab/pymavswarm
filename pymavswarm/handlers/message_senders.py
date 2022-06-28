@@ -26,18 +26,14 @@ from pymavlink import mavutil
 import pymavswarm.messages as swarm_messages
 import pymavswarm.state as swarm_state
 from pymavswarm.handlers.senders import Senders
-from pymavswarm.messages.response import Response, message_results
+from pymavswarm.messages import results
+from pymavswarm.messages.response import Response
 
 
 class MessageSenders(Senders):
     """Methods responsible for sending MAVLink messages."""
 
     # Message types
-    ARM = "ARM"
-    DISARM = "DISARM"
-    KILL = "KILL"
-    REBOOT = "REBOOT"
-    SHUTDOWN = "SHUTDOWN"
     ACCELEROMETER_CALIBRATION = "ACCELEROMETER_CALIBRATION"
     SIMPLE_ACCELEROMETER_CALIBRATION = "SIMPLE_ACCELEROMETER_CALIBRATION"
     AHRS_TRIM = "AHRS_TRIM"
@@ -46,9 +42,6 @@ class MessageSenders(Senders):
     GROUND_PRESSURE_CALIBRATION = "GROUND_PRESSURE_CALIBRATION"
     AIRSPEED_CALIBRATION = "AIRSPEED_CALIBRATION"
     BAROMETER_TEMPERATURE_CALIBRATION = "BAROMETER_TEMPERATURE_CALIBRATION"
-    FLIGHT_MODE = "FLIGHT_MODE"
-    FLIGHT_SPEED = "FLIGHT_SPEED"
-    TAKEOFF = "TAKEOFF"
     TAKEOFF_SEQUENCE = "TAKEOFF_SEQUENCE"
     WAYPOINT = "WAYPOINT"
     GET_HOME_POSITION = "GET_HOME_POSITION"
@@ -971,7 +964,7 @@ class MessageSenders(Senders):
                     message.target_component,
                     message.message_type,
                     False,
-                    message_results.SEQUENCE_STAGE_FAILURE,
+                    results.SEQUENCE_STAGE_FAILURE,
                 )
 
             # Create a new arming message to send
@@ -993,7 +986,7 @@ class MessageSenders(Senders):
                     message.target_component,
                     message.message_type,
                     False,
-                    message_results.SEQUENCE_STAGE_FAILURE,
+                    results.SEQUENCE_STAGE_FAILURE,
                 )
 
             # Give the agent a chance to fully arm
@@ -1009,7 +1002,7 @@ class MessageSenders(Senders):
                     message.target_component,
                     message.message_type,
                     False,
-                    message_results.SEQUENCE_STAGE_FAILURE,
+                    results.SEQUENCE_STAGE_FAILURE,
                 )
 
             return Response(
@@ -1017,7 +1010,7 @@ class MessageSenders(Senders):
                 message.target_component,
                 message.message_type,
                 True,
-                message_results.SUCCESS,
+                results.SUCCESS,
             )
 
         @self._send_message(MessageSenders.WAYPOINT)
@@ -1330,7 +1323,7 @@ class MessageSenders(Senders):
                     message.target_component,
                     message.message_type,
                     False,
-                    message_results.PARAM_READ_FAILURE,
+                    results.PARAM_READ_FAILURE,
                 )
 
             result, code, ack_msg = self._get_message_response(
@@ -1393,7 +1386,7 @@ class MessageSenders(Senders):
                     message.target_component,
                     message.message_type,
                     False,
-                    message_results.PARAM_SETTING_FAILURE,
+                    results.PARAM_SETTING_FAILURE,
                 )
 
             result, code, _ = self._get_message_response(
