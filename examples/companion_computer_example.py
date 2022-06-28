@@ -7,7 +7,9 @@ from pymavswarm.msg import MsgMap, SystemCommandMsg
 
 def main():
     """
-    Demonstrate how to arm and disarm an agent.
+    Demonstrate how connect to send messages to all agents except for the RSPi (4,2), which has sys_id=4 and comp_id=2, which is our
+    companion computer/ground control, and non-flight-control devices.
+    Each agent will print out its flight mode, its armed status, and system/component ID.
 
     Ensure that all propellers have been disconnected prior to running this example!
     """
