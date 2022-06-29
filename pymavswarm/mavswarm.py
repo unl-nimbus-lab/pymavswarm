@@ -16,6 +16,7 @@
 
 import atexit
 import logging
+import math
 import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -180,7 +181,8 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-        validate_state_timeout: float = 1.0,
+        verify_state: bool = False,
+        verify_state_timeout: float = 1.0,
     ) -> Optional[Future]:
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -204,7 +206,7 @@ class MavSwarm:
             start_time = time.time()
 
             while not self.__agents[agent_id].armed.value:
-                if time.time() - start_time >= validate_state_timeout:
+                if time.time() - start_time >= verify_state_timeout:
                     ack = False
                     break
 
@@ -217,7 +219,7 @@ class MavSwarm:
             retry,
             message_timeout,
             ack_timeout,
-            state_verifier=verify_state_changed,
+            state_verifier=verify_state_changed if verify_state else None,
         )
 
     def disarm(
@@ -226,7 +228,8 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-        validate_state_timeout: float = 1.0,
+        verify_state: bool = False,
+        verify_state_timeout: float = 1.0,
     ) -> Optional[Future]:
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -250,7 +253,7 @@ class MavSwarm:
             start_time = time.time()
 
             while self.__agents[agent_id].armed.value:
-                if time.time() - start_time >= validate_state_timeout:
+                if time.time() - start_time >= verify_state_timeout:
                     ack = False
                     break
 
@@ -263,7 +266,7 @@ class MavSwarm:
             retry,
             message_timeout,
             ack_timeout,
-            state_verifier=verify_state_changed,
+            state_verifier=verify_state_changed if verify_state else None,
         )
 
     def reboot(
@@ -337,7 +340,8 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-        validate_state_timeout: float = 1.0,
+        verify_state: bool = False,
+        verify_state_timeout: float = 1.0,
     ) -> Optional[Future]:
         def executor(agent_id: Tuple[int, int]) -> None:
             # Reset target
@@ -356,7 +360,7 @@ class MavSwarm:
             start_time = time.time()
 
             while self.__agents[agent_id].mode.value != flight_mode:
-                if time.time() - start_time >= validate_state_timeout:
+                if time.time() - start_time >= verify_state_timeout:
                     ack = False
                     break
 
@@ -369,7 +373,7 @@ class MavSwarm:
             retry,
             message_timeout,
             ack_timeout,
-            state_verifier=verify_state_changed,
+            state_verifier=verify_state_changed if verify_state else None,
         )
 
     def set_airspeed(
@@ -663,8 +667,83 @@ class MavSwarm:
             ack_timeout,
         )
 
-    def takeoff(self) -> Future:
-        pass
+    def send_debug_message(
+        self,
+        name: str,
+        value: Union[int, float],
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        if not isinstance(name, str):
+            raise TypeError(f"Invalid name provided. Expected string, got {type(name)}")
+
+        if not isinstance(value, int) and not isinstance(value, float):
+            raise TypeError(
+                f"Invalid value provided. Expected an int or a float, got {type(value)}"
+            )
+
+        def executor(agent_id: Tuple[int, int]) -> None:
+            # Reset target
+            self.__connection.mavlink_connection.target_system = agent_id[0]
+            self.__connection.mavlink_connection.target_component = agent_id[1]
+
+            # Send flight mode
+            if isinstance(value, int):
+                self.__connection.mavlink_connection.mav.named_value_int_send(
+                    int(time.time()), str.encode(name), value
+                )
+            else:
+                self.__connection.mavlink_connection.mav.named_value_float_send(
+                    int(time.time()), str.encode(name), value
+                )
+
+            return
+
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
+
+    def takeoff(
+        self,
+        altitude: float,
+        latitude: float = 0,
+        longitude: float = 0,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.command_long_send(
+                agent_id[0],
+                agent_id[1],
+                mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
+                0,
+                0,
+                0,
+                0,
+                0,
+                latitude,
+                longitude,
+                altitude,
+            )
+            return
+
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
 
     def takeoff_sequence(self) -> Future:
         pass
@@ -675,16 +754,132 @@ class MavSwarm:
     def set_parameter(self) -> Future:
         pass
 
-    def get_home_position(self) -> Future:
-        pass
+    def get_home_position(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.command_long_send(
+                agent_id[0],
+                agent_id[1],
+                mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            )
+            return
 
-    def set_home_position(self) -> Future:
-        pass
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
+
+    def set_home_position(
+        self,
+        use_current_position: bool = True,
+        latitude: float = 0,
+        longitude: float = 0,
+        altitude: float = 0,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+        verify_state: bool = False,
+        lat_lon_deviation_tolerance: float = 0.001,
+        altitude_deviation_tolerance: float = 1.0,
+        verify_state_timeout: float = 1.0,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.command_long_send(
+                agent_id[0],
+                agent_id[1],
+                mavutil.mavlink.MAV_CMD_DO_SET_HOME,
+                0,
+                1 if use_current_position else 0,
+                0,
+                0,
+                0,
+                0 if use_current_position else latitude,
+                0 if use_current_position else longitude,
+                0 if use_current_position else altitude,
+            )
+            return
+
+        if use_current_position:
+
+            def verify_state_changed(agent_id: Tuple[int, int]):
+                ack = True
+                start_time = time.time()
+
+                current_location = self.__agents[agent_id].location
+
+                while (
+                    not math.isclose(
+                        current_location.latitude,
+                        self.__agents[agent_id].home_position.latitude,
+                        abs_tol=lat_lon_deviation_tolerance,
+                    )
+                    or not math.isclose(
+                        current_location.latitude,
+                        self.__agents[agent_id].home_position.latitude,
+                        abs_tol=lat_lon_deviation_tolerance,
+                    )
+                    or not math.isclose(
+                        current_location.latitude,
+                        self.__agents[agent_id].home_position.latitude,
+                        abs_tol=altitude_deviation_tolerance,
+                    )
+                ):
+                    self.get_home_position(agent_id)
+
+                    if time.time() - start_time >= verify_state_timeout:
+                        ack = False
+                        break
+
+                return ack
+
+        else:
+
+            def verify_state_changed(agent_id: Tuple[int, int]):
+                ack = True
+                start_time = time.time()
+
+                while (
+                    self.__agents[agent_id].home_position.latitude != latitude
+                    and self.__agents[agent_id].home_position.longitude != longitude
+                    and self.__agents[agent_id].home_position.altitude != altitude
+                ):
+                    self.get_home_position(agent_id)
+
+                    if time.time() - start_time >= verify_state_timeout:
+                        ack = False
+                        break
+
+                return ack
+
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_DO_SET_HOME,
+            retry,
+            message_timeout,
+            ack_timeout,
+            state_verifier=verify_state_changed if verify_state else None,
+        )
 
     def goto(self) -> Future:
-        pass
-
-    def send_debug_message(self) -> Future:
         pass
 
     def create_cluster(self):
@@ -1106,24 +1301,3 @@ class MavSwarm:
                         )
 
         return
-
-    def __timer(self) -> Callable:
-        """
-        Log the time that a sender takes to complete. Used for debugging purposes.
-
-        :return: decorator
-        :rtype: Callable
-        """
-
-        def decorator(function: Callable) -> Callable:
-            def wrapper(*args):
-                start_t = time.time()
-                response = function(*args)
-                self.__logger.debug(
-                    f"Time taken to execute function: {time.time() - start_t}s"
-                )
-                return response
-
-            return wrapper
-
-        return decorator
