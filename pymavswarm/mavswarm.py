@@ -438,26 +438,230 @@ class MavSwarm:
             ack_timeout,
         )
 
-    def gyroscope_calibration(self) -> Future:
-        pass
+    def gyroscope_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.command_long_send(
+                agent_id[0],
+                agent_id[1],
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            )
+            return
 
-    def magnetometer_calibration(self) -> Future:
-        pass
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
 
-    def ground_pressure_calibration(self) -> Future:
-        pass
+    def magnetometer_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.command_long_send(
+                agent_id[0],
+                agent_id[1],
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+            )
+            return
 
-    def airspeed_calibration(self) -> Future:
-        pass
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
 
-    def barometer_temperature_calibration(self) -> Future:
-        pass
+    def ground_pressure_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.command_long_send(
+                agent_id[0],
+                agent_id[1],
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                0,
+                0,
+                0,
+                3,
+                0,
+                0,
+                0,
+                0,
+            )
+            return
 
-    def accelerometer_calibration(self) -> Future:
-        pass
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
 
-    def ahrs_trim(self) -> Future:
-        pass
+    def airspeed_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.command_long_send(
+                agent_id[0],
+                agent_id[1],
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                0,
+            )
+            return
+
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
+
+    def barometer_temperature_calibration(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.command_long_send(
+                agent_id[0],
+                agent_id[1],
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                3,
+            )
+            return
+
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
+
+    def accelerometer_calibration(
+        self,
+        simple_calibration: bool = True,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.command_long_send(
+                agent_id[0],
+                agent_id[1],
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                0,
+                0,
+                0,
+                0,
+                0,
+                4 if simple_calibration else 1,
+                0,
+                0,
+            )
+            return
+
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
+
+    def ahrs_trim(
+        self,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.command_long_send(
+                agent_id[0],
+                agent_id[1],
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                0,
+                0,
+            )
+            return
+
+        return self.__send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
 
     def takeoff(self) -> Future:
         pass
@@ -902,3 +1106,24 @@ class MavSwarm:
                         )
 
         return
+
+    def __timer(self) -> Callable:
+        """
+        Log the time that a sender takes to complete. Used for debugging purposes.
+
+        :return: decorator
+        :rtype: Callable
+        """
+
+        def decorator(function: Callable) -> Callable:
+            def wrapper(*args):
+                start_t = time.time()
+                response = function(*args)
+                self.__logger.debug(
+                    f"Time taken to execute function: {time.time() - start_t}s"
+                )
+                return response
+
+            return wrapper
+
+        return decorator

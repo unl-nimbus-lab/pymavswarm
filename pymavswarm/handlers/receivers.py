@@ -62,7 +62,6 @@ class Receivers:
 
         :param message: The type of message to watch for
         :type message: Union[list, str]
-
         :return: decorator
         :rtype: Callable
         """
