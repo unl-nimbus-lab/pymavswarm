@@ -20,7 +20,7 @@ import math
 import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import monotonic
 from pymavlink import mavutil
@@ -739,7 +739,7 @@ class MavSwarm:
         return self.__send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
             retry,
             message_timeout,
             ack_timeout,
@@ -751,8 +751,35 @@ class MavSwarm:
     def read_parameter(self) -> Future:
         pass
 
-    def set_parameter(self) -> Future:
-        pass
+    def set_parameter(
+        self,
+        parameter_id: str,
+        parameter_value: Any,
+        parameter_type: int = 9,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Optional[Future]:
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self.__connection.mavlink_connection.mav.param_set_send(
+                agent_id[0],
+                agent_id[1],
+                str.encode(parameter_id),
+                parameter_value,
+                parameter_type,
+            )
+            return
+
+        return self.__send_command(
+            agent_ids,
+            executor,
+            "SET_PARAMETER",
+            retry,
+            message_timeout,
+            ack_timeout,
+            ack_packet_type="PARAM_VALUE",
+        )
 
     def get_home_position(
         self,
