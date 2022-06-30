@@ -34,13 +34,10 @@ class Velocity(State):
 
         :param vx: ground x speed [Latitude, positive north], defaults to 0.0
         :type vx: float, optional
-
         :param vy: ground y speed [Longitude, positive east], defaults to 0.0
         :type vy: float, optional
-
         :param vz: ground z speed [Altitude, positive down], defaults to 0.0
         :type vz: float, optional
-
         :param optional_context_props: optional properties to add to the context
         :type optional_context_props: dict, optional
         """

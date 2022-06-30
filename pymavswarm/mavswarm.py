@@ -175,6 +175,39 @@ class MavSwarm:
 
         return
 
+    def add_agent(self, agent: Agent) -> None:
+        """
+        Manually add an agent to the swarm.
+
+        This is useful if an agent isn't automatically recognized, but commands still
+        need to be sent to this agent.
+
+        :param agent: agent to add
+        :type agent: Agent
+        """
+        # Add the agent
+        self.__agents[(agent.system_id, agent.component_id)] = agent
+
+        # Notify listeners that a new agent was added
+        self.agent_list_changed.notify(agent=agent)
+
+        return
+
+    def remove_agent(self, agent: Agent) -> None:
+        """
+        Manually remove an agent from the swarm.
+
+        :param agent: agent to remove
+        :type agent: Agent
+        """
+        # Remove the agent
+        del self.__agents[(agent.system_id, agent.component_id)]
+
+        # Notify listeners that the agent was removed
+        self.agent_list_changed.notify(agent=agent)
+
+        return
+
     def arm(
         self,
         agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
@@ -909,9 +942,6 @@ class MavSwarm:
     def goto(self) -> Future:
         pass
 
-    def create_cluster(self):
-        pass
-
     def get_agent_by_id(self, agent_id: Tuple[int, int]) -> Optional[Agent]:
         """
         Get the agent with the specified ID (system ID, component ID).
@@ -943,110 +973,6 @@ class MavSwarm:
 
         return None
 
-    def get_filtered_agents(
-        self,
-        ignore_gcs: bool = True,
-        ignore_agent_ids: Optional[List[Tuple[int, int]]] = None,
-        ignore_system_ids: Optional[List[int]] = None,
-        ignore_comp_ids: Optional[List[int]] = None,
-    ) -> List[Agent]:
-        """
-        Get a filtered list of agents.
-
-        :param ignore_gcs: ignore the ground control station agent, defaults to True
-        :type ignore_gcs: bool, optional
-        :param ignore_agent_ids: list of agent IDs to ignore, defaults to None
-        :type ignore_agent_ids: Optional[List[Tuple[int, int]]], optional
-        :param ignore_system_ids: list of system IDs to ignore, defaults to None
-        :type ignore_system_ids: Optional[List[int]], optional
-        :param ignore_comp_ids: list of component IDs to ignore, defaults to None
-        :type ignore_comp_ids: Optional[List[int]], optional
-        :return: list of filtered agents
-        :rtype: List[Agent]
-        """
-        agents: List[Agent] = []
-
-        for agent in self.__agents.values():
-            # Check if the agent is the GCS
-            if ignore_gcs:
-                if (
-                    agent.system_id == self.__connection.source_system
-                    and agent.component_id == self.__connection.source_component
-                ):
-                    continue
-
-            # Check if the agent is in the list of agent IDs to ignore
-            if ignore_agent_ids is not None:
-                if (agent.system_id, agent.component_id) in ignore_agent_ids:
-                    continue
-
-            # Check if the agent's system ID is in the list of system IDs to ignore
-            if ignore_system_ids is not None:
-                if agent.system_id in ignore_system_ids:
-                    continue
-
-            # Check if the agent's component ID is in the list of component IDs to
-            # ignore
-            if ignore_comp_ids is not None:
-                if agent.component_id in ignore_comp_ids:
-                    continue
-
-            agents.append(agent)
-
-        return agents
-
-    def get_filtered_agent_ids(
-        self,
-        ignore_gcs: bool = True,
-        ignore_agent_ids: Optional[List[Tuple[int, int]]] = None,
-        ignore_system_ids: Optional[List[int]] = None,
-        ignore_comp_ids: Optional[List[int]] = None,
-    ) -> List[Tuple[int, int]]:
-        """
-        Get a filtered list of agent IDs.
-
-        :param ignore_gcs: ignore the ground control station agent, defaults to True
-        :type ignore_gcs: bool, optional
-        :param ignore_agent_ids: list of agent IDs to ignore, defaults to None
-        :type ignore_agent_ids: Optional[List[Tuple[int, int]]], optional
-        :param ignore_system_ids: list of system IDs to ignore, defaults to None
-        :type ignore_system_ids: Optional[List[int]], optional
-        :param ignore_comp_ids: list of component IDs to ignore, defaults to None
-        :type ignore_comp_ids: Optional[List[int]], optional
-        :return: list of filtered agents
-        :rtype: List[Tuple[int, int]]
-        """
-        agents: List[Tuple[int, int]] = []
-
-        for agent in self.__agents.values():
-            # Check if the agent is the GCS
-            if ignore_gcs:
-                if (
-                    agent.system_id == self.__connection.source_system
-                    and agent.component_id == self.__connection.source_component
-                ):
-                    continue
-
-            # Check if the agent is in the list of agent IDs to ignore
-            if ignore_agent_ids is not None:
-                if (agent.system_id, agent.component_id) in ignore_agent_ids:
-                    continue
-
-            # Check if the agent's system ID is in the list of system IDs to ignore
-            if ignore_system_ids is not None:
-                if agent.system_id in ignore_system_ids:
-                    continue
-
-            # Check if the agent's component ID is in the list of component IDs to
-            # ignore
-            if ignore_comp_ids is not None:
-                if agent.component_id in ignore_comp_ids:
-                    continue
-
-            agents.append((agent.system_id, agent.component_id))
-
-        return agents
-
     def __send_command(
         self,
         agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
@@ -1065,7 +991,22 @@ class MavSwarm:
             return None
 
         if agent_ids is None:
-            agent_ids = self.get_filtered_agent_ids(ignore_gcs=True)
+            # Get the agents that aren't the connection and have a component ID of 0
+            # (typically used by the flight controllers)
+            def filter_fn(agent: Agent):
+                if (
+                    agent.system_id != self.__connection.source_system
+                    and agent.component_id != self.__connection.source_component
+                    and agent.component_id == 0
+                ):
+                    return True
+
+                return False
+
+            agent_ids = [
+                (agent.system_id, agent.component_id)
+                for agent in filter(filter_fn, self.agents)
+            ]
 
         if self.__connection.connected:
             if isinstance(agent_ids, list):
@@ -1320,7 +1261,7 @@ class MavSwarm:
             if message.get_type() in self.__message_receivers.receivers:
                 for function in self.__message_receivers.receivers[message.get_type()]:
                     try:
-                        function(message, self.__agents)
+                        function(message, self)
                     except Exception:
                         self.__logger.exception(
                             f"Exception in message handler for {message.get_type()}",

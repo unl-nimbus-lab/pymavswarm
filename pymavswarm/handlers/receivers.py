@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-import time
 from typing import Callable, Dict, List
 
 import pymavswarm.utils as swarm_utils
@@ -72,26 +71,5 @@ class Receivers:
 
             if function not in self.__receivers[message]:
                 self.__receivers[message].append(function)
-
-        return decorator
-
-    def _timer(self) -> Callable:
-        """
-        Log the time that a sender takes to complete. Used for debugging purposes.
-
-        :return: decorator
-        :rtype: Callable
-        """
-
-        def decorator(function: Callable) -> Callable:
-            def wrapper(*args):
-                start_t = time.time()
-                response = function(*args)
-                self.__logger.debug(
-                    f"Time taken to execute function: {time.time() - start_t}s"
-                )
-                return response
-
-            return wrapper
 
         return decorator

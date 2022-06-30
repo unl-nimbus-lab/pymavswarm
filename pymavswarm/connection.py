@@ -21,7 +21,6 @@ from typing import Any, Optional
 
 from pymavlink import mavutil
 
-import pymavswarm.plugins as swarm_plugins
 import pymavswarm.utils as swarm_utils
 
 
@@ -45,11 +44,6 @@ class Connection:
         self.__connected = False
         self.__source_system: Optional[int] = None
         self.__source_component: Optional[int] = None
-
-        # Load the plugins
-        self.__load_plugins(
-            swarm_plugins.plugin_senders, swarm_plugins.plugin_receivers
-        )
 
         # Threads
         self.__heartbeat_thread = threading.Thread(target=self.__send_heartbeat)
@@ -96,26 +90,6 @@ class Connection:
         :rtype: Optional[int]
         """
         return self.__source_component
-
-    def __load_plugins(self, senders: list, receivers: list) -> None:
-        """
-        Add the plugin handlers to the connection handlers.
-
-        :param plugins: list of plugins to load
-        :type plugins: List[Callable]
-        """
-        # Instantiate each of the plugins
-        self.__plugin_senders = [sender() for sender in senders]
-        self.__plugin_receivers = [receiver() for receiver in receivers]
-
-        # Add the plugin handlers to the primary handlers
-        for sender in self.__plugin_senders:
-            self.__message_senders.senders.update(sender.senders)
-
-        for receiver in self.__plugin_receivers:
-            self.__message_receivers.receivers.update(receiver.receivers)
-
-        return
 
     def __send_heartbeat(self) -> None:
         """Send a GCS heartbeat to the network."""

@@ -18,7 +18,7 @@
 # pylint: disable=function-redefined
 
 import logging
-from typing import Any
+from typing import Any, Dict, Tuple
 
 import monotonic
 from pymavlink import mavutil
@@ -27,6 +27,7 @@ from pymavlink.dialects.v10 import ardupilotmega
 import pymavswarm.state as swarm_state
 from pymavswarm.agent import Agent
 from pymavswarm.handlers.receivers import Receivers
+from pymavswarm.mavswarm import MavSwarm
 
 
 class MessageReceivers(Receivers):
@@ -42,16 +43,14 @@ class MessageReceivers(Receivers):
         super().__init__(__name__, log_level)
 
         @self._receive_message("HEARTBEAT")
-        @self._timer()
-        def listener(message: Any, connection) -> None:
+        def listener(message: Any, swarm: MavSwarm) -> None:
             """
             Register new agents or update the timeout status of existing agents.
 
             :param message: Incoming MAVLink message
             :type message: Any
-
-            :param connection: MAVLink connection
-            :type connection: Connection
+            :param agents: list of agents in the swarm
+            :type agents: Dict[Tuple[int, int], Agent]
             """
             # Make sure that the message isn't from a GCS
             if message.get_type() == mavutil.mavlink.MAV_TYPE_GCS:
@@ -63,7 +62,7 @@ class MessageReceivers(Receivers):
             agent_id = (sys_id, comp_id)
 
             # If the agent hasn't been seen before, save it
-            if agent_id not in connection.agents:
+            if agent_id not in agents:
                 # Create and save a new agent
                 agent = Agent(sys_id, comp_id, timeout_period=connection.agent_timeout)
                 connection.agents[agent_id] = agent
@@ -84,14 +83,12 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("HEARTBEAT")
-        @self._timer()
         def listener(message: Any, connection) -> None:
             """
             Handle general agent information contained within a heartbeat.
 
             :param message: Incoming MAVLink message
             :type message: Any
-
             :param connection: MAVLink connection
             :type connection: Connection
             """
@@ -129,14 +126,12 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("GLOBAL_POSITION_INT")
-        @self._timer()
         def listener(message: Any, connection) -> None:
             """
             Handle the a GPS position message.
 
             :param message: Incoming MAVLink message
             :type message: Any
-
             :param connection: MAVLink connection
             :type connection: Connection
             """
@@ -174,14 +169,12 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("ATTITUDE")
-        @self._timer()
         def listener(message: Any, connection) -> None:
             """
             Handle an agent attitude message.
 
             :param message: Incoming MAVLink message
             :type message: Any
-
             :param connection: MAVLink connection
             :type connection: Connection
             """
@@ -212,14 +205,12 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("SYS_STATUS")
-        @self._timer()
         def listener(message: Any, connection) -> None:
             """
             Handle the system status message containing battery state.
 
             :param message: Incoming MAVLink message
             :type message: Any
-
             :param connection: MAVLink connection
             :type connection: Connection
             """
@@ -244,14 +235,12 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("GPS_RAW_INT")
-        @self._timer()
         def listener(message: Any, connection) -> None:
             """
             Handle the GPS status information.
 
             :param message: Incoming MAVLink message
             :type message: Any
-
             :param connection: MAVLink connection
             :type connection: Connection
             """
@@ -280,14 +269,12 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("EKF_STATUS_REPORT")
-        @self._timer()
         def listener(message: Any, connection) -> None:
             """
             Handle an EKF status message.
 
             :param message: Incoming MAVLink message
             :type message: Any
-
             :param connection: MAVLink connection
             :type connection: Connection
             """
@@ -341,14 +328,12 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("ATTITUDE")
-        @self._timer()
         def listener(message: Any, connection) -> None:
             """
             Handle an agent attitude message.
 
             :param message: Incoming MAVLink message
             :type message: Any
-
             :param connection: MAVLink connection
             :type connection: Connection
             """
@@ -379,7 +364,6 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("HOME_POSITION")
-        @self._timer()
         def listener(message: Any, connection) -> None:
             """
             Handle the home position message.
@@ -388,7 +372,6 @@ class MessageReceivers(Receivers):
 
             :param message: Incoming MAVLink message
             :type message: Any
-
             :param connection: MAVLink connection
             :type connection: Connection
             """

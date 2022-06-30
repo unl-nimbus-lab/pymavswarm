@@ -61,11 +61,9 @@ class SwarmMission:
 
         :param waypoint: new waypoint to add
         :type waypoint: Waypoint
-
         :param index: index that the waypoint should be placed at in the mission
             sequence, defaults to None
         :type index: Optional[int], optional
-
         :return: whether or not the waypoint was inserted successfully
         :rtype: bool
         """
@@ -92,7 +90,6 @@ class SwarmMission:
 
         :param waypoint: waypoint to remove
         :type waypoint: Waypoint
-
         :return: flag indicating whether the waypoint was successfully removed
         :rtype: bool
         """
@@ -110,7 +107,6 @@ class SwarmMission:
 
         :param index: index of the waypoint in the mission that should be removed
         :type index: int
-
         :return: whether or not the waypoint was removed successfully
         :rtype: bool
         """
@@ -132,13 +128,10 @@ class SwarmMission:
 
         :param latitude: waypoint's latitude
         :type latitude: float
-
         :param longitude: waypoint's longitude
         :type longitude: float
-
         :param altitude: waypoint's altitude
         :type altitude: float
-
         :return: whether or not the waypoint was removed properly
         :rtype: bool
         """

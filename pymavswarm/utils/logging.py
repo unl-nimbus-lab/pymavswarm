@@ -23,10 +23,8 @@ def init_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
 
     :param name: The name of the logger
     :type name: str
-
     :param log_level: The log level to display, defaults to logging.INFO
     :type log_level: int, optional
-
     :return: A newly configured logger
     :rtype: logging.Logger
     """

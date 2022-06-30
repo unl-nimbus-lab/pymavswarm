@@ -34,7 +34,7 @@ class TestGeneric(unittest.TestCase):
                 """Test constructor."""
                 super().__init__()
 
-                self.__test_prop = Generic("random", test_prop_name)
+                self.__test_prop = Generic(test_prop_name, "random")
 
                 return
 
