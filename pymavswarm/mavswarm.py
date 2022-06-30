@@ -31,7 +31,7 @@ from pymavswarm.agent import Agent
 from pymavswarm.handlers import MessageReceivers
 from pymavswarm.messages import results
 from pymavswarm.messages.response import Response
-from pymavswarm.utils import Event
+from pymavswarm.utils import Event, NotifierDict
 
 
 class MavSwarm:
@@ -60,8 +60,8 @@ class MavSwarm:
 
         self.__logger = swarm_utils.init_logger(__name__, log_level=log_level)
         self.__connection = Connection(log_level=log_level)
-        self.__agents: Dict[Tuple[int, int], Agent] = {}
         self.__agent_list_changed = Event()
+        self.__agents = NotifierDict(self.__agent_list_changed)
 
         self.__message_receivers = MessageReceivers(log_level=log_level)
 
@@ -71,6 +71,8 @@ class MavSwarm:
 
         self.__incoming_message_thread = threading.Thread(target=self.__receive_message)
         self.__incoming_message_thread.daemon = True
+        self.__heartbeat_thread = threading.Thread(target=self.__send_heartbeat)
+        self.__heartbeat_thread.daemon = True
 
         # Thread pool for sending messages
         self.__send_message_thread_pool_executor = ThreadPoolExecutor(
@@ -93,9 +95,19 @@ class MavSwarm:
         return [*self.__agents.values()]
 
     @property
+    def agent_ids(self) -> List[Tuple[int, int]]:
+        """
+        List of agent IDs in the swarm.
+
+        :return: list of agent IDs
+        :rtype: List[Tuple[int, int]]
+        """
+        return [*self.__agents]
+
+    @property
     def agent_list_changed(self) -> Event:
         """
-        Event signalling that the list of agents in the swarm has changed.
+        Event signaling that the list of agents in the swarm has changed.
 
         :return: event
         :rtype: Event
@@ -126,27 +138,27 @@ class MavSwarm:
         self,
         port: str,
         baudrate: int,
-        source_system: int,
-        source_component: int,
-        connection_attempt_timeout: float,
+        source_system: int = 255,
+        source_component: int = 0,
+        connection_attempt_timeout: float = 2.0,
     ) -> bool:
         """
         Connect to the network.
 
         Attempt to establish a MAVLink connection using the provided configurations.
 
-        :param port: serial port to attempt connection on
+        :param port: port over which a connection should be established
         :type port: str
-        :param baudrate: serial connection baudrate
-        :type baudrate: int
-        :param source_system: system ID for the source system, defaults to 255
+        :param baud: baudrate that a connection should be established with
+        :type baud: int
+        :param source_system: system ID of the connection, defaults to 255
         :type source_system: int, optional
-        :param source_component: component ID for the source system, defaults to 0
+        :param source_component: component ID of the connection, defaults to 0
         :type source_component: int, optional
-        :param connection_attempt_timeout: maximum time taken to establish a connection,
-            defaults to 2.0 [s]
+        :param connection_attempt_timeout: maximum amount of time allowed to attempt
+            to establish a connection, defaults to 2.0 [s]
         :type connection_attempt_timeout: float, optional
-        :return: flag indicating whether connection was successful
+        :return: whether or not the connection attempt was successful
         :rtype: bool
         """
         if not self.__connection.connect(
@@ -156,6 +168,7 @@ class MavSwarm:
 
         # Start threads
         self.__incoming_message_thread.start()
+        self.__heartbeat_thread.start()
 
         return True
 
@@ -163,11 +176,17 @@ class MavSwarm:
         """Disconnect from the MAVLink network and shutdown all services."""
         self.__connection.disconnect()
 
-        if self.__incoming_message_thread is not None:
+        if (
+            self.__incoming_message_thread is not None
+            and self.__incoming_message_thread.is_alive()
+        ):
             self.__incoming_message_thread.join()
 
+        if self.__heartbeat_thread is not None and self.__heartbeat_thread.is_alive():
+            self.__heartbeat_thread.join()
+
         # Shutdown the thread pool executor
-        self.__send_message_thread_pool_executor.shutdown(cancel_futures=True)
+        self.__send_message_thread_pool_executor.shutdown()
 
         # Clear the agents list
         self.__agents.clear()
@@ -188,9 +207,6 @@ class MavSwarm:
         # Add the agent
         self.__agents[(agent.system_id, agent.component_id)] = agent
 
-        # Notify listeners that a new agent was added
-        self.agent_list_changed.notify(agent=agent)
-
         return
 
     def remove_agent(self, agent: Agent) -> None:
@@ -202,9 +218,6 @@ class MavSwarm:
         """
         # Remove the agent
         del self.__agents[(agent.system_id, agent.component_id)]
-
-        # Notify listeners that the agent was removed
-        self.agent_list_changed.notify(agent=agent)
 
         return
 
@@ -997,7 +1010,7 @@ class MavSwarm:
                 if (
                     agent.system_id != self.__connection.source_system
                     and agent.component_id != self.__connection.source_component
-                    and agent.component_id == 0
+                    and agent.component_id == 1
                 ):
                     return True
 
@@ -1144,7 +1157,7 @@ class MavSwarm:
                 agent_id[0],
                 agent_id[1],
             ) in self.__agents and state_verifier is not None:
-                ack = state_verifier(agent_id, self.__agents)
+                ack = state_verifier(agent_id)
 
                 if not ack:
                     code = results.STATE_VALIDATION_FAILURE
@@ -1261,11 +1274,31 @@ class MavSwarm:
             if message.get_type() in self.__message_receivers.receivers:
                 for function in self.__message_receivers.receivers[message.get_type()]:
                     try:
-                        function(message, self)
+                        function(message, self.__agents)
                     except Exception:
                         self.__logger.exception(
                             f"Exception in message handler for {message.get_type()}",
                             exc_info=True,
                         )
+
+        return
+
+    def __send_heartbeat(self) -> None:
+        """Send a GCS heartbeat to the network."""
+        while (
+            self.__connection.connected
+            and self.__connection.mavlink_connection is not None
+        ):
+            with self.__send_message_mutex:
+                self.__connection.mavlink_connection.mav.heartbeat_send(
+                    mavutil.mavlink.MAV_TYPE_GCS,
+                    mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                    0,
+                    0,
+                    0,
+                )
+
+            # Send a heartbeat at the recommended 1 Hz interval
+            time.sleep(1)
 
         return

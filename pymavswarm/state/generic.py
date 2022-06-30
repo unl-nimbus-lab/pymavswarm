@@ -20,7 +20,7 @@ from pymavswarm.state.state import State
 
 
 class Generic(State):
-    """Generic state object used to provide observer capabilities to basic types."""
+    """Generic state object used to provide event capabilities to basic types."""
 
     def __init__(
         self, name: str, value: Any, optional_context_props: Optional[dict] = None

@@ -46,16 +46,12 @@ class Agent:
 
         :param sys_id: The system ID of the agent
         :type sys_id: int
-
         :param comp_id: The component ID of the agent
         :type comp_id: int
-
         :param name: The name assigned to the agent, defaults to None
         :type name: Optional[str], optional
-
         :param timeout_period: The timeout period of the agent, defaults to 30.0
         :type timeout_period: float, optional
-
         :param max_params_stored: The maximum number of parameters that should be
             stored by an agent at once (implemented using a circular buffer), defaults
             to 5
@@ -117,7 +113,6 @@ class Agent:
         self.__hrl_state = swarm_state.Generic(
             "hrl_state", None, optional_context_props=context_props
         )
-        self.__custom_events: List[Event] = []
 
         return
 
@@ -351,24 +346,3 @@ class Agent:
         :rtype: str
         """
         return self.__hrl_state
-
-    @property
-    def custom_events(self) -> List[Event]:
-        """
-        List used to enable non-default custom events.
-
-        :return: list of custom events
-        :rtype: List[Event]
-        """
-        return self.__custom_events
-
-    @custom_events.setter
-    def custom_events(self, events: List[Event]) -> None:
-        """
-        Set custom_events.
-
-        :param events: The list of custom events
-        :type events: List[Event]
-        """
-        self.__custom_events = events
-        return

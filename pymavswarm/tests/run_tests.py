@@ -21,6 +21,7 @@ import unittest
 from pymavswarm.tests.test_event import TestEvent
 from pymavswarm.tests.test_generic import TestGeneric
 from pymavswarm.tests.test_mission import TestMission
+from pymavswarm.tests.test_notifier_dict import TestNotifierDict
 from pymavswarm.tests.test_state import TestState
 
 if __name__ == "__main__":

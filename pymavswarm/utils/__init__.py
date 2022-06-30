@@ -16,3 +16,4 @@
 
 from .event import Event
 from .logging import init_logger
+from .notifier_dict import NotifierDict

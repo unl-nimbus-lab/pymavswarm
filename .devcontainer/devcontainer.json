@@ -7,7 +7,14 @@
     }
   },
   "remoteUser": "developer",
-  "runArgs": ["--network=host"],
+  "runArgs": [
+    "--network=host",
+    "--cap-add=SYS_PTRACE",
+    "--security-opt=seccomp:unconfined",
+    "--security-opt=apparmor:unconfined",
+    "--volume=/dev:/dev",
+    "--privileged"
+  ],
   "settings": {
     "terminal.integrated.profiles.linux": {
       "bash": {

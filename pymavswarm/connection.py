@@ -15,8 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-import threading
-import time
 from typing import Any, Optional
 
 from pymavlink import mavutil
@@ -44,10 +42,6 @@ class Connection:
         self.__connected = False
         self.__source_system: Optional[int] = None
         self.__source_component: Optional[int] = None
-
-        # Threads
-        self.__heartbeat_thread = threading.Thread(target=self.__send_heartbeat)
-        self.__heartbeat_thread.daemon = True
 
         return
 
@@ -91,49 +85,37 @@ class Connection:
         """
         return self.__source_component
 
-    def __send_heartbeat(self) -> None:
-        """Send a GCS heartbeat to the network."""
-        while self.__connected and self.__mavlink_connection is not None:
-            self.__mavlink_connection.mav.heartbeat_send(
-                mavutil.mavlink.MAV_TYPE_GCS,
-                mavutil.mavlink.MAV_AUTOPILOT_INVALID,
-                0,
-                0,
-                0,
-            )
-
-            # Send a heartbeat at the recommended 1 Hz interval
-            time.sleep(1)
-
-        return
-
     def connect(
         self,
         port: str,
         baudrate: int,
-        source_system: int = 255,
-        source_component: int = 0,
-        connection_attempt_timeout: float = 2.0,
+        source_system: int,
+        source_component: int,
+        connection_attempt_timeout: float,
     ) -> bool:
         """
         Establish a MAVLink connection.
 
         Attempt to establish a MAVLink connection using the provided configurations.
 
-        :param port: port over which a connection should be established
+        :param port: serial port to attempt connection on
         :type port: str
-        :param baud: baudrate that a connection should be established with
-        :type baud: int
-        :param source_system: system ID of the connection, defaults to 255
-        :type source_system: int, optional
-        :param source_component: component ID of the connection, defaults to 0
-        :type source_component: int, optional
-        :param connection_attempt_timeout: maximum amount of time allowed to attempt
-            to establish a connection, defaults to 2.0 [s]
-        :type connection_attempt_timeout: float, optional
-        :return: whether or not the connection attempt was successful
+        :param baudrate: serial connection baudrate
+        :type baudrate: int
+        :param source_system: system ID for the source system
+        :type source_system: int
+        :param source_component: component ID for the source system
+        :type source_component: int
+        :param connection_attempt_timeout: maximum time taken to establish a connection
+        :type connection_attempt_timeout: float
+        :return: flag indicating whether connection was successful
         :rtype: bool
         """
+        self.__logger.info(
+            f"Attempting to establish a new MAVLink connection at {port} with "
+            f"baudrate {baudrate}."
+        )
+
         # Create a new mavlink connection
         self.__mavlink_connection = mavutil.mavlink_connection(
             port,
@@ -144,6 +126,7 @@ class Connection:
         )
 
         if self.__mavlink_connection is None:
+            self.__logger.error("Failed to establish a MAVLink connection.")
             return False
 
         # Ensure that a connection has been successfully established
@@ -153,11 +136,12 @@ class Connection:
         )
 
         if not resp:
+            self.__logger.error("Failed to establish a MAVLink connection.")
             self.__mavlink_connection = None
             connected = False
         else:
+            self.__logger.info("Successfully established a MAVLink connection.")
             connected = True
-            self.__heartbeat_thread.start()
 
         # Update the internal connection state
         self.__connected = connected
@@ -168,10 +152,6 @@ class Connection:
         """Close the connection and stop all threads."""
         # Stop the main loop of the threads
         self.__connected = False
-
-        # Join system threads
-        if self.__heartbeat_thread is not None:
-            self.__heartbeat_thread.join()
 
         # Shutdown the mavlink connection
         if self.__mavlink_connection is not None:
