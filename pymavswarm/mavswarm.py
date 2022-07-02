@@ -66,8 +66,8 @@ class MavSwarm:
         self.__message_receivers = MessageReceivers(log_level=log_level)
 
         # Mutexes
-        self.__read_message_mutex = threading.RLock()
-        self.__send_message_mutex = threading.RLock()
+        self.__access_serial_port_mutex = threading.RLock()
+        self.__access_agents_mutex = threading.RLock()
 
         self.__incoming_message_thread = threading.Thread(target=self.__receive_message)
         self.__incoming_message_thread.daemon = True
@@ -1101,7 +1101,7 @@ class MavSwarm:
                 "reception of the message."
             )
 
-        with self.__send_message_mutex:
+        with self.__access_serial_port_mutex:
             try:
                 executor(agent_id)
 
@@ -1126,6 +1126,9 @@ class MavSwarm:
                     False,
                     results.EXCEPTION,
                 )
+
+        result = True
+        code = (0, "random")
 
         return Response(
             target_system,
@@ -1200,10 +1203,6 @@ class MavSwarm:
         :return: acknowledgement success, message received indicating success (if any)
         :rtype: Tuple[bool, Any]
         """
-        # Attempt to acquire the mutex
-        if not self.__read_message_mutex.acquire(timeout=1.0):
-            return False, None
-
         # Flag indicating whether the message was acknowledged
         ack_success = False
 
@@ -1227,9 +1226,6 @@ class MavSwarm:
                 # This is a catch-all to ensure that the system continues attempting
                 # acknowledgement
                 continue
-
-        # Continue reading status messages
-        self.__read_message_mutex.release()
 
         return ack_success, message
 
@@ -1256,7 +1252,7 @@ class MavSwarm:
             # Attempt to read the message
             # Note that a timeout has been integrated. Consequently not ALL messages
             # may be received from an agent
-            if self.__read_message_mutex.acquire(timeout=0.1):
+            if self.__access_serial_port_mutex.acquire(timeout=0.1):
                 try:
                     message = self.__connection.mavlink_connection.recv_msg()
                 except Exception:
@@ -1264,7 +1260,7 @@ class MavSwarm:
                         "An error occurred on MAVLink message reception", exc_info=True
                     )
                 finally:
-                    self.__read_message_mutex.release()
+                    self.__access_serial_port_mutex.release()
 
             # Continue if the message read was not read properly
             if message is None:
@@ -1272,14 +1268,16 @@ class MavSwarm:
 
             # Execute the respective message handler(s)
             if message.get_type() in self.__message_receivers.receivers:
+                self.__logger.info(message.get_type())
                 for function in self.__message_receivers.receivers[message.get_type()]:
                     try:
-                        function(message, self.__agents)
+                        function(message, self.__agents, self.__access_agents_mutex)
                     except Exception:
                         self.__logger.exception(
                             f"Exception in message handler for {message.get_type()}",
                             exc_info=True,
                         )
+                    time.sleep(0.1)
 
         return
 
@@ -1289,14 +1287,22 @@ class MavSwarm:
             self.__connection.connected
             and self.__connection.mavlink_connection is not None
         ):
-            with self.__send_message_mutex:
-                self.__connection.mavlink_connection.mav.heartbeat_send(
-                    mavutil.mavlink.MAV_TYPE_GCS,
-                    mavutil.mavlink.MAV_AUTOPILOT_INVALID,
-                    0,
-                    0,
-                    0,
-                )
+            if self.__access_serial_port_mutex.acquire(timeout=0.1):
+                try:
+                    self.__connection.mavlink_connection.mav.heartbeat_send(
+                        mavutil.mavlink.MAV_TYPE_GCS,
+                        mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                        0,
+                        0,
+                        0,
+                    )
+                except Exception:
+                    self.__logger.debug(
+                        "An error occurred when sending a MAVLink heartbeat",
+                        exc_info=True,
+                    )
+                finally:
+                    self.__access_serial_port_mutex.release()
 
             # Send a heartbeat at the recommended 1 Hz interval
             time.sleep(1)
