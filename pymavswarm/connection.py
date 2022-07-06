@@ -19,7 +19,7 @@ from typing import Any, Optional
 
 from pymavlink import mavutil
 
-import pymavswarm.utils as swarm_utils
+from pymavswarm.utils import MAVWriter, init_logger
 
 
 class Connection:
@@ -36,7 +36,7 @@ class Connection:
             logging.INFO
         :type debug: int, optional
         """
-        self.__logger = swarm_utils.init_logger(__name__, log_level=log_level)
+        self.__logger = init_logger(__name__, log_level=log_level)
 
         self.__mavlink_connection = None
         self.__connected = False
@@ -145,6 +145,8 @@ class Connection:
 
         # Update the internal connection state
         self.__connected = connected
+        self.__source_system = source_system
+        self.__source_component = source_component
 
         return connected
 

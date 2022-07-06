@@ -49,24 +49,24 @@ def main() -> None:
         print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # # Arm all agents in the swarm; don't retry on failure
-    # future = mavswarm.arm(verify_state=True)
+    # Arm all agents in the swarm; don't retry on failure
+    future = mavswarm.arm(verify_state=True)
 
-    # # Wait for the arm command to complete
-    # if future is not None:
-    #     while not future.done():
-    #         pass
+    # Wait for the arm command to complete
+    if future is not None:
+        while not future.done():
+            pass
 
-    # # Let each of the agents arm
-    # time.sleep(5)
+    # Let each of the agents arm
+    time.sleep(5)
 
-    # # Disarm each of the agents; retry on failure
-    # future = mavswarm.disarm(retry=True, verify_state=True)
+    # Disarm each of the agents; retry on failure
+    future = mavswarm.disarm(retry=True, verify_state=True)
 
-    # # Wait for the disarm command to complete
-    # if future is not None:
-    #     while not future.done():
-    #         pass
+    # Wait for the disarm command to complete
+    if future is not None:
+        while not future.done():
+            pass
 
     # Disconnect from the swarm
     mavswarm.disconnect()

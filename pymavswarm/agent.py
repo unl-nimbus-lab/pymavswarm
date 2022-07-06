@@ -14,14 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import monotonic
 
 import pymavswarm.state as swarm_state
 from pymavswarm.mission import SwarmMission
 from pymavswarm.state.generic import Generic
-from pymavswarm.utils import Event
 
 
 class Agent:

@@ -19,14 +19,17 @@ from setuptools import setup
 
 VERSION = "0.0.5"
 
-with open("README.md") as f:
+with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
     name="pymavswarm",
     version=VERSION,
     zip_safe=True,
-    description="Python library used to communicate with robotic swarms using MAVLink",
+    description=(
+        "Python library used to communicate with multiple UAS simultaneously using "
+        "MAVLink"
+    ),
     long_description_type="text/markdown",
     long_description=long_description,
     url="https://github.com/unl-nimbus-lab/pymavswarm",

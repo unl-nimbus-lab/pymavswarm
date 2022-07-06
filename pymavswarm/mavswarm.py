@@ -20,18 +20,18 @@ import math
 import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
+from queue import Queue
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import monotonic
 from pymavlink import mavutil
 
-import pymavswarm.utils as swarm_utils
 from pymavswarm import Connection
 from pymavswarm.agent import Agent
 from pymavswarm.handlers import MessageReceivers
 from pymavswarm.messages import results
 from pymavswarm.messages.response import Response
-from pymavswarm.utils import Event, NotifierDict
+from pymavswarm.utils import Event, MAVWriter, NotifierDict, init_logger
 
 
 class MavSwarm:
@@ -58,12 +58,13 @@ class MavSwarm:
         """
         super().__init__()
 
-        self.__logger = swarm_utils.init_logger(__name__, log_level=log_level)
+        self.__logger = init_logger(__name__, log_level=log_level)
         self.__connection = Connection(log_level=log_level)
         self.__agent_list_changed = Event()
         self.__agents = NotifierDict(self.__agent_list_changed)
 
         self.__message_receivers = MessageReceivers(log_level=log_level)
+        self.__outgoing_message_queue = Queue()
 
         # Mutexes
         self.__access_serial_port_mutex = threading.RLock()
@@ -165,6 +166,13 @@ class MavSwarm:
             port, baudrate, source_system, source_component, connection_attempt_timeout
         ):
             return False
+
+        self.__connection.mavlink_connection.mav = mavutil.mavlink.MAVLink(
+            MAVWriter(self.__outgoing_message_queue),
+            srcSystem=self.__connection.source_system,
+            srcComponent=self.__connection.source_component,
+            use_native=True,
+        )
 
         # Start threads
         self.__incoming_message_thread.start()
@@ -1268,16 +1276,15 @@ class MavSwarm:
 
             # Execute the respective message handler(s)
             if message.get_type() in self.__message_receivers.receivers:
-                self.__logger.info(message.get_type())
                 for function in self.__message_receivers.receivers[message.get_type()]:
-                    try:
-                        function(message, self.__agents, self.__access_agents_mutex)
-                    except Exception:
-                        self.__logger.exception(
-                            f"Exception in message handler for {message.get_type()}",
-                            exc_info=True,
-                        )
-                    time.sleep(0.1)
+                    with self.__access_agents_mutex:
+                        try:
+                            function(message, self.__agents)
+                        except Exception:
+                            self.__logger.exception(
+                                f"Exception in message handler for {message.get_type()}",
+                                exc_info=True,
+                            )
 
         return
 
