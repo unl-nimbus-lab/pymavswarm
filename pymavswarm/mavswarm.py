@@ -20,7 +20,6 @@ import math
 import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
-from queue import Queue
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import monotonic
@@ -31,7 +30,7 @@ from pymavswarm.agent import Agent
 from pymavswarm.handlers import MessageReceivers
 from pymavswarm.messages import results
 from pymavswarm.messages.response import Response
-from pymavswarm.utils import Event, MAVWriter, NotifierDict, init_logger
+from pymavswarm.utils import Event, NotifierDict, init_logger
 
 
 class MavSwarm:
@@ -64,11 +63,11 @@ class MavSwarm:
         self.__agents = NotifierDict(self.__agent_list_changed)
 
         self.__message_receivers = MessageReceivers(log_level=log_level)
-        self.__outgoing_message_queue = Queue()
 
         # Mutexes
-        self.__access_serial_port_mutex = threading.RLock()
-        self.__access_agents_mutex = threading.RLock()
+        self.__access_agents_mutex = threading.Lock()
+        self.__write_message_mutex = threading.Lock()
+        self.__read_message_mutex = threading.Lock()
 
         self.__incoming_message_thread = threading.Thread(target=self.__receive_message)
         self.__incoming_message_thread.daemon = True
@@ -167,13 +166,6 @@ class MavSwarm:
         ):
             return False
 
-        self.__connection.mavlink_connection.mav = mavutil.mavlink.MAVLink(
-            MAVWriter(self.__outgoing_message_queue),
-            srcSystem=self.__connection.source_system,
-            srcComponent=self.__connection.source_component,
-            use_native=True,
-        )
-
         # Start threads
         self.__incoming_message_thread.start()
         self.__heartbeat_thread.start()
@@ -238,6 +230,8 @@ class MavSwarm:
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
     ) -> Optional[Future]:
+        self.__logger.debug(f"Attempting to arm agents: {agent_ids}")
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -285,6 +279,8 @@ class MavSwarm:
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
     ) -> Optional[Future]:
+        self.__logger.debug(f"Attempting to disarm agents: {agent_ids}")
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -1016,8 +1012,10 @@ class MavSwarm:
             # (typically used by the flight controllers)
             def filter_fn(agent: Agent):
                 if (
-                    agent.system_id != self.__connection.source_system
-                    and agent.component_id != self.__connection.source_component
+                    agent.system_id
+                    != self.__connection.mavlink_connection.source_system
+                    and agent.component_id
+                    != self.__connection.mavlink_connection.source_component
                     and agent.component_id == 1
                 ):
                     return True
@@ -1109,7 +1107,7 @@ class MavSwarm:
                 "reception of the message."
             )
 
-        with self.__access_serial_port_mutex:
+        with self.__write_message_mutex:
             try:
                 executor(agent_id)
 
@@ -1134,9 +1132,6 @@ class MavSwarm:
                     False,
                     results.EXCEPTION,
                 )
-
-        result = True
-        code = (0, "random")
 
         return Response(
             target_system,
@@ -1221,19 +1216,28 @@ class MavSwarm:
         start_t = time.time()
 
         while time.time() - start_t < timeout:
-            try:
-                message = self.__connection.mavlink_connection.recv_match(
-                    type=packet_type, blocking=False
-                )
+            if self.__read_message_mutex.acquire(timeout=0.1):
+                try:
+                    message = self.__connection.mavlink_connection.recv_match(
+                        type=packet_type, blocking=False
+                    )
+                except Exception:
+                    self.__logger.debug(
+                        "An exception was raised while attempting to acknowledge a "
+                        "message.",
+                        exc_info=True,
+                    )
+                finally:
+                    self.__read_message_mutex.release()
+            else:
+                continue
+
+            if message is not None:
                 message = message.to_dict()
 
                 if message["mavpackettype"] == packet_type:
                     ack_success = True
                     break
-            except Exception:
-                # This is a catch-all to ensure that the system continues attempting
-                # acknowledgement
-                continue
 
         return ack_success, message
 
@@ -1260,15 +1264,19 @@ class MavSwarm:
             # Attempt to read the message
             # Note that a timeout has been integrated. Consequently not ALL messages
             # may be received from an agent
-            if self.__access_serial_port_mutex.acquire(timeout=0.1):
+            if self.__read_message_mutex.acquire(timeout=0.1):
                 try:
                     message = self.__connection.mavlink_connection.recv_msg()
                 except Exception:
                     self.__logger.debug(
                         "An error occurred on MAVLink message reception", exc_info=True
                     )
+                    self.__logger.debug(
+                        "This exception may be raised if a message is being processed "
+                        "and a disconnect is attempted"
+                    )
                 finally:
-                    self.__access_serial_port_mutex.release()
+                    self.__read_message_mutex.release()
 
             # Continue if the message read was not read properly
             if message is None:
@@ -1282,7 +1290,8 @@ class MavSwarm:
                             function(message, self.__agents)
                         except Exception:
                             self.__logger.exception(
-                                f"Exception in message handler for {message.get_type()}",
+                                "Exception in message handler for "
+                                f"{message.get_type()}",
                                 exc_info=True,
                             )
 
@@ -1294,7 +1303,7 @@ class MavSwarm:
             self.__connection.connected
             and self.__connection.mavlink_connection is not None
         ):
-            if self.__access_serial_port_mutex.acquire(timeout=0.1):
+            if self.__write_message_mutex.acquire(timeout=0.1):
                 try:
                     self.__connection.mavlink_connection.mav.heartbeat_send(
                         mavutil.mavlink.MAV_TYPE_GCS,
@@ -1309,7 +1318,7 @@ class MavSwarm:
                         exc_info=True,
                     )
                 finally:
-                    self.__access_serial_port_mutex.release()
+                    self.__write_message_mutex.release()
 
             # Send a heartbeat at the recommended 1 Hz interval
             time.sleep(1)

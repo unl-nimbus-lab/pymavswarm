@@ -19,6 +19,7 @@ import time
 from argparse import ArgumentParser
 
 from pymavswarm import MavSwarm
+from pymavswarm.utils import init_logger
 
 
 def main() -> None:
@@ -27,14 +28,12 @@ def main() -> None:
 
     Ensure that all propellers have been removed prior to running this example!
     """
-    parser = ArgumentParser()
-
     # Get the desired port and baudrate of the source radio as arguments
+    parser = ArgumentParser()
     parser.add_argument(
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
-
     args = parser.parse_args()
 
     # Create a new MavSwarm instance
@@ -44,29 +43,66 @@ def main() -> None:
     if not mavswarm.connect(args.port, args.baud):
         return
 
+    logger = init_logger("arming_example", logging.DEBUG)
+
+    # In our configuration there are some agents that we want to blacklist and avoid
+    # interacting with
+    blacklisted_agent_ids = [(1, 0)]
+
     # Wait for the swarm to auto-register new agents
-    while not mavswarm.agents:
-        print("Waiting for the system to recognize agents in the network...")
+    while not list(
+        filter(
+            lambda agent_id: not (agent_id in blacklisted_agent_ids),
+            mavswarm.agent_ids,
+        )
+    ):
+        logger.info("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # Arm all agents in the swarm; don't retry on failure
-    future = mavswarm.arm(verify_state=True)
+    # Get the list of target agent ids
+    target_agent_ids = list(
+        filter(
+            lambda agent_id: not (agent_id in blacklisted_agent_ids),
+            mavswarm.agent_ids,
+        )
+    )
+
+    # Arm all agents in the swarm; retry on message failure
+    future = mavswarm.arm(agent_ids=target_agent_ids, verify_state=True, retry=True)
 
     # Wait for the arm command to complete
     if future is not None:
         while not future.done():
             pass
 
+        responses = future.result()
+
+        for response in responses:
+            logger.info(
+                f"Result of {response.message_type} message sent to "
+                f"({response.target_system}, {response.target_component}): "
+                f"{response.code}"
+            )
+
     # Let each of the agents arm
     time.sleep(5)
 
-    # Disarm each of the agents; retry on failure
-    future = mavswarm.disarm(retry=True, verify_state=True)
+    # Disarm each of the agents; retry on message failure
+    future = mavswarm.disarm(agent_ids=target_agent_ids, retry=True, verify_state=True)
 
     # Wait for the disarm command to complete
     if future is not None:
         while not future.done():
             pass
+
+        responses = future.result()
+
+        for response in responses:
+            logger.info(
+                f"Result of {response.message_type} message sent to "
+                f"({response.target_system}, {response.target_component}): "
+                f"{response.code}"
+            )
 
     # Disconnect from the swarm
     mavswarm.disconnect()

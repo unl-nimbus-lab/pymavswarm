@@ -15,11 +15,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from pymavlink import mavutil
 
-from pymavswarm.utils import MAVWriter, init_logger
+from pymavswarm.utils import init_logger
 
 
 class Connection:
@@ -40,8 +40,6 @@ class Connection:
 
         self.__mavlink_connection = None
         self.__connected = False
-        self.__source_system: Optional[int] = None
-        self.__source_component: Optional[int] = None
 
         return
 
@@ -64,26 +62,6 @@ class Connection:
         :rtype: bool
         """
         return self.__connected
-
-    @property
-    def source_system(self) -> Optional[int]:
-        """
-        System ID of the source system.
-
-        :return: system ID
-        :rtype: Optional[int]
-        """
-        return self.__source_system
-
-    @property
-    def source_component(self) -> Optional[int]:
-        """
-        Component ID of the source system.
-
-        :return: component ID
-        :rtype: Optional[int]
-        """
-        return self.__source_component
 
     def connect(
         self,
@@ -145,8 +123,6 @@ class Connection:
 
         # Update the internal connection state
         self.__connected = connected
-        self.__source_system = source_system
-        self.__source_component = source_component
 
         return connected
 
@@ -158,5 +134,7 @@ class Connection:
         # Shutdown the mavlink connection
         if self.__mavlink_connection is not None:
             self.__mavlink_connection.close()
+
+        self.__mavlink_connection = None
 
         return

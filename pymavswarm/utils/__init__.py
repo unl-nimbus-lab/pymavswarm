@@ -16,5 +16,4 @@
 
 from .event import Event
 from .logging import init_logger
-from .mav_writer import MAVWriter
 from .notifier_dict import NotifierDict
