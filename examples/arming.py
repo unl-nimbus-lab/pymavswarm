@@ -24,7 +24,7 @@ from pymavswarm.utils import init_logger
 
 def main() -> None:
     """
-    Demonstrate how to arm and disarm an agent.
+    Demonstrate how to arm and disarm swarm agents.
 
     Ensure that all propellers have been removed prior to running this example!
     """
@@ -46,7 +46,7 @@ def main() -> None:
     logger = init_logger("arming_example", logging.DEBUG)
 
     # In our configuration there are some agents that we want to blacklist and avoid
-    # interacting with
+    # interacting with. Add or remove agents from here as need-be.
     blacklisted_agent_ids = [(1, 0)]
 
     # Wait for the swarm to auto-register new agents

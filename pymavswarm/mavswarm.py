@@ -230,6 +230,32 @@ class MavSwarm:
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
     ) -> Optional[Future]:
+        """
+        Arm the desired agents.
+
+        If the target agent IDs are not provided, the system will attempt to arm
+        all agents in the swarm.
+
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry arming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try arming an agent
+            before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of an arming attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :param verify_state: flag indicating whether or not the system should attempt
+            to verify that the agent switched into the armed state, defaults to False
+        :type verify_state: bool, optional
+        :param verify_state_timeout: maximum amount of time allowed per attempt to
+            verify that an agent is in the armed state, defaults to 1.0 [s]
+        :type verify_state_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
         self.__logger.debug(f"Attempting to arm agents: {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
@@ -279,6 +305,32 @@ class MavSwarm:
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
     ) -> Optional[Future]:
+        """
+        Disarm the desired agents.
+
+        If the target agent IDs are not provided, the system will attempt to disarm
+        all agents in the swarm.
+
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry disarming an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try disarming an agent
+            before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a disarming attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :param verify_state: flag indicating whether or not the system should attempt
+            to verify that the agent switched into the disarmed state, defaults to False
+        :type verify_state: bool, optional
+        :param verify_state_timeout: maximum amount of time allowed per attempt to
+            verify that an agent is in the disarmed state, defaults to 1.0 [s]
+        :type verify_state_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
         self.__logger.debug(f"Attempting to disarm agents: {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
@@ -326,6 +378,28 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Reboot the desired agents.
+
+        If the target agent IDs are not provided, the system will attempt to reboot
+        all agents in the swarm.
+
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry rebooting an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try rebooting an agent
+            before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a reboot attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+        self.__logger.debug(f"Attempting to reboot agents: {agent_ids}")
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -358,6 +432,28 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Shutdown the desired agents.
+
+        If the target agent IDs are not provided, the system will attempt to shutdown
+        all agents in the swarm.
+
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry shutting down an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try shutting down an
+            agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a shutdown attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+        self.__logger.debug(f"Attempting to shutdown agents: {agent_ids}")
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -393,6 +489,10 @@ class MavSwarm:
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
     ) -> Optional[Future]:
+        self.__logger.debug(
+            f"Attempting to set the mode of agents {agent_ids} to: {flight_mode}"
+        )
+
         def executor(agent_id: Tuple[int, int]) -> None:
             # Reset target
             self.__connection.mavlink_connection.target_system = agent_id[0]

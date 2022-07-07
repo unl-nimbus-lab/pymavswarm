@@ -111,7 +111,7 @@ class MessageReceivers(Receivers):
             try:
                 # WARNING: We are currently assuming that ardupilot will be used
                 # this will be changed in a future version
-                agents[agent_id].flight_mode.value = mavutil.mode_mapping_bynumber(
+                agents[agent_id].mode.value = mavutil.mode_mapping_bynumber(
                     message.type
                 )[message.custom_mode]
             except Exception:
