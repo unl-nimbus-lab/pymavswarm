@@ -242,3 +242,21 @@ class Attitude(State):
         context["yaw_speed"] = self.__yaw_speed
 
         return context
+
+    def __str__(self) -> str:
+        """
+        Print attitude information in a human-readable format.
+
+        :return: attitude
+        :rtype: str
+        """
+        return (
+            "Attitude: {"
+            f"roll: {self.__roll}, "
+            f"roll speed: {self.__roll_speed}, "
+            f"pitch: {self.__pitch}, "
+            f"pitch speed: {self.__pitch_speed}, "
+            f"yaw: {self.__yaw}, "
+            f"yaw speed: {self.__yaw_speed}"
+            "}"
+        )

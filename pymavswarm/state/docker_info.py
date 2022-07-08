@@ -117,3 +117,17 @@ class DockerInfo(State):
         context["last_update"] = self.__last_update
 
         return context
+
+    def __str__(self) -> str:
+        """
+        Print docker information in a human-readable format.
+
+        :return: docker information
+        :rtype: str
+        """
+        return (
+            "DockerInfo: {"
+            f"version: {self.__version}, "
+            f"last update: {self.__last_update}"
+            "}"
+        )
