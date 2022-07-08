@@ -34,12 +34,12 @@ RUN apt-get update \
 # Install debugging/linting Python packages
 RUN pip3 install \
     black \
-    pylint \
-    pymavlink \
+    flake8 \
     isort \
     pydocstyle \
     mypy \
-    bandit
+    bandit \
+    coverage
 
 ARG USERNAME=developer
 ARG USER_UID=1000

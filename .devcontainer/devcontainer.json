@@ -30,7 +30,8 @@
     "rewrap.wrappingColumn": 80,
     "rewrap.wholeComment": true,
     "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.linting.pylintEnabled": false,
     "python.linting.pydocstyleEnabled": true,
     "python.linting.mypyEnabled": true,
     "python.formatting.provider": "black",
@@ -68,6 +69,9 @@
       },
       "editor.defaultFormatter": "ms-azuretools.vscode-docker"
     },
+    "[toml]": {
+      "editor.defaultFormatter": "tamasfe.even-better-toml"
+    },
     "autoDocstring.startOnNewLine": false,
     "search.exclude": {
       "**/node_modules": true,
@@ -86,7 +90,9 @@
     "ms-python.vscode-pylance",
     "DavidAnson.vscode-markdownlint",
     "esbenp.prettier-vscode",
-    "LittleFoxTeam.vscode-python-test-adapter"
+    "LittleFoxTeam.vscode-python-test-adapter",
+    "bungcip.better-toml",
+    "tamasfe.even-better-toml"
   ],
   "postStartCommand": "pip3 install -e ."
 }

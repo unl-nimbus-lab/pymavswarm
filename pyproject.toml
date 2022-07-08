@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=40.6.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+target-version = ["py38", "py39", "py310"]
+exclude = '''
+(
+   \.git
+  | \.mypy_cache
+  | \.nox
+  | \.tox
+  | \.venv
+  | _build
+  | build
+  | dist
+  | setup.py
+  | __pycache__
+)
+'''

@@ -14,37 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import setuptools
 from setuptools import setup
 
 VERSION = "0.0.5"
 
-with open("README.md", encoding="utf-8") as f:
-    long_description = f.read()
-
-setup(
-    name="pymavswarm",
-    version=VERSION,
-    zip_safe=True,
-    description=(
-        "Python library used to communicate with multiple UAS simultaneously using "
-        "MAVLink"
-    ),
-    long_description_type="text/markdown",
-    long_description=long_description,
-    url="https://github.com/unl-nimbus-lab/pymavswarm",
-    author="Evan Palmer",
-    author_email="evanp922@gmail.com",
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python",
-        "Topic :: Scientific/Engineering",
-    ],
-    license="GPLv3",
-    packages=setuptools.find_packages(),
-    setup_requires=["setuptools", "wheel"],
-    install_requires=["pymavlink>=2.3.3", "pyserial>=3.0"],
-)
+if __name__ == "__main__":
+    setup(
+        version=VERSION,
+    )

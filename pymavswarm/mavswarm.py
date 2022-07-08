@@ -286,7 +286,7 @@ class MavSwarm:
 
             return ack
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -361,7 +361,7 @@ class MavSwarm:
 
             return ack
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -416,7 +416,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
@@ -470,7 +470,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
@@ -516,7 +516,7 @@ class MavSwarm:
 
             return ack
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             "FLIGHT_MODE",
@@ -550,7 +550,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
@@ -583,7 +583,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
@@ -615,7 +615,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -647,7 +647,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -679,7 +679,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -711,7 +711,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -743,7 +743,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -776,7 +776,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -808,7 +808,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -851,7 +851,7 @@ class MavSwarm:
 
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -886,7 +886,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
@@ -921,7 +921,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             "SET_PARAMETER",
@@ -954,7 +954,7 @@ class MavSwarm:
             )
             return
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
@@ -1046,7 +1046,7 @@ class MavSwarm:
 
                 return ack
 
-        return self.__send_command(
+        return self._send_command(
             agent_ids,
             executor,
             mavutil.mavlink.MAV_CMD_DO_SET_HOME,
@@ -1090,7 +1090,7 @@ class MavSwarm:
 
         return None
 
-    def __send_command(
+    def _send_command(
         self,
         agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
         executor: Callable,

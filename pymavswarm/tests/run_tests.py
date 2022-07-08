@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# pylint: disable=unused-import
-
 import unittest
 
 from pymavswarm.tests.test_event import TestEvent

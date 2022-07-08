@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # type: ignore[no-redef]
-# pylint: disable=function-redefined
 
 import logging
 from typing import Any, Dict, Tuple
@@ -95,7 +94,7 @@ class MessageReceivers(Receivers):
 
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not agent_id in agents:
+            if agent_id not in agents:
                 return agents
 
             agents[agent_id].armed.value = (
@@ -132,7 +131,7 @@ class MessageReceivers(Receivers):
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not agent_id in agents:
+            if agent_id not in agents:
                 return agents
 
             # Update the agent velocity
@@ -173,7 +172,7 @@ class MessageReceivers(Receivers):
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not agent_id in agents:
+            if agent_id not in agents:
                 return agents
 
             # Update the respective agents attitude
@@ -209,7 +208,7 @@ class MessageReceivers(Receivers):
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not agent_id in agents:
+            if agent_id not in agents:
                 return agents
 
             # Update the battery information
@@ -239,7 +238,7 @@ class MessageReceivers(Receivers):
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not agent_id in agents:
+            if agent_id not in agents:
                 return agents
 
             # Read the GPS status information
@@ -273,7 +272,7 @@ class MessageReceivers(Receivers):
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not agent_id in agents:
+            if agent_id not in agents:
                 return agents
 
             # Read the EKF Status information
@@ -322,7 +321,7 @@ class MessageReceivers(Receivers):
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
-            if not agent_id in agents:
+            if agent_id not in agents:
                 return agents
 
             # Update the respective agent's attitude
@@ -361,7 +360,7 @@ class MessageReceivers(Receivers):
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
             # Let the heartbeat implementation handle this
-            if not agent_id in agents:
+            if agent_id not in agents:
                 return agents
 
             # Update the agent home location
