@@ -85,7 +85,6 @@
   "extensions": [
     "ms-azuretools.vscode-docker",
     "ms-python.python",
-    "streetsidesoftware.code-spell-checker",
     "njpwerner.autodocstring",
     "ms-python.vscode-pylance",
     "DavidAnson.vscode-markdownlint",
