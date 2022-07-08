@@ -39,7 +39,8 @@ RUN pip3 install \
     pydocstyle \
     mypy \
     bandit \
-    coverage
+    coverage \
+    pre-commit
 
 ARG USERNAME=developer
 ARG USER_UID=1000
