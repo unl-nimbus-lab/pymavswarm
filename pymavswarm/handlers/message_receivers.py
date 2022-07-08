@@ -114,8 +114,7 @@ class MessageReceivers(Receivers):
                     message.type
                 )[message.custom_mode]
             except Exception:
-                # We received an invalid message
-                pass
+                self._logger.debug("An invalid heartbeat message was received.")
 
             return agents
 

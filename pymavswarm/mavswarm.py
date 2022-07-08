@@ -28,7 +28,7 @@ from pymavlink import mavutil
 from pymavswarm import Connection
 from pymavswarm.agent import Agent
 from pymavswarm.handlers import MessageReceivers
-from pymavswarm.messages import results
+from pymavswarm.messages import codes
 from pymavswarm.messages.response import Response
 from pymavswarm.utils import Event, NotifierDict, init_logger
 
@@ -489,6 +489,34 @@ class MavSwarm:
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
     ) -> Optional[Future]:
+        """
+        Set the flight mode of the desired agents.
+
+        If the target agent IDs are not provided, the system will attempt to set the
+        flight mode of all agents in the swarm.
+
+        :param flight_mode: flight mode to switch the agents into
+        :type flight_mode: str
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry changing the mode of an agent on failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try changing the mode
+            of an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a mode change attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :param verify_state: flag indicating whether or not the system should attempt
+            to verify that the agent switched into the target mode, defaults to False
+        :type verify_state: bool, optional
+        :param verify_state_timeout: maximum amount of time allowed per attempt to
+            verify that an agent is in the desired mode, defaults to 1.0 [s]
+        :type verify_state_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
         self.__logger.debug(
             f"Attempting to set the mode of agents {agent_ids} to: {flight_mode}"
         )
@@ -534,6 +562,30 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Set the airspeed of the desired agents.
+
+        If the target agent IDs are not provided, the system will attempt to set the
+        airspeed of all agents in the swarm.
+
+        :param speed: target airspeed [m/s]
+        :type speed: float
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry setting the airspeed of an agent on failure, defaults to
+            False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try setting the
+            airspeed of an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a airspeed change attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -567,6 +619,30 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Set the groundspeed of the desired agents.
+
+        If the target agent IDs are not provided, the system will attempt to set the
+        groundspeed of all agents in the swarm.
+
+        :param speed: target groundspeed [m/s]
+        :type speed: float
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry setting the groundspeed of an agent on failure, defaults to
+            False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try setting the
+            groundspeed of an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a groundspeed change attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -1090,6 +1166,19 @@ class MavSwarm:
 
         return None
 
+    def add_custom_message_handler(self, message: str, callback: Callable) -> None:
+        """
+        Add a custom message handler for the specified message.
+
+        :param message: message type to call the handler on
+        :type message: str
+        :param callback: function to call when the message is received
+        :type callback: Callable
+        """
+        self.__message_receivers.add_message_handler(message, callback)
+
+        return
+
     def _send_command(
         self,
         agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
@@ -1230,7 +1319,7 @@ class MavSwarm:
                     target_component,
                     command_type,
                     False,
-                    results.EXCEPTION,
+                    codes.EXCEPTION,
                 )
 
         return Response(
@@ -1252,12 +1341,12 @@ class MavSwarm:
         ack_timeout: float,
     ) -> Tuple[bool, Tuple[int, str], Optional[dict]]:
         ack = False
-        code = results.ACK_FAILURE
+        code = codes.ACK_FAILURE
 
         ack, ack_msg = self.__ack_message(ack_packet_type, timeout=ack_timeout)
 
         if ack:
-            code = results.SUCCESS
+            code = codes.SUCCESS
 
             if (
                 agent_id[0],
@@ -1266,10 +1355,10 @@ class MavSwarm:
                 ack = state_verifier(agent_id)
 
                 if not ack:
-                    code = results.STATE_VALIDATION_FAILURE
+                    code = codes.STATE_VALIDATION_FAILURE
 
         else:
-            code = results.ACK_FAILURE
+            code = codes.ACK_FAILURE
 
         if retry and not ack:
             start_time = time.time()

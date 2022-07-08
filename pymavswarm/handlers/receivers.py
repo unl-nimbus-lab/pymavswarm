@@ -34,7 +34,7 @@ class Receivers:
         :param log_level: logging level, defaults to logging.INFO
         :type log_level: int, optional
         """
-        self.__logger = swarm_utils.init_logger(logger_name, log_level=log_level)
+        self._logger = swarm_utils.init_logger(logger_name, log_level=log_level)
         self.__receivers: Dict[str, List[Callable]] = {}
 
         return
@@ -48,6 +48,23 @@ class Receivers:
         :rtype: Dict[str, List[Callable]]
         """
         return self.__receivers
+
+    def add_message_handler(self, message: str, callback: Callable) -> None:
+        """
+        Add a handler for the specified message.
+
+        :param message: message to add the handler to
+        :type message: str
+        :param callback: callback function to call on message reception
+        :type callback: Callable
+        """
+        if message not in self.__receivers:
+            self.__receivers[message] = []
+
+        if callback not in self.__receivers[message]:
+            self.__receivers[message].append(callback)
+
+        return
 
     def _receive_message(self, message: str) -> Callable:
         """
@@ -66,10 +83,6 @@ class Receivers:
         """
 
         def decorator(function: Callable):
-            if message not in self.__receivers:
-                self.__receivers[message] = []
-
-            if function not in self.__receivers[message]:
-                self.__receivers[message].append(function)
+            self.add_message_handler(message, function)
 
         return decorator
