@@ -7,6 +7,7 @@
 [ ] If necessary, documentation has been provided or updated to discuss the changes
 [ ] System integration tests are performed successfully
 [ ] Any new dependencies have been added to the requirements list
+[ ] Any changes that will not be completed or bugs that have been introduced have been added as issues
 
 ## Changes Made
 
@@ -28,3 +29,7 @@ files.
 
 A clear and concise description of the testing performed. Instructions should
 be included discussing how to replicate the testing results.
+
+## Issues Introduced
+
+A list of the issues that have been introduced through this PR.

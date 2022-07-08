@@ -675,6 +675,28 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Perform gyroscope calibration on the specified agents.
+
+        If the target agent IDs are not provided, the system will attempt to perform
+        gyroscope calibration on all swarm agents.
+
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry gyroscope calibration on an agent on calibration failure,
+            defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try gyroscope
+            calibration on an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a gyroscope calibration attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -707,6 +729,28 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Perform magnetometer calibration on the specified agents.
+
+        If the target agent IDs are not provided, the system will attempt to perform
+        magnetometer calibration on all swarm agents.
+
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry magnetometer calibration on an agent on calibration failure,
+            defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try magnetometer
+            calibration on an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a magnetometer calibration attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -739,6 +783,29 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Perform ground pressure calibration on the specified agents.
+
+        If the target agent IDs are not provided, the system will attempt to perform
+        ground pressure calibration on all swarm agents.
+
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry ground pressure calibration on an agent on calibration
+            failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try ground pressure
+            calibration on an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a ground pressure calibration attempt, defaults to
+            0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -771,6 +838,28 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Perform airspeed calibration on the specified agents.
+
+        If the target agent IDs are not provided, the system will attempt to perform
+        airspeed calibration on all swarm agents.
+
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry airspeed calibration on an agent on calibration failure,
+            defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try airspeed
+            calibration on an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a airspeed calibration attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -803,6 +892,30 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Perform barometer temperature calibration on the specified agents.
+
+        If the target agent IDs are not provided, the system will attempt to perform
+        barometer calibration on all swarm agents.
+
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry barometer temperature calibration on an agent on calibration
+            failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try barometer
+            temperature calibration on an agent before a timeout occurs, defaults to
+            2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a barometer temperature calibration attempt, defaults to
+            0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -836,6 +949,31 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Perform accelerometer calibration on the specified agents.
+
+        If the target agent IDs are not provided, the system will attempt to perform
+        accelerometer calibration on all swarm agents.
+
+        :param simple_calibration: perform simple accelerometer calibration, defaults to
+            True
+        :type simple_calibration: bool, optional
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry accelerometer calibration on an agent on calibration
+            failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try accelerometer
+            calibration on an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a accelerometer calibration attempt, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -861,38 +999,6 @@ class MavSwarm:
             ack_timeout,
         )
 
-    def ahrs_trim(
-        self,
-        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
-        retry: bool = False,
-        message_timeout: float = 2.5,
-        ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
-        def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-                0,
-                0,
-                0,
-                0,
-                0,
-                2,
-                0,
-                0,
-            )
-            return
-
-        return self._send_command(
-            agent_ids,
-            executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-            retry,
-            message_timeout,
-            ack_timeout,
-        )
-
     def send_debug_message(
         self,
         name: str,
@@ -902,6 +1008,31 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Send a debug message to the specified agents.
+
+        If the target agent IDs are not provided, the system will attempt to send the
+        debug message to all swarm agents.
+
+        :param name: debug message name
+        :type name: str
+        :param value: debug message value
+        :type value: Union[int, float]
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry sending the debug message to an agent on failure, defaults
+            to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try sending the debug
+            message to an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of the debug message, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
         if not isinstance(name, str):
             raise TypeError(f"Invalid name provided. Expected string, got {type(name)}")
 
@@ -946,6 +1077,38 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Switch the specified agents into takeoff mode.
+
+        This does NOT perform a full takeoff sequence.
+
+        If the target agent IDs are not provided, the system will attempt to switch all
+        swarm agents into takeoff mode.
+
+        State verification is not supported for this command.
+
+        :param altitude: altitude to takeoff to
+        :type altitude: float
+        :param latitude: latitude to takeoff to, defaults to 0
+        :type latitude: float, optional
+        :param longitude: longitude to takeoff to, defaults to 0
+        :type longitude: float, optional
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry switching the agent into takeoff mode on failure, defaults
+            to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try switching an
+            agent into takeoff mode before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of the takeoff message, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -987,6 +1150,34 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Set a parameter on the specified agents.
+
+        If the target agent IDs are not provided, the system will attempt to set the
+        specified parameter on all swarm agents.
+
+        :param parameter_id: ID of the parameter to set
+        :type parameter_id: str
+        :param parameter_value: value to set the parameter to
+        :type parameter_value: Any
+        :param parameter_type: parameter value type, defaults to 9
+        :type parameter_type: int, optional
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry setting the parameter on an agent when parameter setting
+            fails, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try setting the value
+            of the parameter on an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of the set parameter message, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.param_set_send(
                 agent_id[0],
@@ -1014,6 +1205,31 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
     ) -> Optional[Future]:
+        """
+        Get the current home position of the swarm agents.
+
+        If the target agent IDs are not provided, the system will attempt to get the
+        home position of all swarm agents.
+
+        The home position will be updated in the agent's home position property.
+
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry getting the home position of an agent on failure, defaults
+            to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try getting the home
+            position of an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of the get home position request message, defaults to
+            0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -1054,6 +1270,54 @@ class MavSwarm:
         altitude_deviation_tolerance: float = 1.0,
         verify_state_timeout: float = 1.0,
     ) -> Optional[Future]:
+        """
+        Set the home position of the swarm agents.
+
+        If the target agent IDs are not provided, the system will attempt to set the
+        home position of all swarm agents.
+
+        :param use_current_position: use the current position of an agent as its home
+            position, defaults to True
+        :type use_current_position: bool, optional
+        :param latitude: latitude of the home position, defaults to 0
+        :type latitude: float, optional
+        :param longitude: longitude of the home position, defaults to 0
+        :type longitude: float, optional
+        :param altitude: altitude of the home position, defaults to 0
+        :type altitude: float, optional
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry setting the home position of an agent on failure, defaults
+            to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try setting the home
+            position of an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of the set home position request message, defaults to
+            0.5 [s]
+        :type ack_timeout: float, optional
+        :param verify_state: flag indicating whether or not the system should attempt
+            to verify that the agent's home position was properly set, defaults to False
+        :type verify_state: bool, optional
+
+        :param lat_lon_deviation_tolerance: maximum lat/lon deviation allowed when
+            verifying that an agent's home position was set to its current position,
+            defaults to 0.001
+        :type lat_lon_deviation_tolerance: float, optional
+        :param altitude_deviation_tolerance: maximum altitude deviation allowed when
+            verifying that an agent's home position was set to its current position,
+            defaults to 1.0
+        :type altitude_deviation_tolerance: float, optional
+        :param verify_state_timeout: maximum amount of time allowed per attempt to
+            verify that an agent's home position has been set properly, defaults to
+            1.0 [s]
+        :type verify_state_timeout: float, optional
+        :return: _description_
+        :rtype: Optional[Future]
+        """
+
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
@@ -1090,8 +1354,8 @@ class MavSwarm:
                         abs_tol=lat_lon_deviation_tolerance,
                     )
                     or not math.isclose(
-                        current_location.latitude,
-                        self.__agents[agent_id].home_position.latitude,
+                        current_location.altitude,
+                        self.__agents[agent_id].home_position.altitude,
                         abs_tol=altitude_deviation_tolerance,
                     )
                 ):
@@ -1190,6 +1454,32 @@ class MavSwarm:
         ack_packet_type: str = "COMMAND_ACK",
         state_verifier: Optional[Callable] = None,
     ) -> Optional[Future]:
+        """
+        Send a command to the desired agents.
+
+        :param agent_ids: agents to send the command to
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]]
+        :param executor: function used to execute the command
+        :type executor: Callable
+        :param command_type: type of command being executed; used for debugging
+        :type command_type: str
+        :param retry: retry sending the command on failure
+        :type retry: bool
+        :param message_timeout: maximum amount of time allowed to try sending the
+            command to an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a command, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :param ack_packet_type: packet used to indicate message acknowledgment, defaults
+            to "COMMAND_ACK"
+        :type ack_packet_type: str, optional
+        :param state_verifier: function called to verify that the command resulted in
+            the desired changes on an agent, defaults to None
+        :type state_verifier: Optional[Callable], optional
+        :return: future message response, if any
+        :rtype: Optional[Future]
+        """
         if not self.__connection.connected:
             self.__logger.error(
                 "Attempted to send a message without an active MAVLink connection."
@@ -1255,6 +1545,32 @@ class MavSwarm:
         ack_timeout: float,
         state_verifier: Optional[Callable],
     ) -> List[Response]:
+        """
+        Handle sending a list of commands.
+
+        :param agent_ids: agents to send the command to
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]]
+        :param executor: function used to execute the command
+        :type executor: Callable
+        :param command_type: type of command being executed; used for debugging
+        :type command_type: str
+        :param retry: retry sending the command on failure
+        :type retry: bool
+        :param message_timeout: maximum amount of time allowed to try sending the
+            command to an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a command, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :param ack_packet_type: packet used to indicate message acknowledgment, defaults
+            to "COMMAND_ACK"
+        :type ack_packet_type: str, optional
+        :param state_verifier: function called to verify that the command resulted in
+            the desired changes on an agent, defaults to None
+        :type state_verifier: Optional[Callable], optional
+        :return: response of each message sent
+        :rtype: List[Response]
+        """
         responses: List[Response] = []
 
         for agent_id in agent_ids:
@@ -1284,6 +1600,32 @@ class MavSwarm:
         ack_timeout: float,
         state_verifier: Optional[Callable],
     ) -> Response:
+        """
+        Handle sending a single command.
+
+        :param agent_id: agent to send the command to
+        :type agent_id: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]]
+        :param executor: function used to execute the command
+        :type executor: Callable
+        :param command_type: type of command being executed; used for debugging
+        :type command_type: str
+        :param retry: retry sending the command on failure
+        :type retry: bool
+        :param message_timeout: maximum amount of time allowed to try sending the
+            command to an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a command, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :param ack_packet_type: packet used to indicate message acknowledgment, defaults
+            to "COMMAND_ACK"
+        :type ack_packet_type: str, optional
+        :param state_verifier: function called to verify that the command resulted in
+            the desired changes on an agent, defaults to None
+        :type state_verifier: Optional[Callable], optional
+        :return: message response
+        :rtype: Response
+        """
         target_system = agent_id[0]
         target_component = agent_id[1]
 
@@ -1340,6 +1682,34 @@ class MavSwarm:
         message_timeout: float,
         ack_timeout: float,
     ) -> Tuple[bool, Tuple[int, str], Optional[dict]]:
+        """
+        Get the result of the command.
+
+        Attempt to acknowledge the message and verify the state of an agent if a state
+        verifier is provided. If the retry flag has been set, retry sending the message.
+
+        :param agent_id: agent to send the command to
+        :type agent_id: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]]
+        :param executor: function used to execute the command
+        :type executor: Callable
+        :param retry: retry sending the command on failure
+        :type retry: bool
+        :param ack_packet_type: packet used to indicate message acknowledgment, defaults
+            to "COMMAND_ACK"
+        :type ack_packet_type: str, optional
+        :param state_verifier: function called to verify that the command resulted in
+            the desired changes on an agent, defaults to None
+        :type state_verifier: Optional[Callable], optional
+        :param message_timeout: maximum amount of time allowed to try sending the
+            command to an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a command, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: message send was successful, message response code, acknowledgement
+            message received
+        :rtype: Tuple[bool, Tuple[int, str], Optional[dict]]
+        """
         ack = False
         code = codes.ACK_FAILURE
 
@@ -1387,8 +1757,8 @@ class MavSwarm:
         """
         Ensure that a distributed message is acknowledged.
 
-        :param message_type: The type of message that should be acknowledged
-        :type message_type: str
+        :param packet_type: The type of message that should be acknowledged
+        :type packet_type: str
         :param timeout: The acceptable time period before the acknowledgement is
             considered timed out, defaults to 1.0
         :type timeout: float, optional
