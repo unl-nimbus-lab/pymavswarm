@@ -1,9 +1,11 @@
 # Contributing to pymavswarm
 
-## Code
+## Submitting a bug report or a feature request
 
-## Tests
+## Contributing code
 
-## Documentation
+## Coding guidelines
 
-## Local Development Environment
+## Writing documentation
+
+## Setting up a local development environment
