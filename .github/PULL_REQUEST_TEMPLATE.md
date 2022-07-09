@@ -1,13 +1,13 @@
 # Checklist
 
-[ ] I have performed a thorough review of my code
-[ ] I have sufficiently commented my code
-[ ] The implementation follows the project style conventions
-[ ] All project unit tests are passing
-[ ] If necessary, documentation has been provided or updated to discuss the changes
-[ ] System integration tests are performed successfully
-[ ] Any new dependencies have been added to the requirements list
-[ ] Any changes that will not be completed or bugs that have been introduced have been added as issues
+- [ ] I have performed a thorough review of my code
+- [ ] I have sufficiently commented my code
+- [ ] The implementation follows the project style conventions
+- [ ] All project unit tests are passing
+- [ ] If necessary, documentation has been provided or updated to discuss the changes
+- [ ] System integration tests are performed successfully
+- [ ] Any new dependencies have been added to the requirements list
+- [ ] Any changes that will not be completed or bugs that have been introduced have been added as issues
 
 ## Changes Made
 
