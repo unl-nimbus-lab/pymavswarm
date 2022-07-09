@@ -11,25 +11,25 @@
 
 ## Changes Made
 
-A clear and concise description of all changes made in this PR. This should
-include a high-level discussion regarding the implementation of the PR.
+*A clear and concise description of all changes made in this PR. This should
+include a high-level discussion regarding the implementation of the PR.*
 
 ## Associated Issues
 
-A list of all open issues that this PR will close or contribute toward closing.
+*A list of all open issues that this PR will close or contribute toward closing.*
 
 Fixes # (issue)
 
 ## Files Changes
 
-A list of all files changed and a summary of the changes made to the respective
-files.
+*A list of all files changed and a summary of the changes made to the respective
+files.*
 
 ## Testing
 
-A clear and concise description of the testing performed. Instructions should
-be included discussing how to replicate the testing results.
+*A clear and concise description of the testing performed. Instructions should
+be included discussing how to replicate the testing results.*
 
 ## Issues Introduced
 
-A list of the issues that have been introduced through this PR.
+*A list of the issues that have been introduced through this PR.*
