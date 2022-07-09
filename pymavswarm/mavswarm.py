@@ -28,8 +28,8 @@ from pymavlink import mavutil
 from pymavswarm import Connection
 from pymavswarm.agent import Agent
 from pymavswarm.handlers import MessageReceivers
-from pymavswarm.messages import codes
-from pymavswarm.messages.response import Response
+from pymavswarm.message import codes
+from pymavswarm.message.response import Response
 from pymavswarm.utils import Event, NotifierDict, init_logger
 
 

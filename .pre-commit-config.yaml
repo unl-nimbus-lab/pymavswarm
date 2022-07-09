@@ -33,11 +33,6 @@ repos:
     hooks:
       - id: mypy
 
-  - repo: https://github.com/Lucas-C/pre-commit-hooks-bandit
-    rev: v1.0.5
-    hooks:
-      - id: python-bandit-vulnerability-check
-
   - repo: https://github.com/pycqa/pydocstyle
     rev: 6.1.1
     hooks:

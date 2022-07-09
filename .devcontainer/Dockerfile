@@ -40,7 +40,8 @@ RUN pip3 install \
     mypy \
     bandit \
     coverage \
-    pre-commit
+    pre-commit \
+    tox
 
 ARG USERNAME=developer
 ARG USER_UID=1000
