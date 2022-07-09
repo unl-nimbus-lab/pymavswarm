@@ -57,10 +57,10 @@ class MavSwarm:
         """
         super().__init__()
 
-        self.__logger = init_logger(__name__, log_level=log_level)
-        self.__connection = Connection(log_level=log_level)
+        self._logger = init_logger(__name__, log_level=log_level)
         self.__agent_list_changed = Event()
-        self.__agents = NotifierDict(self.__agent_list_changed)
+        self._agents = NotifierDict(self.__agent_list_changed)
+        self._connection = Connection(log_level=log_level)
 
         self.__message_receivers = MessageReceivers(log_level=log_level)
 
@@ -92,7 +92,7 @@ class MavSwarm:
         :return: swarm agents
         :rtype: List[Agent]
         """
-        return [*self.__agents.values()]
+        return [*self._agents.values()]
 
     @property
     def agent_ids(self) -> List[Tuple[int, int]]:
@@ -102,7 +102,7 @@ class MavSwarm:
         :return: list of agent IDs
         :rtype: List[Tuple[int, int]]
         """
-        return [*self.__agents]
+        return [*self._agents]
 
     @property
     def agent_list_changed(self) -> Event:
@@ -122,7 +122,7 @@ class MavSwarm:
         :return: flag
         :rtype: bool
         """
-        return self.__connection.connected
+        return self._connection.connected
 
     @property
     def supported_modes(self) -> Dict[str, int]:
@@ -132,7 +132,7 @@ class MavSwarm:
         :return: supported flight modes
         :rtype: Dict[str, int]
         """
-        return self.__connection.mavlink_connection.mode_mapping()
+        return self._connection.mavlink_connection.mode_mapping()
 
     def connect(
         self,
@@ -161,12 +161,12 @@ class MavSwarm:
         :return: whether or not the connection attempt was successful
         :rtype: bool
         """
-        self.__logger.debug(
+        self._logger.debug(
             f"Attempting to establish a new MAVLink connection over port {port} with "
             f"baudrate {baudrate}"
         )
 
-        if not self.__connection.connect(
+        if not self._connection.connect(
             port, baudrate, source_system, source_component, connection_attempt_timeout
         ):
             return False
@@ -179,9 +179,9 @@ class MavSwarm:
 
     def disconnect(self) -> None:
         """Disconnect from the MAVLink network and shutdown all services."""
-        self.__logger.debug("Disconnecting the MAVLink connection")
+        self._logger.debug("Disconnecting the MAVLink connection")
 
-        self.__connection.disconnect()
+        self._connection.disconnect()
 
         if (
             self.__incoming_message_thread is not None
@@ -196,7 +196,7 @@ class MavSwarm:
         self.__send_message_thread_pool_executor.shutdown()
 
         # Clear the agents list
-        self.__agents.clear()
+        self._agents.clear()
         self.__agent_list_changed.listeners.clear()
 
         return
@@ -212,7 +212,7 @@ class MavSwarm:
         :type agent: Agent
         """
         # Add the agent
-        self.__agents[(agent.system_id, agent.component_id)] = agent
+        self._agents[(agent.system_id, agent.component_id)] = agent
 
         return
 
@@ -224,7 +224,7 @@ class MavSwarm:
         :type agent: Agent
         """
         # Remove the agent
-        del self.__agents[(agent.system_id, agent.component_id)]
+        del self._agents[(agent.system_id, agent.component_id)]
 
         return
 
@@ -263,10 +263,10 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(f"Attempting to arm agents: {agent_ids}")
+        self._logger.debug(f"Attempting to arm agents: {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -286,7 +286,7 @@ class MavSwarm:
             ack = True
             start_time = time.time()
 
-            while not self.__agents[agent_id].armed.value:
+            while not self._agents[agent_id].armed.value:
                 if time.time() - start_time >= verify_state_timeout:
                     ack = False
                     break
@@ -338,10 +338,10 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(f"Attempting to disarm agents: {agent_ids}")
+        self._logger.debug(f"Attempting to disarm agents: {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -361,7 +361,7 @@ class MavSwarm:
             ack = True
             start_time = time.time()
 
-            while self.__agents[agent_id].armed.value:
+            while self._agents[agent_id].armed.value:
                 if time.time() - start_time >= verify_state_timeout:
                     ack = False
                     break
@@ -405,10 +405,10 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(f"Attempting to reboot agents: {agent_ids}")
+        self._logger.debug(f"Attempting to reboot agents: {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
@@ -459,10 +459,10 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(f"Attempting to shutdown agents: {agent_ids}")
+        self._logger.debug(f"Attempting to shutdown agents: {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
@@ -524,18 +524,18 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(
+        self._logger.debug(
             f"Attempting to set the mode of agents {agent_ids} to: {flight_mode}"
         )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             # Reset target
-            self.__connection.mavlink_connection.target_system = agent_id[0]
-            self.__connection.mavlink_connection.target_component = agent_id[1]
+            self._connection.mavlink_connection.target_system = agent_id[0]
+            self._connection.mavlink_connection.target_component = agent_id[1]
 
             # Send flight mode
-            self.__connection.mavlink_connection.set_mode(
-                self.__connection.mavlink_connection.mode_mapping()[flight_mode]
+            self._connection.mavlink_connection.set_mode(
+                self._connection.mavlink_connection.mode_mapping()[flight_mode]
             )
             return
 
@@ -544,7 +544,7 @@ class MavSwarm:
             ack = True
             start_time = time.time()
 
-            while self.__agents[agent_id].mode.value != flight_mode:
+            while self._agents[agent_id].mode.value != flight_mode:
                 if time.time() - start_time >= verify_state_timeout:
                     ack = False
                     break
@@ -592,12 +592,12 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(
+        self._logger.debug(
             f"Attempting to set the airspeed of agents {agent_ids} to {speed}"
         )
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
@@ -652,12 +652,12 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(
+        self._logger.debug(
             f"Attempting to set the groundspeed of agents {agent_ids} to {speed}"
         )
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
@@ -709,12 +709,12 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(
+        self._logger.debug(
             f"Attempting to perform gyroscope calibration on agents {agent_ids}"
         )
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -766,12 +766,12 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(
+        self._logger.debug(
             f"Attempting to perform magnetometer calibration on agents {agent_ids}"
         )
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -824,12 +824,12 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(
+        self._logger.debug(
             f"Attempting to perform ground pressure calibration on agents {agent_ids}"
         )
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -881,12 +881,12 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(
+        self._logger.debug(
             f"Attempting to perform airspeed calibration on agents {agent_ids}"
         )
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -940,13 +940,13 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(
+        self._logger.debug(
             "Attempting to perform barometer temperature calibration on "
             f"agents {agent_ids}"
         )
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -1002,12 +1002,12 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(
+        self._logger.debug(
             f"Attempting to perform accelerometer calibration on agents {agent_ids}"
         )
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
@@ -1073,23 +1073,23 @@ class MavSwarm:
                 f"Invalid value provided. Expected an int or a float, got {type(value)}"
             )
 
-        self.__logger.debug(
+        self._logger.debug(
             f"Attempting to send debug message with name {name} and value {value} to "
             f"agents {agent_ids}"
         )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             # Reset target
-            self.__connection.mavlink_connection.target_system = agent_id[0]
-            self.__connection.mavlink_connection.target_component = agent_id[1]
+            self._connection.mavlink_connection.target_system = agent_id[0]
+            self._connection.mavlink_connection.target_component = agent_id[1]
 
             # Send flight mode
             if isinstance(value, int):
-                self.__connection.mavlink_connection.mav.named_value_int_send(
+                self._connection.mavlink_connection.mav.named_value_int_send(
                     int(time.time()), str.encode(name), value
                 )
             else:
-                self.__connection.mavlink_connection.mav.named_value_float_send(
+                self._connection.mavlink_connection.mav.named_value_float_send(
                     int(time.time()), str.encode(name), value
                 )
 
@@ -1145,10 +1145,10 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self.__logger.debug(f"Attempting to perform takeoff on agents {agent_ids}")
+        self._logger.debug(f"Attempting to perform takeoff on agents {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
@@ -1238,7 +1238,7 @@ class MavSwarm:
             value will be the message responses for that particular stage)
         :rtype: Union[List[Response], Response]
         """
-        self.__logger.debug(f"Attempting a full takeoff sequence on agents {agent_ids}")
+        self._logger.debug(f"Attempting a full takeoff sequence on agents {agent_ids}")
 
         def failure_occured(responses: Union[List[Response], Response]) -> bool:
             """
@@ -1271,7 +1271,7 @@ class MavSwarm:
 
         # If a message failure occurred, return the list of responses
         if failure_occured(future.result()):
-            self.__logger.warning("Takeoff sequence command failed at stage 1")
+            self._logger.warning("Takeoff sequence command failed at stage 1")
             return future.result()
 
         time.sleep(stage_delay)
@@ -1292,7 +1292,7 @@ class MavSwarm:
 
         # Attempt to disarm all agents on stage 2 failure
         if failure_occured(future.result()):
-            self.__logger.warning("Takeoff sequence command failed at stage 2")
+            self._logger.warning("Takeoff sequence command failed at stage 2")
             self.disarm(agent_ids=agent_ids, retry=True, verify_state=True)
             return future.result()
 
@@ -1311,11 +1311,11 @@ class MavSwarm:
 
         # Attempt to disarm all agents on stage 2 failure
         if failure_occured(future.result()):
-            self.__logger.warning("Takeoff sequence command failed at stage 3")
+            self._logger.warning("Takeoff sequence command failed at stage 3")
             self.set_mode("LAND", agent_ids=agent_ids, retry=True, verify_state=True)
             return future.result()
 
-        self.__logger.info("Successfully completed all stages of the takeoff sequence")
+        self._logger.info("Successfully completed all stages of the takeoff sequence")
 
         if agent_ids is None:
             agent_ids = self.__get_expected_agent_ids()
@@ -1380,7 +1380,7 @@ class MavSwarm:
         """
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.param_set_send(
+            self._connection.mavlink_connection.mav.param_set_send(
                 agent_id[0],
                 agent_id[1],
                 str.encode(parameter_id),
@@ -1432,7 +1432,7 @@ class MavSwarm:
         """
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
@@ -1520,7 +1520,7 @@ class MavSwarm:
         """
 
         def executor(agent_id: Tuple[int, int]) -> None:
-            self.__connection.mavlink_connection.mav.command_long_send(
+            self._connection.mavlink_connection.mav.command_long_send(
                 agent_id[0],
                 agent_id[1],
                 mavutil.mavlink.MAV_CMD_DO_SET_HOME,
@@ -1541,22 +1541,22 @@ class MavSwarm:
                 ack = True
                 start_time = time.time()
 
-                current_location = self.__agents[agent_id].location
+                current_location = self._agents[agent_id].location
 
                 while (
                     not math.isclose(
                         current_location.latitude,
-                        self.__agents[agent_id].home_position.latitude,
+                        self._agents[agent_id].home_position.latitude,
                         abs_tol=lat_lon_deviation_tolerance,
                     )
                     or not math.isclose(
                         current_location.latitude,
-                        self.__agents[agent_id].home_position.latitude,
+                        self._agents[agent_id].home_position.latitude,
                         abs_tol=lat_lon_deviation_tolerance,
                     )
                     or not math.isclose(
                         current_location.altitude,
-                        self.__agents[agent_id].home_position.altitude,
+                        self._agents[agent_id].home_position.altitude,
                         abs_tol=altitude_deviation_tolerance,
                     )
                 ):
@@ -1575,9 +1575,9 @@ class MavSwarm:
                 start_time = time.time()
 
                 while (
-                    self.__agents[agent_id].home_position.latitude != latitude
-                    and self.__agents[agent_id].home_position.longitude != longitude
-                    and self.__agents[agent_id].home_position.altitude != altitude
+                    self._agents[agent_id].home_position.latitude != latitude
+                    and self._agents[agent_id].home_position.longitude != longitude
+                    and self._agents[agent_id].home_position.altitude != altitude
                 ):
                     self.get_home_position(agent_id)
 
@@ -1609,8 +1609,8 @@ class MavSwarm:
         :return: agent, if found
         :rtype: Optional[Agent]
         """
-        if agent_id in self.__agents:
-            return self.__agents[agent_id]
+        if agent_id in self._agents:
+            return self._agents[agent_id]
 
         return None
 
@@ -1641,9 +1641,9 @@ class MavSwarm:
         # (typically used by the flight controllers)
         def filter_fn(agent: Agent):
             if (
-                agent.system_id != self.__connection.mavlink_connection.source_system
+                agent.system_id != self._connection.mavlink_connection.source_system
                 and agent.component_id
-                != self.__connection.mavlink_connection.source_component
+                != self._connection.mavlink_connection.source_component
                 and agent.component_id == 1
             ):
                 return True
@@ -1652,7 +1652,7 @@ class MavSwarm:
 
         return [
             (agent.system_id, agent.component_id)
-            for agent in filter(filter_fn, self.__agents)
+            for agent in filter(filter_fn, self._agents)
         ]
 
     def _send_command(
@@ -1694,7 +1694,7 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        if not self.__connection.connected:
+        if not self._connection.connected:
             raise RuntimeError(
                 "Attempted to send a message without an active MAVLink connection."
             )
@@ -1702,7 +1702,7 @@ class MavSwarm:
         if agent_ids is None:
             agent_ids = self.__get_expected_agent_ids()
 
-        if self.__connection.connected:
+        if self._connection.connected:
             if isinstance(agent_ids, list):
                 future = self.__send_message_thread_pool_executor.submit(
                     self.__send_command_list_handler,
@@ -1826,8 +1826,8 @@ class MavSwarm:
         target_component = agent_id[1]
 
         # Determine whether the agent has been recognized
-        if agent_id not in self.__agents:
-            self.__logger.info(
+        if agent_id not in self._agents:
+            self._logger.info(
                 "The current set of registered agents does not include Agent "
                 f"({target_system}, {target_component}). The provided message will "
                 "still be sent; however, the system may not be able to confirm "
@@ -1848,7 +1848,7 @@ class MavSwarm:
                     ack_timeout=ack_timeout,
                 )
             except Exception:
-                self.__logger.exception(
+                self._logger.exception(
                     f"Exception occurred while sending message: {command_type}",
                     exc_info=True,
                 )
@@ -1917,7 +1917,7 @@ class MavSwarm:
             if (
                 agent_id[0],
                 agent_id[1],
-            ) in self.__agents and state_verifier is not None:
+            ) in self._agents and state_verifier is not None:
                 ack = state_verifier(agent_id)
 
                 if not ack:
@@ -1973,11 +1973,11 @@ class MavSwarm:
         while time.time() - start_t < timeout:
             if self.__read_message_mutex.acquire(timeout=0.1):
                 try:
-                    message = self.__connection.mavlink_connection.recv_match(
+                    message = self._connection.mavlink_connection.recv_match(
                         type=packet_type, blocking=False
                     )
                 except Exception:
-                    self.__logger.debug(
+                    self._logger.debug(
                         "An exception was raised while attempting to acknowledge a "
                         "message.",
                         exc_info=True,
@@ -1998,7 +1998,7 @@ class MavSwarm:
 
     def __update_agent_timeout_states(self) -> None:
         """Update the timeout status of each agent in the network."""
-        for agent in self.__agents.values():
+        for agent in self._agents.values():
             if agent.last_heartbeat.value is not None:
                 agent.timeout.value = (
                     monotonic.monotonic() - agent.last_heartbeat.value
@@ -2009,8 +2009,8 @@ class MavSwarm:
     def __receive_message(self) -> None:
         """Handle incoming messages and distribute them to their respective handlers."""
         while (
-            self.__connection.connected
-            and self.__connection.mavlink_connection is not None
+            self._connection.connected
+            and self._connection.mavlink_connection is not None
         ):
             self.__update_agent_timeout_states()
 
@@ -2021,12 +2021,12 @@ class MavSwarm:
             # may be received from an agent
             if self.__read_message_mutex.acquire(timeout=0.1):
                 try:
-                    message = self.__connection.mavlink_connection.recv_msg()
+                    message = self._connection.mavlink_connection.recv_msg()
                 except Exception:
-                    self.__logger.debug(
+                    self._logger.debug(
                         "An error occurred on MAVLink message reception", exc_info=True
                     )
-                    self.__logger.debug(
+                    self._logger.debug(
                         "This exception may be raised if a message is being processed "
                         "and a disconnect is attempted"
                     )
@@ -2042,9 +2042,9 @@ class MavSwarm:
                 for function in self.__message_receivers.receivers[message.get_type()]:
                     with self.__access_agents_mutex:
                         try:
-                            function(message, self.__agents)
+                            function(message, self._agents)
                         except Exception:
-                            self.__logger.exception(
+                            self._logger.exception(
                                 "Exception in message handler for "
                                 f"{message.get_type()}",
                                 exc_info=True,
@@ -2055,12 +2055,12 @@ class MavSwarm:
     def __send_heartbeat(self) -> None:
         """Send a GCS heartbeat to the network."""
         while (
-            self.__connection.connected
-            and self.__connection.mavlink_connection is not None
+            self._connection.connected
+            and self._connection.mavlink_connection is not None
         ):
             if self.__write_message_mutex.acquire(timeout=0.1):
                 try:
-                    self.__connection.mavlink_connection.mav.heartbeat_send(
+                    self._connection.mavlink_connection.mav.heartbeat_send(
                         mavutil.mavlink.MAV_TYPE_GCS,
                         mavutil.mavlink.MAV_AUTOPILOT_INVALID,
                         0,
@@ -2068,7 +2068,7 @@ class MavSwarm:
                         0,
                     )
                 except Exception:
-                    self.__logger.debug(
+                    self._logger.debug(
                         "An error occurred when sending a MAVLink heartbeat",
                         exc_info=True,
                     )

@@ -72,7 +72,7 @@ class MessageReceivers(Receivers):
                         f"Connection to agent {sys_id}:{comp_id} has been restored"
                     )
 
-            # # Update the last heartbeat variable
+            # Update the last heartbeat variable
             agents[agent_id].last_heartbeat.value = monotonic.monotonic()
             agents[agent_id].timeout.value = False
 
