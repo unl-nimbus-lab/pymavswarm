@@ -125,9 +125,4 @@ class DockerInfo(State):
         :return: docker information
         :rtype: str
         """
-        return (
-            "DockerInfo: {"
-            f"version: {self.__version}, "
-            f"last update: {self.__last_update}"
-            "}"
-        )
+        return f"DockerInfo: {self.context}"

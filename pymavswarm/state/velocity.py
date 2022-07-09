@@ -145,3 +145,12 @@ class Velocity(State):
         context["vz"] = self.__vz
 
         return context
+
+    def __str__(self) -> str:
+        """
+        Print velocity information in a human-readable format.
+
+        :return: velocity information
+        :rtype: str
+        """
+        return f"Velocity: {self.context}"

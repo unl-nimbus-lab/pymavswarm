@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any, Optional
+from typing import Any
 
 import monotonic
 
@@ -36,7 +36,6 @@ class Agent:
         self,
         system_id: int,
         component_id: int,
-        name: Optional[str] = None,
         timeout_period: float = 30.0,
         max_params_stored: int = 5,
     ) -> None:
@@ -47,8 +46,6 @@ class Agent:
         :type sys_id: int
         :param comp_id: The component ID of the agent
         :type comp_id: int
-        :param name: The name assigned to the agent, defaults to None
-        :type name: Optional[str], optional
         :param timeout_period: The timeout period of the agent, defaults to 30.0
         :type timeout_period: float, optional
         :param max_params_stored: The maximum number of parameters that should be
@@ -59,11 +56,10 @@ class Agent:
         # Immutable
         self.__system_id = system_id
         self.__component_id = component_id
-        self.__name = name
 
         # We create additional context properties here so that listeners of the
         # respective property events have information about the parent agent
-        context_props = {"sys_id": system_id, "comp_id": component_id, "name": name}
+        context_props = {"sys_id": system_id, "comp_id": component_id}
 
         # Mutable
         self.__attitude = swarm_state.Attitude(optional_context_props=context_props)
@@ -134,18 +130,6 @@ class Agent:
         :rtype: int
         """
         return self.__component_id
-
-    @property
-    def name(self) -> Optional[str]:
-        """
-        Name of an agent.
-
-        Used to assign more readable names to agents.
-
-        :return: agent name
-        :rtype: Optional[str]
-        """
-        return self.__name
 
     @property
     def attitude(self) -> swarm_state.Attitude:
@@ -345,3 +329,13 @@ class Agent:
         :rtype: str
         """
         return self.__hrl_state
+
+    def __str__(self) -> str:
+        """
+        Print agent information in a human-readable format.
+
+        :return: agent information
+        :rtype: str
+        """
+        context = {"system_id": self.__system_id, "component_id": self.__component_id}
+        return f"Agent: {context}"

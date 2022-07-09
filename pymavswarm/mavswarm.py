@@ -161,6 +161,11 @@ class MavSwarm:
         :return: whether or not the connection attempt was successful
         :rtype: bool
         """
+        self.__logger.debug(
+            f"Attempting to establish a new MAVLink connection over port {port} with "
+            f"baudrate {baudrate}"
+        )
+
         if not self.__connection.connect(
             port, baudrate, source_system, source_component, connection_attempt_timeout
         ):
@@ -174,6 +179,8 @@ class MavSwarm:
 
     def disconnect(self) -> None:
         """Disconnect from the MAVLink network and shutdown all services."""
+        self.__logger.debug("Disconnecting the MAVLink connection")
+
         self.__connection.disconnect()
 
         if (
@@ -229,7 +236,7 @@ class MavSwarm:
         ack_timeout: float = 0.5,
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Arm the desired agents.
 
@@ -254,7 +261,7 @@ class MavSwarm:
             verify that an agent is in the armed state, defaults to 1.0 [s]
         :type verify_state_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
         self.__logger.debug(f"Attempting to arm agents: {agent_ids}")
 
@@ -304,7 +311,7 @@ class MavSwarm:
         ack_timeout: float = 0.5,
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Disarm the desired agents.
 
@@ -329,7 +336,7 @@ class MavSwarm:
             verify that an agent is in the disarmed state, defaults to 1.0 [s]
         :type verify_state_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
         self.__logger.debug(f"Attempting to disarm agents: {agent_ids}")
 
@@ -377,7 +384,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Reboot the desired agents.
 
@@ -396,7 +403,7 @@ class MavSwarm:
             acknowledgement of a reboot attempt, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
         self.__logger.debug(f"Attempting to reboot agents: {agent_ids}")
 
@@ -431,7 +438,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Shutdown the desired agents.
 
@@ -450,7 +457,7 @@ class MavSwarm:
             acknowledgement of a shutdown attempt, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
         self.__logger.debug(f"Attempting to shutdown agents: {agent_ids}")
 
@@ -488,7 +495,7 @@ class MavSwarm:
         ack_timeout: float = 0.5,
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Set the flight mode of the desired agents.
 
@@ -515,7 +522,7 @@ class MavSwarm:
             verify that an agent is in the desired mode, defaults to 1.0 [s]
         :type verify_state_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
         self.__logger.debug(
             f"Attempting to set the mode of agents {agent_ids} to: {flight_mode}"
@@ -561,7 +568,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Set the airspeed of the desired agents.
 
@@ -583,8 +590,11 @@ class MavSwarm:
             acknowledgement of a airspeed change attempt, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
+        self.__logger.debug(
+            f"Attempting to set the airspeed of agents {agent_ids} to {speed}"
+        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -618,7 +628,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Set the groundspeed of the desired agents.
 
@@ -640,8 +650,11 @@ class MavSwarm:
             acknowledgement of a groundspeed change attempt, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
+        self.__logger.debug(
+            f"Attempting to set the groundspeed of agents {agent_ids} to {speed}"
+        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -674,7 +687,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Perform gyroscope calibration on the specified agents.
 
@@ -694,8 +707,11 @@ class MavSwarm:
             acknowledgement of a gyroscope calibration attempt, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
+        self.__logger.debug(
+            f"Attempting to perform gyroscope calibration on agents {agent_ids}"
+        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -728,7 +744,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Perform magnetometer calibration on the specified agents.
 
@@ -748,8 +764,11 @@ class MavSwarm:
             acknowledgement of a magnetometer calibration attempt, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
+        self.__logger.debug(
+            f"Attempting to perform magnetometer calibration on agents {agent_ids}"
+        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -782,7 +801,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Perform ground pressure calibration on the specified agents.
 
@@ -803,8 +822,11 @@ class MavSwarm:
             0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
+        self.__logger.debug(
+            f"Attempting to perform ground pressure calibration on agents {agent_ids}"
+        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -837,7 +859,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Perform airspeed calibration on the specified agents.
 
@@ -857,8 +879,11 @@ class MavSwarm:
             acknowledgement of a airspeed calibration attempt, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
+        self.__logger.debug(
+            f"Attempting to perform airspeed calibration on agents {agent_ids}"
+        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -891,7 +916,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Perform barometer temperature calibration on the specified agents.
 
@@ -913,8 +938,12 @@ class MavSwarm:
             0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
+        self.__logger.debug(
+            "Attempting to perform barometer temperature calibration on "
+            f"agents {agent_ids}"
+        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -948,7 +977,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Perform accelerometer calibration on the specified agents.
 
@@ -971,8 +1000,11 @@ class MavSwarm:
             acknowledgement of a accelerometer calibration attempt, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
+        self.__logger.debug(
+            f"Attempting to perform accelerometer calibration on agents {agent_ids}"
+        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -1007,7 +1039,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Send a debug message to the specified agents.
 
@@ -1031,7 +1063,7 @@ class MavSwarm:
             acknowledgement of the debug message, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
         if not isinstance(name, str):
             raise TypeError(f"Invalid name provided. Expected string, got {type(name)}")
@@ -1040,6 +1072,11 @@ class MavSwarm:
             raise TypeError(
                 f"Invalid value provided. Expected an int or a float, got {type(value)}"
             )
+
+        self.__logger.debug(
+            f"Attempting to send debug message with name {name} and value {value} to "
+            f"agents {agent_ids}"
+        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             # Reset target
@@ -1076,7 +1113,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Switch the specified agents into takeoff mode.
 
@@ -1106,8 +1143,9 @@ class MavSwarm:
             acknowledgement of the takeoff message, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
+        self.__logger.debug(f"Attempting to perform takeoff on agents {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self.__connection.mavlink_connection.mav.command_long_send(
@@ -1134,8 +1172,171 @@ class MavSwarm:
             ack_timeout,
         )
 
-    def takeoff_sequence(self) -> Future:
-        pass
+    def takeoff_sequence(
+        self,
+        altitude: float,
+        latitude: float = 0,
+        longitude: float = 0,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+        verify_state: bool = False,
+        verify_state_timeout: float = 1.0,
+        stage_delay: float = 3.0,
+    ) -> Union[List[Response], Response]:
+        """
+        Command the desired agents to perform a full takeoff sequence.
+
+        The full takeoff sequence includes the following stages:
+
+        1. Switch the agent into GUIDED mode
+        2. Arm the agent
+        3. Command takeoff
+
+        If a failure occurs at stage 1, the takeoff sequence will immediately return a
+        failure response. No attempt will be made to revert back to the previous flight
+        mode. If a failure occurs at stage 2, the system will attempt to command all
+        agents to disarm. If a failure occurs at stage 3, the system will attempt to
+        command all agents to land.
+
+        This command is a blocking command and does not run asynchronously (i.e., no
+        future will be returned). This command is multi-staged as well; therefore, it
+        may take a while to complete. Furthermore, there is NO altitude verification to
+        ensure that an agent has reached the desired altitude.
+
+        :param altitude: altitude to takeoff to
+        :type altitude: float
+        :param latitude: latitude to takeoff to, defaults to 0
+        :type latitude: float, optional
+        :param longitude: longitude to takeoff to, defaults to 0
+        :type longitude: float, optional
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry performing a stage on stage failure, defaults
+            to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try complete a stage
+            on an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of a stage, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :param verify_state: verify that the agents successfully changed flight modes
+            and armed; if state verification fails, failure response will be initiaed,
+            defaults to False
+        :type verify_state: bool, optional
+        :param verify_state_timeout: maximum amount of time allowed to verify a state
+            change on an agent, defaults to 1.0
+        :type verify_state_timeout: float, optional
+        :param stage_delay: amount of time to delay between takeoff sequence stages,
+            defaults to 3.0
+        :type stage_delay: float, optional
+        :return: message response; if a failure occurs, the response(s) will be the
+            stage's responses (e.g., if any message fails at stage 1, the returned
+            value will be the message responses for that particular stage)
+        :rtype: Union[List[Response], Response]
+        """
+        self.__logger.debug(f"Attempting a full takeoff sequence on agents {agent_ids}")
+
+        def failure_occured(responses: Union[List[Response], Response]) -> bool:
+            """
+            Check the responses to determine if a message failure occurred.
+
+            :param responses: message responses
+            :type responses: Union[List[Response], Response]
+            :return: true if failure occurred, false otherwise
+            :rtype: bool
+            """
+            if isinstance(responses, list):
+                return all(not response.result for response in responses)
+
+            return not responses.result
+
+        # Guided stage
+        future = self.set_mode(
+            "GUIDED",
+            agent_ids=agent_ids,
+            retry=retry,
+            message_timeout=message_timeout,
+            ack_timeout=ack_timeout,
+            verify_state=verify_state,
+            verify_state_timeout=verify_state_timeout,
+        )
+
+        # Wait for the set mode stage to complete
+        while not future.done():
+            pass
+
+        # If a message failure occurred, return the list of responses
+        if failure_occured(future.result()):
+            self.__logger.warning("Takeoff sequence command failed at stage 1")
+            return future.result()
+
+        time.sleep(stage_delay)
+
+        # Arming stage
+        self.arm(
+            agent_ids=agent_ids,
+            retry=retry,
+            message_timeout=message_timeout,
+            ack_timeout=ack_timeout,
+            verify_state=verify_state,
+            verify_state_timeout=verify_state_timeout,
+        )
+
+        # Wait for the arming stage to complete
+        while not future.done():
+            pass
+
+        # Attempt to disarm all agents on stage 2 failure
+        if failure_occured(future.result()):
+            self.__logger.warning("Takeoff sequence command failed at stage 2")
+            self.disarm(agent_ids=agent_ids, retry=True, verify_state=True)
+            return future.result()
+
+        time.sleep(stage_delay)
+
+        # Takeoff stage
+        self.takeoff(
+            altitude,
+            latitude=latitude,
+            longitude=longitude,
+            agent_ids=agent_ids,
+            retry=retry,
+            message_timeout=message_timeout,
+            ack_timeout=ack_timeout,
+        )
+
+        # Attempt to disarm all agents on stage 2 failure
+        if failure_occured(future.result()):
+            self.__logger.warning("Takeoff sequence command failed at stage 3")
+            self.set_mode("LAND", agent_ids=agent_ids, retry=True, verify_state=True)
+            return future.result()
+
+        self.__logger.info("Successfully completed all stages of the takeoff sequence")
+
+        if agent_ids is None:
+            agent_ids = self.__get_expected_agent_ids()
+
+        if isinstance(agent_ids, int):
+            responses = Response(
+                agent_ids[0], agent_ids[1], "TAKEOFF_SEQUENCE", True, codes.SUCCESS
+            )
+        else:
+            responses = [
+                Response(
+                    agent_id[0],  # type: ignore
+                    agent_id[1],  # type: ignore
+                    "TAKEOFF_SEQUENCE",
+                    True,
+                    codes.SUCCESS,
+                )
+                for agent_id in agent_ids
+            ]
+
+        return responses
 
     def read_parameter(self) -> Future:
         pass
@@ -1149,7 +1350,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Set a parameter on the specified agents.
 
@@ -1175,7 +1376,7 @@ class MavSwarm:
             acknowledgement of the set parameter message, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
 
         def executor(agent_id: Tuple[int, int]) -> None:
@@ -1204,7 +1405,7 @@ class MavSwarm:
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Get the current home position of the swarm agents.
 
@@ -1227,7 +1428,7 @@ class MavSwarm:
             0.5 [s]
         :type ack_timeout: float, optional
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
 
         def executor(agent_id: Tuple[int, int]) -> None:
@@ -1269,7 +1470,7 @@ class MavSwarm:
         lat_lon_deviation_tolerance: float = 0.001,
         altitude_deviation_tolerance: float = 1.0,
         verify_state_timeout: float = 1.0,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Set the home position of the swarm agents.
 
@@ -1315,7 +1516,7 @@ class MavSwarm:
             1.0 [s]
         :type verify_state_timeout: float, optional
         :return: _description_
-        :rtype: Optional[Future]
+        :rtype: Future
         """
 
         def executor(agent_id: Tuple[int, int]) -> None:
@@ -1413,23 +1614,6 @@ class MavSwarm:
 
         return None
 
-    def get_agent_by_name(self, name: str) -> Optional[Agent]:
-        """
-        Get an agent by its name.
-
-        Get the first agent in the swarm with the specified name.
-
-        :param name: name of the agent to access
-        :type name: str
-        :return: first agent identified with the given name
-        :rtype: Optional[Agent]
-        """
-        for agent in self.__agents.values():
-            if agent.name == name:
-                return agent
-
-        return None
-
     def add_custom_message_handler(self, message: str, callback: Callable) -> None:
         """
         Add a custom message handler for the specified message.
@@ -1443,6 +1627,34 @@ class MavSwarm:
 
         return
 
+    def __get_expected_agent_ids(self) -> List[Tuple[int, int]]:
+        """
+        Get the expected agent IDs in the swarm.
+
+        This is used when the target agents aren't provided and the system needs
+        to guess which agents to send the command to.
+
+        :return: filtered agent IDs
+        :rtype: List[Tuple[int, int]]
+        """
+        # Get the agents that aren't the connection and have a component ID of 0
+        # (typically used by the flight controllers)
+        def filter_fn(agent: Agent):
+            if (
+                agent.system_id != self.__connection.mavlink_connection.source_system
+                and agent.component_id
+                != self.__connection.mavlink_connection.source_component
+                and agent.component_id == 1
+            ):
+                return True
+
+            return False
+
+        return [
+            (agent.system_id, agent.component_id)
+            for agent in filter(filter_fn, self.__agents)
+        ]
+
     def _send_command(
         self,
         agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
@@ -1453,7 +1665,7 @@ class MavSwarm:
         ack_timeout: float,
         ack_packet_type: str = "COMMAND_ACK",
         state_verifier: Optional[Callable] = None,
-    ) -> Optional[Future]:
+    ) -> Future:
         """
         Send a command to the desired agents.
 
@@ -1477,34 +1689,18 @@ class MavSwarm:
         :param state_verifier: function called to verify that the command resulted in
             the desired changes on an agent, defaults to None
         :type state_verifier: Optional[Callable], optional
+        :raises RuntimeError: Attempted to send a message without an active MAVLink
+            connection
         :return: future message response, if any
-        :rtype: Optional[Future]
+        :rtype: Future
         """
         if not self.__connection.connected:
-            self.__logger.error(
+            raise RuntimeError(
                 "Attempted to send a message without an active MAVLink connection."
             )
-            return None
 
         if agent_ids is None:
-            # Get the agents that aren't the connection and have a component ID of 0
-            # (typically used by the flight controllers)
-            def filter_fn(agent: Agent):
-                if (
-                    agent.system_id
-                    != self.__connection.mavlink_connection.source_system
-                    and agent.component_id
-                    != self.__connection.mavlink_connection.source_component
-                    and agent.component_id == 1
-                ):
-                    return True
-
-                return False
-
-            agent_ids = [
-                (agent.system_id, agent.component_id)
-                for agent in filter(filter_fn, self.agents)
-            ]
+            agent_ids = self.__get_expected_agent_ids()
 
         if self.__connection.connected:
             if isinstance(agent_ids, list):

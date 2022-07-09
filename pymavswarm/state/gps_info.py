@@ -189,3 +189,12 @@ class GPSInfo(State):
         context["satellites_visible"] = self.__satellites_visible
 
         return context
+
+    def __str__(self) -> str:
+        """
+        Print GPS information in a human-readable format.
+
+        :return: GPS information
+        :rtype: str
+        """
+        return f"GPSInfo: {self.context}"

@@ -150,3 +150,12 @@ class Location(State):
         context["longitude"] = self.__longitude
 
         return context
+
+    def __str__(self) -> str:
+        """
+        Print location in a human-readable format.
+
+        :return: location
+        :rtype: str
+        """
+        return f"Location: {self.context}"

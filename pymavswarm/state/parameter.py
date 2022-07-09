@@ -102,3 +102,20 @@ class Parameter:
         :rtype: int
         """
         return self.__parameter_count
+
+    def __str__(self) -> str:
+        """
+        Print agent information in a human-readable format.
+
+        :return: agent information
+        :rtype: str
+        """
+        context = {
+            "id": self.__parameter_id,
+            "value": self.__parameter_value,
+            "type": self.__parameter_type,
+            "index": self.__parameter_index,
+            "count": self.__parameter_count,
+        }
+
+        return f"Parameter: {context}"

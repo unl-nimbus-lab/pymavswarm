@@ -93,3 +93,12 @@ class Generic(State):
         context[self.__name] = self.__value
 
         return context
+
+    def __str__(self) -> str:
+        """
+        Print state information in a human-readable format.
+
+        :return: state information
+        :rtype: str
+        """
+        return f"Generic: {self.context}"

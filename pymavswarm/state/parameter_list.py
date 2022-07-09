@@ -111,3 +111,12 @@ class ParameterList(State):
         self.state_changed_event.notify(context=self.context)
 
         return
+
+    def __str__(self) -> str:
+        """
+        Print location in a human-readable format.
+
+        :return: location
+        :rtype: str
+        """
+        return f"Location: {self.context}"

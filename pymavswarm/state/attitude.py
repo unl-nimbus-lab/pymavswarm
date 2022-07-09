@@ -250,13 +250,4 @@ class Attitude(State):
         :return: attitude
         :rtype: str
         """
-        return (
-            "Attitude: {"
-            f"roll: {self.__roll}, "
-            f"roll speed: {self.__roll_speed}, "
-            f"pitch: {self.__pitch}, "
-            f"pitch speed: {self.__pitch_speed}, "
-            f"yaw: {self.__yaw}, "
-            f"yaw speed: {self.__yaw_speed}"
-            "}"
-        )
+        return f"Attitude: {self.context}"

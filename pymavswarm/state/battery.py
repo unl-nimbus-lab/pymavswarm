@@ -165,10 +165,4 @@ class Battery(State):
         :return: battery
         :rtype: str
         """
-        return (
-            "Battery: {"
-            f"voltage: {self.__voltage}, "
-            f"current: {self.__current}, "
-            f"level: {self.__level}"
-            "}"
-        )
+        return f"Battery: {self.context}"

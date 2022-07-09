@@ -83,3 +83,12 @@ class Telemetry(State):
         context["drop_rate"] = self.__drop_rate
 
         return context
+
+    def __str__(self) -> str:
+        """
+        Print telemetry information in a human-readable format.
+
+        :return: telemetry information
+        :rtype: str
+        """
+        return f"Telemetry: {self.context}"

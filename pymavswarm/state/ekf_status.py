@@ -316,3 +316,12 @@ class EKFStatus(State):
         context["pred_pos_horiz_abs"] = self.__pred_pos_horiz_abs
 
         return context
+
+    def __str__(self) -> str:
+        """
+        Print EKF status information in a human-readable format.
+
+        :return: EKF status
+        :rtype: str
+        """
+        return f"EKFStatus: {self.context}"

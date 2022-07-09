@@ -138,3 +138,18 @@ class Connection:
         self.__mavlink_connection = None
 
         return
+
+    def __str__(self) -> str:
+        """
+        Print connection information in a human-readable format.
+
+        :return: connection information
+        :rtype: str
+        """
+        context = {"connected": self.__connected}
+
+        if self.__mavlink_connection is not None:
+            context["source_system"] = self.__mavlink_connection.source_system
+            context["source_component"] = self.__mavlink_connection.source_component
+
+        return f"Connection: {context}"

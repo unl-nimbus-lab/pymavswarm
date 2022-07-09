@@ -67,10 +67,7 @@ def main() -> None:
         agent = mavswarm.get_agent_by_id(agent_id)
 
         if agent is not None:
-            logger.info(
-                f"The current attitude of agent ({agent.system_id}, "
-                f"{agent.component_id}) is: {agent.attitude}"
-            )
+            logger.info(f"The current attitude of {agent} is: {agent.attitude}")
 
     # Disconnect from the swarm
     mavswarm.disconnect()

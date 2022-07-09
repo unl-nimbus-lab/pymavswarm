@@ -1,7 +1,5 @@
 # pymavswarm
 
-## Introduction
-
 `pymavswarm` is a Python library implemented to enable interaction with drone
 swarms using the MAVLink protocol. This library supports reading MAVLink
 messages sent from multiple agents in a swarm and sending MAVLink messages to
@@ -31,7 +29,7 @@ cd path/to/pymavswarm/
 pip3 install .
 ```
 
-## Getting Started
+## Quick Start
 
 `pymavswarm` has been implemented to enable easy interfacing with drone
 swarms. Refer to the following code snippet for a simple example to get started

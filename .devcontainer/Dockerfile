@@ -11,7 +11,8 @@ RUN pip3 install --upgrade pip
 # Install all required Python packages
 RUN pip3 install \
     monotonic \
-    pymavlink
+    pymavlink \
+    pyserial
 
 
 ###################################################################
