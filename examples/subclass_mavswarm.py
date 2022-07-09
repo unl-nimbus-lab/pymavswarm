@@ -62,7 +62,7 @@ class CustomMavSwarm(MavSwarm):
             command to an agent before a timeout occurs, defaults to 2.5 [s]
         :type message_timeout: float, optional
         :param ack_timeout: maximum amount of time allowed per attempt to verify
-            acknowledgement of an arming attempt, defaults to 0.5 [s]
+            acknowledgement of the fun command, defaults to 0.5 [s]
         :type ack_timeout: float, optional
         :return: future response
         :rtype: Future
