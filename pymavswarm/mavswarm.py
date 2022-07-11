@@ -30,6 +30,7 @@ from pymavswarm.agent import Agent
 from pymavswarm.handlers import MessageReceivers
 from pymavswarm.message import codes
 from pymavswarm.message.response import Response
+from pymavswarm.state import Parameter
 from pymavswarm.utils import Event, NotifierDict, init_logger
 
 
@@ -1338,8 +1339,77 @@ class MavSwarm:
 
         return responses
 
-    def read_parameter(self) -> Future:
-        pass
+    def read_parameter(
+        self,
+        parameter_id: str,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Read the parameter value from the desired agents.
+
+        :param parameter_id: ID of the parameter to read
+        :type parameter_id: str
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry reading the parameter on an agent when parameter read
+            fails, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try reading the value
+            of the parameter on an agent before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of the read parameter message, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Future
+        """
+        self._logger.debug(
+            f"Attempting to read parameter {parameter_id} on agents {agent_ids}"
+        )
+
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self._connection.mavlink_connection.mav.param_request_read_send(
+                agent_id[0], agent_id[1], str.encode(parameter_id), -1
+            )
+            return
+
+        def post_command_executor(
+            agent_id: Tuple[int, int],
+            result: bool,
+            code: Tuple[int, str],
+            ack_msg: Dict,
+        ) -> None:
+            try:
+                read_param = Parameter(
+                    ack_msg["param_id"],
+                    ack_msg["param_value"],
+                    ack_msg["param_type"],
+                    ack_msg["param_index"],
+                    ack_msg["param_count"],
+                )
+            except KeyError:
+                self._logger.debug(
+                    "Received an invalid acknowledgement message when reading "
+                    f"parameter {parameter_id}"
+                )
+                return
+
+            self._agents[agent_id].last_params_read.append(read_param)
+            return
+
+        return self._send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
+            retry,
+            message_timeout,
+            ack_timeout,
+            post_execution_handler=post_command_executor,
+        )
 
     def set_parameter(
         self,
@@ -1378,6 +1448,10 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
+        self._logger.debug(
+            f"Attempting to set parameter {parameter_id} to {parameter_value} on "
+            f"agents {agent_ids}"
+        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.param_set_send(
@@ -1597,8 +1671,90 @@ class MavSwarm:
             state_verifier=verify_state_changed if verify_state else None,
         )
 
-    def goto(self) -> Future:
-        pass
+    def goto(
+        self,
+        latitude: float = 0,
+        longitude: float = 0,
+        altitude: float = 0,
+        hold: float = 0,
+        accept_radius: float = 0,
+        pass_radius: float = 0,
+        yaw: float = 0,
+        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Command the agents to go to the desired location.
+
+        Use this cautiously. If multiple agents fly to the same location, there may be
+        a collision at this location.
+
+        :param latitude: target latitude, defaults to 0
+        :type latitude: float, optional
+        :param longitude: target longitude, defaults to 0
+        :type longitude: float, optional
+        :param altitude: target altitude, defaults to 0
+        :type altitude: float, optional
+        :param hold: time to stay at waypoint for rotary wing (ignored by fixed wing),
+            defaults to 0
+        :type hold: float, optional
+        :param accept_radius: if the sphere around the target location with this radius
+            [m] is hit, the waypoint counts as reached, defaults to 0
+        :type accept_radius: float, optional
+        :param pass_radius: 0 to pass through the WP, if > 0 radius to pass by WP.
+            Positive value for clockwise orbit, negative value for counter-clockwise
+            orbit. Allows trajectory control, defaults to 0
+        :type pass_radius: float, optional
+        :param yaw: desired yaw angle at waypoint (rotary wing). NaN to use the current
+            system yaw heading mode (e.g. yaw towards next waypoint, yaw to home,
+            etc.)., defaults to 0
+        :type yaw: float, optional
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+            optional
+        :param retry: retry commanding the desired agents to go to the desired location
+            on acknowledgement failure, defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try commanding an
+            agent to fly to the specified location before a timeout occurs, defaults to
+            2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of the goto message, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Future
+        """
+
+        def executor(agent_id: Tuple[int, int]) -> None:
+            self._connection.mavlink_connection.mav.mission_item_send(
+                agent_id[0],
+                agent_id[1],
+                0,
+                mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
+                0,
+                0,
+                hold,
+                accept_radius,
+                pass_radius,
+                yaw,
+                latitude,
+                longitude,
+                altitude,
+            )
+            return
+
+        return self._send_command(
+            agent_ids,
+            executor,
+            mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
 
     def get_agent_by_id(self, agent_id: Tuple[int, int]) -> Optional[Agent]:
         """
@@ -1665,6 +1821,7 @@ class MavSwarm:
         ack_timeout: float,
         ack_packet_type: str = "COMMAND_ACK",
         state_verifier: Optional[Callable] = None,
+        post_execution_handler: Optional[Callable] = None,
     ) -> Future:
         """
         Send a command to the desired agents.
@@ -1689,6 +1846,10 @@ class MavSwarm:
         :param state_verifier: function called to verify that the command resulted in
             the desired changes on an agent, defaults to None
         :type state_verifier: Optional[Callable], optional
+        :param post_execution_handler: function called after successful execution, can
+            be used to perform post-processing or handle the acknowledgment message,
+            defaults to None
+        :type post_execution_handler: Optional[Callable], optional
         :raises RuntimeError: Attempted to send a message without an active MAVLink
             connection
         :return: future message response, if any
@@ -1714,6 +1875,7 @@ class MavSwarm:
                     message_timeout,
                     ack_timeout,
                     state_verifier,
+                    post_execution_handler,
                 )
             else:
                 future = self.__send_message_thread_pool_executor.submit(
@@ -1726,6 +1888,7 @@ class MavSwarm:
                     message_timeout,
                     ack_timeout,
                     state_verifier,
+                    post_execution_handler,
                 )
 
         return future
@@ -1740,6 +1903,7 @@ class MavSwarm:
         message_timeout: float,
         ack_timeout: float,
         state_verifier: Optional[Callable],
+        post_execution_handler: Optional[Callable],
     ) -> List[Response]:
         """
         Handle sending a list of commands.
@@ -1753,17 +1917,19 @@ class MavSwarm:
         :param retry: retry sending the command on failure
         :type retry: bool
         :param message_timeout: maximum amount of time allowed to try sending the
-            command to an agent before a timeout occurs, defaults to 2.5 [s]
-        :type message_timeout: float, optional
+            command to an agent before a timeout occurs
+        :type message_timeout: float
         :param ack_timeout: maximum amount of time allowed per attempt to verify
-            acknowledgement of a command, defaults to 0.5 [s]
-        :type ack_timeout: float, optional
-        :param ack_packet_type: packet used to indicate message acknowledgment, defaults
-            to "COMMAND_ACK"
-        :type ack_packet_type: str, optional
+            acknowledgement of a command
+        :type ack_timeout: float
+        :param ack_packet_type: packet used to indicate message acknowledgment
+        :type ack_packet_type: str
         :param state_verifier: function called to verify that the command resulted in
-            the desired changes on an agent, defaults to None
-        :type state_verifier: Optional[Callable], optional
+            the desired changes on an agent
+        :type state_verifier: Optional[Callable]
+        :param post_execution_handler: function called after successful execution, can
+            be used to perform post-processing or handle the acknowledgment message
+        :type post_execution_handler: Optional[Callable]
         :return: response of each message sent
         :rtype: List[Response]
         """
@@ -1780,6 +1946,7 @@ class MavSwarm:
                     message_timeout,
                     ack_timeout,
                     state_verifier,
+                    post_execution_handler,
                 )
             )
 
@@ -1795,6 +1962,7 @@ class MavSwarm:
         message_timeout: float,
         ack_timeout: float,
         state_verifier: Optional[Callable],
+        post_execution_handler: Optional[Callable],
     ) -> Response:
         """
         Handle sending a single command.
@@ -1808,17 +1976,19 @@ class MavSwarm:
         :param retry: retry sending the command on failure
         :type retry: bool
         :param message_timeout: maximum amount of time allowed to try sending the
-            command to an agent before a timeout occurs, defaults to 2.5 [s]
-        :type message_timeout: float, optional
+            command to an agent before a timeout occurs
+        :type message_timeout: float
         :param ack_timeout: maximum amount of time allowed per attempt to verify
-            acknowledgement of a command, defaults to 0.5 [s]
-        :type ack_timeout: float, optional
-        :param ack_packet_type: packet used to indicate message acknowledgment, defaults
-            to "COMMAND_ACK"
-        :type ack_packet_type: str, optional
+            acknowledgement of a command
+        :type ack_timeout: float
+        :param ack_packet_type: packet used to indicate message acknowledgment
+        :type ack_packet_type: str
         :param state_verifier: function called to verify that the command resulted in
-            the desired changes on an agent, defaults to None
-        :type state_verifier: Optional[Callable], optional
+            the desired changes on an agent
+        :type state_verifier: Optional[Callable]
+        :param post_execution_handler: function called after successful execution, can
+            be used to perform post-processing or handle the acknowledgment message
+        :type post_execution_handler: Optional[Callable]
         :return: message response
         :rtype: Response
         """
@@ -1836,9 +2006,11 @@ class MavSwarm:
 
         with self.__write_message_mutex:
             try:
+                # Execute the command
                 executor(agent_id)
 
-                result, code, _ = self.__get_message_result(
+                # Get the result of the message and retry if desired
+                result, code, ack_msg = self.__get_message_result(
                     agent_id,
                     executor,
                     retry,
@@ -1847,6 +2019,7 @@ class MavSwarm:
                     message_timeout=message_timeout,
                     ack_timeout=ack_timeout,
                 )
+
             except Exception:
                 self._logger.exception(
                     f"Exception occurred while sending message: {command_type}",
@@ -1859,6 +2032,10 @@ class MavSwarm:
                     False,
                     codes.EXCEPTION,
                 )
+
+        # Run the post-execution handler
+        if result and post_execution_handler is not None:
+            post_execution_handler(agent_id, result, code, ack_msg)
 
         return Response(
             target_system,
