@@ -9,6 +9,7 @@ Several examples have been implemented to demonstrate how to use and extend the
 computer
 - `custom_observer.py`: demonstrates how to implement a callback for an agent
 state change
+- `goto.py`: demonstrates how to command an agent to fly to a specified location
 - `set_flight_mode.py`: demonstrates how to set the agents' flight mode
 - `set_home_position.py`: demonstrates how to set the swarm agents' home
 position
