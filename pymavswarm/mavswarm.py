@@ -1322,14 +1322,11 @@ class MavSwarm:
             agent_ids = self.__get_expected_agent_ids()
 
         if isinstance(agent_ids, int):
-            responses = Response(
-                agent_ids[0], agent_ids[1], "TAKEOFF_SEQUENCE", True, codes.SUCCESS
-            )
+            responses = Response(agent_ids, "TAKEOFF_SEQUENCE", True, codes.SUCCESS)
         else:
             responses = [
                 Response(
-                    agent_id[0],  # type: ignore
-                    agent_id[1],  # type: ignore
+                    agent_id,  # type: ignore
                     "TAKEOFF_SEQUENCE",
                     True,
                     codes.SUCCESS,
@@ -1408,6 +1405,7 @@ class MavSwarm:
             retry,
             message_timeout,
             ack_timeout,
+            ack_packet_type="PARAM_VALUE",
             post_execution_handler=post_command_executor,
         )
 
@@ -1992,14 +1990,11 @@ class MavSwarm:
         :return: message response
         :rtype: Response
         """
-        target_system = agent_id[0]
-        target_component = agent_id[1]
-
         # Determine whether the agent has been recognized
         if agent_id not in self._agents:
             self._logger.info(
                 "The current set of registered agents does not include Agent "
-                f"({target_system}, {target_component}). The provided message will "
+                f"({agent_id[0]}, {agent_id[1]}). The provided message will "
                 "still be sent; however, the system may not be able to confirm "
                 "reception of the message."
             )
@@ -2026,8 +2021,7 @@ class MavSwarm:
                     exc_info=True,
                 )
                 return Response(
-                    target_system,
-                    target_component,
+                    agent_id,
                     command_type,
                     False,
                     codes.EXCEPTION,
@@ -2038,8 +2032,7 @@ class MavSwarm:
             post_execution_handler(agent_id, result, code, ack_msg)
 
         return Response(
-            target_system,
-            target_component,
+            agent_id,
             command_type,
             result,
             code,

@@ -22,8 +22,7 @@ class Response:
 
     def __init__(
         self,
-        target_system: int,
-        target_component: int,
+        target_agent_id: Tuple[int, int],
         message_type: str,
         result: bool,
         code: Tuple[int, str],
@@ -31,10 +30,8 @@ class Response:
         """
         Create a message response.
 
-        :param target_system: system ID of the target agent
-        :type target_system: int
-        :param target_component: component ID of the target agent
-        :type target_component: int
+        :param target_agent_id: agent targeted by the message
+        :type target_agent_id: Tuple[int, int]
         :param message_type: type of message sent
         :type message_type: str
         :param result: message result
@@ -42,8 +39,7 @@ class Response:
         :param code: message code
         :type code: Tuple[int, str]
         """
-        self.__target_system = target_system
-        self.__target_component = target_component
+        self.__target_agent_id = target_agent_id
         self.__message_type = message_type
         self.__result = result
         self.__code = code
@@ -51,24 +47,14 @@ class Response:
         return
 
     @property
-    def target_system(self) -> int:
+    def target_agent_id(self) -> Tuple[int, int]:
         """
-        System ID of the target agent.
+        ID of agent targeted by the message.
 
-        :return: system ID
-        :rtype: int
+        :return: agent ID
+        :rtype: Tuple[int, int]
         """
-        return self.__target_system
-
-    @property
-    def target_component(self) -> int:
-        """
-        Component ID of the target agent.
-
-        :return: component ID
-        :rtype: int
-        """
-        return self.__target_component
+        return self.__target_agent_id
 
     @property
     def message_type(self) -> str:

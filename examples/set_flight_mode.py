@@ -84,18 +84,16 @@ def main() -> None:
     )
 
     # Wait for the arm command to complete
-    if future is not None:
-        while not future.done():
-            pass
+    while not future.done():
+        pass
 
-        responses = future.result()
+    responses = future.result()
 
-        for response in responses:
-            logger.info(
-                f"Result of {response.message_type} message sent to "
-                f"({response.target_system}, {response.target_component}): "
-                f"{response.code}"
-            )
+    for response in responses:
+        logger.info(
+            f"Result of {response.message_type} message sent to "
+            f"({response.target_agent_id}): {response.code}"
+        )
 
     # Disconnect from the swarm
     mavswarm.disconnect()

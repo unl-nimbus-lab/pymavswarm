@@ -73,18 +73,16 @@ def main() -> None:
         for response in responses:
             logger.info(
                 f"Result of {response.message_type} message sent to "
-                f"({response.target_system}, {response.target_component}): "
-                f"{response.code}"
+                f"({response.target_agent_id}): {response.code}"
             )
     else:
         logger.info(
             f"Result of {responses.message_type} message sent to "
-            f"({responses.target_system}, {responses.target_component}): "
-            f"{responses.code}"
+            f"({response.target_agent_id}): {responses.code}"
         )
 
-    # Delay to let the agents takeoff
-    time.sleep(10)
+    # Wait for user input
+    input("Press any key to command the agents to land")
 
     # Attempt to land the agents
     future = mavswarm.set_mode(
@@ -92,18 +90,16 @@ def main() -> None:
     )
 
     # Wait for the land command to complete
-    if future is not None:
-        while not future.done():
-            pass
+    while not future.done():
+        pass
 
-        landing_responses = future.result()
+    landing_responses = future.result()
 
-        for response in landing_responses:
-            logger.info(
-                f"Result of {response.message_type} message sent to "
-                f"({response.target_system}, {response.target_component}): "
-                f"{response.code}"
-            )
+    for response in landing_responses:
+        logger.info(
+            f"Result of {response.message_type} message sent to "
+            f"({response.target_agent_id}): {response.code}"
+        )
 
     # Disconnect from the swarm
     mavswarm.disconnect()

@@ -47,6 +47,16 @@ class ParameterList(State):
         return
 
     @property
+    def parameters(self) -> List[Parameter]:
+        """
+        List of stored parameters.
+
+        :return: stored parameters
+        :rtype: List[Parameter]
+        """
+        return [*self.__params]
+
+    @property
     def max_length(self) -> int:
         """
         Maximum length of the circular buffer.
@@ -65,7 +75,7 @@ class ParameterList(State):
         :rtype: dict
         """
         context = super().context
-        context["parameters"] = self.__params
+        context["parameters"] = self.parameters
 
         return context
 
@@ -114,9 +124,9 @@ class ParameterList(State):
 
     def __str__(self) -> str:
         """
-        Print location in a human-readable format.
+        Print parameter list in a human-readable format.
 
-        :return: location
+        :return: parameters
         :rtype: str
         """
-        return f"Location: {self.context}"
+        return f"ParameterList: {self.context}"

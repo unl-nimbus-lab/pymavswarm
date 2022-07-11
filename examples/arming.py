@@ -71,18 +71,16 @@ def main() -> None:
     future = mavswarm.arm(agent_ids=target_agent_ids, verify_state=True, retry=True)
 
     # Wait for the arm command to complete
-    if future is not None:
-        while not future.done():
-            pass
+    while not future.done():
+        pass
 
-        responses = future.result()
+    responses = future.result()
 
-        for response in responses:
-            logger.info(
-                f"Result of {response.message_type} message sent to "
-                f"({response.target_system}, {response.target_component}): "
-                f"{response.code}"
-            )
+    for response in responses:
+        logger.info(
+            f"Result of {response.message_type} message sent to "
+            f"({response.target_agent_id}): {response.code}"
+        )
 
     # Let each of the agents arm
     time.sleep(5)
@@ -91,18 +89,16 @@ def main() -> None:
     future = mavswarm.disarm(agent_ids=target_agent_ids, retry=True, verify_state=True)
 
     # Wait for the disarm command to complete
-    if future is not None:
-        while not future.done():
-            pass
+    while not future.done():
+        pass
 
-        responses = future.result()
+    responses = future.result()
 
-        for response in responses:
-            logger.info(
-                f"Result of {response.message_type} message sent to "
-                f"({response.target_system}, {response.target_component}): "
-                f"{response.code}"
-            )
+    for response in responses:
+        logger.info(
+            f"Result of {response.message_type} message sent to "
+            f"({response.target_agent_id}): {response.code}"
+        )
 
     # Disconnect from the swarm
     mavswarm.disconnect()
