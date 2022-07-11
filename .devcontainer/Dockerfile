@@ -34,6 +34,7 @@ RUN apt-get update \
 
 # Install debugging/linting Python packages
 RUN pip3 install \
+    pipenv \
     black \
     flake8 \
     isort \
