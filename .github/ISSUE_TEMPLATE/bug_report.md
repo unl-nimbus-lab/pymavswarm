@@ -33,7 +33,7 @@ is provided using code formatting.*
 
 *Provide the version that the issue occurred on (e.g. 0.1.0)*
 
-## Desktop (please complete the following information)
+## Desktop
 
 *Please provide information regarding hardware platform that this error
 occurred on (e.g., Raspberry Pi 4 running Ubuntu 22.04)*
