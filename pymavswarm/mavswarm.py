@@ -1661,6 +1661,11 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
+        if agent_ids is None or len(agent_ids) > 1:
+            self._logger.warning(
+                "More than one agent has received a command to fly to the same "
+                "location. This may result in a collision."
+            )
 
         def executor(agent_id: AgentID) -> None:
             self._connection.mavlink_connection.mav.mission_item_send(
