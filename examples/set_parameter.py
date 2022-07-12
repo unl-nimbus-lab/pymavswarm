@@ -31,11 +31,16 @@ def main() -> None:
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
     parser.add_argument("id", type=str, help="parameter ID to read/write")
-    parser.add_argument("value", help="value that the parameter should be set to")
+    parser.add_argument(
+        "value", type=float, help="value that the parameter should be set to"
+    )
+    parser.add_argument(
+        "type", type=int, help="type of parameter value to set", choices=range(1, 11)
+    )
     args = parser.parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_level=logging.DEBUG)
+    mavswarm = MavSwarm(log_level=logging.INFO)
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -68,7 +73,7 @@ def main() -> None:
     # Get the value of the parameter before it is set
     future = mavswarm.read_parameter(args.id, target_agent_ids, retry=True)
 
-    # Wait for the read parameter value to
+    # Wait for the read parameter value to complete
     while not future.done():
         pass
 
@@ -85,6 +90,42 @@ def main() -> None:
             if agent is not None:
                 logger.info(
                     f"Initial value of parameter {args.id} on agent ("
+                    f"{response.target_agent_id}): "
+                    f"{agent.last_params_read.parameters[-1]}"
+                )
+
+    # Set the parameter to the desired value
+    future = mavswarm.set_parameter(
+        args.id,
+        args.value,
+        args.type,
+        target_agent_ids,
+        retry=True,
+    )
+
+    # Wait for the operation to finish
+    while not future.done():
+        pass
+
+    # Get the value of the parameter after it has been set
+    future = mavswarm.read_parameter(args.id, target_agent_ids, retry=True)
+
+    while not future.done():
+        pass
+
+    responses = future.result()
+
+    for response in responses:
+        logger.info(
+            f"Result of {response.message_type} message sent to "
+            f"({response.target_agent_id}): {response.code}"
+        )
+
+        if response.result:
+            agent = mavswarm.get_agent_by_id(response.target_agent_id)
+            if agent is not None:
+                logger.info(
+                    f"Resulting value of parameter {args.id} on agent ("
                     f"{response.target_agent_id}): "
                     f"{agent.last_params_read.parameters[-1]}"
                 )
