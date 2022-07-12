@@ -46,30 +46,13 @@ def main() -> None:
 
     logger = init_logger("flight_mode_example", logging.DEBUG)
 
-    # In our configuration there are some agents that we want to blacklist and avoid
-    # interacting with. Add or remove agents from here as need-be.
-    blacklisted_agent_ids = [(1, 0)]
-
     # Wait for the swarm to auto-register new agents
-    while not list(
-        filter(
-            lambda agent_id: not (agent_id in blacklisted_agent_ids),
-            mavswarm.agent_ids,
-        )
-    ):
+    while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
         logger.info("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # Get the list of target agent ids
-    target_agent_ids = list(
-        filter(
-            lambda agent_id: not (agent_id in blacklisted_agent_ids),
-            mavswarm.agent_ids,
-        )
-    )
-
     # Print out the current flight modes of the agents
-    for agent_id in target_agent_ids:
+    for agent_id in list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
         agent = mavswarm.get_agent_by_id(agent_id)
 
         if agent is not None:
@@ -79,9 +62,7 @@ def main() -> None:
             )
 
     # Arm all agents in the swarm; retry on message failure
-    future = mavswarm.set_mode(
-        args.mode, agent_ids=target_agent_ids, verify_state=True, retry=True
-    )
+    future = mavswarm.set_mode(args.mode, verify_state=True, retry=True)
 
     # Wait for the arm command to complete
     while not future.done():

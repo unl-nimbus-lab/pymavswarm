@@ -17,3 +17,27 @@ position
 - `subclass_mavswarm.py`: demonstrates how to extend the functionality of
 `MavSwarm`
 - `takeoff_sequence.py`: demonstrates how to execute a full takeoff sequence
+
+## Running the examples
+
+Prior to running the examples, ensure that there is an active connection between
+a ground control station and the swarm agents. When these examples were first
+developed, the ground control station and the swarm agents utilized RFD900
+radios configured to use the multi-point radio setting. In the case of the
+`companion_computer.py` example, ensure that the script has been uploaded to the
+companion computer for execution.
+
+Once the network has been configured, the examples may be run using the
+following command:
+
+```bash
+python3 <example_script.py> ...
+```
+
+where `<example_script.py>` is replaced with the name of the example script to
+run and `...` is replaced with the example's required arguments. To see the
+required arguments, run the following command:
+
+```bash
+python3 <example_script.py> -h
+```

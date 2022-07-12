@@ -42,32 +42,13 @@ def main() -> None:
 
     logger = init_logger("takeoff_sequence_example", logging.DEBUG)
 
-    # In our configuration there are some agents that we want to blacklist and avoid
-    # interacting with. Add or remove agents from here as need-be.
-    blacklisted_agent_ids = [(1, 0)]
-
     # Wait for the swarm to auto-register new agents
-    while not list(
-        filter(
-            lambda agent_id: not (agent_id in blacklisted_agent_ids),
-            mavswarm.agent_ids,
-        )
-    ):
+    while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
         logger.info("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # Get the list of target agent ids
-    target_agent_ids = list(
-        filter(
-            lambda agent_id: not (agent_id in blacklisted_agent_ids),
-            mavswarm.agent_ids,
-        )
-    )
-
     # Perform takeoff with all agents in the swarm; retry on message failure
-    responses = mavswarm.takeoff_sequence(
-        args.altitude, agent_ids=target_agent_ids, verify_state=True, retry=True
-    )
+    responses = mavswarm.takeoff_sequence(args.altitude, verify_state=True, retry=True)
 
     if isinstance(responses, list):
         for response in responses:
@@ -82,12 +63,10 @@ def main() -> None:
         )
 
     # Wait for user input
-    input("Press any key to command the agents to land")
+    input("Press any key to command the agents to land\n")
 
     # Attempt to land the agents
-    future = mavswarm.set_mode(
-        "LAND", agent_ids=target_agent_ids, retry=True, verify_state=True
-    )
+    future = mavswarm.set_mode("LAND", retry=True, verify_state=True)
 
     # Wait for the land command to complete
     while not future.done():

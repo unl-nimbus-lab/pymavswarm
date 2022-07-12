@@ -48,30 +48,13 @@ def main() -> None:
 
     logger = init_logger("set_parameter_example", logging.DEBUG)
 
-    # In our configuration, there are some agents that we want to avoid
-    # interacting with. Add or remove agents from here as need-be.
-    blacklisted_agent_ids = [(1, 0)]
-
     # Wait for the swarm to auto-register new agents
-    while not list(
-        filter(
-            lambda agent_id: not (agent_id in blacklisted_agent_ids),
-            mavswarm.agent_ids,
-        )
-    ):
+    while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
         logger.info("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # Get the list of target agent ids
-    target_agent_ids = list(
-        filter(
-            lambda agent_id: not (agent_id in blacklisted_agent_ids),
-            mavswarm.agent_ids,
-        )
-    )
-
     # Get the value of the parameter before it is set
-    future = mavswarm.read_parameter(args.id, target_agent_ids, retry=True)
+    future = mavswarm.read_parameter(args.id, retry=True)
 
     # Wait for the read parameter value to complete
     while not future.done():
@@ -99,7 +82,6 @@ def main() -> None:
         args.id,
         args.value,
         args.type,
-        target_agent_ids,
         retry=True,
     )
 
@@ -108,7 +90,7 @@ def main() -> None:
         pass
 
     # Get the value of the parameter after it has been set
-    future = mavswarm.read_parameter(args.id, target_agent_ids, retry=True)
+    future = mavswarm.read_parameter(args.id, retry=True)
 
     while not future.done():
         pass

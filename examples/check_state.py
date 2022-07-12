@@ -41,29 +41,12 @@ def main() -> None:
 
     logger = init_logger("check_state_example", logging.DEBUG)
 
-    # In our configuration there are some agents that we want to blacklist and avoid
-    # interacting with. Add or remove agents from here as need-be.
-    blacklisted_agent_ids = [(1, 0)]
-
     # Wait for the swarm to auto-register new agents
-    while not list(
-        filter(
-            lambda agent_id: not (agent_id in blacklisted_agent_ids),
-            mavswarm.agent_ids,
-        )
-    ):
+    while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
         logger.info("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # Get the list of target agent ids
-    target_agent_ids = list(
-        filter(
-            lambda agent_id: not (agent_id in blacklisted_agent_ids),
-            mavswarm.agent_ids,
-        )
-    )
-
-    for agent_id in target_agent_ids:
+    for agent_id in list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
         agent = mavswarm.get_agent_by_id(agent_id)
 
         if agent is not None:

@@ -67,7 +67,7 @@ class CustomMavSwarm(MavSwarm):
         :return: future response
         :rtype: Future
         """
-        self._logger.info(f"Attempting to send my fun command to agents {agent_ids}")
+        self._logger.info("Attempting to send my fun command!")
 
         return self.send_debug_message(
             "party-time",
@@ -129,31 +129,14 @@ def main() -> None:
 
     logger = init_logger("custom_mavswarm_example", logging.DEBUG)
 
-    # In our configuration there are some agents that we want to blacklist and avoid
-    # interacting with. Add or remove agents from here as need-be.
-    blacklisted_agent_ids = [(1, 0)]
-
     # Wait for the swarm to auto-register new agents
     # We should also see our custom handler called here
-    while not list(
-        filter(
-            lambda agent_id: not (agent_id in blacklisted_agent_ids),
-            mavswarm.agent_ids,
-        )
-    ):
+    while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
         logger.info("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # Get the list of target agent ids
-    target_agent_ids = list(
-        filter(
-            lambda agent_id: not (agent_id in blacklisted_agent_ids),
-            mavswarm.agent_ids,
-        )
-    )
-
     # Send our fun new command
-    mavswarm.fun_command(target_agent_ids)
+    mavswarm.fun_command()
 
     # Disconnect from the swarm
     mavswarm.disconnect()

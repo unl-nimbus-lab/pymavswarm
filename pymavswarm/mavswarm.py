@@ -264,7 +264,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(f"Attempting to arm agents: {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -339,7 +338,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(f"Attempting to disarm agents: {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -406,7 +404,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(f"Attempting to reboot agents: {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -460,7 +457,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(f"Attempting to shutdown agents: {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -525,9 +521,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            f"Attempting to set the mode of agents {agent_ids} to: {flight_mode}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             # Reset target
@@ -593,9 +586,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            f"Attempting to set the airspeed of agents {agent_ids} to {speed}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -653,9 +643,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            f"Attempting to set the groundspeed of agents {agent_ids} to {speed}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -710,9 +697,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            f"Attempting to perform gyroscope calibration on agents {agent_ids}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -767,9 +751,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            f"Attempting to perform magnetometer calibration on agents {agent_ids}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -825,9 +806,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            f"Attempting to perform ground pressure calibration on agents {agent_ids}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -882,9 +860,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            f"Attempting to perform airspeed calibration on agents {agent_ids}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -941,10 +916,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            "Attempting to perform barometer temperature calibration on "
-            f"agents {agent_ids}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -1003,9 +974,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            f"Attempting to perform accelerometer calibration on agents {agent_ids}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -1074,11 +1042,6 @@ class MavSwarm:
                 f"Invalid value provided. Expected an int or a float, got {type(value)}"
             )
 
-        self._logger.debug(
-            f"Attempting to send debug message with name {name} and value {value} to "
-            f"agents {agent_ids}"
-        )
-
         def executor(agent_id: Tuple[int, int]) -> None:
             # Reset target
             self._connection.mavlink_connection.target_system = agent_id[0]
@@ -1146,7 +1109,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(f"Attempting to perform takeoff on agents {agent_ids}")
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.command_long_send(
@@ -1239,7 +1201,6 @@ class MavSwarm:
             value will be the message responses for that particular stage)
         :rtype: Union[List[Response], Response]
         """
-        self._logger.debug(f"Attempting a full takeoff sequence on agents {agent_ids}")
 
         def failure_occured(responses: Union[List[Response], Response]) -> bool:
             """
@@ -1364,9 +1325,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            f"Attempting to read parameter {parameter_id} on agents {agent_ids}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.param_request_read_send(
@@ -1446,10 +1404,6 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        self._logger.debug(
-            f"Attempting to set parameter {parameter_id} to {parameter_value} on "
-            f"agents {agent_ids}"
-        )
 
         def executor(agent_id: Tuple[int, int]) -> None:
             self._connection.mavlink_connection.mav.param_set_send(
@@ -1791,7 +1745,7 @@ class MavSwarm:
         :return: filtered agent IDs
         :rtype: List[Tuple[int, int]]
         """
-        # Get the agents that aren't the connection and have a component ID of 0
+        # Get the agents that aren't the connection and have a component ID of 1
         # (typically used by the flight controllers)
         def filter_fn(agent: Agent):
             if (
@@ -1806,7 +1760,7 @@ class MavSwarm:
 
         return [
             (agent.system_id, agent.component_id)
-            for agent in filter(filter_fn, self._agents)
+            for agent in filter(filter_fn, self.agents)
         ]
 
     def _send_command(
