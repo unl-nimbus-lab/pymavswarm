@@ -17,14 +17,14 @@
 # type: ignore[no-redef]
 
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import monotonic
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega
 
 import pymavswarm.state as swarm_state
-from pymavswarm.agent import Agent
+from pymavswarm.agent import Agent, AgentID
 from pymavswarm.handlers.receivers import Receivers
 
 
@@ -41,14 +41,14 @@ class MessageReceivers(Receivers):
         super().__init__(__name__, log_level)
 
         @self._receive_message("HEARTBEAT")
-        def listener(message: Any, agents: Dict[Tuple[int, int], Agent]) -> None:
+        def listener(message: Any, agents: Dict[AgentID, Agent]) -> None:
             """
             Register new agents or update the timeout status of existing agents.
 
             :param message: Incoming MAVLink message
             :type message: Any
             :param agents: agents in the swarm
-            :type agents: Dict[Tuple[int, int], Agent]
+            :type agents: Dict[AgentID, Agent]
             """
             # Make sure that the message isn't from a GCS
             if message.get_type() == mavutil.mavlink.MAV_TYPE_GCS:
@@ -79,14 +79,14 @@ class MessageReceivers(Receivers):
             return agents
 
         @self._receive_message("HEARTBEAT")
-        def listener(message: Any, agents: Dict[Tuple[int, int], Agent]) -> None:
+        def listener(message: Any, agents: Dict[AgentID, Agent]) -> None:
             """
             Handle general agent information contained within a heartbeat.
 
             :param message: Incoming MAVLink message
             :type message: Any
             :param agents: agents in the swarm
-            :type agents: Dict[Tuple[int, int], Agent]
+            :type agents: Dict[AgentID, Agent]
             """
             # Ignore messages sent by a GCS
             if message.type == mavutil.mavlink.MAV_TYPE_GCS:
@@ -119,14 +119,14 @@ class MessageReceivers(Receivers):
             return agents
 
         @self._receive_message("GLOBAL_POSITION_INT")
-        def listener(message: Any, agents: Dict[Tuple[int, int], Agent]) -> None:
+        def listener(message: Any, agents: Dict[AgentID, Agent]) -> None:
             """
             Handle the a GPS position message.
 
             :param message: Incoming MAVLink message
             :type message: Any
             :param agents: agents in the swarm
-            :type agents: Dict[Tuple[int, int], Agent]
+            :type agents: Dict[AgentID, Agent]
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -160,14 +160,14 @@ class MessageReceivers(Receivers):
             return agents
 
         @self._receive_message("ATTITUDE")
-        def listener(message: Any, agents: Dict[Tuple[int, int], Agent]) -> None:
+        def listener(message: Any, agents: Dict[AgentID, Agent]) -> None:
             """
             Handle an agent attitude message.
 
             :param message: Incoming MAVLink message
             :type message: Any
             :param agents: agents in the swarm
-            :type agents: Dict[Tuple[int, int], Agent]
+            :type agents: Dict[AgentID, Agent]
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -196,14 +196,14 @@ class MessageReceivers(Receivers):
             return agents
 
         @self._receive_message("SYS_STATUS")
-        def listener(message: Any, agents: Dict[Tuple[int, int], Agent]) -> None:
+        def listener(message: Any, agents: Dict[AgentID, Agent]) -> None:
             """
             Handle the system status message containing battery state.
 
             :param message: Incoming MAVLink message
             :type message: Any
             :param agents: agents in the swarm
-            :type agents: Dict[Tuple[int, int], Agent]
+            :type agents: Dict[AgentID, Agent]
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -226,14 +226,14 @@ class MessageReceivers(Receivers):
             return agents
 
         @self._receive_message("GPS_RAW_INT")
-        def listener(message: Any, agents: Dict[Tuple[int, int], Agent]) -> None:
+        def listener(message: Any, agents: Dict[AgentID, Agent]) -> None:
             """
             Handle the GPS status information.
 
             :param message: Incoming MAVLink message
             :type message: Any
             :param agents: agents in the swarm
-            :type agents: Dict[Tuple[int, int], Agent]
+            :type agents: Dict[AgentID, Agent]
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -260,14 +260,14 @@ class MessageReceivers(Receivers):
             return agents
 
         @self._receive_message("EKF_STATUS_REPORT")
-        def listener(message: Any, agents: Dict[Tuple[int, int], Agent]) -> None:
+        def listener(message: Any, agents: Dict[AgentID, Agent]) -> None:
             """
             Handle an EKF status message.
 
             :param message: Incoming MAVLink message
             :type message: Any
             :param agents: agents in the swarm
-            :type agents: Dict[Tuple[int, int], Agent]
+            :type agents: Dict[AgentID, Agent]
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -309,14 +309,14 @@ class MessageReceivers(Receivers):
             return agents
 
         @self._receive_message("ATTITUDE")
-        def listener(message: Any, agents: Dict[Tuple[int, int], Agent]) -> None:
+        def listener(message: Any, agents: Dict[AgentID, Agent]) -> None:
             """
             Handle an agent attitude message.
 
             :param message: Incoming MAVLink message
             :type message: Any
             :param agents: agents in the swarm
-            :type agents: Dict[Tuple[int, int], Agent]
+            :type agents: Dict[AgentID, Agent]
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
@@ -345,7 +345,7 @@ class MessageReceivers(Receivers):
             return agents
 
         @self._receive_message("HOME_POSITION")
-        def listener(message: Any, agents: Dict[Tuple[int, int], Agent]) -> None:
+        def listener(message: Any, agents: Dict[AgentID, Agent]) -> None:
             """
             Handle the home position message.
 
@@ -354,7 +354,7 @@ class MessageReceivers(Receivers):
             :param message: Incoming MAVLink message
             :type message: Any
             :param agents: agents in the swarm
-            :type agents: Dict[Tuple[int, int], Agent]
+            :type agents: Dict[AgentID, Agent]
             """
             agent_id = (message.get_srcSystem(), message.get_srcComponent())
 

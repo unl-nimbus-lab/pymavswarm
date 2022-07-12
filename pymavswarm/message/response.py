@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Tuple
+from pymavswarm.agent import AgentID
+from pymavswarm.message.codes import MessageCode
 
 
 class Response:
@@ -22,22 +23,22 @@ class Response:
 
     def __init__(
         self,
-        target_agent_id: Tuple[int, int],
+        target_agent_id: AgentID,
         message_type: str,
         result: bool,
-        code: Tuple[int, str],
+        code: MessageCode,
     ) -> None:
         """
         Create a message response.
 
         :param target_agent_id: agent targeted by the message
-        :type target_agent_id: Tuple[int, int]
+        :type target_agent_id: AgentID
         :param message_type: type of message sent
         :type message_type: str
         :param result: message result
         :type result: bool
         :param code: message code
-        :type code: Tuple[int, str]
+        :type code: MessageCode
         """
         self.__target_agent_id = target_agent_id
         self.__message_type = message_type
@@ -47,12 +48,12 @@ class Response:
         return
 
     @property
-    def target_agent_id(self) -> Tuple[int, int]:
+    def target_agent_id(self) -> AgentID:
         """
         ID of agent targeted by the message.
 
         :return: agent ID
-        :rtype: Tuple[int, int]
+        :rtype: AgentID
         """
         return self.__target_agent_id
 
@@ -77,11 +78,11 @@ class Response:
         return self.__result
 
     @property
-    def code(self) -> Tuple[int, str]:
+    def code(self) -> MessageCode:
         """
         Message result code.
 
         :return: code
-        :rtype: Tuple[int, str]
+        :rtype: MessageCode
         """
         return self.__code

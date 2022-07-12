@@ -18,11 +18,12 @@ import logging
 import time
 from argparse import ArgumentParser
 from concurrent.futures import Future
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import monotonic
 
 from pymavswarm import Agent, MavSwarm
+from pymavswarm.agent import AgentID
 from pymavswarm.utils import init_logger
 
 
@@ -44,7 +45,7 @@ class CustomMavSwarm(MavSwarm):
 
     def fun_command(
         self,
-        agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -53,7 +54,7 @@ class CustomMavSwarm(MavSwarm):
         Send a fun command to the specified agents.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]],
+        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
             optional
         :param retry: retry sending the fun command to an agent on failure, defaults to
             False
@@ -78,16 +79,14 @@ class CustomMavSwarm(MavSwarm):
             ack_timeout=ack_timeout,
         )
 
-    def custom_handler(
-        self, message: Any, agents: Dict[Tuple[int, int], Agent]
-    ) -> None:
+    def custom_handler(self, message: Any, agents: Dict[AgentID, Agent]) -> None:
         """
         Create a custom message handler.
 
         :param message: message to handle
         :type message: Any
         :param agents: swarm agents
-        :type agents: Dict[Tuple[int, int], Agent]
+        :type agents: Dict[AgentID, Agent]
         """
         sys_id = message.get_srcSystem()
         comp_id = message.get_srcComponent()
