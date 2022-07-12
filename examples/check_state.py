@@ -19,7 +19,6 @@ import time
 from argparse import ArgumentParser
 
 from pymavswarm import MavSwarm
-from pymavswarm.utils import init_logger
 
 
 def main() -> None:
@@ -39,18 +38,16 @@ def main() -> None:
     if not mavswarm.connect(args.port, args.baud):
         return
 
-    logger = init_logger("check_state_example", logging.DEBUG)
-
     # Wait for the swarm to auto-register new agents
     while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
-        logger.info("Waiting for the system to recognize agents in the network...")
+        print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
     for agent_id in list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
         agent = mavswarm.get_agent_by_id(agent_id)
 
         if agent is not None:
-            logger.info(f"The current attitude of {agent} is: {agent.attitude}")
+            print(f"The current attitude of {agent} is: {agent.attitude}")
 
     # Disconnect from the swarm
     mavswarm.disconnect()

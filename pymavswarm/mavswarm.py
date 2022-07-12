@@ -182,8 +182,6 @@ class MavSwarm:
         """Disconnect from the MAVLink network and shutdown all services."""
         self._logger.debug("Disconnecting the MAVLink connection")
 
-        self._connection.disconnect()
-
         if (
             self.__incoming_message_thread is not None
             and self.__incoming_message_thread.is_alive()
@@ -199,6 +197,9 @@ class MavSwarm:
         # Clear the agents list
         self._agents.clear()
         self.__agent_list_changed.listeners.clear()
+
+        # Disconnect the MAVLink connection
+        self._connection.disconnect()
 
         return
 
@@ -1153,14 +1154,13 @@ class MavSwarm:
 
         The full takeoff sequence includes the following stages:
 
-        1. Switch the agent into GUIDED mode
-        2. Arm the agent
-        3. Command takeoff
+        1. Arm the agent
+        2. Command takeoff
 
-        If a failure occurs at stage 1, the takeoff sequence will immediately return a
-        failure response. No attempt will be made to revert back to the previous flight
-        mode. If a failure occurs at stage 2, the system will attempt to command all
-        agents to disarm. If a failure occurs at stage 3, the system will attempt to
+        Prior to executing this command, ensure that all agents are in the correct
+        flight mode. In the case of ArduPilot, this should be GUIDED mode. If a failure
+        occurs at stage 1, the system will attempt to command all agents to disarm. If
+        a failure occurs at stage 2, the system will attempt to
         command all agents to land.
 
         This command is a blocking command and does not run asynchronously (i.e., no
@@ -1216,30 +1216,8 @@ class MavSwarm:
 
             return not responses.result
 
-        # Guided stage
-        future = self.set_mode(
-            "GUIDED",
-            agent_ids=agent_ids,
-            retry=retry,
-            message_timeout=message_timeout,
-            ack_timeout=ack_timeout,
-            verify_state=verify_state,
-            verify_state_timeout=verify_state_timeout,
-        )
-
-        # Wait for the set mode stage to complete
-        while not future.done():
-            pass
-
-        # If a message failure occurred, return the list of responses
-        if failure_occured(future.result()):
-            self._logger.warning("Takeoff sequence command failed at stage 1")
-            return future.result()
-
-        time.sleep(stage_delay)
-
         # Arming stage
-        self.arm(
+        future = self.arm(
             agent_ids=agent_ids,
             retry=retry,
             message_timeout=message_timeout,
@@ -1252,16 +1230,16 @@ class MavSwarm:
         while not future.done():
             pass
 
-        # Attempt to disarm all agents on stage 2 failure
+        # Attempt to disarm all agents on stage 1 failure
         if failure_occured(future.result()):
-            self._logger.warning("Takeoff sequence command failed at stage 2")
+            self._logger.warning("Takeoff sequence command failed at stage 1")
             self.disarm(agent_ids=agent_ids, retry=True, verify_state=True)
             return future.result()
 
         time.sleep(stage_delay)
 
         # Takeoff stage
-        self.takeoff(
+        future = self.takeoff(
             altitude,
             latitude=latitude,
             longitude=longitude,
@@ -1271,9 +1249,13 @@ class MavSwarm:
             ack_timeout=ack_timeout,
         )
 
+        # Wait for the takeoff stage to complete
+        while not future.done():
+            pass
+
         # Attempt to disarm all agents on stage 2 failure
         if failure_occured(future.result()):
-            self._logger.warning("Takeoff sequence command failed at stage 3")
+            self._logger.warning("Takeoff sequence command failed at stage 2")
             self.set_mode("LAND", agent_ids=agent_ids, retry=True, verify_state=True)
             return future.result()
 

@@ -17,9 +17,35 @@
 import logging
 import time
 from argparse import ArgumentParser
+from concurrent.futures import Future
 
 from pymavswarm import MavSwarm
-from pymavswarm.utils import init_logger
+
+
+# Define a callback to attach to a future
+def print_message_response_cb(future: Future) -> None:
+    """
+    Print the result of the future.
+
+    :param future: message execution future
+    :type future: Future
+    """
+    responses = future.result()
+
+    if isinstance(responses, list):
+        for response in responses:
+            print(
+                f"Result of {response.message_type} message sent to "
+                f"({response.target_agent_id}): {response.code}"
+            )
+    else:
+        for response in responses:
+            print(
+                f"Result of {response.message_type} message sent to "
+                f"({response.target_agent_id}): {response.code}"
+            )
+
+    return
 
 
 def main() -> None:
@@ -43,45 +69,29 @@ def main() -> None:
     if not mavswarm.connect(args.port, args.baud):
         return
 
-    logger = init_logger("arming_example", logging.DEBUG)
-
     # Wait for the swarm to auto-register new agents
     while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
-        logger.info("Waiting for the system to recognize agents in the network...")
+        print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
     # Arm all agents in the swarm; retry on message failure
     future = mavswarm.arm(verify_state=True, retry=True)
+    future.add_done_callback(print_message_response_cb)
 
     # Wait for the arm command to complete
     while not future.done():
         pass
-
-    responses = future.result()
-
-    for response in responses:
-        logger.info(
-            f"Result of {response.message_type} message sent to "
-            f"({response.target_agent_id}): {response.code}"
-        )
 
     # Let each of the agents arm
     time.sleep(5)
 
     # Disarm each of the agents; retry on message failure
     future = mavswarm.disarm(retry=True, verify_state=True)
+    future.add_done_callback(print_message_response_cb)
 
     # Wait for the disarm command to complete
     while not future.done():
         pass
-
-    responses = future.result()
-
-    for response in responses:
-        logger.info(
-            f"Result of {response.message_type} message sent to "
-            f"({response.target_agent_id}): {response.code}"
-        )
 
     # Disconnect from the swarm
     mavswarm.disconnect()

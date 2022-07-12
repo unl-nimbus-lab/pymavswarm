@@ -19,7 +19,6 @@ import time
 from argparse import ArgumentParser
 
 from pymavswarm import MavSwarm
-from pymavswarm.utils import init_logger
 
 
 def main() -> None:
@@ -40,24 +39,35 @@ def main() -> None:
     if not mavswarm.connect(args.port, args.baud):
         return
 
-    logger = init_logger("takeoff_sequence_example", logging.DEBUG)
-
     # Wait for the swarm to auto-register new agents
     while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
-        logger.info("Waiting for the system to recognize agents in the network...")
+        print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
+
+    # Set each agent to guided mode before attempting a takeoff sequence
+    future = mavswarm.set_mode("GUIDED", retry=True)
+
+    while not future.done():
+        pass
+
+    if not future.result().result:
+        print(
+            "Failed to set the flight mode of all agents to GUIDED prior to the "
+            "takeoff sequence. Exiting."
+        )
+        return
 
     # Perform takeoff with all agents in the swarm; retry on message failure
     responses = mavswarm.takeoff_sequence(args.altitude, verify_state=True, retry=True)
 
     if isinstance(responses, list):
         for response in responses:
-            logger.info(
+            print(
                 f"Result of {response.message_type} message sent to "
                 f"({response.target_agent_id}): {response.code}"
             )
     else:
-        logger.info(
+        print(
             f"Result of {responses.message_type} message sent to "
             f"({response.target_agent_id}): {responses.code}"
         )
@@ -75,7 +85,7 @@ def main() -> None:
     landing_responses = future.result()
 
     for response in landing_responses:
-        logger.info(
+        print(
             f"Result of {response.message_type} message sent to "
             f"({response.target_agent_id}): {response.code}"
         )

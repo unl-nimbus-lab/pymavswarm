@@ -24,7 +24,6 @@ import monotonic
 
 from pymavswarm import Agent, MavSwarm
 from pymavswarm.agent import AgentID
-from pymavswarm.utils import init_logger
 
 
 class CustomMavSwarm(MavSwarm):
@@ -126,12 +125,10 @@ def main() -> None:
     if not mavswarm.connect(args.port, args.baud):
         return
 
-    logger = init_logger("custom_mavswarm_example", logging.DEBUG)
-
     # Wait for the swarm to auto-register new agents
     # We should also see our custom handler called here
     while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
-        logger.info("Waiting for the system to recognize agents in the network...")
+        print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
     # Send our fun new command

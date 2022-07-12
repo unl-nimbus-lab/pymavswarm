@@ -19,7 +19,6 @@ import time
 from argparse import ArgumentParser
 
 from pymavswarm import MavSwarm
-from pymavswarm.utils import init_logger
 
 
 def main() -> None:
@@ -46,11 +45,9 @@ def main() -> None:
     if not mavswarm.connect(args.port, args.baud):
         return
 
-    logger = init_logger("set_parameter_example", logging.DEBUG)
-
     # Wait for the swarm to auto-register new agents
     while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
-        logger.info("Waiting for the system to recognize agents in the network...")
+        print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
     # Get the value of the parameter before it is set
@@ -63,7 +60,7 @@ def main() -> None:
     responses = future.result()
 
     for response in responses:
-        logger.info(
+        print(
             f"Result of {response.message_type} message sent to "
             f"({response.target_agent_id}): {response.code}"
         )
@@ -71,7 +68,7 @@ def main() -> None:
         if response.result:
             agent = mavswarm.get_agent_by_id(response.target_agent_id)
             if agent is not None:
-                logger.info(
+                print(
                     f"Initial value of parameter {args.id} on agent ("
                     f"{response.target_agent_id}): "
                     f"{agent.last_params_read.parameters[-1]}"
@@ -98,7 +95,7 @@ def main() -> None:
     responses = future.result()
 
     for response in responses:
-        logger.info(
+        print(
             f"Result of {response.message_type} message sent to "
             f"({response.target_agent_id}): {response.code}"
         )
@@ -106,7 +103,7 @@ def main() -> None:
         if response.result:
             agent = mavswarm.get_agent_by_id(response.target_agent_id)
             if agent is not None:
-                logger.info(
+                print(
                     f"Resulting value of parameter {args.id} on agent ("
                     f"{response.target_agent_id}): "
                     f"{agent.last_params_read.parameters[-1]}"
