@@ -14,25 +14,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
 import time
 from argparse import ArgumentParser
+from typing import Any
 
 from pymavswarm import MavSwarm
 
 
-def main() -> None:
-    """Demonstrate how to get the state of agents."""
-    # Get the desired port and baudrate of the source radio as arguments
+def parse_args() -> Any:
+    """
+    Parse the script arguments.
+
+    :return: argument namespace
+    :rtype: Any
+    """
     parser = ArgumentParser()
     parser.add_argument(
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main() -> None:
+    """Demonstrate how to get the state of agents."""
+    # Parse script arguments
+    args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_level=logging.DEBUG)
+    mavswarm = MavSwarm()
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):

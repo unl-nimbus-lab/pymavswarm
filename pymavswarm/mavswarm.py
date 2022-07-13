@@ -126,14 +126,17 @@ class MavSwarm:
         return self._connection.connected
 
     @property
-    def supported_modes(self) -> Dict[str, int]:
+    def supported_modes(self) -> Optional[Dict[str, int]]:
         """
         List of supported flight modes.
 
         :return: supported flight modes
         :rtype: Dict[str, int]
         """
-        return self._connection.mavlink_connection.mode_mapping()
+        if self._connection.mavlink_connection is not None:
+            return self._connection.mavlink_connection.mode_mapping()
+
+        return None
 
     def connect(
         self,
@@ -182,6 +185,12 @@ class MavSwarm:
         """Disconnect from the MAVLink network and shutdown all services."""
         self._logger.debug("Disconnecting the MAVLink connection")
 
+        # Shutdown the thread pool executor
+        self.__send_message_thread_pool_executor.shutdown()
+
+        # Disconnect the MAVLink connection
+        self._connection.disconnect()
+
         if (
             self.__incoming_message_thread is not None
             and self.__incoming_message_thread.is_alive()
@@ -191,15 +200,9 @@ class MavSwarm:
         if self.__heartbeat_thread is not None and self.__heartbeat_thread.is_alive():
             self.__heartbeat_thread.join()
 
-        # Shutdown the thread pool executor
-        self.__send_message_thread_pool_executor.shutdown()
-
         # Clear the agents list
         self._agents.clear()
         self.__agent_list_changed.listeners.clear()
-
-        # Disconnect the MAVLink connection
-        self._connection.disconnect()
 
         return
 
@@ -267,19 +270,20 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
             return
 
         # Construct a method to use for verifying state change
@@ -297,7 +301,7 @@ class MavSwarm:
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+            "ARM",
             retry,
             message_timeout,
             ack_timeout,
@@ -341,19 +345,20 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
             return
 
         # Construct a method to use for verifying state change
@@ -371,7 +376,7 @@ class MavSwarm:
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+            "DISARM",
             retry,
             message_timeout,
             ack_timeout,
@@ -407,25 +412,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+            "REBOOT",
             retry,
             message_timeout,
             ack_timeout,
@@ -460,25 +466,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
-                0,
-                2,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+                    0,
+                    2,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+            "SHUTDOWN",
             retry,
             message_timeout,
             ack_timeout,
@@ -524,14 +531,15 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            # Reset target
-            self._connection.mavlink_connection.target_system = agent_id[0]
-            self._connection.mavlink_connection.target_component = agent_id[1]
+            if self._connection.mavlink_connection is not None:
+                # Reset target
+                self._connection.mavlink_connection.target_system = agent_id[0]
+                self._connection.mavlink_connection.target_component = agent_id[1]
 
-            # Send flight mode
-            self._connection.mavlink_connection.set_mode(
-                self._connection.mavlink_connection.mode_mapping()[flight_mode]
-            )
+                # Send flight mode
+                self._connection.mavlink_connection.set_mode(
+                    self._connection.mavlink_connection.mode_mapping()[flight_mode]
+                )
             return
 
         # Construct a method to use for verifying the state change
@@ -549,7 +557,7 @@ class MavSwarm:
         return self._send_command(
             agent_ids,
             executor,
-            "FLIGHT_MODE",
+            "SET_MODE",
             retry,
             message_timeout,
             ack_timeout,
@@ -589,25 +597,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
-                0,
-                0,
-                speed,
-                -1,
-                0,
-                0,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
+                    0,
+                    0,
+                    speed,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
+            "SET_AIRSPEED",
             retry,
             message_timeout,
             ack_timeout,
@@ -646,25 +655,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
-                0,
-                1,
-                speed,
-                -1,
-                0,
-                0,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
+                    0,
+                    1,
+                    speed,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
+            "SET_GROUNDSPEED",
             retry,
             message_timeout,
             ack_timeout,
@@ -700,25 +710,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            "GYROSCOPE_CALIBRATION",
             retry,
             message_timeout,
             ack_timeout,
@@ -754,25 +765,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            "MAGNETOMETER_CALIBRATION",
             retry,
             message_timeout,
             ack_timeout,
@@ -809,25 +821,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-                0,
-                0,
-                0,
-                3,
-                0,
-                0,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                    0,
+                    0,
+                    0,
+                    3,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            "GROUND_PRESSURE_CALIBRATION",
             retry,
             message_timeout,
             ack_timeout,
@@ -863,25 +876,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                2,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    2,
+                    0,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            "AIRSPEED_CALIBRATION",
             retry,
             message_timeout,
             ack_timeout,
@@ -919,25 +933,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                3,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    3,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            "BAROMETER_TEMPERATURE_CALIBRATION",
             retry,
             message_timeout,
             ack_timeout,
@@ -977,25 +992,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-                0,
-                0,
-                0,
-                0,
-                0,
-                4 if simple_calibration else 1,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    4 if simple_calibration else 1,
+                    0,
+                    0,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            "ACCELEROMETER_CALIBRATION",
             retry,
             message_timeout,
             ack_timeout,
@@ -1044,26 +1060,27 @@ class MavSwarm:
             )
 
         def executor(agent_id: AgentID) -> None:
-            # Reset target
-            self._connection.mavlink_connection.target_system = agent_id[0]
-            self._connection.mavlink_connection.target_component = agent_id[1]
+            if self._connection.mavlink_connection is not None:
+                # Reset target
+                self._connection.mavlink_connection.target_system = agent_id[0]
+                self._connection.mavlink_connection.target_component = agent_id[1]
 
-            # Send flight mode
-            if isinstance(value, int):
-                self._connection.mavlink_connection.mav.named_value_int_send(
-                    int(time.time()), str.encode(name), value
-                )
-            else:
-                self._connection.mavlink_connection.mav.named_value_float_send(
-                    int(time.time()), str.encode(name), value
-                )
+                # Send flight mode
+                if isinstance(value, int):
+                    self._connection.mavlink_connection.mav.named_value_int_send(
+                        int(time.time()), str.encode(name), value
+                    )
+                else:
+                    self._connection.mavlink_connection.mav.named_value_float_send(
+                        int(time.time()), str.encode(name), value
+                    )
 
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            "DEBUG",
             retry,
             message_timeout,
             ack_timeout,
@@ -1112,25 +1129,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
-                0,
-                0,
-                0,
-                0,
-                0,
-                latitude,
-                longitude,
-                altitude,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    latitude,
+                    longitude,
+                    altitude,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
+            "TAKEOFF",
             retry,
             message_timeout,
             ack_timeout,
@@ -1309,9 +1327,10 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.param_request_read_send(
-                agent_id[0], agent_id[1], str.encode(parameter_id), -1
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.param_request_read_send(
+                    agent_id[0], agent_id[1], str.encode(parameter_id), -1
+                )
             return
 
         def post_command_executor(
@@ -1341,7 +1360,7 @@ class MavSwarm:
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
+            "READ_PARAMETER",
             retry,
             message_timeout,
             ack_timeout,
@@ -1388,13 +1407,14 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.param_set_send(
-                agent_id[0],
-                agent_id[1],
-                str.encode(parameter_id),
-                parameter_value,
-                parameter_type,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.param_set_send(
+                    agent_id[0],
+                    agent_id[1],
+                    str.encode(parameter_id),
+                    parameter_value,
+                    parameter_type,
+                )
             return
 
         return self._send_command(
@@ -1440,25 +1460,26 @@ class MavSwarm:
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
+            "GET_HOME_POSITION",
             retry,
             message_timeout,
             ack_timeout,
@@ -1523,24 +1544,25 @@ class MavSwarm:
             verify that an agent's home position has been set properly, defaults to
             1.0 [s]
         :type verify_state_timeout: float, optional
-        :return: _description_
+        :return: future message response, if any
         :rtype: Future
         """
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.command_long_send(
-                agent_id[0],
-                agent_id[1],
-                mavutil.mavlink.MAV_CMD_DO_SET_HOME,
-                0,
-                1 if use_current_position else 0,
-                0,
-                0,
-                0,
-                0 if use_current_position else latitude,
-                0 if use_current_position else longitude,
-                0 if use_current_position else altitude,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_DO_SET_HOME,
+                    0,
+                    1 if use_current_position else 0,
+                    0,
+                    0,
+                    0,
+                    0 if use_current_position else latitude,
+                    0 if use_current_position else longitude,
+                    0 if use_current_position else altitude,
+                )
             return
 
         if use_current_position:
@@ -1568,7 +1590,29 @@ class MavSwarm:
                         abs_tol=altitude_deviation_tolerance,
                     )
                 ):
-                    self.get_home_position(agent_id)
+                    if self.__write_message_mutex.acquire(timeout=0.1):
+                        try:
+                            if self._connection.mavlink_connection is not None:
+                                self._connection.mavlink_connection.mav.command_long_send(  # noqa
+                                    agent_id[0],
+                                    agent_id[1],
+                                    mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                )
+                        except Exception:
+                            self._logger.debug(
+                                "An error occurred while verifying state change in the "
+                                "set home position command"
+                            )
+                        finally:
+                            self.__write_message_mutex.release()
 
                     if time.time() - start_time >= verify_state_timeout:
                         ack = False
@@ -1587,7 +1631,29 @@ class MavSwarm:
                     and self._agents[agent_id].home_position.longitude != longitude
                     and self._agents[agent_id].home_position.altitude != altitude
                 ):
-                    self.get_home_position(agent_id)
+                    if self.__write_message_mutex.acquire(timeout=0.1):
+                        try:
+                            if self._connection.mavlink_connection is not None:
+                                self._connection.mavlink_connection.mav.command_long_send(  # noqa
+                                    agent_id[0],
+                                    agent_id[1],
+                                    mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                )
+                        except Exception:
+                            self._logger.debug(
+                                "An error occurred while verifying state change in the "
+                                "set home position command"
+                            )
+                        finally:
+                            self.__write_message_mutex.release()
 
                     if time.time() - start_time >= verify_state_timeout:
                         ack = False
@@ -1598,7 +1664,7 @@ class MavSwarm:
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_DO_SET_HOME,
+            "SET_HOME_POSITION",
             retry,
             message_timeout,
             ack_timeout,
@@ -1668,28 +1734,29 @@ class MavSwarm:
             )
 
         def executor(agent_id: AgentID) -> None:
-            self._connection.mavlink_connection.mav.mission_item_send(
-                agent_id[0],
-                agent_id[1],
-                0,
-                mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
-                mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
-                0,
-                0,
-                hold,
-                accept_radius,
-                pass_radius,
-                yaw,
-                latitude,
-                longitude,
-                altitude,
-            )
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.mission_item_send(
+                    agent_id[0],
+                    agent_id[1],
+                    0,
+                    mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                    mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
+                    0,
+                    0,
+                    hold,
+                    accept_radius,
+                    pass_radius,
+                    yaw,
+                    latitude,
+                    longitude,
+                    altitude,
+                )
             return
 
         return self._send_command(
             agent_ids,
             executor,
-            mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
+            "GOTO",
             retry,
             message_timeout,
             ack_timeout,
@@ -1735,13 +1802,14 @@ class MavSwarm:
         # Get the agents that aren't the connection and have a component ID of 1
         # (typically used by the flight controllers)
         def filter_fn(agent: Agent):
-            if (
-                agent.system_id != self._connection.mavlink_connection.source_system
-                and agent.component_id
-                != self._connection.mavlink_connection.source_component
-                and agent.component_id == 1
-            ):
-                return True
+            if self._connection.mavlink_connection is not None:
+                if (
+                    agent.system_id != self._connection.mavlink_connection.source_system
+                    and agent.component_id
+                    != self._connection.mavlink_connection.source_component
+                    and agent.component_id == 1
+                ):
+                    return True
 
             return False
 
@@ -1818,7 +1886,7 @@ class MavSwarm:
                 )
             else:
                 future = self.__send_message_thread_pool_executor.submit(
-                    self.__send_message_handler,  # type: ignore
+                    self.__send_command_handler,  # type: ignore
                     agent_ids,
                     executor,
                     command_type,
@@ -1940,33 +2008,40 @@ class MavSwarm:
                 "reception of the message."
             )
 
-        with self.__write_message_mutex:
-            try:
-                # Execute the command
-                executor(agent_id)
+        try:
+            # Execute the command
+            if self.__write_message_mutex.acquire(timeout=0.1):
+                try:
+                    executor(agent_id)
+                except Exception:
+                    self._logger.debug(
+                        "An error occurred while executing a command", exc_info=True
+                    )
+                finally:
+                    self.__write_message_mutex.release()
 
-                # Get the result of the message and retry if desired
-                result, code, ack_msg = self.__get_message_result(
-                    agent_id,
-                    executor,
-                    retry,
-                    ack_packet_type=ack_packet_type,
-                    state_verifier=state_verifier,
-                    message_timeout=message_timeout,
-                    ack_timeout=ack_timeout,
-                )
+            # Get the result of the message and retry if desired
+            result, code, ack_msg = self.__get_message_result(
+                agent_id,
+                executor,
+                retry,
+                ack_packet_type=ack_packet_type,
+                state_verifier=state_verifier,
+                message_timeout=message_timeout,
+                ack_timeout=ack_timeout,
+            )
 
-            except Exception:
-                self._logger.exception(
-                    f"Exception occurred while sending message: {command_type}",
-                    exc_info=True,
-                )
-                return Response(
-                    agent_id,
-                    command_type,
-                    False,
-                    codes.EXCEPTION,
-                )
+        except Exception:
+            self._logger.exception(
+                f"Exception occurred while sending message: {command_type}",
+                exc_info=True,
+            )
+            return Response(
+                agent_id,
+                command_type,
+                False,
+                codes.EXCEPTION,
+            )
 
         # Run the post-execution handler
         if result and post_execution_handler is not None:
@@ -2041,7 +2116,15 @@ class MavSwarm:
             start_time = time.time()
 
             while time.time() - start_time <= message_timeout:
-                executor(agent_id)
+                if self.__write_message_mutex.acquire(timeout=0.1):
+                    try:
+                        executor(agent_id)
+                    except Exception:
+                        self._logger.debug(
+                            "An error occurred while executing a command", exc_info=True
+                        )
+                    finally:
+                        self.__write_message_mutex.release()
 
                 ack, code, ack_msg = self.__get_message_result(
                     agent_id,
@@ -2084,9 +2167,10 @@ class MavSwarm:
         while time.time() - start_t < timeout:
             if self.__read_message_mutex.acquire(timeout=0.1):
                 try:
-                    message = self._connection.mavlink_connection.recv_match(
-                        type=packet_type, blocking=False
-                    )
+                    if self._connection.mavlink_connection is not None:
+                        message = self._connection.mavlink_connection.recv_match(
+                            type=packet_type, blocking=False
+                        )
                 except Exception:
                     self._logger.debug(
                         "An exception was raised while attempting to acknowledge a "

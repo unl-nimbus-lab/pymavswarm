@@ -149,13 +149,13 @@ class MessageReceivers(Receivers):
                 loc = swarm_state.Location(
                     message.lat / 1.0e7,
                     message.lon / 1.0e7,
-                    message.relative_alt / 1000,
+                    message.alt / 1000,
                 )
                 agents[agent_id].location = loc
             else:
                 agents[agent_id].location.latitude = message.lat / 1.0e7
                 agents[agent_id].location.longitude = message.lon / 1.0e7
-                agents[agent_id].location.altitude = message.relative_alt / 1000
+                agents[agent_id].location.altitude = message.alt / 1000
 
             return agents
 

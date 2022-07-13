@@ -93,9 +93,9 @@ class TestEvent(unittest.TestCase):
         counter = 0
 
         # Function used to increment the counter by one
-        def test_fn(kwargs):
+        def test_fn(addend=0):
             nonlocal counter
-            counter += kwargs["addend"]
+            counter += addend
 
         # Register the function as a listener
         event.add_listener(test_fn)

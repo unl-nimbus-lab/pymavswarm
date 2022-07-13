@@ -14,15 +14,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
 import time
 from argparse import ArgumentParser
 from concurrent.futures import Future
+from typing import Any
 
 from pymavswarm import MavSwarm
 
 
-# Define a callback to attach to a future
+def parse_args() -> Any:
+    """
+    Parse the script arguments.
+
+    :return: argument namespace
+    :rtype: Any
+    """
+    parser = ArgumentParser()
+    parser.add_argument(
+        "port", type=str, help="port to establish a MAVLink connection over"
+    )
+    parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
+    return parser.parse_args()
+
+
 def print_message_response_cb(future: Future) -> None:
     """
     Print the result of the future.
@@ -54,16 +68,11 @@ def main() -> None:
 
     Ensure that all propellers have been removed prior to running this example!
     """
-    # Get the desired port and baudrate of the source radio as arguments
-    parser = ArgumentParser()
-    parser.add_argument(
-        "port", type=str, help="port to establish a MAVLink connection over"
-    )
-    parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
-    args = parser.parse_args()
+    # Parse the script arguments
+    args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_level=logging.DEBUG)
+    mavswarm = MavSwarm()
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):

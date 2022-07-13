@@ -59,11 +59,11 @@ class Event:
 
         return
 
-    def notify(self, **kwargs: Any) -> None:
+    def notify(self, *args, **kwargs: Any) -> None:
         """Notify all listeners that the event was triggered."""
         for listener in self.__listeners:
             if len(kwargs) > 0:
-                listener(kwargs)
+                listener(*args, **kwargs)
             else:
                 listener()
 

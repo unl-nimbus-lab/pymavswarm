@@ -72,10 +72,10 @@ class TestState(unittest.TestCase):
         passed_context = {}
 
         # Sample listener to attach to the event
-        def test_fn(kwargs) -> None:
+        def test_fn(context=None) -> None:
             nonlocal total_calls, passed_context
             total_calls += 1
-            passed_context = kwargs["context"]
+            passed_context = context
 
             return
 

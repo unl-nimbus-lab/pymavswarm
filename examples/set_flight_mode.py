@@ -14,12 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
 import time
 from argparse import ArgumentParser
 from concurrent.futures import Future
+from typing import Any
 
 from pymavswarm import MavSwarm
+
+
+def parse_args() -> Any:
+    """
+    Parse the script arguments.
+
+    :return: argument namespace
+    :rtype: Any
+    """
+    parser = ArgumentParser()
+    parser.add_argument(
+        "port", type=str, help="port to establish a MAVLink connection over"
+    )
+    parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
+    parser.add_argument("mode", type=str, help="flight mode to set")
+    return parser.parse_args()
 
 
 # Define a callback to attach to a future
@@ -54,17 +70,11 @@ def main() -> None:
 
     Ensure that all propellers have been removed prior to running this example!
     """
-    # Get the desired port and baudrate of the source radio as arguments
-    parser = ArgumentParser()
-    parser.add_argument(
-        "port", type=str, help="port to establish a MAVLink connection over"
-    )
-    parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
-    parser.add_argument("mode", type=str, help="flight mode to switch into")
-    args = parser.parse_args()
+    # Parse the script arguments
+    args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_level=logging.DEBUG)
+    mavswarm = MavSwarm()
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -92,6 +102,16 @@ def main() -> None:
     # Wait for the arm command to complete
     while not future.done():
         pass
+
+    # Print out the current flight modes of the agents
+    for agent_id in list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
+        agent = mavswarm.get_agent_by_id(agent_id)
+
+        if agent is not None:
+            print(
+                f"Agent ({agent.system_id}, {agent.component_id}) is now in the "
+                f"{agent.mode.value} flight mode"
+            )
 
     # Disconnect from the swarm
     mavswarm.disconnect()

@@ -14,12 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
 import time
 from argparse import ArgumentParser
 from concurrent.futures import Future
+from typing import Any
 
 from pymavswarm import MavSwarm
+
+
+def parse_args() -> Any:
+    """
+    Parse the script arguments.
+
+    :return: argument namespace
+    :rtype: Any
+    """
+    parser = ArgumentParser()
+    parser.add_argument(
+        "port", type=str, help="port to establish a MAVLink connection over"
+    )
+    parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
+    return parser.parse_args()
 
 
 # Define a callback to attach to a future
@@ -49,23 +64,12 @@ def print_message_response_cb(future: Future) -> None:
 
 
 def main() -> None:
-    """
-    Demonstrate how to set the home position of agents.
-
-    This example shows how to read an agent's home position, set the home position of
-    swarm agents to their respective current location, and set the home position of
-    swarm agents to a desired location.
-    """
-    # Get the desired port and baudrate of the source radio as arguments
-    parser = ArgumentParser()
-    parser.add_argument(
-        "port", type=str, help="port to establish a MAVLink connection over"
-    )
-    parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
-    args = parser.parse_args()
+    """Demonstrate how to read and set the home position of agents."""
+    # Parse the script arguments
+    args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_level=logging.DEBUG)
+    mavswarm = MavSwarm()
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -79,10 +83,20 @@ def main() -> None:
     future = mavswarm.get_home_position(retry=True)
     future.add_done_callback(print_message_response_cb)
 
+    # Print out the current home position of the agents
+    for agent_id in list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
+        agent = mavswarm.get_agent_by_id(agent_id)
+
+        if agent is not None:
+            print(
+                f"The home position of agent ({agent.system_id}, {agent.component_id}) "
+                f"is: {agent.home_position}"
+            )
+
     while not future.done():
         pass
 
-    future = mavswarm.set_home_position(retry=True)
+    future = mavswarm.set_home_position(retry=True, verify_state=True)
     future.add_done_callback(print_message_response_cb)
 
     while not future.done():
@@ -93,6 +107,16 @@ def main() -> None:
 
     while not future.done():
         pass
+
+    # Print out the current home position of the agents
+    for agent_id in list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
+        agent = mavswarm.get_agent_by_id(agent_id)
+
+        if agent is not None:
+            print(
+                f"The home position of agent ({agent.system_id}, {agent.component_id}) "
+                f"is: {agent.home_position}"
+            )
 
     # Disconnect from the swarm
     mavswarm.disconnect()

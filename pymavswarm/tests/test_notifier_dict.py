@@ -34,14 +34,14 @@ class TestNotifierDict(unittest.TestCase):
         # Reset these with the test function
         result_key = None
         result_value = None
-        operation = None
+        result_operation = None
 
         # Function used to modify the resulting key and value
-        def test_fn(kwargs):
-            nonlocal result_key, result_value, operation
-            operation = kwargs["operation"]
-            result_key = kwargs["key"]
-            result_value = kwargs["value"]
+        def test_fn(operation=None, key=None, value=None):
+            nonlocal result_key, result_value, result_operation
+            result_operation = operation
+            result_key = key
+            result_value = value
 
         # Register the function as a listener
         event.add_listener(test_fn)
@@ -52,7 +52,7 @@ class TestNotifierDict(unittest.TestCase):
         # Set the value of the test key
         test_dict[test_key] = test_value
 
-        self.assertEqual(operation, "set")
+        self.assertEqual(result_operation, "set")
         self.assertEqual(test_key, result_key)
         self.assertEqual(test_value, result_value)
 
@@ -68,14 +68,14 @@ class TestNotifierDict(unittest.TestCase):
         # Reset these with the test function
         result_key = None
         result_value = None
-        operation = None
+        result_operation = None
 
         # Function used to modify the resulting key and value
-        def test_fn(kwargs):
-            nonlocal result_key, result_value, operation
-            operation = kwargs["operation"]
-            result_key = kwargs["key"]
-            result_value = kwargs["value"]
+        def test_fn(operation=None, key=None, value=None):
+            nonlocal result_key, result_value, result_operation
+            result_operation = operation
+            result_key = key
+            result_value = value
 
         # Register the function as a listener
         event.add_listener(test_fn)
@@ -89,9 +89,22 @@ class TestNotifierDict(unittest.TestCase):
         # Delete the test value
         del test_dict[test_key]
 
-        self.assertEqual(operation, "del")
+        self.assertEqual(result_operation, "del")
         self.assertEqual(test_key, result_key)
         self.assertEqual(test_value, result_value)
+
+    def test_get_item(self) -> None:
+        """Verify that items can be properly retrieved."""
+        test_dict = NotifierDict(Event())
+
+        test_key = "random"
+        test_value = "value"
+
+        test_dict[test_key] = test_value
+
+        self.assertEqual(test_dict[test_key], test_value)
+
+        return
 
 
 if __name__ == "__main__":

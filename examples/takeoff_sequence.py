@@ -14,26 +14,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
 import time
 from argparse import ArgumentParser
+from typing import Any
 
 from pymavswarm import MavSwarm
 
 
-def main() -> None:
-    """Demonstrate how to perform a takeoff sequence with swarm agents."""
-    # Get the desired port and baudrate of the source radio as arguments
+def parse_args() -> Any:
+    """
+    Parse the script arguments.
+
+    :return: argument namespace
+    :rtype: Any
+    """
     parser = ArgumentParser()
     parser.add_argument(
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
     parser.add_argument("altitude", type=float, help="altitude to takeoff to")
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main() -> None:
+    """Demonstrate how to perform a takeoff sequence with swarm agents."""
+    # Parse the script arguments
+    args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_level=logging.DEBUG)
+    mavswarm = MavSwarm()
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -50,12 +60,15 @@ def main() -> None:
     while not future.done():
         pass
 
-    if not future.result().result:
-        print(
-            "Failed to set the flight mode of all agents to GUIDED prior to the "
-            "takeoff sequence. Exiting."
-        )
-        return
+    responses = future.result()
+
+    for response in responses:
+        if not response.result:
+            print(
+                "Failed to set the flight mode of all agents to GUIDED prior to the "
+                "takeoff sequence. Exiting."
+            )
+            return
 
     # Perform takeoff with all agents in the swarm; retry on message failure
     responses = mavswarm.takeoff_sequence(args.altitude, verify_state=True, retry=True)

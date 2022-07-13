@@ -14,27 +14,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
 import time
 from argparse import ArgumentParser
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 
 from pymavswarm import MavSwarm
 from pymavswarm.agent import AgentID
 
 
-def main() -> None:
-    """Demonstrate how to command agents to go to a location."""
-    # Get the desired port and baudrate of the source radio as arguments
+def parse_args() -> Any:
+    """
+    Parse the script arguments.
+
+    :return: argument namespace
+    :rtype: Any
+    """
     parser = ArgumentParser()
     parser.add_argument(
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
-    args = parser.parse_args()
+    parser.add_argument(
+        "--takeoff_alt", type=float, default=3.0, help="altitude to takeoff to [m]"
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    """Demonstrate how to command agents to go to a location."""
+    # Parse the script arguments
+    args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_level=logging.DEBUG)
+    mavswarm = MavSwarm()
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -51,15 +63,20 @@ def main() -> None:
     while not future.done():
         pass
 
-    if not future.result().result:
-        print(
-            "Failed to set the flight mode of all agents to GUIDED prior to the "
-            "takeoff sequence. Exiting."
-        )
-        return
+    responses = future.result()
+
+    for response in responses:
+        if not response.result:
+            print(
+                "Failed to set the flight mode of all agents to GUIDED prior to the "
+                "takeoff sequence. Exiting."
+            )
+            return
 
     # Perform takeoff with all agents in the swarm; retry on message failure
-    responses = mavswarm.takeoff_sequence(args.altitude, verify_state=True, retry=True)
+    responses = mavswarm.takeoff_sequence(
+        args.takeoff_alt, verify_state=True, retry=True
+    )
 
     if isinstance(responses, list):
         for response in responses:
@@ -93,6 +110,7 @@ def main() -> None:
             target_locations[agent_id][0],
             target_locations[agent_id][1],
             target_locations[agent_id][2],
+            agent_ids=agent_id,
             retry=True,
         )
 

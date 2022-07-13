@@ -108,15 +108,25 @@ class CustomMavSwarm(MavSwarm):
         return
 
 
-def main() -> None:
-    """Demonstrate how to use the custom subclass."""
-    # Get the desired port and baudrate of the source radio as arguments
+def parse_args() -> Any:
+    """
+    Parse the script arguments.
+
+    :return: argument namespace
+    :rtype: Any
+    """
     parser = ArgumentParser()
     parser.add_argument(
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main() -> None:
+    """Demonstrate how to use the custom subclass."""
+    # Parse the script arguments
+    args = parse_args()
 
     # Create a new CustomMavSwarm instance
     mavswarm = CustomMavSwarm(log_level=logging.DEBUG)

@@ -18,11 +18,35 @@ import logging
 import time
 from argparse import ArgumentParser
 from concurrent.futures import Future
+from typing import Any
 
 from pymavswarm import MavSwarm
 
 
-# Define a callback to attach to a future
+def parse_args() -> Any:
+    """
+    Parse the script arguments.
+
+    :return: argument namespace
+    :rtype: Any
+    """
+    parser = ArgumentParser()
+    parser.add_argument(
+        "port", type=str, help="port to establish a MAVLink connection over"
+    )
+    parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
+    parser.add_argument(
+        "parent_sys_id",
+        type=int,
+        help="system ID of the parent system (usually the flight controller)",
+    )
+    parser.add_argument("mode", type=str, help="flight mode to switch into")
+    parser.add_argument(
+        "--comp_id", type=int, default=2, help="component ID of the companion computer"
+    )
+    return parser.parse_args()
+
+
 def print_message_response_cb(future: Future) -> None:
     """
     Print the result of the future.
@@ -54,26 +78,18 @@ def main() -> None:
 
     Ensure that all propellers have been removed prior to running this example!
     """
-    # Get the desired port and baudrate of the source radio as arguments
-    parser = ArgumentParser()
-    parser.add_argument(
-        "port", type=str, help="port to establish a MAVLink connection over"
-    )
-    parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
-    parser.add_argument(
-        "parent_sys_id",
-        type=int,
-        help="system ID of the parent system (usually the flight controller)",
-    )
-    parser.add_argument("mode", type=str, help="flight mode to switch into")
-    args = parser.parse_args()
+    # Parse script arguments
+    args = parse_args()
 
     # Create a new MavSwarm instance
     mavswarm = MavSwarm(log_level=logging.DEBUG)
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(
-        args.port, args.baud, source_system=args.parent_sys_id, source_component=2
+        args.port,
+        args.baud,
+        source_system=args.parent_sys_id,
+        source_component=args.comp_id,
     ):
         return
 
@@ -92,7 +108,7 @@ def main() -> None:
                 f"{agent.mode.value} flight mode"
             )
 
-    # Arm all agents in the swarm; retry on message failure
+    # Set the flight mode of the swarm agents
     future = mavswarm.set_mode(args.mode, verify_state=True, retry=True)
     future.add_done_callback(print_message_response_cb)
 
