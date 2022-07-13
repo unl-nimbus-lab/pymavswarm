@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 import atexit
 import logging
 import math
@@ -26,7 +28,8 @@ import monotonic
 from pymavlink import mavutil
 
 from pymavswarm import Connection
-from pymavswarm.agent import Agent, AgentID
+from pymavswarm._typing import AgentID, MessageCode
+from pymavswarm.agent import Agent
 from pymavswarm.handlers import MessageReceivers
 from pymavswarm.message import codes
 from pymavswarm.message.response import Response
@@ -2063,7 +2066,7 @@ class MavSwarm:
         state_verifier: Callable | None,
         message_timeout: float,
         ack_timeout: float,
-    ) -> tuple[bool, codes.MessageCode, dict | None]:
+    ) -> tuple[bool, MessageCode, dict | None]:
         """
         Get the result of the command.
 

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from typing import Any
 
 import monotonic
@@ -21,10 +23,6 @@ import monotonic
 import pymavswarm.state as swarm_state
 from pymavswarm.mission import SwarmMission
 from pymavswarm.state.generic import Generic
-
-# Define a type alias for the agent ID
-# Order should be (system ID, component ID)
-AgentID = tuple[int, int]
 
 
 class Agent:

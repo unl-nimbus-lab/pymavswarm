@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 import logging
 import time
 from argparse import ArgumentParser
@@ -23,7 +25,7 @@ from typing import Any, Union
 import monotonic
 
 from pymavswarm import Agent, MavSwarm
-from pymavswarm.agent import AgentID
+from pymavswarm._typing import AgentID
 
 
 class CustomMavSwarm(MavSwarm):

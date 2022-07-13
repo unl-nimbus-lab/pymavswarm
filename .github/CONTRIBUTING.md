@@ -1,6 +1,7 @@
 # Contributing to pymavswarm
 
-Thank you for considering contributing to `pymavswarm`! This document serves to provide a set of guidelines for contributing.
+Thank you for considering contributing to `pymavswarm`! This document serves
+to provide a set of guidelines for contributing.
 
 Contributions include but are not restricted to:
 
@@ -12,6 +13,16 @@ Contributions include but are not restricted to:
 - Answering [discussion questions](https://github.com/unl-nimbus-lab/pymavswarm/discussions)
 
 ## Workflow
+
+- Send all pull requests to the `main` branch (unless otherwise requested)
+- Limit each pull request to resolving a single [issue](https://github.com/unl-nimbus-lab/pymavswarm/issues)
+- It is your responsibility to ensure that your development branch is up-to-date
+with the `main` branch. You may either rebase on `main` or merge `main` into
+your development branch.
+- Always test and document your code. We also encourage performing field tests
+for significant changes.
+- Ensure that your changes pass our CI. We will not review your PR until the CI
+passes.
 
 ## Setting up a local development environment
 
@@ -69,7 +80,85 @@ python3 -m unittest
 
 ## Coding guidelines
 
+The following section documents the `pymavswarm` coding guidelines (e.g.,
+styling, convention, etc.)
+
+### Linting
+
+`pymavswarm` uses `pre-commit` to run code formatting checks such as `black`,
+`flake8`, `pydocstyle`, and `isort`. If you have installed the project
+using one of our recommended local develompent configurations, you may run
+`pre-commit` using the following command:
+
+```bash
+pre-commit run --all-files
+```
+
+We recommend running `pre-commit` before committing your code to ensure that
+your commit follows our code style conventions. Any warnings from these checks
+will cause the CI to fail.
+
+### Type hints
+
+`pymavswarm` uses [PEP 484](https://peps.python.org/pep-0484/) type-hints. Any
+new development should use type hints. When using type-hints, it is preferred
+that built-in types are used (see [PREP 585](https://peps.python.org/pep-0585/)).
+The `Optional` type-hint should be avoided in favor of `| None`. For example,
+rather than
+
+```python
+from typing import Optional
+
+agent_location: Optional[Location] = None
+```
+
+You should use
+
+```python
+from __future__ import annotations
+
+agent_location: Location | None = None
+```
+
+Commonly used types will appear in `pymavswarm._typing`. These should be used
+where applicable.
+
 ## Writing documentation
+
+`pymavswarm` uses Sphinx to generate online developer documentation from
+docstrings. Broadly, docstrings should adhere to
+[PEP 257](https://peps.python.org/pep-0257/), unless otherwise specified.
+
+All docstrings should use triple quotation marks. Multi-line docstrings should
+start on new-lines. Parameters and their types should be prefaced with `:param`
+and `:type`, respectively. All methods should have a short summary. An extended
+summary should be used when an in-depth explanation of a method is required.
+
+The following example demonstrates the Sphinx markdown conventions used by
+`pymavswarm`:
+
+```python
+def compute_location(current_location: Location | None = None) -> Location | None:
+    """
+    Demonstrate how to write a docstring.
+
+    Docstrings are a great way to add developer documentation.
+
+    :param current_location: current location of an agent, defaults to None
+    :type current_location: Location | None, optional
+    :return: computed agent location
+    :rtype: Location | None
+    """
+    return current_location
+```
+
+### Testing
+
+Unit tests should be implemented using `unittest`. Unit tests should be
+implemented whenever possible. Functional tests should be named `def test_*`.
+It is suggested that field tests are also performed when adding a code
+contribution; however, this is not required (we understand that not everyone
+has a fleet of drones laying around).
 
 ## Support
 
