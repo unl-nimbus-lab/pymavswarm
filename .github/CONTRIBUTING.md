@@ -28,7 +28,7 @@ passes.
 
 `pymavswarm` provides two ways to configure a local development environment:
 
-1. Using a [VSCode development container](https://code.visualstudio.com/docs/remote/containers)
+1. Using our [VSCode development container](https://code.visualstudio.com/docs/remote/containers)
 2. Using [Pipenv](https://pipenv.pypa.io/en/latest/)
 
 A VSCode development container has been provided to offer a fully sandboxed
@@ -94,7 +94,7 @@ using one of our recommended local develompent configurations, you may run
 pre-commit run --all-files
 ```
 
-We recommend running `pre-commit` before committing your code to ensure that
+We *strongly* recommend running `pre-commit` before committing your code to ensure that
 your commit follows our code style conventions. Any warnings from these checks
 will cause the CI to fail.
 
@@ -102,7 +102,7 @@ will cause the CI to fail.
 
 `pymavswarm` uses [PEP 484](https://peps.python.org/pep-0484/) type-hints. Any
 new development should use type hints. When using type-hints, it is preferred
-that built-in types are used (see [PREP 585](https://peps.python.org/pep-0585/)).
+that built-in types are used (see [PEP 585](https://peps.python.org/pep-0585/)).
 The `Optional` type-hint should be avoided in favor of `| None`. For example,
 rather than
 
