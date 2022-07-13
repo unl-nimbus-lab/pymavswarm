@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any, Callable, List
+from typing import Any, Callable
 
 
 class Event:
@@ -22,7 +22,7 @@ class Event:
 
     def __init__(self) -> None:
         """Create an event."""
-        self.__listeners: List[Callable] = []
+        self.__listeners: list[Callable] = []
 
         return
 

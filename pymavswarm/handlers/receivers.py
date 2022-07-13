@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from typing import Callable, Dict, List
+from typing import Callable
 
 import pymavswarm.utils as swarm_utils
 
@@ -35,12 +35,12 @@ class Receivers:
         :type log_level: int, optional
         """
         self._logger = swarm_utils.init_logger(logger_name, log_level=log_level)
-        self.__receivers: Dict[str, List[Callable]] = {}
+        self.__receivers: dict[str, list[Callable]] = {}
 
         return
 
     @property
-    def receivers(self) -> Dict[str, List[Callable]]:
+    def receivers(self) -> dict[str, list[Callable]]:
         """
         Methods used to handle incoming messages.
 

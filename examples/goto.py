@@ -16,7 +16,7 @@
 
 import time
 from argparse import ArgumentParser
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from pymavswarm import MavSwarm
 from pymavswarm.agent import AgentID
@@ -90,7 +90,7 @@ def main() -> None:
             f"({response.target_agent_id}): {responses.code}"
         )
 
-    target_locations: Dict[AgentID, Tuple[float, float, float]] = {}
+    target_locations: dict[AgentID, tuple[float, float, float]] = {}
 
     # Get the target positions
     for agent_id in mavswarm.agent_ids:

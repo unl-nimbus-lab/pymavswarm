@@ -16,7 +16,7 @@
 
 from collections.abc import MutableMapping
 from copy import deepcopy
-from typing import Any, Dict, Iterator
+from typing import Any, Iterator
 
 from pymavswarm.utils import Event
 
@@ -39,7 +39,7 @@ class NotifierDict(MutableMapping):
         :param event: event to fire on value change
         :type event: Event
         """
-        self.__store: Dict[Any, Any] = {}
+        self.__store: dict[Any, Any] = {}
         self.__event = event
         self.update(dict(*args, **kwargs))
 

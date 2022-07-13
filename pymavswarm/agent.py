@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any, Tuple
+from typing import Any
 
 import monotonic
 
@@ -24,7 +24,7 @@ from pymavswarm.state.generic import Generic
 
 # Define a type alias for the agent ID
 # Order should be (system ID, component ID)
-AgentID = Tuple[int, int]
+AgentID = tuple[int, int]
 
 
 class Agent:

@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import datetime
-from typing import Optional
 
 from pymavswarm.state.state import State
 
@@ -27,7 +26,7 @@ class DockerInfo(State):
         self,
         version: str = "0.0.0",
         last_update: datetime.datetime = datetime.datetime(datetime.MINYEAR, 1, 1),
-        optional_context_props: Optional[dict] = None,
+        optional_context_props: dict | None = None,
     ) -> None:
         """
         Create a new docker info instance.

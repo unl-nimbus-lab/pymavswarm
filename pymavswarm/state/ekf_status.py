@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional
-
 from pymavswarm.state.state import State
 
 
@@ -32,7 +30,7 @@ class EKFStatus(State):
         pos_horiz_abs: float = 0.0,
         const_pos_mode: float = 0.0,
         pred_pos_horiz_abs: float = 0.0,
-        optional_context_props: Optional[dict] = None,
+        optional_context_props: dict | None = None,
     ) -> None:
         """
         Create an EKF status.

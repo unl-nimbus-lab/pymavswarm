@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from abc import ABC
-from typing import Optional
 
 from pymavswarm.utils import Event
 
@@ -23,7 +22,7 @@ from pymavswarm.utils import Event
 class State(ABC):
     """Base state class."""
 
-    def __init__(self, optional_context_props: Optional[dict] = None) -> None:
+    def __init__(self, optional_context_props: dict | None = None) -> None:
         """Create a state object."""
         super().__init__()
 

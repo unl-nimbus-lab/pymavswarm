@@ -20,7 +20,7 @@ import math
 import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Union
 
 import monotonic
 from pymavlink import mavutil
@@ -86,22 +86,22 @@ class MavSwarm:
         return
 
     @property
-    def agents(self) -> List[Agent]:
+    def agents(self) -> list[Agent]:
         """
         List of agents in the swarm.
 
         :return: swarm agents
-        :rtype: List[Agent]
+        :rtype: list[Agent]
         """
         return [*self._agents.values()]
 
     @property
-    def agent_ids(self) -> List[AgentID]:
+    def agent_ids(self) -> list[AgentID]:
         """
         List of agent IDs in the swarm.
 
         :return: list of agent IDs
-        :rtype: List[AgentID]
+        :rtype: list[AgentID]
         """
         return [*self._agents]
 
@@ -126,12 +126,12 @@ class MavSwarm:
         return self._connection.connected
 
     @property
-    def supported_modes(self) -> Optional[Dict[str, int]]:
+    def supported_modes(self) -> dict[str, int] | None:
         """
         List of supported flight modes.
 
         :return: supported flight modes
-        :rtype: Dict[str, int]
+        :rtype: dict[str, int]
         """
         if self._connection.mavlink_connection is not None:
             return self._connection.mavlink_connection.mode_mapping()
@@ -235,7 +235,7 @@ class MavSwarm:
 
     def arm(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -249,7 +249,7 @@ class MavSwarm:
         all agents in the swarm.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry arming an agent on failure, defaults to False
         :type retry: bool, optional
@@ -310,7 +310,7 @@ class MavSwarm:
 
     def disarm(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -324,7 +324,7 @@ class MavSwarm:
         all agents in the swarm.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry disarming an agent on failure, defaults to False
         :type retry: bool, optional
@@ -385,7 +385,7 @@ class MavSwarm:
 
     def reboot(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -397,7 +397,7 @@ class MavSwarm:
         all agents in the swarm.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry rebooting an agent on failure, defaults to False
         :type retry: bool, optional
@@ -439,7 +439,7 @@ class MavSwarm:
 
     def shutdown(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -451,7 +451,7 @@ class MavSwarm:
         all agents in the swarm.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry shutting down an agent on failure, defaults to False
         :type retry: bool, optional
@@ -494,7 +494,7 @@ class MavSwarm:
     def set_mode(
         self,
         flight_mode: str,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -510,7 +510,7 @@ class MavSwarm:
         :param flight_mode: flight mode to switch the agents into
         :type flight_mode: str
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry changing the mode of an agent on failure, defaults to False
         :type retry: bool, optional
@@ -567,7 +567,7 @@ class MavSwarm:
     def set_airspeed(
         self,
         speed: float,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -581,7 +581,7 @@ class MavSwarm:
         :param speed: target airspeed [m/s]
         :type speed: float
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry setting the airspeed of an agent on failure, defaults to
             False
@@ -625,7 +625,7 @@ class MavSwarm:
     def set_groundspeed(
         self,
         speed: float,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -639,7 +639,7 @@ class MavSwarm:
         :param speed: target groundspeed [m/s]
         :type speed: float
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry setting the groundspeed of an agent on failure, defaults to
             False
@@ -682,7 +682,7 @@ class MavSwarm:
 
     def gyroscope_calibration(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -694,7 +694,7 @@ class MavSwarm:
         gyroscope calibration on all swarm agents.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry gyroscope calibration on an agent on calibration failure,
             defaults to False
@@ -737,7 +737,7 @@ class MavSwarm:
 
     def magnetometer_calibration(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -749,7 +749,7 @@ class MavSwarm:
         magnetometer calibration on all swarm agents.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry magnetometer calibration on an agent on calibration failure,
             defaults to False
@@ -792,7 +792,7 @@ class MavSwarm:
 
     def ground_pressure_calibration(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -804,7 +804,7 @@ class MavSwarm:
         ground pressure calibration on all swarm agents.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry ground pressure calibration on an agent on calibration
             failure, defaults to False
@@ -848,7 +848,7 @@ class MavSwarm:
 
     def airspeed_calibration(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -860,7 +860,7 @@ class MavSwarm:
         airspeed calibration on all swarm agents.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry airspeed calibration on an agent on calibration failure,
             defaults to False
@@ -903,7 +903,7 @@ class MavSwarm:
 
     def barometer_temperature_calibration(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -915,7 +915,7 @@ class MavSwarm:
         barometer calibration on all swarm agents.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry barometer temperature calibration on an agent on calibration
             failure, defaults to False
@@ -961,7 +961,7 @@ class MavSwarm:
     def accelerometer_calibration(
         self,
         simple_calibration: bool = True,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -976,7 +976,7 @@ class MavSwarm:
             True
         :type simple_calibration: bool, optional
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry accelerometer calibration on an agent on calibration
             failure, defaults to False
@@ -1021,7 +1021,7 @@ class MavSwarm:
         self,
         name: str,
         value: Union[int, float],
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -1037,7 +1037,7 @@ class MavSwarm:
         :param value: debug message value
         :type value: Union[int, float]
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry sending the debug message to an agent on failure, defaults
             to False
@@ -1091,7 +1091,7 @@ class MavSwarm:
         altitude: float,
         latitude: float = 0,
         longitude: float = 0,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -1113,7 +1113,7 @@ class MavSwarm:
         :param longitude: longitude to takeoff to, defaults to 0
         :type longitude: float, optional
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry switching the agent into takeoff mode on failure, defaults
             to False
@@ -1159,14 +1159,14 @@ class MavSwarm:
         altitude: float,
         latitude: float = 0,
         longitude: float = 0,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
         stage_delay: float = 3.0,
-    ) -> Union[List[Response], Response]:
+    ) -> Union[list[Response], Response]:
         """
         Command the desired agents to perform a full takeoff sequence.
 
@@ -1193,7 +1193,7 @@ class MavSwarm:
         :param longitude: longitude to takeoff to, defaults to 0
         :type longitude: float, optional
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry performing a stage on stage failure, defaults
             to False
@@ -1217,15 +1217,15 @@ class MavSwarm:
         :return: message response; if a failure occurs, the response(s) will be the
             stage's responses (e.g., if any message fails at stage 1, the returned
             value will be the message responses for that particular stage)
-        :rtype: Union[List[Response], Response]
+        :rtype: Union[list[Response], Response]
         """
 
-        def failure_occured(responses: Union[List[Response], Response]) -> bool:
+        def failure_occured(responses: Union[list[Response], Response]) -> bool:
             """
             Check the responses to determine if a message failure occurred.
 
             :param responses: message responses
-            :type responses: Union[List[Response], Response]
+            :type responses: Union[list[Response], Response]
             :return: true if failure occurred, false otherwise
             :rtype: bool
             """
@@ -1300,7 +1300,7 @@ class MavSwarm:
     def read_parameter(
         self,
         parameter_id: str,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -1311,7 +1311,7 @@ class MavSwarm:
         :param parameter_id: ID of the parameter to read
         :type parameter_id: str
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry reading the parameter on an agent when parameter read
             fails, defaults to False
@@ -1336,8 +1336,8 @@ class MavSwarm:
         def post_command_executor(
             agent_id: AgentID,
             result: bool,
-            code: Tuple[int, str],
-            ack_msg: Dict,
+            code: tuple[int, str],
+            ack_msg: dict,
         ) -> None:
             try:
                 read_param = Parameter(
@@ -1373,7 +1373,7 @@ class MavSwarm:
         parameter_id: str,
         parameter_value: Any,
         parameter_type: int = 9,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -1391,7 +1391,7 @@ class MavSwarm:
         :param parameter_type: parameter value type, defaults to 9
         :type parameter_type: int, optional
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry setting the parameter on an agent when parameter setting
             fails, defaults to False
@@ -1429,7 +1429,7 @@ class MavSwarm:
 
     def get_home_position(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -1443,7 +1443,7 @@ class MavSwarm:
         The home position will be updated in the agent's home position property.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry getting the home position of an agent on failure, defaults
             to False
@@ -1491,7 +1491,7 @@ class MavSwarm:
         latitude: float = 0,
         longitude: float = 0,
         altitude: float = 0,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -1516,7 +1516,7 @@ class MavSwarm:
         :param altitude: altitude of the home position, defaults to 0
         :type altitude: float, optional
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry setting the home position of an agent on failure, defaults
             to False
@@ -1680,7 +1680,7 @@ class MavSwarm:
         accept_radius: float = 0,
         pass_radius: float = 0,
         yaw: float = 0,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]] = None,
+        agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -1712,7 +1712,7 @@ class MavSwarm:
             etc.)., defaults to 0
         :type yaw: float, optional
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
         :param retry: retry commanding the desired agents to go to the desired location
             on acknowledgement failure, defaults to False
@@ -1762,7 +1762,7 @@ class MavSwarm:
             ack_timeout,
         )
 
-    def get_agent_by_id(self, agent_id: AgentID) -> Optional[Agent]:
+    def get_agent_by_id(self, agent_id: AgentID) -> Agent | None:
         """
         Get the agent with the specified ID (system ID, component ID).
 
@@ -1789,7 +1789,7 @@ class MavSwarm:
 
         return
 
-    def __get_expected_agent_ids(self) -> List[AgentID]:
+    def __get_expected_agent_ids(self) -> list[AgentID]:
         """
         Get the expected agent IDs in the swarm.
 
@@ -1797,7 +1797,7 @@ class MavSwarm:
         to guess which agents to send the command to.
 
         :return: filtered agent IDs
-        :rtype: List[AgentID]
+        :rtype: list[AgentID]
         """
         # Get the agents that aren't the connection and have a component ID of 1
         # (typically used by the flight controllers)
@@ -1820,21 +1820,21 @@ class MavSwarm:
 
     def _send_command(
         self,
-        agent_ids: Optional[Union[AgentID, List[AgentID]]],
+        agent_ids: Union[AgentID, list[AgentID]] | None,
         executor: Callable,
         command_type: str,
         retry: bool,
         message_timeout: float,
         ack_timeout: float,
         ack_packet_type: str = "COMMAND_ACK",
-        state_verifier: Optional[Callable] = None,
-        post_execution_handler: Optional[Callable] = None,
+        state_verifier: Callable | None = None,
+        post_execution_handler: Callable | None = None,
     ) -> Future:
         """
         Send a command to the desired agents.
 
         :param agent_ids: agents to send the command to
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]]
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]]
         :param executor: function used to execute the command
         :type executor: Callable
         :param command_type: type of command being executed; used for debugging
@@ -1902,21 +1902,21 @@ class MavSwarm:
 
     def __send_command_list_handler(
         self,
-        agent_ids: List[AgentID],
+        agent_ids: list[AgentID],
         executor: Callable,
         command_type: str,
         retry: bool,
         ack_packet_type: str,
         message_timeout: float,
         ack_timeout: float,
-        state_verifier: Optional[Callable],
-        post_execution_handler: Optional[Callable],
-    ) -> List[Response]:
+        state_verifier: Callable | None,
+        post_execution_handler: Callable | None,
+    ) -> list[Response]:
         """
         Handle sending a list of commands.
 
         :param agent_ids: agents to send the command to
-        :type agent_ids: Optional[Union[AgentID, List[AgentID]]]
+        :type agent_ids: Optional[Union[AgentID, list[AgentID]]]
         :param executor: function used to execute the command
         :type executor: Callable
         :param command_type: type of command being executed; used for debugging
@@ -1938,9 +1938,9 @@ class MavSwarm:
             be used to perform post-processing or handle the acknowledgment message
         :type post_execution_handler: Optional[Callable]
         :return: response of each message sent
-        :rtype: List[Response]
+        :rtype: list[Response]
         """
-        responses: List[Response] = []
+        responses: list[Response] = []
 
         for agent_id in agent_ids:
             responses.append(
@@ -1968,14 +1968,14 @@ class MavSwarm:
         ack_packet_type: str,
         message_timeout: float,
         ack_timeout: float,
-        state_verifier: Optional[Callable],
-        post_execution_handler: Optional[Callable],
+        state_verifier: Callable | None,
+        post_execution_handler: Callable | None,
     ) -> Response:
         """
         Handle sending a single command.
 
         :param agent_id: agent to send the command to
-        :type agent_id: Optional[Union[AgentID, List[AgentID]]]
+        :type agent_id: Optional[Union[AgentID, list[AgentID]]]
         :param executor: function used to execute the command
         :type executor: Callable
         :param command_type: type of command being executed; used for debugging
@@ -2060,10 +2060,10 @@ class MavSwarm:
         executor: Callable,
         retry: bool,
         ack_packet_type: str,
-        state_verifier: Optional[Callable],
+        state_verifier: Callable | None,
         message_timeout: float,
         ack_timeout: float,
-    ) -> Tuple[bool, codes.MessageCode, Optional[dict]]:
+    ) -> tuple[bool, codes.MessageCode, dict | None]:
         """
         Get the result of the command.
 
@@ -2071,7 +2071,7 @@ class MavSwarm:
         verifier is provided. If the retry flag has been set, retry sending the message.
 
         :param agent_id: agent to send the command to
-        :type agent_id: Optional[Union[AgentID, List[AgentID]]]
+        :type agent_id: Optional[Union[AgentID, list[AgentID]]]
         :param executor: function used to execute the command
         :type executor: Callable
         :param retry: retry sending the command on failure
@@ -2143,7 +2143,7 @@ class MavSwarm:
 
     def __ack_message(
         self, packet_type: str, timeout: float = 0.5
-    ) -> Tuple[bool, Optional[dict]]:
+    ) -> tuple[bool, dict | None]:
         """
         Ensure that a distributed message is acknowledged.
 

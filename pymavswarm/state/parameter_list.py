@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from collections import deque
-from typing import List, Optional
 
 from pymavswarm.state.parameter import Parameter
 from pymavswarm.state.state import State
@@ -29,7 +28,7 @@ class ParameterList(State):
     """
 
     def __init__(
-        self, max_length: int, optional_context_props: Optional[dict] = None
+        self, max_length: int, optional_context_props: dict | None = None
     ) -> None:
         """
         Create a new list of read parameters.
@@ -47,7 +46,7 @@ class ParameterList(State):
         return
 
     @property
-    def parameters(self) -> List[Parameter]:
+    def parameters(self) -> list[Parameter]:
         """
         List of stored parameters.
 
@@ -110,7 +109,7 @@ class ParameterList(State):
 
         return
 
-    def extend(self, params: List[Parameter]) -> None:
+    def extend(self, params: list[Parameter]) -> None:
         """
         Extend the parameter buffer to include the iterable collection of parameters.
 

@@ -14,11 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Tuple
-
 # Define a type alias for the message codes
 # Tuple order is (code number, code message)
-MessageCode = Tuple[int, str]
+MessageCode = tuple[int, str]
 
 # The message was successfully sent
 SUCCESS = (1, "success")

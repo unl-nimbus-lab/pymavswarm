@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional
-
 
 class Waypoint:
     """Waypoint that an agent should fly to."""
@@ -25,8 +23,8 @@ class Waypoint:
         latitude: float,
         longitude: float,
         altitude: float,
-        airspeed: Optional[float] = None,
-        groundspeed: Optional[float] = None,
+        airspeed: float | None = None,
+        groundspeed: float | None = None,
     ) -> None:
         """
         Create a waypoint.
@@ -83,7 +81,7 @@ class Waypoint:
         return self.__altitude
 
     @property
-    def airspeed(self) -> Optional[float]:
+    def airspeed(self) -> float | None:
         """
         Airspeed that the agent should have going through the waypoint.
 
@@ -93,7 +91,7 @@ class Waypoint:
         return self.__airspeed
 
     @property
-    def groundspeed(self) -> Optional[float]:
+    def groundspeed(self) -> float | None:
         """
         Groundspeed that the agent should have when going through the waypoint.
 

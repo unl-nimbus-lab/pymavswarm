@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from typing import List, Optional
 
 import pymavswarm.utils as swarm_utils
 from pymavswarm.mission.waypoint import Waypoint
@@ -26,7 +25,7 @@ class SwarmMission:
 
     def __init__(
         self,
-        waypoints: Optional[List[Waypoint]] = None,
+        waypoints: list[Waypoint] | None = None,
         log_level: int = logging.INFO,
     ) -> None:
         """
@@ -43,7 +42,7 @@ class SwarmMission:
         return
 
     @property
-    def waypoints(self) -> List[Waypoint]:
+    def waypoints(self) -> list[Waypoint]:
         """
         Set of waypoints included in the mission.
 
@@ -55,7 +54,7 @@ class SwarmMission:
 
         return self.__waypoints
 
-    def add_waypoint(self, waypoint: Waypoint, index: Optional[int] = None) -> bool:
+    def add_waypoint(self, waypoint: Waypoint, index: int | None = None) -> bool:
         """
         Add a waypoint to the mission.
 

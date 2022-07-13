@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional
-
 from pymavswarm.state.state import State
 
 
@@ -27,7 +25,7 @@ class Battery(State):
         voltage: float = 0.0,
         current: float = 0.0,
         level: float = 0.0,
-        optional_context_props: Optional[dict] = None,
+        optional_context_props: dict | None = None,
     ) -> None:
         """
         Create a battery state instance.

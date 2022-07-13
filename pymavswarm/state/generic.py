@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any, Optional
+from typing import Any
 
 from pymavswarm.state.state import State
 
@@ -23,7 +23,7 @@ class Generic(State):
     """Generic state object used to provide event capabilities to basic types."""
 
     def __init__(
-        self, name: str, value: Any, optional_context_props: Optional[dict] = None
+        self, name: str, value: Any, optional_context_props: dict | None = None
     ) -> None:
         """
         Create a generic state object.

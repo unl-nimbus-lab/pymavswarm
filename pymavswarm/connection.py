@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from pymavlink import mavutil
 
@@ -44,7 +44,7 @@ class Connection:
         return
 
     @property
-    def mavlink_connection(self) -> Optional[Any]:
+    def mavlink_connection(self) -> Any | None:
         """
         Mavlink connection.
 

@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional
-
 from pymavswarm.state.state import State
 
 
@@ -30,7 +28,7 @@ class Attitude(State):
         pitch_speed: float = 0.0,
         yaw_speed: float = 0.0,
         roll_speed: float = 0.0,
-        optional_context_props: Optional[dict] = None,
+        optional_context_props: dict | None = None,
     ) -> None:
         """
         Create a new attitude state instance.

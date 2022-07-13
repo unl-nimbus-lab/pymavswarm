@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional
-
 from pymavswarm.state.state import State
 
 
@@ -23,7 +21,7 @@ class Telemetry(State):
     """Telemetry state information."""
 
     def __init__(
-        self, drop_rate: float = 0.0, optional_context_props: Optional[dict] = None
+        self, drop_rate: float = 0.0, optional_context_props: dict | None = None
     ) -> None:
         """
         Create a new telemetry status object.
