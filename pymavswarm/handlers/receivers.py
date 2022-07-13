@@ -20,6 +20,7 @@ import logging
 from typing import Callable
 
 import pymavswarm.utils as swarm_utils
+from pymavswarm._typing import MessageHandler
 
 
 class Receivers:
@@ -37,28 +38,28 @@ class Receivers:
         :type log_level: int, optional
         """
         self._logger = swarm_utils.init_logger(logger_name, log_level=log_level)
-        self.__receivers: dict[str, list[Callable]] = {}
+        self.__receivers: dict[str, list[MessageHandler]] = {}
 
         return
 
     @property
-    def receivers(self) -> dict[str, list[Callable]]:
+    def receivers(self) -> dict[str, list[MessageHandler]]:
         """
         Methods used to handle incoming messages.
 
         :return: message receivers
-        :rtype: Dict[str, List[Callable]]
+        :rtype: dict[str, list[MessageHandler]]
         """
         return self.__receivers
 
-    def add_message_handler(self, message: str, callback: Callable) -> None:
+    def add_message_handler(self, message: str, callback: MessageHandler) -> None:
         """
         Add a handler for the specified message.
 
         :param message: message to add the handler to
         :type message: str
         :param callback: callback function to call on message reception
-        :type callback: Callable
+        :type callback: MessageHandler
         """
         if message not in self.__receivers:
             self.__receivers[message] = []
@@ -84,7 +85,7 @@ class Receivers:
         :rtype: Callable
         """
 
-        def decorator(function: Callable):
+        def decorator(function: MessageHandler):
             self.add_message_handler(message, function)
 
         return decorator
