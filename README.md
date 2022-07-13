@@ -8,7 +8,7 @@ new swarm applications such as ground control stations.
 
 ## Dependencies
 
-`pymavswarm` depends on Python versions 3.9 or greater. Ensure that this
+`pymavswarm` depends on Python versions 3.8 or greater. Ensure that this
 dependency is met prior to installation.
 
 ## Installation

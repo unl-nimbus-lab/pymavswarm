@@ -90,7 +90,6 @@
     "DavidAnson.vscode-markdownlint",
     "esbenp.prettier-vscode",
     "LittleFoxTeam.vscode-python-test-adapter",
-    "bungcip.better-toml",
     "tamasfe.even-better-toml"
   ],
   "postStartCommand": "pip3 install -e ."
