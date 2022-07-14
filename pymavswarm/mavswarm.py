@@ -56,6 +56,7 @@ class MavSwarm:
         self,
         max_workers: int = 5,
         log_level: int = logging.INFO,
+        log_file: str | None = None,
     ) -> None:
         """
         Construct MavSwarm interface.
@@ -65,6 +66,8 @@ class MavSwarm:
         :type: max_workers: int, optional
         :param log_level: log level of the system, defaults to logging.INFO
         :type log_level: int, optional
+        :param log_file: log_file to write to, if provided, defaults to None
+        :type log_file: str | None, optional
         """
         super().__init__()
 
@@ -72,6 +75,7 @@ class MavSwarm:
         self.__agent_list_changed = Event()
         self._agents = NotifierDict(self.__agent_list_changed)
         self._connection = Connection(log_level=log_level)
+        self.__log_file = log_file
 
         self.__message_receivers = MessageReceivers(log_level=log_level)
 
@@ -184,6 +188,13 @@ class MavSwarm:
             port, baudrate, source_system, source_component, connection_attempt_timeout
         ):
             return False
+
+        # Start logging to a log file
+        if (
+            self.__log_file is not None
+            and self._connection.mavlink_connection is not None
+        ):
+            self._connection.mavlink_connection.setup_logfile(self.__log_file)
 
         # Start threads
         self.__incoming_message_thread.start()
