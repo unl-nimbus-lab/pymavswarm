@@ -41,7 +41,7 @@ from pymavswarm.handlers import MessageReceivers
 from pymavswarm.message import codes
 from pymavswarm.message.response import Response
 from pymavswarm.state import Parameter
-from pymavswarm.utils import Event, NotifierDict, init_logger
+from pymavswarm.utils import Event, FileLogger, NotifierDict, init_logger
 
 
 class MavSwarm:
@@ -56,7 +56,8 @@ class MavSwarm:
         self,
         max_workers: int = 5,
         log_level: int = logging.INFO,
-        log_file: str | None = None,
+        log_to_file: bool = False,
+        log_filename: str | None = None,
     ) -> None:
         """
         Construct MavSwarm interface.
@@ -66,8 +67,11 @@ class MavSwarm:
         :type: max_workers: int, optional
         :param log_level: log level of the system, defaults to logging.INFO
         :type log_level: int, optional
-        :param log_file: log_file to write to, if provided, defaults to None
-        :type log_file: str | None, optional
+        :param log_to_file: flag indicating whether to log the results to a file,
+            defaults to False
+        :type log_to_file: bool, optional
+        :param log_filename: name of the file to log messages to, defaults to None
+        :type log_filename: str | None, optional
         """
         super().__init__()
 
@@ -75,9 +79,11 @@ class MavSwarm:
         self.__agent_list_changed = Event()
         self._agents = NotifierDict(self.__agent_list_changed)
         self._connection = Connection(log_level=log_level)
-        self.__log_file = log_file
-
         self.__message_receivers = MessageReceivers(log_level=log_level)
+        self.__file_logger = None
+
+        if log_to_file:
+            self.__file_logger = FileLogger(log_filename)
 
         # Mutexes
         self.__access_agents_mutex = threading.Lock()
@@ -188,13 +194,6 @@ class MavSwarm:
             port, baudrate, source_system, source_component, connection_attempt_timeout
         ):
             return False
-
-        # Start logging to a log file
-        if (
-            self.__log_file is not None
-            and self._connection.mavlink_connection is not None
-        ):
-            self._connection.mavlink_connection.setup_logfile(self.__log_file)
 
         # Start threads
         self.__incoming_message_thread.start()
@@ -2255,6 +2254,16 @@ class MavSwarm:
             # Continue if the message read was not read properly
             if message is None:
                 continue
+
+            # Log the message to the logfile
+            if self.__file_logger is not None and message.get_type() != "BAD_DATA":
+                self.__file_logger(
+                    int(time.time() * 1.0e6),
+                    message.get_srcSystem(),
+                    message.get_srcComponent(),
+                    message.get_type(),
+                    message.to_dict(),
+                )
 
             # Execute the respective message handler(s)
             if message.get_type() in self.__message_receivers.receivers:

@@ -15,6 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+import os
+from datetime import datetime
 
 
 def init_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
@@ -33,3 +35,60 @@ def init_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
     logger.setLevel(log_level)
 
     return logger
+
+
+class FileLogger:
+    """File logging handler."""
+
+    def __init__(self, filename: str | None = None) -> None:
+        """
+        Create a new file logger.
+
+        :param filename: name of the file to write to, defaults to None
+        :type filename: str | None, optional
+        """
+        log_dir = os.path.join(os.getcwd(), "logs")
+
+        if not os.path.isdir(log_dir):
+            os.mkdir(log_dir)
+
+        if filename is None:
+            filename = os.path.join(
+                log_dir, f"{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.log"
+            )
+        else:
+            filename = os.path.join(log_dir, filename)
+
+        self.__log_file = open(filename, "w")  # type: ignore
+
+        self.__log_file.write("timestamp,system_id,component_id,message_type,message\n")
+
+        return
+
+    def __call__(
+        self,
+        timestamp: int,
+        system_id: int,
+        component_id: int,
+        message_type: str,
+        message: dict,
+    ) -> None:
+        """
+        Add a log to the log file.
+
+        :param timestamp: timestamp that the message was received
+        :type timestamp: int
+        :param system_id: system ID of the agent that sent the message
+        :type system_id: int
+        :param component_id: component ID of the agent that sent the message
+        :type component_id: int
+        :param message_type: MAVLink message type
+        :type message_type: str
+        :param message: MAVLink message
+        :type message: dict
+        """
+        self.__log_file.write(
+            f"{timestamp},{system_id},{component_id},{message_type},{message}\n"
+        )
+
+        return

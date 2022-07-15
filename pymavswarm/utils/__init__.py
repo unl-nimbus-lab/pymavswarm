@@ -15,5 +15,5 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .event import Event
-from .logging import init_logger
+from .logging import FileLogger, init_logger
 from .notifier_dict import NotifierDict

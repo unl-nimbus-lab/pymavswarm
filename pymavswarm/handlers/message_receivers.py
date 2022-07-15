@@ -23,7 +23,7 @@ from typing import Any
 
 import monotonic
 from pymavlink import mavutil
-from pymavlink.dialects.v10 import ardupilotmega
+from pymavlink.dialects.v10 import ardupilotmega as mavlink1
 
 import pymavswarm.state as swarm_state
 from pymavswarm._typing import AgentID
@@ -285,9 +285,9 @@ class MessageReceivers(Receivers):
                     message.pos_vert_variance,
                     message.compass_variance,
                     message.terrain_alt_variance,
-                    (message.flags & ardupilotmega.EKF_POS_HORIZ_ABS) > 0,
-                    (message.flags & ardupilotmega.EKF_CONST_POS_MODE) > 0,
-                    (message.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS) > 0,
+                    (message.flags & mavlink1.EKF_POS_HORIZ_ABS) > 0,
+                    (message.flags & mavlink1.EKF_CONST_POS_MODE) > 0,
+                    (message.flags & mavlink1.EKF_PRED_POS_HORIZ_ABS) > 0,
                 )
                 agents[agent_id].ekf = ekf
             else:
@@ -300,13 +300,13 @@ class MessageReceivers(Receivers):
 
                 # Read flags
                 agents[agent_id].ekf.pos_horiz_abs = (
-                    message.flags & ardupilotmega.EKF_POS_HORIZ_ABS
+                    message.flags & mavlink1.EKF_POS_HORIZ_ABS
                 ) > 0
                 agents[agent_id].ekf.const_pos_mode = (
-                    message.flags & ardupilotmega.EKF_CONST_POS_MODE
+                    message.flags & mavlink1.EKF_CONST_POS_MODE
                 ) > 0
                 agents[agent_id].ekf.pred_pos_horiz_abs = (
-                    message.flags & ardupilotmega.EKF_PRED_POS_HORIZ_ABS
+                    message.flags & mavlink1.EKF_PRED_POS_HORIZ_ABS
                 ) > 0
 
             return agents

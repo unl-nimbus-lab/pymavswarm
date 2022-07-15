@@ -38,12 +38,6 @@ def parse_args() -> Any:
     parser.add_argument(
         "--duration", type=float, default=5.0, help="duration to print out state [s]"
     )
-    parser.add_argument(
-        "--log_file",
-        type=str,
-        default=None,
-        help="log file to save the resulting tlog to (including its path)",
-    )
     return parser.parse_args()
 
 
@@ -53,7 +47,7 @@ def main() -> None:
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_file=args.log_file)
+    mavswarm = MavSwarm(log_to_file=True)
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
