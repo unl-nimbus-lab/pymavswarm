@@ -42,7 +42,7 @@ cd path/to/pymavswarm/
 pip3 install .
 ```
 
-## Quick Start
+## Quick start
 
 `pymavswarm` has been implemented to enable easy interfacing with drone
 swarms. Refer to the following code snippet for a simple example to get started
