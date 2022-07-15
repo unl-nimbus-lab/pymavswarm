@@ -1,10 +1,13 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
+__pycache__
 *.py[cod]
 *$py.class
 
 # C extensions
 *.so
+
+# VSCode Settings
+.vscode
 
 # Distribution / packaging
 .Python
@@ -127,3 +130,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# pymavlink files
+logs/

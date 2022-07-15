@@ -14,6 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .agent import Agent
-from .connection import Connection
-from .mavswarm import MavSwarm
+from __future__ import annotations
+
+from typing import Any, Callable
+
+from pymavswarm import Agent
+
+# Order should be (system ID, component ID)
+AgentID = tuple[int, int]
+
+# Tuple order is (code number, code message)
+MessageCode = tuple[int, str]
+
+StateVerifier = Callable[[AgentID], bool]
+CommandExecutor = Callable[[AgentID], None]
+PostExecutionHandler = Callable[
+    [
+        AgentID,
+        bool,
+        tuple[int, str],
+        dict | None,
+    ],
+    None,
+]
+MessageHandler = Callable[[Any, dict[AgentID, Agent]], None]

@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+monotonic = ">=1.6"
+pymavlink = ">=2.3.3"
+pyserial = ">=3.0"
+pandas = ">=1.4.3"
+
+[dev-packages]
+black = "*"
+flake8 = "*"
+isort = "*"
+pydocstyle = "*"
+mypy = "*"
+bandit = "*"
+coverage = "*"
+pre-commit = "*"
+tox = "*"
+
+[requires]
+python_version = "3"
