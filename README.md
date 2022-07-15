@@ -1,10 +1,23 @@
 # pymavswarm
 
+## What is `pymavswarm`?
+
 `pymavswarm` is a Python library implemented to enable interaction with drone
 swarms using the MAVLink protocol. This library supports reading MAVLink
 messages sent from multiple agents in a swarm and sending MAVLink messages to
 agents within the swarm. Such functionality ultimately enables development of
 new swarm applications such as ground control stations.
+
+## Main features
+
+Here are some of the main features of `pymavswarm`:
+
+- Easily send MAVLink commands to multiple drones, simultaneously
+- Monitor the state of swarm drone agents
+- Implement custom commands and swarm algorithms
+- Develop applications for on-board companion computers
+- Implement custom swarm ground control stations
+- Log incoming MAVLink messages for future evaluation and debugging
 
 ## Dependencies
 
@@ -63,6 +76,17 @@ mavswarm.disarm()
 # Close the pymavswarm connection
 mavswarm.disconnect()
 ```
+
+## Getting help
+
+If you have questions regarding `pymavswarm` usage or contribution please ask a
+question on our [Discussions](https://github.com/unl-nimbus-lab/pymavswarm/discussions)
+board!
+
+## Contributing
+
+All contributions and ideas are welcome! Detailed guidelines regarding how to
+contribute can be found in the `.github/CONTRIBUTING.md` document.
 
 ## License
 
