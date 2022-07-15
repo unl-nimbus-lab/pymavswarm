@@ -18,7 +18,7 @@ import unittest
 from typing import Any
 
 from pymavswarm import Agent
-from pymavswarm._typing import AgentID
+from pymavswarm._types import AgentID
 from pymavswarm.handlers.receivers import Receivers
 
 

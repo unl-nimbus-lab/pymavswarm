@@ -21,7 +21,7 @@ from argparse import ArgumentParser
 from typing import Any
 
 from pymavswarm import MavSwarm
-from pymavswarm._typing import AgentID
+from pymavswarm._types import AgentID
 
 
 def parse_args() -> Any:

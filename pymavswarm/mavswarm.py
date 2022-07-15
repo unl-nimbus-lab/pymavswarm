@@ -28,7 +28,7 @@ import monotonic
 from pymavlink import mavutil
 
 from pymavswarm import Connection
-from pymavswarm._typing import (
+from pymavswarm._types import (
     AgentID,
     CommandExecutor,
     MessageCode,

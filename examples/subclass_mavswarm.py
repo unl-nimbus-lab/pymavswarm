@@ -25,7 +25,7 @@ from typing import Any, Union
 import monotonic
 
 from pymavswarm import Agent, MavSwarm
-from pymavswarm._typing import AgentID
+from pymavswarm._types import AgentID
 
 
 class CustomMavSwarm(MavSwarm):
