@@ -10,6 +10,7 @@ RUN pip3 install --upgrade pip
 
 # Install all required Python packages
 RUN pip3 install \
+    pandas \
     monotonic \
     pymavlink \
     pyserial

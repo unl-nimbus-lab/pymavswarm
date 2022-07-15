@@ -14,9 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import csv
 import logging
 import os
 from datetime import datetime
+from typing import Union
+
+import pandas as pd
 
 
 def init_logger(name: str, log_level: int = logging.INFO) -> logging.Logger:
@@ -87,8 +91,97 @@ class FileLogger:
         :param message: MAVLink message
         :type message: dict
         """
+        message.pop("mavpackettype")
+
+        message_log = ""
+        for key, value in message.items():
+            if isinstance(value, list):
+                value_log = ""
+                for elm in value:
+                    value_log += f"{elm}/"
+
+                message_log += f"{key}:{value_log};"
+            else:
+                message_log += f"{key}:{value};"
+
         self.__log_file.write(
-            f"{timestamp},{system_id},{component_id},{message_type},{message}\n"
+            f"{timestamp},{system_id},{component_id},{message_type},{message_log}\n"
         )
 
         return
+
+
+def parse_log_file(
+    logfile: str, message_type: str | None = None
+) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
+    """
+    Parse a pymavswarm log file.
+
+    :param logfile: logfile to parse (including its path)
+    :type logfile: str
+    :param message_type: specific message type to get, defaults to None
+    :type message_type: str | None, optional
+    :return: messages received of the specified type or a dictionary with all messages
+        with their respective types as keys
+    :rtype: Union[pd.DataFrame, dict[str, pd.DataFrame]]
+    """
+    log_dict: dict[str, pd.DataFrame] = {}
+
+    # Specify the indexes of each of the different properties
+    TIMESTAMP_IDX = 0
+    SYS_ID_IDX = 1
+    COMP_ID_IDX = 2
+    MSG_TYPE_IDX = 3
+    MSG_IDX = 4
+    PROP_NAME_IDX = 0
+    PROP_VALUE_IDX = 1
+
+    with open(logfile, "r") as log:
+        reader = csv.reader(log)
+
+        # Skip file headers
+        next(reader, None)
+
+        for row in reader:
+            msg_dict: dict[str, Union[str, list[str]]] = {
+                "timestamp": row[TIMESTAMP_IDX],
+                "system_id": row[SYS_ID_IDX],
+                "component_id": row[COMP_ID_IDX],
+            }
+
+            # Split the message
+            msg = row[MSG_IDX].split(";")
+
+            # Remove any empty strings
+            msg = [prop for prop in msg if prop]
+
+            # Split each message property into a key value pair
+            for prop in msg:
+                prop_split = prop.split(":")
+
+                # Parse lists into lists when necessary
+                if "/" in prop_split[PROP_VALUE_IDX]:
+                    msg_dict[prop_split[PROP_NAME_IDX]] = prop_split[
+                        PROP_VALUE_IDX
+                    ].split("/")
+                else:
+                    msg_dict[prop_split[PROP_NAME_IDX]] = prop_split[PROP_VALUE_IDX]
+
+            # Create a dataframe from the dictionary
+            msg_df = pd.DataFrame([msg_dict])
+
+            # Append the dataframe to the dictionary
+            if row[MSG_TYPE_IDX] not in log_dict:
+                log_dict[row[MSG_TYPE_IDX]] = []
+
+            log_dict[row[MSG_TYPE_IDX]].append(msg_df)
+
+        # Concatonate each of the dataframes
+        for msg_type in log_dict.keys():
+            log_dict[msg_type] = pd.concat(log_dict[msg_type])
+
+    # If a specific message type was desired, return only that dataframe
+    if message_type is not None:
+        return log_dict[message_type]
+
+    return log_dict
