@@ -1,6 +1,6 @@
 # pymavswarm
 
-## What is `pymavswarm`?
+## What is pymavswarm?
 
 `pymavswarm` is a Python library implemented to enable interaction with drone
 swarms using the MAVLink protocol. This library supports reading MAVLink
