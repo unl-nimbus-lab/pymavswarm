@@ -15,7 +15,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
+from typing import Any
 
+from pymavswarm import Agent
+from pymavswarm._typing import AgentID
 from pymavswarm.handlers.receivers import Receivers
 
 
@@ -26,7 +29,7 @@ class TestReceivers(unittest.TestCase):
         """Verify that one method is properly added to the handlers."""
         receivers = Receivers()
 
-        def test_func():
+        def test_func(message: Any, agents: dict[AgentID, Agent]):
             pass
 
         test_message_type = "test"
@@ -41,10 +44,10 @@ class TestReceivers(unittest.TestCase):
         """Verify that multiple methods are properly added to the handlers."""
         receivers = Receivers()
 
-        def test_func():
+        def test_func(message: Any, agents: dict[AgentID, Agent]):
             pass
 
-        def test_func_two():
+        def test_func_two(message: Any, agents: dict[AgentID, Agent]):
             pass
 
         test_message_type = "test"
