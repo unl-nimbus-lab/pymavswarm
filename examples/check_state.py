@@ -35,6 +35,15 @@ def parse_args() -> Any:
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
+    parser.add_argument(
+        "--duration", type=float, default=5.0, help="duration to print out state [s]"
+    )
+    parser.add_argument(
+        "--log_file",
+        type=str,
+        default=None,
+        help="log file to save the resulting tlog to (including its path)",
+    )
     return parser.parse_args()
 
 
@@ -44,7 +53,7 @@ def main() -> None:
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm()
+    mavswarm = MavSwarm(log_file=args.log_file)
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -55,11 +64,20 @@ def main() -> None:
         print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    for agent_id in list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
-        agent = mavswarm.get_agent_by_id(agent_id)
+    print(f"Logging the attitude of swarm agents for {args.duration} seconds")
 
-        if agent is not None:
-            print(f"The current attitude of {agent} is: {agent.attitude}")
+    start_t = time.time()
+
+    while time.time() - start_t < args.duration:
+        for agent_id in list(
+            filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)
+        ):
+            agent = mavswarm.get_agent_by_id(agent_id)
+
+            if agent is not None:
+                print(f"The current attitude of {agent} is: {agent.attitude}")
+
+            time.sleep(0.5)
 
     # Disconnect from the swarm
     mavswarm.disconnect()

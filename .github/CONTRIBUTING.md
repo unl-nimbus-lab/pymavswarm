@@ -87,16 +87,16 @@ styling, convention, etc.)
 
 `pymavswarm` uses `pre-commit` to run code formatting checks such as `black`,
 `flake8`, `pydocstyle`, and `isort`. If you have installed the project
-using one of our recommended local develompent configurations, you may run
+using one of our recommended local development configurations, you may run
 `pre-commit` using the following command:
 
 ```bash
 pre-commit run --all-files
 ```
 
-We *strongly* recommend running `pre-commit` before committing your code to ensure that
-your commit follows our code style conventions. Any warnings from these checks
-will cause the CI to fail.
+We *strongly* recommend running `pre-commit` before committing your code to
+ensure that your commit follows our code style conventions. Any warnings from
+these checks will cause the CI to fail.
 
 ### Type hints
 
