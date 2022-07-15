@@ -176,7 +176,7 @@ def parse_log_file(
 
             log_dict[row[MSG_TYPE_IDX]].append(msg_df)
 
-        # Concatonate each of the dataframes
+        # Concatenate each of the dataframes
         for msg_type in log_dict.keys():
             log_dict[msg_type] = pd.concat(log_dict[msg_type])
 
