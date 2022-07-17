@@ -37,4 +37,4 @@ PostExecutionHandler = Callable[
     ],
     None,
 ]
-MessageHandler = Callable[[Any, dict[AgentID, Agent]], None]
+MessageHandler = Callable[[Any, dict[AgentID, Agent], AgentID], None]

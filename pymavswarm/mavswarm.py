@@ -87,13 +87,15 @@ class MavSwarm:
 
         # Mutexes
         self.__access_agents_mutex = threading.Lock()
-        self.__write_message_mutex = threading.Lock()
+        self.__send_message_mutex = threading.Lock()
         self.__read_message_mutex = threading.Lock()
 
         self.__incoming_message_thread = threading.Thread(target=self.__receive_message)
-        self.__incoming_message_thread.daemon = True
+        self.__incoming_message_thread.setDaemon(True)
         self.__heartbeat_thread = threading.Thread(target=self.__send_heartbeat)
-        self.__heartbeat_thread.daemon = True
+        self.__heartbeat_thread.setDaemon(True)
+        self.__timesync_thread = threading.Thread(target=self.__sync_clocks)
+        self.__timesync_thread.setDaemon(True)
 
         # Thread pool for sending messages
         self.__send_message_thread_pool_executor = ThreadPoolExecutor(
@@ -198,6 +200,7 @@ class MavSwarm:
         # Start threads
         self.__incoming_message_thread.start()
         self.__heartbeat_thread.start()
+        self.__timesync_thread.start()
 
         return True
 
@@ -219,6 +222,9 @@ class MavSwarm:
 
         if self.__heartbeat_thread is not None and self.__heartbeat_thread.is_alive():
             self.__heartbeat_thread.join()
+
+        if self.__timesync_thread is not None and self.__timesync_thread.is_alive():
+            self.__timesync_thread.join()
 
         # Clear the agents list
         self._agents.clear()
@@ -1611,7 +1617,7 @@ class MavSwarm:
                         abs_tol=altitude_deviation_tolerance,
                     )
                 ):
-                    if self.__write_message_mutex.acquire(timeout=0.1):
+                    if self.__send_message_mutex.acquire(timeout=0.1):
                         try:
                             if self._connection.mavlink_connection is not None:
                                 self._connection.mavlink_connection.mav.command_long_send(  # noqa
@@ -1633,7 +1639,7 @@ class MavSwarm:
                                 "set home position command"
                             )
                         finally:
-                            self.__write_message_mutex.release()
+                            self.__send_message_mutex.release()
 
                     if time.time() - start_time >= verify_state_timeout:
                         ack = False
@@ -1652,7 +1658,7 @@ class MavSwarm:
                     and self._agents[agent_id].home_position.longitude != longitude
                     and self._agents[agent_id].home_position.altitude != altitude
                 ):
-                    if self.__write_message_mutex.acquire(timeout=0.1):
+                    if self.__send_message_mutex.acquire(timeout=0.1):
                         try:
                             if self._connection.mavlink_connection is not None:
                                 self._connection.mavlink_connection.mav.command_long_send(  # noqa
@@ -1674,7 +1680,7 @@ class MavSwarm:
                                 "set home position command"
                             )
                         finally:
-                            self.__write_message_mutex.release()
+                            self.__send_message_mutex.release()
 
                     if time.time() - start_time >= verify_state_timeout:
                         ack = False
@@ -2033,7 +2039,7 @@ class MavSwarm:
 
         try:
             # Execute the command
-            if self.__write_message_mutex.acquire(timeout=0.1):
+            if self.__send_message_mutex.acquire(timeout=0.1):
                 try:
                     executor(agent_id)
                 except Exception:
@@ -2041,7 +2047,7 @@ class MavSwarm:
                         "An error occurred while executing a command", exc_info=True
                     )
                 finally:
-                    self.__write_message_mutex.release()
+                    self.__send_message_mutex.release()
 
             # Get the result of the message and retry if desired
             result, code, ack_msg = self.__get_message_result(
@@ -2139,7 +2145,7 @@ class MavSwarm:
             start_time = time.time()
 
             while time.time() - start_time <= message_timeout:
-                if self.__write_message_mutex.acquire(timeout=0.1):
+                if self.__send_message_mutex.acquire(timeout=0.1):
                     try:
                         executor(agent_id)
                     except Exception:
@@ -2147,7 +2153,7 @@ class MavSwarm:
                             "An error occurred while executing a command", exc_info=True
                         )
                     finally:
-                        self.__write_message_mutex.release()
+                        self.__send_message_mutex.release()
 
                 ack, code, ack_msg = self.__get_message_result(
                     agent_id,
@@ -2269,8 +2275,12 @@ class MavSwarm:
             if message.get_type() in self.__message_receivers.receivers:
                 for function in self.__message_receivers.receivers[message.get_type()]:
                     with self.__access_agents_mutex:
+                        mavswarm_id = (
+                            self._connection.mavlink_connection.source_system,
+                            self._connection.mavlink_connection.source_component,
+                        )
                         try:
-                            function(message, self._agents)
+                            function(message, self._agents, mavswarm_id)
                         except Exception:
                             self._logger.exception(
                                 "Exception in message handler for "
@@ -2282,11 +2292,19 @@ class MavSwarm:
 
     def __send_heartbeat(self) -> None:
         """Send a GCS heartbeat to the network."""
+        HEARTBEAT_FREQ = 1  # Hz
+
+        last_send = time.time()
+
         while (
             self._connection.connected
             and self._connection.mavlink_connection is not None
         ):
-            if self.__write_message_mutex.acquire(timeout=0.1):
+            # Sleep until it's time to resend the message
+            if time.time() - last_send < 1 / HEARTBEAT_FREQ:
+                time.sleep(1 / HEARTBEAT_FREQ - (time.time() - last_send))
+
+            if self.__send_message_mutex.acquire(timeout=0.1):
                 try:
                     self._connection.mavlink_connection.mav.heartbeat_send(
                         mavutil.mavlink.MAV_TYPE_GCS,
@@ -2295,15 +2313,54 @@ class MavSwarm:
                         0,
                         0,
                     )
+                    last_send = time.time()
                 except Exception:
                     self._logger.debug(
                         "An error occurred when sending a MAVLink heartbeat",
                         exc_info=True,
                     )
                 finally:
-                    self.__write_message_mutex.release()
+                    self.__send_message_mutex.release()
 
-            # Send a heartbeat at the recommended 1 Hz interval
-            time.sleep(1)
+        return
+
+    def __sync_clocks(self) -> None:
+        """Signal time synchronization between agent clocks."""
+        TIMESYNC_FREQ = 0.5  # Hz
+
+        last_send = time.time()
+
+        while (
+            self._connection.connected
+            and self._connection.mavlink_connection is not None
+        ):
+            # Sleep until it's time to resend the message
+            if time.time() - last_send < 1 / TIMESYNC_FREQ:
+                time.sleep(1 / TIMESYNC_FREQ - (time.time() - last_send))
+
+            if self.__send_message_mutex.acquire(timeout=0.1):
+                try:
+                    # Construct ts1
+                    # We use the top 9 bytes for the timestamp and the bottom 6
+                    # for the source system and source component stamps
+                    sys_time = str(int(time.time() * 1e6))[:9]
+                    src_sys = str(
+                        self._connection.mavlink_connection.source_system
+                    ).zfill(3)
+                    src_comp = str(
+                        self._connection.mavlink_connection.source_component
+                    ).zfill(3)
+                    ts1 = int(f"{sys_time}{src_sys}{src_comp}")
+
+                    self._connection.mavlink_connection.mav.timesync_send(0, ts1)
+                    last_send = time.time()
+                except Exception:
+                    self._logger.debug(
+                        "An error occurred when sending a timesync request to the "
+                        "swarm agents",
+                        exc_info=True,
+                    )
+                finally:
+                    self.__send_message_mutex.release()
 
         return

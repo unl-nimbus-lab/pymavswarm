@@ -44,7 +44,9 @@ class MessageReceivers(Receivers):
         super().__init__(__name__, log_level)
 
         @self._receive_message("HEARTBEAT")
-        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+        def listener(
+            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+        ) -> None:
             """
             Register new agents or update the timeout status of existing agents.
 
@@ -82,7 +84,9 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("HEARTBEAT")
-        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+        def listener(
+            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+        ) -> None:
             """
             Handle general agent information contained within a heartbeat.
 
@@ -122,7 +126,9 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("GLOBAL_POSITION_INT")
-        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+        def listener(
+            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+        ) -> None:
             """
             Handle the a GPS position message.
 
@@ -163,7 +169,9 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("ATTITUDE")
-        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+        def listener(
+            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+        ) -> None:
             """
             Handle an agent attitude message.
 
@@ -199,7 +207,9 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("SYS_STATUS")
-        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+        def listener(
+            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+        ) -> None:
             """
             Handle the system status message containing battery state.
 
@@ -229,7 +239,9 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("GPS_RAW_INT")
-        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+        def listener(
+            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+        ) -> None:
             """
             Handle the GPS status information.
 
@@ -263,7 +275,9 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("EKF_STATUS_REPORT")
-        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+        def listener(
+            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+        ) -> None:
             """
             Handle an EKF status message.
 
@@ -312,7 +326,9 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("ATTITUDE")
-        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+        def listener(
+            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+        ) -> None:
             """
             Handle an agent attitude message.
 
@@ -348,7 +364,9 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("HOME_POSITION")
-        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+        def listener(
+            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+        ) -> None:
             """
             Handle the home position message.
 
@@ -381,7 +399,9 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("TIMESYNC")
-        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+        def listener(
+            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+        ) -> None:
             """
             Sync the agent clock with the local clock.
 
@@ -389,6 +409,8 @@ class MessageReceivers(Receivers):
             :type message: Any
             :param agents: agents in the swarm
             :type agents: dict[AgentID, Agent]
+            :param mavswarm_id: system ID and component ID of the mavswarm connection
+            :type mavswarm_id: AgentID
             """
             return
 
