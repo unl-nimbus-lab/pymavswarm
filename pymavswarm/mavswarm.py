@@ -78,9 +78,14 @@ class MavSwarm:
         self._logger = init_logger(__name__, log_level=log_level)
         self.__agent_list_changed = Event()
         self._agents = NotifierDict(self.__agent_list_changed)
+
+        self.__agent_list_changed.add_listener(self.__request_system_time)
+
         self._connection = Connection(log_level=log_level)
         self.__message_receivers = MessageReceivers(log_level=log_level)
-        self.__file_logger = None
+        self.__message_receivers.add_message_handler("SYSTEM_TIME", self.__sync_clocks)
+        self.__file_logger: FileLogger | None = None
+        self.__boot_time: float | None = None
 
         if log_to_file:
             self.__file_logger = FileLogger(log_filename)
@@ -90,12 +95,13 @@ class MavSwarm:
         self.__send_message_mutex = threading.Lock()
         self.__read_message_mutex = threading.Lock()
 
+        # Threads
         self.__incoming_message_thread = threading.Thread(target=self.__receive_message)
         self.__incoming_message_thread.setDaemon(True)
         self.__heartbeat_thread = threading.Thread(target=self.__send_heartbeat)
         self.__heartbeat_thread.setDaemon(True)
-        self.__timesync_thread = threading.Thread(target=self.__sync_clocks)
-        self.__timesync_thread.setDaemon(True)
+        self.__ping_thread = threading.Thread(target=self.__measure_ping)
+        self.__ping_thread.setDaemon(True)
 
         # Thread pool for sending messages
         self.__send_message_thread_pool_executor = ThreadPoolExecutor(
@@ -160,6 +166,21 @@ class MavSwarm:
 
         return None
 
+    @property
+    def time_since_boot(self) -> int | None:
+        """
+        Time since the connection was established.
+
+        :return: time since connection was established.
+        :rtype: int | None
+        """
+        time_since_boot = None
+
+        if self.__boot_time is not None:
+            time_since_boot = int((time.time() - self.__boot_time) * 1e3)
+
+        return time_since_boot
+
     def connect(
         self,
         port: str,
@@ -197,10 +218,13 @@ class MavSwarm:
         ):
             return False
 
+        # Set the boot time
+        self.__boot_time = time.time()
+
         # Start threads
         self.__incoming_message_thread.start()
         self.__heartbeat_thread.start()
-        self.__timesync_thread.start()
+        self.__ping_thread.start()
 
         return True
 
@@ -223,8 +247,8 @@ class MavSwarm:
         if self.__heartbeat_thread is not None and self.__heartbeat_thread.is_alive():
             self.__heartbeat_thread.join()
 
-        if self.__timesync_thread is not None and self.__timesync_thread.is_alive():
-            self.__timesync_thread.join()
+        if self.__ping_thread is not None and self.__ping_thread.is_alive():
+            self.__ping_thread.join()
 
         # Clear the agents list
         self._agents.clear()
@@ -2324,8 +2348,8 @@ class MavSwarm:
 
         return
 
-    def __sync_clocks(self) -> None:
-        """Signal time synchronization between agent clocks."""
+    def __measure_ping(self) -> None:
+        """Measure the latency between this system and the agents."""
         TIMESYNC_FREQ = 0.5  # Hz
 
         last_send = time.time()
@@ -2341,9 +2365,9 @@ class MavSwarm:
             if self.__send_message_mutex.acquire(timeout=0.1):
                 try:
                     # Construct ts1
-                    # We use the top 9 bytes for the timestamp and the bottom 6
+                    # We use the top 10 bytes for the timestamp and the bottom 6
                     # for the source system and source component stamps
-                    sys_time = str(int(time.time() * 1e6))[:9]
+                    sys_time = str(int(time.time() * 1e6))[:10]
                     src_sys = str(
                         self._connection.mavlink_connection.source_system
                     ).zfill(3)
@@ -2362,5 +2386,85 @@ class MavSwarm:
                     )
                 finally:
                     self.__send_message_mutex.release()
+
+        return
+
+    def __request_system_time(self, operation: str, key: AgentID, value: Agent) -> None:
+        """
+        Request the system time from the agent at the desired rate.
+
+        :param operation: _description_
+        :type operation: str
+        :param agent_id: _description_
+        :type agent_id: AgentID
+        :param agent: _description_
+        :type agent: Agent
+        """
+        REQUEST_FREQ = 0.5  # Hz
+
+        if operation == "set" and self._connection.mavlink_connection is not None:
+            # Request that the agent broadcast its system time at the target interval
+            # Note that we request that it broadcast to reduce reduncancy in the
+            # case where multiple agents establish a request for this message
+
+            def executor(agent_id: AgentID) -> None:
+                if self._connection.mavlink_connection is not None:
+                    self._connection.mavlink_connection.mav.command_long_send(
+                        agent_id[0],
+                        agent_id[1],
+                        mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+                        0,
+                        mavutil.mavlink.MAVLINK_MSG_ID_SYSTEM_TIME,
+                        1e6 / REQUEST_FREQ,
+                        0,
+                        0,
+                        0,
+                        0,
+                        2,
+                    )
+                return
+
+            future = self._send_command(
+                key,
+                executor,
+                "SET_MESSAGE_INTERVAL",
+                True,
+                2.5,
+                0.5,
+            )
+
+            while not future.done():
+                pass
+
+            response = future.result()
+
+            if not response.result:
+                self._logger.warning(
+                    "Unable to set the message interval of the SYSTEM_TIME message on "
+                    f"agent {response.target_agent_id}. This error can be safely "
+                    "ignored if the target ID is not an actual agent in the swarm or "
+                    "if state estimation is not required."
+                )
+        return
+
+    def __sync_clocks(
+        self, message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
+    ) -> None:
+        """
+        Measure the message latency between the source and the agent.
+
+        :param message: Incoming MAVLink message
+        :type message: Any
+        :param agents: agents in the swarm
+        :type agents: dict[AgentID, Agent]
+        :param mavswarm_id: system ID and component ID of the mavswarm connection
+        :type mavswarm_id: AgentID
+        """
+        agent_id = (message.get_srcSystem(), message.get_srcComponent())
+
+        if self.time_since_boot is not None and agent_id in agents:
+            agents[agent_id].update_clock_offset(
+                message.time_boot_ms - agents[agent_id].ping - self.time_since_boot
+            )
 
         return

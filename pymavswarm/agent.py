@@ -16,6 +16,8 @@
 
 from __future__ import annotations
 
+from collections import deque
+from statistics import fmean
 from typing import Any
 
 import monotonic
@@ -110,12 +112,8 @@ class Agent:
         self.__hrl_state = swarm_state.Generic(
             "hrl_state", None, optional_context_props=context_props
         )
-        self.__time_since_boot_local = swarm_state.Generic(
-            "time_since_boot_local", None, optional_context_props=context_props
-        )
-        self.__time_since_boot_global = swarm_state.Generic(
-            "time_since_boot_local", None, optional_context_props=context_props
-        )
+        self.__ping = 0
+        self.__clock_offset: deque[int] = deque(maxlen=5)
 
         return
 
@@ -334,9 +332,50 @@ class Agent:
         """
         HRL state that the agent is in.
 
+        :return: hrl state
         :rtype: str
         """
         return self.__hrl_state
+
+    @property
+    def ping(self) -> int:
+        """
+        Agent latency [ms].
+
+        :return: latency
+        :rtype: int
+        """
+        return self.__ping
+
+    @ping.setter
+    def ping(self, ping: int) -> None:
+        """
+        Set the agent latency.
+
+        :param ping: latency [ms]
+        :type ping: float
+        """
+        self.__ping = ping
+
+    def update_clock_offset(self, offset: int) -> None:
+        """
+        Update the agent clock offset relative to the source clock.
+
+        :param offset: clock offset
+        :type offset: int
+        """
+        self.__clock_offset.append(offset)
+        return
+
+    @property
+    def clock_offset(self) -> int:
+        """
+        Average offset between the source clock and agent clock.
+
+        :return: clock offset
+        :rtype: int
+        """
+        return int(fmean(self.__clock_offset))
 
     def __str__(self) -> str:
         """

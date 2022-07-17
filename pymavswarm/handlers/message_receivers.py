@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 import monotonic
@@ -403,7 +404,7 @@ class MessageReceivers(Receivers):
             message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
         ) -> None:
             """
-            Sync the agent clock with the local clock.
+            Measure the message latency between the source and the agent.
 
             :param message: Incoming MAVLink message
             :type message: Any
@@ -412,6 +413,24 @@ class MessageReceivers(Receivers):
             :param mavswarm_id: system ID and component ID of the mavswarm connection
             :type mavswarm_id: AgentID
             """
+            receive_time = time.time()
+
+            try:
+                if (
+                    int(str(message.ts1)[-6:-3]) == mavswarm_id[0]
+                    and int(str(message.ts1)[-2:]) == mavswarm_id[1]
+                ):
+                    agent_id = (message.get_srcSystem(), message.get_srcComponent())
+
+                    # Assume that the latency is equivalent in both directions
+                    agents[agent_id].ping = int(
+                        ((receive_time - float(str(message.ts1)[:-6])) / 2) * 1000
+                    )
+            except Exception:
+                self._logger.debug(
+                    "An error occurred while attempting to handle the time sync message"
+                )
+
             return
 
         return
