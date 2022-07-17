@@ -79,7 +79,7 @@ class MessageReceivers(Receivers):
             agents[agent_id].last_heartbeat.value = monotonic.monotonic()
             agents[agent_id].timeout.value = False
 
-            return agents
+            return
 
         @self._receive_message("HEARTBEAT")
         def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
@@ -119,7 +119,7 @@ class MessageReceivers(Receivers):
             except Exception:
                 self._logger.debug("An invalid heartbeat message was received")
 
-            return agents
+            return
 
         @self._receive_message("GLOBAL_POSITION_INT")
         def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
@@ -160,7 +160,7 @@ class MessageReceivers(Receivers):
                 agents[agent_id].location.longitude = message.lon / 1.0e7
                 agents[agent_id].location.altitude = message.alt / 1000
 
-            return agents
+            return
 
         @self._receive_message("ATTITUDE")
         def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
@@ -196,7 +196,7 @@ class MessageReceivers(Receivers):
                 agents[agent_id].attitude.roll_speed = message.rollspeed
                 agents[agent_id].attitude.yaw_speed = message.yawspeed
 
-            return agents
+            return
 
         @self._receive_message("SYS_STATUS")
         def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
@@ -226,7 +226,7 @@ class MessageReceivers(Receivers):
                 agents[agent_id].battery.current = message.current_battery
                 agents[agent_id].battery.level = message.battery_remaining
 
-            return agents
+            return
 
         @self._receive_message("GPS_RAW_INT")
         def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
@@ -260,7 +260,7 @@ class MessageReceivers(Receivers):
                     agent_id
                 ].gps_info.satellites_visible = message.satellites_visible
 
-            return agents
+            return
 
         @self._receive_message("EKF_STATUS_REPORT")
         def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
@@ -309,7 +309,7 @@ class MessageReceivers(Receivers):
                     message.flags & mavlink1.EKF_PRED_POS_HORIZ_ABS
                 ) > 0
 
-            return agents
+            return
 
         @self._receive_message("ATTITUDE")
         def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
@@ -345,7 +345,7 @@ class MessageReceivers(Receivers):
                 agents[agent_id].attitude.roll_speed = message.rollspeed
                 agents[agent_id].attitude.yaw_speed = message.yawspeed
 
-            return agents
+            return
 
         @self._receive_message("HOME_POSITION")
         def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
@@ -378,6 +378,6 @@ class MessageReceivers(Receivers):
                 agents[agent_id].home_position.longitude = message.longitude / 1.0e7
                 agents[agent_id].home_position.altitude = message.altitude / 1000
 
-            return agents
+            return
 
         return
