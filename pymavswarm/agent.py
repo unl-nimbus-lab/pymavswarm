@@ -110,6 +110,12 @@ class Agent:
         self.__hrl_state = swarm_state.Generic(
             "hrl_state", None, optional_context_props=context_props
         )
+        self.__time_since_boot_local = swarm_state.Generic(
+            "time_since_boot_local", None, optional_context_props=context_props
+        )
+        self.__time_since_boot_global = swarm_state.Generic(
+            "time_since_boot_local", None, optional_context_props=context_props
+        )
 
         return
 

@@ -380,4 +380,16 @@ class MessageReceivers(Receivers):
 
             return agents
 
+        @self._receive_message("TIMESYNC")
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+            """
+            Sync the agent clock with the local clock.
+
+            :param message: Incoming MAVLink message
+            :type message: Any
+            :param agents: agents in the swarm
+            :type agents: dict[AgentID, Agent]
+            """
+            return
+
         return
