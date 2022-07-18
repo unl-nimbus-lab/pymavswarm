@@ -85,7 +85,10 @@ class MavSwarm:
         self._connection = Connection(log_level=log_level)
         self.__message_receivers = MessageReceivers(log_level=log_level)
 
-        # Add a callback to handle clock synchronization
+        # Add callbacks to handle clock synchronization
+        # These callbacks are implemented here, rather than in the handlers, because
+        # of their one-off dependence on single properties
+        self.__message_receivers.add_message_handler("TIMESYNC", self.__measure_ping)
         self.__message_receivers.add_message_handler("SYSTEM_TIME", self.__sync_clocks)
 
         self.__file_logger: FileLogger | None = None
@@ -104,7 +107,7 @@ class MavSwarm:
         self.__incoming_message_thread.setDaemon(True)
         self.__heartbeat_thread = threading.Thread(target=self.__send_heartbeat)
         self.__heartbeat_thread.setDaemon(True)
-        self.__ping_thread = threading.Thread(target=self.__measure_ping)
+        self.__ping_thread = threading.Thread(target=self.__request_ping_measurement)
         self.__ping_thread.setDaemon(True)
 
         # Thread pool for sending messages
@@ -2303,12 +2306,8 @@ class MavSwarm:
             if message.get_type() in self.__message_receivers.receivers:
                 for function in self.__message_receivers.receivers[message.get_type()]:
                     with self.__access_agents_mutex:
-                        mavswarm_id = (
-                            self._connection.mavlink_connection.source_system,
-                            self._connection.mavlink_connection.source_component,
-                        )
                         try:
-                            function(message, self._agents, mavswarm_id)
+                            function(message, self._agents)
                         except Exception:
                             self._logger.exception(
                                 "Exception in message handler for "
@@ -2352,8 +2351,8 @@ class MavSwarm:
 
         return
 
-    def __measure_ping(self) -> None:
-        """Measure the latency between this system and the agents."""
+    def __request_ping_measurement(self) -> None:
+        """Send a TIMESYNC to signal ping measurement."""
         TIMESYNC_FREQ = 0.5  # Hz
 
         last_send = time.time()
@@ -2409,7 +2408,7 @@ class MavSwarm:
         if operation == "set" and self._connection.mavlink_connection is not None:
             # Request that the agent broadcast its system time at the target interval
             # Note that we request that it broadcast to reduce reduncancy in the
-            # case where multiple agents establish a request for this message
+            # case where multiple agents create a request for this message
 
             def executor(agent_id: AgentID) -> None:
                 if self._connection.mavlink_connection is not None:
@@ -2445,30 +2444,75 @@ class MavSwarm:
             if not response.result:
                 self._logger.warning(
                     "Unable to set the message interval of the SYSTEM_TIME message on "
-                    f"agent {response.target_agent_id}. This error can be safely "
+                    f"agent {response.target_agent_id}. This warning can be safely "
                     "ignored if the target ID is not an actual agent in the swarm or "
                     "if state estimation is not required."
                 )
         return
 
-    def __sync_clocks(
-        self, message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-    ) -> None:
+    def __measure_ping(self, message: Any, agents: dict[AgentID, Agent]) -> None:
         """
-        Measure the offset between the agent and source clocks.
+        Measure the message latency between the source and the agent.
+
+        This has been implemented externally to the receivers because of its dependence
+        on the MavSwarm ID.
 
         :param message: Incoming MAVLink message
         :type message: Any
         :param agents: agents in the swarm
         :type agents: dict[AgentID, Agent]
-        :param mavswarm_id: system ID and component ID of the mavswarm connection
-        :type mavswarm_id: AgentID
+        """
+        receive_time = time.time()
+
+        try:
+            if (
+                self._connection.mavlink_connection is not None
+                and int(str(message.ts1)[-6:-3])
+                == self._connection.mavlink_connection.source_system
+                and int(str(message.ts1)[-2:])
+                == self._connection.mavlink_connection.source_component
+            ):
+                agent_id = (message.get_srcSystem(), message.get_srcComponent())
+
+                ping = int((receive_time - float(str(message.ts1)[:-6])) * 1000)
+                agents[agent_id].ping.value = ping
+
+                # Log the ping to the log file
+                if self.__file_logger is not None:
+                    self.__file_logger(
+                        int(time.time() * 1.0e6),
+                        message.get_srcSystem(),
+                        message.get_srcComponent(),
+                        "PING",
+                        {"ping": ping},
+                    )
+        except Exception:
+            self._logger.debug(
+                "An error occurred while attempting to handle the time sync message"
+            )
+
+        return
+
+    def __sync_clocks(self, message: Any, agents: dict[AgentID, Agent]) -> None:
+        """
+        Measure the offset between the agent and source clocks.
+
+        This has been implemented externally from the message receivers because of its
+        dependence on the time since boot.
+
+        :param message: Incoming MAVLink message
+        :type message: Any
+        :param agents: agents in the swarm
+        :type agents: dict[AgentID, Agent]
         """
         agent_id = (message.get_srcSystem(), message.get_srcComponent())
 
         if self.time_since_boot is not None and agent_id in agents:
+            # We make the assumption that the latency is equivalent in both directions
             agents[agent_id].update_clock_offset(
-                message.time_boot_ms - agents[agent_id].ping - self.time_since_boot
+                message.time_boot_ms
+                - int(agents[agent_id].ping.value / 2)
+                - self.time_since_boot
             )
 
         return

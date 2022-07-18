@@ -91,7 +91,8 @@ class FileLogger:
         :param message: MAVLink message
         :type message: dict
         """
-        message.pop("mavpackettype")
+        if "mavpackettype" in message:
+            message.pop("mavpackettype")
 
         message_log = ""
         for key, value in message.items():

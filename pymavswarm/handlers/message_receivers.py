@@ -19,7 +19,6 @@
 from __future__ import annotations
 
 import logging
-import time
 from typing import Any
 
 import monotonic
@@ -45,9 +44,7 @@ class MessageReceivers(Receivers):
         super().__init__(__name__, log_level)
 
         @self._receive_message("HEARTBEAT")
-        def listener(
-            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-        ) -> None:
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
             Register new agents or update the timeout status of existing agents.
 
@@ -85,9 +82,7 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("HEARTBEAT")
-        def listener(
-            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-        ) -> None:
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
             Handle general agent information contained within a heartbeat.
 
@@ -127,9 +122,7 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("GLOBAL_POSITION_INT")
-        def listener(
-            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-        ) -> None:
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
             Handle the a GPS position message.
 
@@ -170,9 +163,7 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("ATTITUDE")
-        def listener(
-            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-        ) -> None:
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
             Handle an agent attitude message.
 
@@ -208,9 +199,7 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("SYS_STATUS")
-        def listener(
-            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-        ) -> None:
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
             Handle the system status message containing battery state.
 
@@ -240,9 +229,7 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("GPS_RAW_INT")
-        def listener(
-            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-        ) -> None:
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
             Handle the GPS status information.
 
@@ -276,9 +263,7 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("EKF_STATUS_REPORT")
-        def listener(
-            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-        ) -> None:
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
             Handle an EKF status message.
 
@@ -327,9 +312,7 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("ATTITUDE")
-        def listener(
-            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-        ) -> None:
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
             Handle an agent attitude message.
 
@@ -365,9 +348,7 @@ class MessageReceivers(Receivers):
             return
 
         @self._receive_message("HOME_POSITION")
-        def listener(
-            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-        ) -> None:
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
             Handle the home position message.
 
@@ -396,40 +377,6 @@ class MessageReceivers(Receivers):
                 agents[agent_id].home_position.latitude = message.latitude / 1.0e7
                 agents[agent_id].home_position.longitude = message.longitude / 1.0e7
                 agents[agent_id].home_position.altitude = message.altitude / 1000
-
-            return
-
-        @self._receive_message("TIMESYNC")
-        def listener(
-            message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
-        ) -> None:
-            """
-            Measure the message latency between the source and the agent.
-
-            :param message: Incoming MAVLink message
-            :type message: Any
-            :param agents: agents in the swarm
-            :type agents: dict[AgentID, Agent]
-            :param mavswarm_id: system ID and component ID of the mavswarm connection
-            :type mavswarm_id: AgentID
-            """
-            receive_time = time.time()
-
-            try:
-                if (
-                    int(str(message.ts1)[-6:-3]) == mavswarm_id[0]
-                    and int(str(message.ts1)[-2:]) == mavswarm_id[1]
-                ):
-                    agent_id = (message.get_srcSystem(), message.get_srcComponent())
-
-                    # Assume that the latency is equivalent in both directions
-                    agents[agent_id].ping = int(
-                        ((receive_time - float(str(message.ts1)[:-6])) / 2) * 1000
-                    )
-            except Exception:
-                self._logger.debug(
-                    "An error occurred while attempting to handle the time sync message"
-                )
 
             return
 

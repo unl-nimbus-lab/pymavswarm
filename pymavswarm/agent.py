@@ -112,7 +112,9 @@ class Agent:
         self.__hrl_state = swarm_state.Generic(
             "hrl_state", None, optional_context_props=context_props
         )
-        self.__ping = 0
+        self.__ping = swarm_state.Generic(
+            "ping", 0, optional_context_props=context_props
+        )
         self.__clock_offset: deque[int] = deque(maxlen=5)
 
         return
@@ -338,24 +340,14 @@ class Agent:
         return self.__hrl_state
 
     @property
-    def ping(self) -> int:
+    def ping(self) -> Generic:
         """
         Agent latency [ms].
 
         :return: latency
-        :rtype: int
+        :rtype: Generic
         """
         return self.__ping
-
-    @ping.setter
-    def ping(self, ping: int) -> None:
-        """
-        Set the agent latency.
-
-        :param ping: latency [ms]
-        :type ping: float
-        """
-        self.__ping = ping
 
     def update_clock_offset(self, offset: int) -> None:
         """
@@ -371,6 +363,8 @@ class Agent:
     def clock_offset(self) -> int:
         """
         Average offset between the source clock and agent clock.
+
+        This property does not implement a watcher interface.
 
         :return: clock offset
         :rtype: int
