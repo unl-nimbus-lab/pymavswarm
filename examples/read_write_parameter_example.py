@@ -43,21 +43,17 @@ def main():
     # Get the first agent in the swarm
     system_id = mavswarm.agents[0].sys_id
     component_id = mavswarm.agents[0].comp_id
-    agentTest = mavswarm.agents[0]
+    agent_test = mavswarm.agents[0]
     
     # read the sysid of the agent
-    # TODO: Check to see if this is correct? I don't think this is like the other tests, as it doesn't involve a message being sent.
     param = Parameter(system_id, component_id, "SYSID_THISMAV", False)
     param_list = [param]
-    old_sysid_test = mavswarm.read_param(param_list)
+    old_sys_id_of_test = mavswarm.read_param(param_list)
     # Try making the new sys_id a float
     new_sysid = 4
     new_sysid_param = Parameter(system_id, component_id, "SYSID_THISMAV", False, new_sysid)
     param_list2 = [new_sysid_param]
     mavswarm.set_param(param_list2)
-    
-    
-    # TODO: Follow trace back to fix bug (private variable)
     
     # Delay for a bit so that we can see the agent post mode-change
     time.sleep(5)

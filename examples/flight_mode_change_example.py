@@ -18,8 +18,26 @@ def main():
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
+    
+    parser.add_argument(
+        "flight_mode", 
+        type=str, 
+        choices=[
+            MsgMap().flight_modes.stabilize, 
+            MsgMap().flight_modes.acro, 
+            MsgMap().flight_modes.alt_hold, 
+            MsgMap().flight_modes.auto, 
+            MsgMap().flight_modes.loiter, 
+            MsgMap().flight_modes.rtl, 
+            MsgMap().flight_modes.land,  
+            MsgMap().flight_modes.throw, 
+            MsgMap().flight_modes.systemid, 
+            MsgMap().flight_modes.guided
+        ], 
+        help="the flight mode that all of the agents in the swarm will be set to"
+    )
 
-    args = parser.parse_args()
+    args = parser.parse_args()  
 
     # Create a new MavSwarm instance
     mavswarm = MavSwarm()
@@ -45,7 +63,7 @@ def main():
     mavswarm.send_msg(
         [
             SystemCommandMsg(
-                MsgMap().flight_modes.loiter, system_id, component_id, retry=False
+                args.flight_mode, system_id, component_id, retry=False
             )
         ]
     )

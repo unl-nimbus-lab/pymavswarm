@@ -71,7 +71,7 @@ def main():
             ]
         )
 
-    # # Delay for a bit so that we can see the agent(s) arm
+    # Delay for a bit so that we can see the agent(s) arm
     time.sleep(5)
 
     # Disarm each agent

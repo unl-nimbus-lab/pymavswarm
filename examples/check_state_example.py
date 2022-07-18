@@ -27,9 +27,18 @@ def main():
 
     # Create a new MavSwarm instance
     mavswarm = MavSwarm()
+    
+     # Ground control station identifier
+    gcs_system_id = 255
+    gcs_component_id = 0
 
     # Attempt to connect
-    if mavswarm.connect(args.port, args.baud):
+    if mavswarm.connect(
+        args.port,
+        args.baud,
+        source_system=gcs_system_id,
+        source_component=gcs_component_id,
+    ):
         print("Successfully established a MAVLink connection!")
     else:
         print(
@@ -39,20 +48,26 @@ def main():
 
     # Wait for the swarm to recognize agents
     while not mavswarm.agents:
+        print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # Get the first agent in the swarm
-    # system_id = mavswarm.agents[0].sys_id
-    # component_id = mavswarm.agents[0].comp_id
-    agentTest = mavswarm.agents[0]
+    # Get all agents excluding the ground control station and non-flight controller
+    # devices (devices that don't have a component ID of 1)
+    agents = filter(lambda agent: not (agent.sys_id == gcs_system_id and agent.comp_id == gcs_component_id) and agent.comp_id == 1, mavswarm.agents)
 
-    # Print these values out
-    print(
-        f"Flight mode: {agentTest.flight_mode} \n"
-        f"Arm state: {agentTest.armed} \n"
-        f"Location (latitude): {agentTest.location.latitude} \n"
-        f"System ID: {agentTest.sys_id} \ncomp_id: {agentTest.comp_id} \n"
-    )
+    # Print these values out for each agent in the network
+    for agent in agents:
+        print(
+            f"Flight mode: {agent.flight_mode} \n"
+            f"Arm state: {agent.armed} \n"
+            f"Location (latitude): {agent.location.latitude} \n"
+            f"Location (longitude): {agent.location.longitude} \n"
+            f"Location (altitude): {agent.location.altitude} \n"
+            f"System ID: {agent.sys_id} \n"
+            f"Component ID: {agent.comp_id} \n"
+            "---------------------------------------- \n"
+        )
+    
 
     # Delay for a bit so that we can see the agent post mode-change
     time.sleep(5)
