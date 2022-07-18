@@ -79,11 +79,15 @@ class MavSwarm:
         self.__agent_list_changed = Event()
         self._agents = NotifierDict(self.__agent_list_changed)
 
+        # Register a listener to update the system time publish rate
         self.__agent_list_changed.add_listener(self.__request_system_time)
 
         self._connection = Connection(log_level=log_level)
         self.__message_receivers = MessageReceivers(log_level=log_level)
+
+        # Add a callback to handle clock synchronization
         self.__message_receivers.add_message_handler("SYSTEM_TIME", self.__sync_clocks)
+
         self.__file_logger: FileLogger | None = None
         self.__boot_time: float | None = None
 
@@ -2451,7 +2455,7 @@ class MavSwarm:
         self, message: Any, agents: dict[AgentID, Agent], mavswarm_id: AgentID
     ) -> None:
         """
-        Measure the message latency between the source and the agent.
+        Measure the offset between the agent and source clocks.
 
         :param message: Incoming MAVLink message
         :type message: Any
