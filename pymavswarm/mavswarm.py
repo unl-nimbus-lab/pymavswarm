@@ -1735,9 +1735,6 @@ class MavSwarm:
         longitude: float = 0,
         altitude: float = 0,
         hold: float = 0,
-        accept_radius: float = 0,
-        pass_radius: float = 0,
-        yaw: float = 0,
         agent_ids: Union[AgentID, list[AgentID]] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
@@ -1758,17 +1755,6 @@ class MavSwarm:
         :param hold: time to stay at waypoint for rotary wing (ignored by fixed wing),
             defaults to 0
         :type hold: float, optional
-        :param accept_radius: if the sphere around the target location with this radius
-            [m] is hit, the waypoint counts as reached, defaults to 0
-        :type accept_radius: float, optional
-        :param pass_radius: 0 to pass through the WP, if > 0 radius to pass by WP.
-            Positive value for clockwise orbit, negative value for counter-clockwise
-            orbit. Allows trajectory control, defaults to 0
-        :type pass_radius: float, optional
-        :param yaw: desired yaw angle at waypoint (rotary wing). NaN to use the current
-            system yaw heading mode (e.g. yaw towards next waypoint, yaw to home,
-            etc.)., defaults to 0
-        :type yaw: float, optional
         :param agent_ids: optional list of target agent IDs, defaults to None
         :type agent_ids: Optional[Union[AgentID, list[AgentID]]],
             optional
@@ -1799,12 +1785,12 @@ class MavSwarm:
                     0,
                     mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
                     mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
-                    0,
+                    2,
                     0,
                     hold,
-                    accept_radius,
-                    pass_radius,
-                    yaw,
+                    0,
+                    0,
+                    0,
                     latitude,
                     longitude,
                     altitude,

@@ -92,15 +92,21 @@ def main() -> None:
             f"({response.target_agent_id}): {responses.code}"
         )
 
-    target_locations: dict[AgentID, tuple[float, float, float]] = {}
+    target_locations: dict[AgentID, tuple[float, float, float, float]] = {}
 
     # Get the target positions
     for agent_id in mavswarm.agent_ids:
         lat = float(input(f"Enter the target latitude for agent {agent_id}: "))
         lon = float(input(f"Enter the target longitude for agent {agent_id}: "))
         alt = float(input(f"Enter the target altitude for agent {agent_id}: "))
+        groundspeed = float(
+            input(
+                f"Enter the desired groundspeed [m/s] of agent {agent_id} when flying "
+                "to the target location: "
+            )
+        )
 
-        target_locations[agent_id] = (lat, lon, alt)
+        target_locations[agent_id] = (lat, lon, alt, groundspeed)
 
     print(f"Target locations specified: {target_locations}")
 
@@ -108,6 +114,8 @@ def main() -> None:
     input("Press any key to command the agents to fly to their waypoints")
 
     for agent_id in target_locations.keys():
+
+        # Command the agent to the target location
         future = mavswarm.goto(
             target_locations[agent_id][0],
             target_locations[agent_id][1],
@@ -126,7 +134,27 @@ def main() -> None:
             f"({response.target_agent_id}): {response.code}"
         )
 
-        if not response.result:
+        # Set the groundspeed if the goto was successfully initiated
+        if response.result:
+            print(
+                f"Attempting to set the groundspeed of agent {agent_id} to "
+                f"{target_locations[agent_id][3]} m/s"
+            )
+            future = mavswarm.set_groundspeed(
+                target_locations[agent_id][3], agent_ids=agent_id, retry=True
+            )
+
+            while not future.done():
+                pass
+
+            response = future.result()
+
+            print(
+                f"Result of {response.message_type} message sent to "
+                f"({response.target_agent_id}): {response.code}"
+            )
+
+        else:
             print(
                 f"Failed to command agent {agent_id} to location "
                 f"{target_locations[agent_id]}"
