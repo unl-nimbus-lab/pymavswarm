@@ -20,7 +20,7 @@ import logging
 from typing import Callable
 
 import pymavswarm.utils as swarm_utils
-from pymavswarm._types import MessageHandler
+from pymavswarm.types import MessageHandler
 
 
 class Receivers:

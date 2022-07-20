@@ -25,7 +25,9 @@
     "editor.formatOnSave": true,
     "editor.tabSize": 4,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.rulers": [88],
+    "editor.rulers": [
+      88
+    ],
     "rewrap.autoWrap.enabled": true,
     "rewrap.wrappingColumn": 80,
     "rewrap.wholeComment": true,
@@ -52,7 +54,9 @@
       "pymavswarm"
     ],
     "[python]": {
-      "editor.rulers": [88],
+      "editor.rulers": [
+        88
+      ],
       "editor.tabSize": 4,
       "editor.defaultFormatter": "ms-python.python",
       "editor.codeActionsOnSave": {
@@ -60,7 +64,9 @@
       }
     },
     "[markdown]": {
-      "editor.rulers": [80],
+      "editor.rulers": [
+        80
+      ],
       "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
     },
     "[dockerfile]": {

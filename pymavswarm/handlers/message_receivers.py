@@ -26,9 +26,9 @@ from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega as mavlink1
 
 import pymavswarm.state as swarm_state
-from pymavswarm._types import AgentID
 from pymavswarm.agent import Agent
 from pymavswarm.handlers.receivers import Receivers
+from pymavswarm.types import AgentID
 
 
 class MessageReceivers(Receivers):
