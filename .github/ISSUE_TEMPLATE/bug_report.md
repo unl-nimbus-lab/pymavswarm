@@ -13,7 +13,7 @@ assignees: ""
 
 ## To Reproduce
 
-*Steps to reproduce the behavior:*
+Steps to reproduce the behavior:
 
 1. *Go to '...'*
 2. *Click on '....'*
@@ -24,10 +24,10 @@ assignees: ""
 
 *A clear and concise description of what you expected to happen.*
 
-## Screenshots
+## Stack Traceback
 
-*If applicable, provide the traceback for the error. Ensure that this traceback
-is provided using code formatting.*
+*If applicable, provide the stack traceback for the error. Ensure that this
+trace is provided using code formatting.*
 
 ## Project Version
 
