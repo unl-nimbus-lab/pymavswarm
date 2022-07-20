@@ -191,7 +191,7 @@ class MavSwarm:
     def connect(
         self,
         port: str,
-        baudrate: int,
+        baudrate: int | None = None,
         source_system: int = 255,
         source_component: int = 0,
         connection_attempt_timeout: float = 2.0,
@@ -221,7 +221,11 @@ class MavSwarm:
         )
 
         if not self._connection.connect(
-            port, baudrate, source_system, source_component, connection_attempt_timeout
+            port,
+            baudrate if baudrate is not None else 115200,
+            source_system,
+            source_component,
+            connection_attempt_timeout,
         ):
             return False
 
