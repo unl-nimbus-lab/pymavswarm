@@ -28,7 +28,12 @@ import monotonic
 from pymavlink import mavutil
 
 from pymavswarm import Connection
-from pymavswarm._types import (
+from pymavswarm.agent import Agent
+from pymavswarm.handlers import MessageReceivers
+from pymavswarm.message import codes
+from pymavswarm.message.response import Response
+from pymavswarm.state import Parameter
+from pymavswarm.types import (
     AgentID,
     CommandExecutor,
     MessageCode,
@@ -36,11 +41,6 @@ from pymavswarm._types import (
     PostExecutionHandler,
     StateVerifier,
 )
-from pymavswarm.agent import Agent
-from pymavswarm.handlers import MessageReceivers
-from pymavswarm.message import codes
-from pymavswarm.message.response import Response
-from pymavswarm.state import Parameter
 from pymavswarm.utils import Event, FileLogger, NotifierDict, init_logger
 
 
