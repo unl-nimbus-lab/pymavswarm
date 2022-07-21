@@ -21,7 +21,7 @@ Here are some of the main features of `pymavswarm`:
 
 ## Dependencies
 
-`pymavswarm` depends on Python versions 3.8 or greater. Ensure that this
+`pymavswarm` depends on Python versions 3.10 or greater. Ensure that this
 dependency is met prior to installation.
 
 ## Installation
