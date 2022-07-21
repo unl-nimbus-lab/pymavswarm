@@ -38,7 +38,7 @@ class ParameterList(State):
         :param max_length: maximum length of the circular buffer
         :type max_length: int
         :param optional_context_props: optional context properties, defaults to None
-        :type optional_context_props: Optional[dict], optional
+        :type optional_context_props: dict | None, optional
         """
         super().__init__(optional_context_props)
 

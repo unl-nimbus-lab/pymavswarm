@@ -18,7 +18,6 @@ import csv
 import logging
 import os
 from datetime import datetime
-from typing import Union
 
 import pandas as pd
 
@@ -114,7 +113,7 @@ class FileLogger:
 
 def parse_log_file(
     logfile: str, message_type: str | None = None
-) -> Union[pd.DataFrame, dict[str, pd.DataFrame]]:
+) -> pd.DataFrame | dict[str, pd.DataFrame]:
     """
     Parse a pymavswarm log file.
 
@@ -124,7 +123,7 @@ def parse_log_file(
     :type message_type: str | None, optional
     :return: messages received of the specified type or a dictionary with all messages
         with their respective types as keys
-    :rtype: Union[pd.DataFrame, dict[str, pd.DataFrame]]
+    :rtype: pd.DataFrame | dict[str, pd.DataFrame]
     """
     log_dict: dict[str, pd.DataFrame] = {}
 
@@ -144,7 +143,7 @@ def parse_log_file(
         next(reader, None)
 
         for row in reader:
-            msg_dict: dict[str, Union[str, list[str]]] = {
+            msg_dict: dict[str, str | list[str]] = {
                 "timestamp": row[TIMESTAMP_IDX],
                 "system_id": row[SYS_ID_IDX],
                 "component_id": row[COMP_ID_IDX],

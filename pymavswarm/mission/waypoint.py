@@ -39,10 +39,10 @@ class Waypoint:
         :type altitude: float
         :param airspeed: target airspeed of the agent when passing through the waypoint,
             defaults to None
-        :type airspeed: Optional[float], optional
+        :type airspeed: float | None, optional
         :param groundspeed: target groundspeed of the agent when passing through the
             waypoint, defaults to None
-        :type groundspeed: Optional[float], optional
+        :type groundspeed: float | None, optional
         """
         self.__latitude = latitude
         self.__longitude = longitude
@@ -88,7 +88,7 @@ class Waypoint:
         Airspeed that the agent should have going through the waypoint.
 
         :return: agent airspeed at waypoint
-        :rtype: Optional[float]
+        :rtype: float | None
         """
         return self.__airspeed
 
@@ -98,6 +98,6 @@ class Waypoint:
         Groundspeed that the agent should have when going through the waypoint.
 
         :return: agent groundspeed at waypoint
-        :rtype: Optional[float]
+        :rtype: float | None
         """
         return self.__groundspeed
