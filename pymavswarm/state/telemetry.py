@@ -33,7 +33,7 @@ class Telemetry(State):
             defaults to 0.0
         :type drop_rate: float, optional
         :param optional_context_props: optional context properties, defaults to None
-        :type optional_context_props: Optional[dict], optional
+        :type optional_context_props: dict | None, optional
         """
         super().__init__(optional_context_props)
 

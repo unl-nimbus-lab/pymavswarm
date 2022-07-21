@@ -34,7 +34,7 @@ class SwarmMission:
         Create a new mission.
 
         :param waypoints: The set of waypoints to be executed, defaults to None
-        :type waypoints: Optional[List[Waypoint]], optional
+        :type waypoints: list[Waypoint] | None, optional
         :param log_level: The desired debugging level, defaults to logging.INFO
         :type debug: int, optional
         """
@@ -64,7 +64,7 @@ class SwarmMission:
         :type waypoint: Waypoint
         :param index: index that the waypoint should be placed at in the mission
             sequence, defaults to None
-        :type index: Optional[int], optional
+        :type index: int | None, optional
         :return: whether or not the waypoint was inserted successfully
         :rtype: bool
         """
