@@ -120,7 +120,7 @@ from __future__ import annotations
 agent_location: Location | None = None
 ```
 
-Commonly used types will appear in `pymavswarm._types`. These should be used
+Commonly used types will appear in `pymavswarm.types`. These should be used
 where applicable.
 
 ## Writing documentation

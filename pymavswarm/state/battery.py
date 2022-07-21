@@ -43,7 +43,7 @@ class Battery(State):
         :type level: float, optional
         :param optional_context_props: optional properties to add to the battery
             context, defaults to None
-        :type optional_context_props: Optional[dict], optional
+        :type optional_context_props: dict | None, optional
         """
         super().__init__(optional_context_props)
 

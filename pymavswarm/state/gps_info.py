@@ -46,7 +46,7 @@ class GPSInfo(State):
         :type satellites_visible: int, optional
         :param optional_context_props: properties to add to the context, defaults to
             None
-        :type optional_context_props: Optional[dict], optional
+        :type optional_context_props: dict | None, optional
         """
         super().__init__(optional_context_props)
 

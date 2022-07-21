@@ -20,7 +20,7 @@ import logging
 from typing import Callable
 
 import pymavswarm.utils as swarm_utils
-from pymavswarm._types import MessageHandler
+from pymavswarm.types import MessageHandler
 
 
 class Receivers:
@@ -80,7 +80,7 @@ class Receivers:
             * URL: https://github.com/dronekit/dronekit-python
 
         :param message: The type of message to watch for
-        :type message: Union[list, str]
+        :type message: list | str
         :return: decorator
         :rtype: Callable
         """

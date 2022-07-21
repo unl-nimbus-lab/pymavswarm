@@ -58,7 +58,7 @@ class EKFStatus(State):
         :type pred_pos_horiz_abs: float, optional
         :param optional_context_props: optional properties to add to the EKF status
             context, defaults to None
-        :type optional_context_props: Optional[dict], optional
+        :type optional_context_props: dict | None, optional
         """
         super().__init__(optional_context_props)
 
