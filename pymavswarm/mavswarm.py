@@ -1739,7 +1739,7 @@ class MavSwarm:
         :param y: target y position in the specified frame, defaults to 0
         :type y: float, optional
         :param z: target z position in the specified frame, defaults to 0
-        :type altitude: float, optional
+        :type z: float, optional
         :param hold: time to stay at waypoint for rotary wing (ignored by fixed wing),
             defaults to 0
         :type hold: float, optional

@@ -1,7 +1,7 @@
 mission:
   [
     {
-      !!python/tuple [3, 1]: { x: 40.832865, y: -96.695831, z: 3.0, hold: 0.0 },
-      !!python/tuple [4, 1]: { x: 40.832865, y: -96.695831, z: 4.0, hold: 0.0 },
+      !!python/tuple [3, 1]: { x: 10, y: 10, z: 3.0, hold: 0.0 },
+      !!python/tuple [4, 1]: { x: 20, y: -20, z: 4.0, hold: 0.0 },
     },
   ]

@@ -149,7 +149,7 @@ def main() -> None:
     future = mavswarm.goto(
         config_file=args.config,
         retry=True,
-        frame=mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+        frame=mavutil.mavlink.MAV_FRAME_LOCAL_FLU,
     )
     future.add_done_callback(print_message_response_cb)
 
