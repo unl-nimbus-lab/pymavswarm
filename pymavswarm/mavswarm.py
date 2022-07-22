@@ -1714,15 +1714,16 @@ class MavSwarm:
 
     def goto(
         self,
-        latitude: float = 0,
-        longitude: float = 0,
-        altitude: float = 0,
+        x: float = 0,
+        y: float = 0,
+        z: float = 0,
         hold: float = 0,
         agent_ids: AgentID | list[AgentID] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
         config_file: str | None = None,
+        frame: int = mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
     ) -> Future:
         """
         Command the agents to go to the desired location.
@@ -1733,11 +1734,11 @@ class MavSwarm:
         If using a configuration file for pre-planned goto execution, the system will
         only send commands to the agents with locations specified in the file.
 
-        :param latitude: target latitude, defaults to 0
-        :type latitude: float, optional
-        :param longitude: target longitude, defaults to 0
-        :type longitude: float, optional
-        :param altitude: target altitude, defaults to 0
+        :param x: target x position in the specified frame, defaults to 0
+        :type x: float, optional
+        :param y: target y position in the specified frame, defaults to 0
+        :type y: float, optional
+        :param z: target z position in the specified frame, defaults to 0
         :type altitude: float, optional
         :param hold: time to stay at waypoint for rotary wing (ignored by fixed wing),
             defaults to 0
@@ -1754,8 +1755,12 @@ class MavSwarm:
         :param ack_timeout: maximum amount of time allowed per attempt to verify
             acknowledgement of the goto message, defaults to 0.5 [s]
         :type ack_timeout: float, optional
-        :param config_file: file with pre-planned goto locations, defaults to None
+        :param config_file: full path to file with pre-planned goto locations, defaults
+            to None
         :type config_file: str | None, optional
+        :param frame: coordinate frame that the x, y, and z positions are provided in,
+            defaults to MAV_FRAME_GLOBAL_RELATIVE_ALT
+        :type frame: int, optional
         :return: future message response, if any
         :rtype: Future
         """
@@ -1767,7 +1772,7 @@ class MavSwarm:
 
         if config_file is not None:
             # Parse the config file
-            goto = self.__parse_yaml_mission(config_file)
+            goto = self.parse_yaml_mission(config_file)
 
             if len(goto) > 1:
                 self._logger.warning(
@@ -1795,9 +1800,9 @@ class MavSwarm:
                         0,
                         0,
                         0,
-                        goto[agent_id]["latitude"],
-                        goto[agent_id]["longitude"],
-                        goto[agent_id]["relative_altitude"],
+                        goto[agent_id]["x"],
+                        goto[agent_id]["y"],
+                        goto[agent_id]["z"],
                     )
                 return
 
@@ -1817,9 +1822,9 @@ class MavSwarm:
                         0,
                         0,
                         0,
-                        latitude,
-                        longitude,
-                        altitude,
+                        x,
+                        y,
+                        z,
                     )
                 return
 
@@ -1860,6 +1865,22 @@ class MavSwarm:
         self.__message_receivers.add_message_handler(message, callback)
 
         return
+
+    def parse_yaml_mission(self, config_file: str) -> dict:
+        """
+        Parse a pre-planned trajectory/mission.
+
+        :param config_file: configuration file to parse
+        :type config_file: str
+        :return: parsed configuration file
+        :rtype: dict
+        """
+        mission = None
+
+        with open(config_file, "r") as config:
+            mission = yaml.load(config, yaml.Loader)["mission"]
+
+        return mission
 
     def __get_expected_agent_ids(self) -> list[AgentID]:
         """
@@ -2528,19 +2549,3 @@ class MavSwarm:
             )
 
         return
-
-    def __parse_yaml_mission(self, config_file: str) -> dict:
-        """
-        Parse a pre-planned trajectory/mission.
-
-        :param config_file: configuration file to parse
-        :type config_file: str
-        :return: parsed configuration file
-        :rtype: dict
-        """
-        mission = None
-
-        with open(config_file, "r") as config:
-            mission = yaml.load(config, yaml.Loader)["mission"]
-
-        return mission
