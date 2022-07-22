@@ -1723,7 +1723,7 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
         config_file: str | None = None,
-        frame: int = mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+        frame: int = mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT,
     ) -> Future:
         """
         Command the agents to go to the desired location.
@@ -1759,12 +1759,14 @@ class MavSwarm:
             to None
         :type config_file: str | None, optional
         :param frame: coordinate frame that the x, y, and z positions are provided in,
-            defaults to MAV_FRAME_GLOBAL_RELATIVE_ALT
+            defaults to MAV_FRAME_GLOBAL_TERRAIN_ALT
         :type frame: int, optional
         :return: future message response, if any
         :rtype: Future
         """
-        if agent_ids is None or len(agent_ids) > 1:
+        if (agent_ids is None and config_file is None) or (
+            agent_ids is not None and len(agent_ids) > 1
+        ):
             self._logger.warning(
                 "More than one agent has received a command to fly to the same "
                 "location. This may result in a collision."
@@ -1792,7 +1794,7 @@ class MavSwarm:
                         agent_id[0],
                         agent_id[1],
                         0,
-                        mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                        frame,
                         mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
                         2,
                         0,
@@ -1814,7 +1816,7 @@ class MavSwarm:
                         agent_id[0],
                         agent_id[1],
                         0,
-                        mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                        frame,
                         mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
                         2,
                         0,

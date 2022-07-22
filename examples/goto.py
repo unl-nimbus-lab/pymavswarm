@@ -21,8 +21,6 @@ from argparse import ArgumentParser
 from concurrent.futures import Future
 from typing import Any
 
-from pymavlink import mavutil
-
 from pymavswarm import MavSwarm
 
 
@@ -82,22 +80,26 @@ def main() -> None:
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm()
+    mavswarm = MavSwarm(log_to_file=True)
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
         return
 
     # Get the target agents specified in the config file
-    target_agents = mavswarm.parse_yaml_mission(args.config)[0].keys()
+    target_agents = list(mavswarm.parse_yaml_mission(args.config)[0].keys())
 
     # Wait for the swarm to register all target agents
     while not all(agent_id in mavswarm.agent_ids for agent_id in target_agents):
         print("Waiting for the system to recognize all target agents...")
         time.sleep(0.5)
 
+    time.sleep(4)
+
     # Set each agent to guided mode before attempting a takeoff sequence
-    future = mavswarm.set_mode("GUIDED", agent_ids=target_agents, retry=True)
+    future = mavswarm.set_mode(
+        "GUIDED", agent_ids=target_agents, retry=True, verify_state=True
+    )
     future.add_done_callback(print_message_response_cb)
 
     while not future.done():
@@ -146,11 +148,7 @@ def main() -> None:
     # Command the agent to the target location
     # We don't need to specify the target agents because these are captured from the
     # config file
-    future = mavswarm.goto(
-        config_file=args.config,
-        retry=True,
-        frame=mavutil.mavlink.MAV_FRAME_LOCAL_FLU,
-    )
+    future = mavswarm.goto(config_file=args.config, retry=True)
     future.add_done_callback(print_message_response_cb)
 
     while not future.done():
