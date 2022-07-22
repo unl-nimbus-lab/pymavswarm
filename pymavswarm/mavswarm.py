@@ -1880,7 +1880,7 @@ class MavSwarm:
         mission = None
 
         with open(config_file, "r") as config:
-            mission = yaml.load(config, yaml.Loader)["mission"]
+            mission = yaml.load(config, yaml.FullLoader)["mission"]
 
         return mission
 
