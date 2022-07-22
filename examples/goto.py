@@ -94,8 +94,6 @@ def main() -> None:
         print("Waiting for the system to recognize all target agents...")
         time.sleep(0.5)
 
-    time.sleep(4)
-
     # Set each agent to guided mode before attempting a takeoff sequence
     future = mavswarm.set_mode(
         "GUIDED", agent_ids=target_agents, retry=True, verify_state=True
