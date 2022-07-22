@@ -1,0 +1,19 @@
+mission:
+  [
+    {
+      !!python/tuple [3, 1]:
+        {
+          latitude: 40.832865,
+          longitude: -96.695831,
+          relative_altitude: 3.0,
+          hold: 0.0,
+        },
+      !!python/tuple [4, 1]:
+        {
+          latitude: 40.832865,
+          longitude: -96.695831,
+          relative_altitude: 4.0,
+          hold: 0.0,
+        },
+    },
+  ]

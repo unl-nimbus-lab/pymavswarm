@@ -13,7 +13,8 @@ RUN pip3 install \
     pandas \
     monotonic \
     pymavlink \
-    pyserial
+    pyserial \
+    PyYAML
 
 
 ###################################################################
