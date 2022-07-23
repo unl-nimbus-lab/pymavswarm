@@ -18,10 +18,10 @@ from __future__ import annotations
 
 import time
 from argparse import ArgumentParser
+from concurrent.futures import Future
 from typing import Any
 
 from pymavswarm import MavSwarm
-from pymavswarm.types import AgentID
 
 
 def parse_args() -> Any:
@@ -36,10 +36,42 @@ def parse_args() -> Any:
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
+    parser.add_argument("config", type=str, help="Pre-planned positions to load")
     parser.add_argument(
         "--takeoff_alt", type=float, default=3.0, help="altitude to takeoff to [m]"
     )
+    parser.add_argument(
+        "--ground_speed",
+        type=float,
+        default=3.0,
+        help="ground speed that the agents should fly at when flying to the target "
+        "location",
+    )
     return parser.parse_args()
+
+
+def print_message_response_cb(future: Future) -> None:
+    """
+    Print the result of the future.
+
+    :param future: message execution future
+    :type future: Future
+    """
+    responses = future.result()
+
+    if isinstance(responses, list):
+        for response in responses:
+            print(
+                f"Result of {response.message_type} message sent to "
+                f"({response.target_agent_id}): {response.code}"
+            )
+    else:
+        print(
+            f"Result of {responses.message_type} message sent to "
+            f"({responses.target_agent_id}): {responses.code}"
+        )
+
+    return
 
 
 def main() -> None:
@@ -48,36 +80,52 @@ def main() -> None:
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm()
+    mavswarm = MavSwarm(log_to_file=True)
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
         return
 
-    # Wait for the swarm to auto-register new agents
-    while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
-        print("Waiting for the system to recognize agents in the network...")
+    # Get the target agents specified in the config file
+    target_agents = list(mavswarm.parse_yaml_mission(args.config)[0].keys())
+
+    # Wait for the swarm to register all target agents
+    while not all(agent_id in mavswarm.agent_ids for agent_id in target_agents):
+        print("Waiting for the system to recognize all target agents...")
         time.sleep(0.5)
 
     # Set each agent to guided mode before attempting a takeoff sequence
-    future = mavswarm.set_mode("GUIDED", retry=True)
+    future = mavswarm.set_mode(
+        "GUIDED", agent_ids=target_agents, retry=True, verify_state=True
+    )
+    future.add_done_callback(print_message_response_cb)
 
     while not future.done():
         pass
 
     responses = future.result()
 
-    for response in responses:
-        if not response.result:
+    # Exit if all agents didn't successfully switch into GUIDED mode
+    if isinstance(responses, list):
+        for response in responses:
+            if not response.result:
+                print(
+                    "Failed to set the flight mode of agent "
+                    f"{response.target_agent_id} to GUIDED prior to the takeoff "
+                    "sequence. Exiting."
+                )
+                return
+    else:
+        if not responses.result:
             print(
-                "Failed to set the flight mode of all agents to GUIDED prior to the "
-                "takeoff sequence. Exiting."
+                "Failed to set the flight mode of agent {responses.target_agent_id} to "
+                "GUIDED prior to the takeoff sequence. Exiting."
             )
             return
 
     # Perform takeoff with all agents in the swarm; retry on message failure
     responses = mavswarm.takeoff_sequence(
-        args.takeoff_alt, verify_state=True, retry=True
+        args.takeoff_alt, agent_ids=target_agents, verify_state=True, retry=True
     )
 
     if isinstance(responses, list):
@@ -92,63 +140,39 @@ def main() -> None:
             f"({response.target_agent_id}): {responses.code}"
         )
 
-    target_locations: dict[AgentID, tuple[float, float, float]] = {}
-
-    # Get the target positions
-    for agent_id in mavswarm.agent_ids:
-        lat = float(input(f"Enter the target latitude for agent {agent_id}: "))
-        lon = float(input(f"Enter the target longitude for agent {agent_id}: "))
-        alt = float(input(f"Enter the target altitude for agent {agent_id}: "))
-
-        target_locations[agent_id] = (lat, lon, alt)
-
-    print(f"Target locations specified: {target_locations}")
-
     # Wait for the user to indicate that the agents should fly to their waypoints
     input("Press any key to command the agents to fly to their waypoints")
 
-    for agent_id in target_locations.keys():
-        future = mavswarm.goto(
-            target_locations[agent_id][0],
-            target_locations[agent_id][1],
-            target_locations[agent_id][2],
-            agent_ids=agent_id,
-            retry=True,
-        )
+    # Command the agent to the target location
+    # We don't need to specify the target agents because these are captured from the
+    # config file
+    future = mavswarm.goto(config_file=args.config, retry=True)
+    future.add_done_callback(print_message_response_cb)
 
-        while not future.done():
-            pass
+    while not future.done():
+        pass
 
-        response = future.result()
+    # Set the groundspeed
+    future = mavswarm.set_groundspeed(
+        args.ground_speed, agent_ids=target_agents, retry=True
+    )
+    future.add_done_callback(print_message_response_cb)
 
-        print(
-            f"Result of {response.message_type} message sent to "
-            f"({response.target_agent_id}): {response.code}"
-        )
-
-        if not response.result:
-            print(
-                f"Failed to command agent {agent_id} to location "
-                f"{target_locations[agent_id]}"
-            )
+    while not future.done():
+        pass
 
     # Wait for user input
     input("Press any key to command the agents to land")
 
     # Attempt to land the agents
-    future = mavswarm.set_mode("LAND", retry=True, verify_state=True)
+    future = mavswarm.set_mode(
+        "LAND", agent_ids=target_agents, retry=True, verify_state=True
+    )
+    future.add_done_callback(print_message_response_cb)
 
     # Wait for the land command to complete
     while not future.done():
         pass
-
-    landing_responses = future.result()
-
-    for response in landing_responses:
-        print(
-            f"Result of {response.message_type} message sent to "
-            f"({response.target_agent_id}): {response.code}"
-        )
 
     # Disconnect from the swarm
     mavswarm.disconnect()
