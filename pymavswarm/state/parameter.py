@@ -16,8 +16,6 @@
 
 from __future__ import annotations
 
-from typing import Union
-
 
 class Parameter:
     """Parameter that has been read from an agent."""
@@ -25,7 +23,7 @@ class Parameter:
     def __init__(
         self,
         parameter_id: str,
-        parameter_value: Union[float, int],
+        parameter_value: float | int,
         parameter_type: int,
         parameter_index: int,
         parameter_count: int,
@@ -36,7 +34,7 @@ class Parameter:
         :param param_id: parameter ID
         :type param_id: str
         :param param_value: parameter value
-        :type param_value: Union[float, int]
+        :type param_value: float | int
         :param param_type: type of value that the parameter may contain (should be
             6: float or int)
         :type param_type: int
@@ -64,12 +62,12 @@ class Parameter:
         return self.__parameter_id
 
     @property
-    def parameter_value(self) -> Union[float, int]:
+    def parameter_value(self) -> float | int:
         """
         Parameter value.
 
         :return: parameter value
-        :rtype: Union[float, int]
+        :rtype: float | int
         """
         return self.__parameter_value
 

@@ -47,3 +47,4 @@ repos:
         language_version: python3.10
       - id: check-toml
       - id: check-yaml
+        args: ["--unsafe"]

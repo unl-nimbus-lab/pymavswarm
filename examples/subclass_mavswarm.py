@@ -20,11 +20,12 @@ import logging
 import time
 from argparse import ArgumentParser
 from concurrent.futures import Future
-from typing import Any, Union
+from typing import Any
 
 import monotonic
 
 from pymavswarm import Agent, MavSwarm
+from pymavswarm.types import AgentID
 
 
 class CustomMavSwarm(MavSwarm):
@@ -45,7 +46,7 @@ class CustomMavSwarm(MavSwarm):
 
     def fun_command(
         self,
-        agent_ids: Union[tuple[int, int], list[tuple[int, int]]] | None = None,
+        agent_ids: AgentID | list[AgentID] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -54,7 +55,7 @@ class CustomMavSwarm(MavSwarm):
         Send a fun command to the specified agents.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: Optional[Union[tuple[int, int], list[tuple[int, int]]]],
+        :type agent_ids: AgentID | list[AgentID] | None,
             optional
         :param retry: retry sending the fun command to an agent on failure, defaults to
             False

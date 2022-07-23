@@ -18,10 +18,11 @@ Here are some of the main features of `pymavswarm`:
 - Develop applications for on-board companion computers
 - Implement custom swarm ground control stations
 - Log incoming MAVLink messages for future evaluation and debugging
+- Construct pre-planned missions
 
 ## Dependencies
 
-`pymavswarm` depends on Python versions 3.8 or greater. Ensure that this
+`pymavswarm` depends on Python versions 3.10 or greater. Ensure that this
 dependency is met prior to installation.
 
 ## Installation

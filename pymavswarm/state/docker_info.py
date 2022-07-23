@@ -41,7 +41,7 @@ class DockerInfo(State):
         :type last_update: datetime.datetime, optional
         :param optional_context_props: optional properties to add to the DockerInfo
             context, defaults to None
-        :type optional_context_props: Optional[dict], optional
+        :type optional_context_props: dict | None, optional
         """
         super().__init__(optional_context_props)
 

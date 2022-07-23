@@ -42,7 +42,7 @@ class Location(State):
         :type altitude: float, optional
         :param optional_context_props: properties to add to the location context,
             defaults to None
-        :type optional_context_props: Optional[dict], optional
+        :type optional_context_props: dict | None, optional
         """
         super().__init__(optional_context_props)
 
