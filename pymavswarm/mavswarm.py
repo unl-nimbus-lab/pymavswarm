@@ -25,6 +25,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any
 
 import monotonic
+import yaml  # type: ignore
 from pymavlink import mavutil
 
 from pymavswarm import Connection
@@ -1713,14 +1714,16 @@ class MavSwarm:
 
     def goto(
         self,
-        latitude: float = 0,
-        longitude: float = 0,
-        altitude: float = 0,
+        x: float = 0,
+        y: float = 0,
+        z: float = 0,
         hold: float = 0,
         agent_ids: AgentID | list[AgentID] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
+        config_file: str | None = None,
+        frame: int = mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT,
     ) -> Future:
         """
         Command the agents to go to the desired location.
@@ -1728,12 +1731,15 @@ class MavSwarm:
         Use this cautiously. If multiple agents fly to the same location, there may be
         a collision at this location.
 
-        :param latitude: target latitude, defaults to 0
-        :type latitude: float, optional
-        :param longitude: target longitude, defaults to 0
-        :type longitude: float, optional
-        :param altitude: target altitude, defaults to 0
-        :type altitude: float, optional
+        If using a configuration file for pre-planned goto execution, the system will
+        only send commands to the agents with locations specified in the file.
+
+        :param x: target x position in the specified frame, defaults to 0
+        :type x: float, optional
+        :param y: target y position in the specified frame, defaults to 0
+        :type y: float, optional
+        :param z: target z position in the specified frame, defaults to 0
+        :type z: float, optional
         :param hold: time to stay at waypoint for rotary wing (ignored by fixed wing),
             defaults to 0
         :type hold: float, optional
@@ -1749,34 +1755,80 @@ class MavSwarm:
         :param ack_timeout: maximum amount of time allowed per attempt to verify
             acknowledgement of the goto message, defaults to 0.5 [s]
         :type ack_timeout: float, optional
+        :param config_file: full path to file with pre-planned goto locations, defaults
+            to None
+        :type config_file: str | None, optional
+        :param frame: coordinate frame that the x, y, and z positions are provided in,
+            defaults to MAV_FRAME_GLOBAL_TERRAIN_ALT
+        :type frame: int, optional
         :return: future message response, if any
         :rtype: Future
         """
-        if agent_ids is None or len(agent_ids) > 1:
+        if (agent_ids is None and config_file is None) or (
+            agent_ids is not None and len(agent_ids) > 1
+        ):
             self._logger.warning(
                 "More than one agent has received a command to fly to the same "
                 "location. This may result in a collision."
             )
 
-        def executor(agent_id: AgentID) -> None:
-            if self._connection.mavlink_connection is not None:
-                self._connection.mavlink_connection.mav.mission_item_send(
-                    agent_id[0],
-                    agent_id[1],
-                    0,
-                    mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
-                    mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
-                    2,
-                    0,
-                    hold,
-                    0,
-                    0,
-                    0,
-                    latitude,
-                    longitude,
-                    altitude,
+        if config_file is not None:
+            # Parse the config file
+            goto = self.parse_yaml_mission(config_file)
+
+            if len(goto) > 1:
+                self._logger.warning(
+                    "More than one stage was provided in the goto configuration file. "
+                    "The system will use only the first stage for command execution."
                 )
-            return
+
+            # Get only the first stage
+            goto = goto[0]
+
+            # Get the agent IDs in the first stage
+            agent_ids = list(goto.keys())
+
+            def executor(agent_id: AgentID) -> None:
+                if self._connection.mavlink_connection is not None:
+                    self._connection.mavlink_connection.mav.mission_item_send(
+                        agent_id[0],
+                        agent_id[1],
+                        0,
+                        frame,
+                        mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
+                        2,
+                        0,
+                        goto[agent_id]["hold"],
+                        0,
+                        0,
+                        0,
+                        goto[agent_id]["x"],
+                        goto[agent_id]["y"],
+                        goto[agent_id]["z"],
+                    )
+                return
+
+        else:
+
+            def executor(agent_id: AgentID) -> None:
+                if self._connection.mavlink_connection is not None:
+                    self._connection.mavlink_connection.mav.mission_item_send(
+                        agent_id[0],
+                        agent_id[1],
+                        0,
+                        frame,
+                        mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
+                        2,
+                        0,
+                        hold,
+                        0,
+                        0,
+                        0,
+                        x,
+                        y,
+                        z,
+                    )
+                return
 
         return self._send_command(
             agent_ids,
@@ -1815,6 +1867,22 @@ class MavSwarm:
         self.__message_receivers.add_message_handler(message, callback)
 
         return
+
+    def parse_yaml_mission(self, config_file: str) -> dict:
+        """
+        Parse a pre-planned trajectory/mission.
+
+        :param config_file: configuration file to parse
+        :type config_file: str
+        :return: parsed configuration file
+        :rtype: dict
+        """
+        mission = None
+
+        with open(config_file, "r") as config:
+            mission = yaml.load(config, yaml.FullLoader)["mission"]
+
+        return mission
 
     def __get_expected_agent_ids(self) -> list[AgentID]:
         """
