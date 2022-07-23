@@ -152,15 +152,14 @@ def main() -> None:
     while not future.done():
         pass
 
-    # Set the groundspeed if the goto was successfully initiated
-    if response.result:
-        future = mavswarm.set_groundspeed(
-            args.ground_speed, agent_ids=target_agents, retry=True
-        )
-        future.add_done_callback(print_message_response_cb)
+    # Set the groundspeed
+    future = mavswarm.set_groundspeed(
+        args.ground_speed, agent_ids=target_agents, retry=True
+    )
+    future.add_done_callback(print_message_response_cb)
 
-        while not future.done():
-            pass
+    while not future.done():
+        pass
 
     # Wait for user input
     input("Press any key to command the agents to land")
