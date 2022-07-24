@@ -7,8 +7,6 @@ Several examples have been implemented to demonstrate how to use and extend the
 - `check_state.py`: demonstrates how to check the state of swarm agents; also
 demonstrates how to log data to a [`tlog`](https://ardupilot.org/copter/docs/common-mission-planner-telemetry-logs.html)
 file
-- `companion_computer.py`: demonstrates how to send commands from a companion
-computer
 - `custom_observer.py`: demonstrates how to implement a callback for an agent
 state change
 - `goto.py`: demonstrates how to command an agent to fly to a specified location

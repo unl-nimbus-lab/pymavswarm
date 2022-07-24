@@ -89,14 +89,15 @@
     }
   },
   "extensions": [
-    "ms-azuretools.vscode-docker",
-    "ms-python.python",
-    "njpwerner.autodocstring",
-    "ms-python.vscode-pylance",
-    "DavidAnson.vscode-markdownlint",
-    "esbenp.prettier-vscode",
-    "LittleFoxTeam.vscode-python-test-adapter",
-    "tamasfe.even-better-toml"
-  ],
+	"ms-azuretools.vscode-docker",
+	"ms-python.python",
+	"njpwerner.autodocstring",
+	"ms-python.vscode-pylance",
+	"DavidAnson.vscode-markdownlint",
+	"esbenp.prettier-vscode",
+	"LittleFoxTeam.vscode-python-test-adapter",
+	"tamasfe.even-better-toml",
+	"alefragnani.Bookmarks"
+],
   "postStartCommand": "pip3 install -e ."
 }

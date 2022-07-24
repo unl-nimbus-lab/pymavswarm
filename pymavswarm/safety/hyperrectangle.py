@@ -16,6 +16,8 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+
 from pymavswarm.safety import Interval
 
 
@@ -115,3 +117,47 @@ class HyperRectangle:
                 return False
 
         return True
+
+    def convex_hull(
+        self, contained: HyperRectangle, in_place: bool = True
+    ) -> HyperRectangle | None:
+        if self.__dimensions != contained.dimensions:
+            raise ValueError(
+                f"The dimensions of the provided rectangle {contained.dimensions} is "
+                f"not equal to the current dimensions {self.__dimensions}"
+            )
+
+        if not in_place:
+            result_rect = deepcopy(self)
+
+        for dim in range(self.__dimensions):
+            if (
+                contained.intervals[dim].interval_min
+                < self.__intervals[dim].interval_min
+            ):
+                if in_place:
+                    self.__intervals[dim].interval_min = contained.intervals[
+                        dim
+                    ].interval_min
+                else:
+                    result_rect.intervals[dim].interval_min = contained.intervals[
+                        dim
+                    ].interval_min
+
+            if (
+                contained.intervals[dim].interval_max
+                > self.__intervals[dim].interval_max
+            ):
+                if in_place:
+                    self.__intervals[dim].interval_max = contained.intervals[
+                        dim
+                    ].interval_max
+                else:
+                    result_rect.intervals[dim].interval_max = contained.intervals[
+                        dim
+                    ].interval_max
+
+        if not in_place:
+            return result_rect
+
+        return None

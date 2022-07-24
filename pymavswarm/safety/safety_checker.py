@@ -1,3 +1,4 @@
+import time
 from copy import deepcopy
 
 import numpy as np
@@ -17,10 +18,9 @@ class SafetyChecker:
         original: HyperRectangle,
         bloated: HyperRectangle,
         face: int,
-        neighbor_width: float,
+        neighborhood_width: float,
     ) -> HyperRectangle:
         result = deepcopy(bloated)
-        original = deepcopy(original)
 
         dim = int(face / 2)
 
@@ -31,10 +31,10 @@ class SafetyChecker:
             result.intervals[dim].interval_min = original.intervals[dim].interval_max
             result.intervals[dim].interval_max = original.intervals[dim].interval_max
 
-        if neighbor_width < 0:
-            result.intervals[dim].interval_min += neighbor_width
+        if neighborhood_width < 0:
+            result.intervals[dim].interval_min += neighborhood_width
         else:
-            result.intervals[dim].interval_max += neighbor_width
+            result.intervals[dim].interval_max += neighborhood_width
 
         return result
 
@@ -97,12 +97,12 @@ class SafetyChecker:
         self,
         rect: HyperRectangle,
         acceleration: tuple[float, float, float],
-        step_size: int,
+        step_size: float,
         time_remaining: float,
     ) -> tuple[HyperRectangle, float]:
         bloated_rect = deepcopy(rect)
         recompute = True
-        neighbor_widths = np.zeros(rect.faces)
+        neighborhood_widths = np.zeros(rect.faces)
         derivatives: list[float] = []
 
         while recompute:
@@ -115,7 +115,7 @@ class SafetyChecker:
 
                 # Compute the candidate neighborhood
                 neighbor_rect = self.__make_neighborhood_rectangle(
-                    rect, bloated_rect, face, neighbor_widths[face]
+                    rect, bloated_rect, face, neighborhood_widths[face]
                 )
 
                 # Compute the face derivative
@@ -124,7 +124,7 @@ class SafetyChecker:
                 )
 
                 # Calculate the face widths
-                prev_neighbor_width = neighbor_widths[face]
+                prev_neighbor_width = neighborhood_widths[face]
                 updated_neighbor_width = derivative * step_size
 
                 # Check if the face width grew outward
@@ -149,7 +149,7 @@ class SafetyChecker:
 
                 # Adjust the bloated rectangle
                 if recompute:
-                    neighbor_widths[face] = updated_neighbor_width
+                    neighborhood_widths[face] = updated_neighbor_width
 
                     if is_min and updated_neighbor_width < 0:
                         bloated_rect.intervals[dimension].interval_min = (
@@ -202,3 +202,51 @@ class SafetyChecker:
             raise RuntimeError("Lifted rectangle is outside of the bloated rectangle")
 
         return rect, time_to_elapse
+
+    def face_lifting_iterative_improvement(
+        self,
+        rect: HyperRectangle,
+        local_start_time: float,
+        acceleration: tuple[float, float, float],
+        initial_step_size: float = 0.01,
+        reach_time: float = 2.0,
+        timeout: float = 0.01,
+        min_step_size: float = 0.0000001,
+    ):
+        # Begin with the initial step size, this will decrease each iteration to
+        # improve the accuracy of the result
+        step_size = initial_step_size
+
+        # Initialize the return values
+        hull = deepcopy(rect)
+        end_time = local_start_time
+
+        start_t = time.time()
+
+        # Improve the accuracy of the reachable set iteratively until timeout
+        while time.time() - start_t < timeout:
+            # Exit early if the step size shrinks too much
+            if step_size < min_step_size:
+                break
+
+            reach_time_remaining = reach_time
+            reach_time_advance = 0.0
+
+            while reach_time_remaining > 0:
+                rect_result, reach_time_elapsed = self.__single_face_lift(
+                    rect, acceleration, step_size, reach_time_remaining
+                )
+
+                updated_hull = hull.convex_hull(rect_result, in_place=False)
+
+                if updated_hull is not None:
+                    hull = updated_hull
+
+                reach_time_advance += reach_time_elapsed
+                end_time = local_start_time + 1000 * reach_time_advance
+
+                reach_time_remaining -= reach_time_elapsed
+
+            step_size /= 2.0
+
+        return hull, end_time
