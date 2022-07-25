@@ -1,3 +1,21 @@
+# pymavswarm is an interface for swarm control and interaction
+# Copyright (C) 2022  Evan Palmer
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+from __future__ import annotations
+
 import time
 from copy import deepcopy
 
@@ -212,7 +230,32 @@ class SafetyChecker:
         reach_time: float = 2.0,
         timeout: float = 0.01,
         min_step_size: float = 0.0000001,
-    ):
+    ) -> tuple[HyperRectangle, float]:
+        """
+        Perform the face lifting algorithm to compute the reachable set.
+
+        :param rect: current state of the agent that sent the position message
+        :type rect: HyperRectangle
+        :param local_start_time: time since boot of the agent that sent the message in
+            the local clock [ms]
+        :type local_start_time: float
+        :param acceleration: acceleration of the agent that sent the position message
+        :type acceleration: tuple[float, float, float]
+        :param initial_step_size: step size to start the algorithm with, defaults to
+            0.01
+        :type initial_step_size: float, optional
+        :param reach_time: maximum reach time [s], defaults to 2.0
+        :type reach_time: float, optional
+        :param timeout: maximum time to execute the face lifting algorithm [s],
+            defaults to 0.01
+        :type timeout: float, optional
+        :param min_step_size: minimum step size to allow before automatically
+            cancelling the algorithm's execution, defaults to 0.0000001
+        :type min_step_size: float, optional
+        :return: reachable set, time in the local clock that the algorithm has
+            computed forward
+        :rtype: tuple[HyperRectangle, float]
+        """
         # Begin with the initial step size, this will decrease each iteration to
         # improve the accuracy of the result
         step_size = initial_step_size
@@ -250,3 +293,63 @@ class SafetyChecker:
             step_size /= 2.0
 
         return hull, end_time
+
+    def check_collision(
+        self,
+        current_state: HyperRectangle,
+        sender_state: HyperRectangle,
+        allowable_distance: float,
+    ) -> bool:
+        """
+        Check for a potential collision between the two agents.
+
+        :param current_state: state of the agent that received the message
+        :type current_state: HyperRectangle
+        :param sender_state: state of the agent that sent the position message
+        :type sender_state: HyperRectangle
+        :param allowable_distance: minimum allowable distance between agents
+        :type allowable_distance: float
+        :return: potential collision detected
+        :rtype: bool
+        """
+        current_min_pos = np.array(
+            [
+                current_state.intervals[0].interval_min,
+                current_state.intervals[1].interval_min,
+                current_state.intervals[2].interval_min,
+            ]
+        )
+
+        current_max_pos = np.array(
+            [
+                current_state.intervals[0].interval_max,
+                current_state.intervals[1].interval_max,
+                current_state.intervals[2].interval_max,
+            ]
+        )
+
+        sender_min_pos = np.array(
+            [
+                sender_state.intervals[0].interval_min,
+                sender_state.intervals[1].interval_min,
+                sender_state.intervals[2].interval_min,
+            ]
+        )
+
+        sender_max_pos = np.array(
+            [
+                sender_state.intervals[0].interval_max,
+                sender_state.intervals[1].interval_max,
+                sender_state.intervals[2].interval_max,
+            ]
+        )
+
+        # Calculate the distances between the intervals
+        distances = [
+            np.linalg.norm(sender_min_pos - current_min_pos),
+            np.linalg.norm(sender_min_pos - current_max_pos),
+            np.linalg.norm(sender_max_pos - current_min_pos),
+            np.linalg.norm(sender_max_pos - current_max_pos),
+        ]
+
+        return min(distances) < allowable_distance  # type: ignore

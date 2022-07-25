@@ -14,6 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .hyperrectangle import HyperRectangle
-from .interval import Interval
-from .safety_checker import SafetyChecker
+import unittest
+
+from pymavswarm.safety import HyperRectangle, Interval, SafetyChecker
+
+
+class TestSafetyChecker(unittest.TestCase):
+    """Test the SafetyChecker class."""
+
+    def test_check_collision(self) -> None:
+        pass
+
+    def test_face_lifting_iterative_improvement(self) -> None:
+        pass
+
+
+if __name__ == "__main__":
+    unittest.main()

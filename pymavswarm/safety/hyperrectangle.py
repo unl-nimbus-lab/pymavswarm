@@ -29,23 +29,20 @@ class HyperRectangle:
     https://github.com/verivital/rtreach/blob/master/src/geometry.c
     """
 
-    def __init__(self, dimensions: int) -> None:
+    def __init__(self, intervals: list[Interval]) -> None:
         """
         Create a new hyperrectangle.
 
-        :param dimensions: number of dimensions that the hyperrectangle should exist in
-        :type dimensions: int
+        TODO: Document intervals
         """
-        if dimensions <= 0:
+        if len(intervals) <= 0:
             raise ValueError(
                 "Invalid HyperRectangle dimensions provided. Ensure that the "
                 "dimensions are non-negative."
             )
 
         # Construct the dimensions for the hyper-rectangle
-        self.__intervals: list[Interval] = [
-            Interval(0, float("inf")) for _ in range(dimensions)
-        ]
+        self.__intervals = intervals
         self.__dimensions = len(self.__intervals)
         self.__faces = 2 * len(self.__intervals)
 
@@ -121,6 +118,18 @@ class HyperRectangle:
     def convex_hull(
         self, contained: HyperRectangle, in_place: bool = True
     ) -> HyperRectangle | None:
+        """
+        Compute the convex hull of the this rectangle and the contained rectangle.
+
+        :param contained: rectangle to compute the convex hull with
+        :type contained: HyperRectangle
+        :param in_place: compute the hull in place, defaults to True
+        :type in_place: bool, optional
+        :raises ValueError: dimensions of the containing rectangle don't match the
+            dimensions of this rectangle
+        :return: convex hull if not computed in place
+        :rtype: HyperRectangle | None
+        """
         if self.__dimensions != contained.dimensions:
             raise ValueError(
                 f"The dimensions of the provided rectangle {contained.dimensions} is "
