@@ -1884,7 +1884,7 @@ class MavSwarm:
         mission = None
 
         with open(config_file, "r") as config:
-            mission = yaml.load(config, yaml.FullLoader)["mission"]
+            mission = yaml.load(config, yaml.FullLoader)["mission"]  # nosec: B506
 
         return mission
 

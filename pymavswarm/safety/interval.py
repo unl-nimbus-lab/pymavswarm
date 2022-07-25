@@ -61,7 +61,7 @@ class Interval:
         """
         Maximum interval value.
 
-        :return: inverval maximum
+        :return: interval maximum
         :rtype: float
         """
         return self.__interval_max
