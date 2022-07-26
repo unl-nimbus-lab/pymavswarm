@@ -53,6 +53,11 @@ class MavSwarm:
     configuring agents.
     """
 
+    # Collision response constants
+    COLLISION_RESPONSE_LAND = 0
+    COLLISION_RESPONSE_RTL = 1
+    COLLISION_RESPONSE_LOITER = 2
+
     def __init__(
         self,
         max_workers: int = 5,
@@ -377,6 +382,7 @@ class MavSwarm:
         ack_timeout: float = 0.5,
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
+        force: bool = False,
     ) -> Future:
         """
         Disarm the desired agents.
@@ -400,6 +406,8 @@ class MavSwarm:
         :param verify_state_timeout: maximum amount of time allowed per attempt to
             verify that an agent is in the disarmed state, defaults to 1.0 [s]
         :type verify_state_timeout: float, optional
+        :param force: force disarm the agents, defaults to False
+        :type force: bool, optional
         :return: future message response, if any
         :rtype: Future
         """
@@ -412,7 +420,7 @@ class MavSwarm:
                     mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                     0,
                     0,
-                    0,
+                    0 if not force else 21196,
                     0,
                     0,
                     0,
@@ -1842,6 +1850,25 @@ class MavSwarm:
             message_timeout,
             ack_timeout,
         )
+
+    def handle_collision(self, collision_response: int) -> Future:
+        """
+        Execute a collision response.
+
+        :param collision_response: integer dictating the collision response, available
+            as a MavSwarm constant
+        :type collision_response: int
+        :return: future result of collision response call
+        :rtype: Future
+        """
+        if collision_response == MavSwarm.COLLISION_RESPONSE_LAND:
+            pass
+        elif collision_response == MavSwarm.COLLISION_RESPONSE_LOITER:
+            pass
+        elif collision_response == MavSwarm.COLLISION_RESPONSE_RTL:
+            pass
+        else:
+            raise ValueError("An invalid collision response was provided")
 
     def get_agent_by_id(self, agent_id: AgentID) -> Agent | None:
         """
