@@ -24,9 +24,6 @@ from pymavswarm.safety.interval import Interval
 class HyperRectangle:
     """
     Orthotope used for computing reachable drone states.
-
-    This implementation has been inspired by the following source:
-    https://github.com/verivital/rtreach/blob/master/src/geometry.c
     """
 
     def __init__(self, intervals: list[Interval]) -> None:
@@ -95,27 +92,26 @@ class HyperRectangle:
             ]
         )
 
-    def contains(self, inside_rectangle: HyperRectangle) -> bool:
+    def contains(self, inside: HyperRectangle) -> bool:
         """
         Determine if this hyperrectangle contains the given hyperrectangle.
 
-        :param inside_rectangle: hyperrectangle to check for containment
-        :type inside_rectangle: HyperRectangle
-        :return: inside_rectangle is contained by this hyperrectangle
+        :param inside: hyperrectangle to check for containment
+        :type inside: HyperRectangle
+        :return: inside is contained by this hyperrectangle
         :rtype: bool
         """
-        if self.__dimensions != inside_rectangle.dimensions:
+        if self.__dimensions != inside.dimensions:
             raise ValueError(
                 "The provided rectangle does not have the same dimensions as this "
                 f"rectangle. Expected dimensions: {self.__dimensions}, but got "
-                f"{inside_rectangle.dimensions}"
+                f"{inside.dimensions}"
             )
 
         for dim in range(self.__dimensions):
             if (
-                inside_rectangle.intervals[dim].interval_min
-                < self.__intervals[dim].interval_min
-                or inside_rectangle.intervals[dim].interval_max
+                inside.intervals[dim].interval_min < self.__intervals[dim].interval_min
+                or inside.intervals[dim].interval_max
                 > self.__intervals[dim].interval_max
             ):
                 return False
@@ -123,13 +119,13 @@ class HyperRectangle:
         return True
 
     def convex_hull(
-        self, contained: HyperRectangle, in_place: bool = True
+        self, rect: HyperRectangle, in_place: bool = True
     ) -> HyperRectangle | None:
         """
-        Compute the convex hull of this rectangle and the contained rectangle.
+        Compute the convex hull of this rectangle and another rectangle.
 
-        :param contained: rectangle to compute the convex hull with
-        :type contained: HyperRectangle
+        :param rect: rectangle to compute the convex hull with
+        :type rect: HyperRectangle
         :param in_place: compute the hull in place, defaults to True
         :type in_place: bool, optional
         :raises ValueError: dimensions of the containing rectangle don't match the
@@ -137,9 +133,9 @@ class HyperRectangle:
         :return: convex hull if not computed in place
         :rtype: HyperRectangle | None
         """
-        if self.__dimensions != contained.dimensions:
+        if self.__dimensions != rect.dimensions:
             raise ValueError(
-                f"The dimensions of the provided rectangle {contained.dimensions} is "
+                f"The dimensions of the provided rectangle {rect.dimensions} is "
                 f"not equal to the current dimensions {self.__dimensions}"
             )
 
@@ -147,29 +143,23 @@ class HyperRectangle:
             result_rect = deepcopy(self)
 
         for dim in range(self.__dimensions):
-            if (
-                contained.intervals[dim].interval_min
-                < self.__intervals[dim].interval_min
-            ):
+            if rect.intervals[dim].interval_min < self.__intervals[dim].interval_min:
                 if in_place:
-                    self.__intervals[dim].interval_min = contained.intervals[
+                    self.__intervals[dim].interval_min = rect.intervals[
                         dim
                     ].interval_min
                 else:
-                    result_rect.intervals[dim].interval_min = contained.intervals[
+                    result_rect.intervals[dim].interval_min = rect.intervals[
                         dim
                     ].interval_min
 
-            if (
-                contained.intervals[dim].interval_max
-                > self.__intervals[dim].interval_max
-            ):
+            if rect.intervals[dim].interval_max > self.__intervals[dim].interval_max:
                 if in_place:
-                    self.__intervals[dim].interval_max = contained.intervals[
+                    self.__intervals[dim].interval_max = rect.intervals[
                         dim
                     ].interval_max
                 else:
-                    result_rect.intervals[dim].interval_max = contained.intervals[
+                    result_rect.intervals[dim].interval_max = rect.intervals[
                         dim
                     ].interval_max
 
@@ -177,3 +167,12 @@ class HyperRectangle:
             return result_rect
 
         return None
+
+    def __str__(self) -> str:
+        """
+        Print a hyperrectangle in a human-readable format.
+
+        :return: hyperrectangle
+        :rtype: str
+        """
+        return f"HyperRectangle: {[str(inter) for inter in self.__intervals]}"

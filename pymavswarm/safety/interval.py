@@ -29,6 +29,11 @@ class Interval:
         :param interval_max: maximum interval value
         :type interval_max: float
         """
+        if interval_min > interval_max:
+            raise ValueError(
+                "Ensure that the interval minimum is smaller than the interval maximum."
+            )
+
         self.__interval_min = interval_min
         self.__interval_max = interval_max
 
@@ -77,3 +82,12 @@ class Interval:
         self.__interval_max = max_value
 
         return
+
+    def __str__(self) -> str:
+        """
+        Print an interval in a human-readable format.
+
+        :return: interval
+        :rtype: str
+        """
+        return f"Interval: ({self.__interval_min}, {self.__interval_max})"

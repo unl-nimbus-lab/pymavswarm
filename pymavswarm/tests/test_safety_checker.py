@@ -22,10 +22,202 @@ from pymavswarm.safety import HyperRectangle, Interval, SafetyChecker
 class TestSafetyChecker(unittest.TestCase):
     """Test the SafetyChecker class."""
 
-    def test_check_collision(self) -> None:
-        pass
+    def test_make_neighborhood_rectangle_min_face(self) -> None:
+        """Verify that a neighborhood rectangle is made properly."""
+        original = HyperRectangle(
+            [
+                Interval(0.1, 0.3),  # x
+                Interval(0.5, 0.6),  # y
+                Interval(3.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+        bloated = HyperRectangle(
+            [
+                Interval(0.1, 0.3),  # x
+                Interval(0.5, 0.6),  # y
+                Interval(3.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+
+        face = 0
+        neighborhood_width = 0.1
+
+        expected = HyperRectangle(
+            [
+                Interval(0.1, 0.2),  # We expect the range to be reset to (0.1, 0.2)
+                Interval(0.5, 0.6),
+                Interval(3.4, 5.6),
+                Interval(1.2, 1.4),
+                Interval(2.3, 2.4),
+                Interval(2.5, 2.7),
+            ]
+        )
+
+        result = SafetyChecker.make_neighborhood_rectangle(
+            original, bloated, face, neighborhood_width
+        )
+
+        for dim in range(result.dimensions):
+            self.assertEqual(
+                result.intervals[dim].interval_min,
+                expected.intervals[dim].interval_min,
+            )
+            self.assertEqual(
+                result.intervals[dim].interval_max,
+                expected.intervals[dim].interval_max,
+            )
+
+        return
+
+    def test_make_neighborhood_rectangle_max_face(self) -> None:
+        """Verify that a neighborhood rectangle is made properly."""
+        original = HyperRectangle(
+            [
+                Interval(0.1, 0.3),  # x
+                Interval(0.5, 0.6),  # y
+                Interval(3.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+        bloated = HyperRectangle(
+            [
+                Interval(0.1, 0.3),  # x
+                Interval(0.5, 0.6),  # y
+                Interval(3.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+
+        face = 1
+        neighborhood_width = -0.1
+
+        expected = HyperRectangle(
+            [
+                Interval(0.2, 0.3),  # We expect the range to be reset to (0.2, 0.3)
+                Interval(0.5, 0.6),
+                Interval(3.4, 5.6),
+                Interval(1.2, 1.4),
+                Interval(2.3, 2.4),
+                Interval(2.5, 2.7),
+            ]
+        )
+
+        result = SafetyChecker.make_neighborhood_rectangle(
+            original, bloated, face, neighborhood_width
+        )
+
+        # Sometimes Python experiences floating point errors
+        for dim in range(result.dimensions):
+            self.assertAlmostEqual(
+                result.intervals[dim].interval_min,
+                expected.intervals[dim].interval_min,
+                delta=0.000000001,
+            )
+            self.assertAlmostEqual(
+                result.intervals[dim].interval_max,
+                expected.intervals[dim].interval_max,
+                delta=0.000000001,
+            )
+
+        return
+
+    def test_compute_derivative_bounds_position(self) -> None:
+        """Verify that the position derivative bounds are properly computed."""
+        rect = HyperRectangle(
+            [
+                Interval(0.1, 0.3),  # x
+                Interval(0.5, 0.6),  # y
+                Interval(3.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+        acceleration = (0.1, 0.1, 0.2)
+
+        position_dimensions = [0, 1, 2]
+
+        for dim in position_dimensions:
+            min_der = SafetyChecker.compute_derivative_bounds(
+                rect, dim * 2, acceleration
+            )
+            max_der = SafetyChecker.compute_derivative_bounds(
+                rect, dim * 2 + 1, acceleration
+            )
+
+            # The derivative of the position should be equal to the velocity
+            self.assertEqual(rect.intervals[dim + 3].interval_min, min_der)
+            self.assertEqual(rect.intervals[dim + 3].interval_max, max_der)
+
+        return
+
+    def test_compute_derivative_bounds_velocity(self) -> None:
+        """Verify that the velocity derivative bounds are properly computed."""
+        rect = HyperRectangle(
+            [
+                Interval(0.1, 0.3),  # x
+                Interval(0.5, 0.6),  # y
+                Interval(3.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+        acceleration = (0.1, 0.1, 0.2)
+
+        velocity_dimensions = [3, 4, 5]
+
+        for dim in velocity_dimensions:
+            min_der = SafetyChecker.compute_derivative_bounds(
+                rect, dim * 2, acceleration
+            )
+            max_der = SafetyChecker.compute_derivative_bounds(
+                rect, dim * 2 + 1, acceleration
+            )
+
+            # The derivative of the velocity should be equal to the acceleration
+            self.assertEqual(acceleration[dim - 3], min_der)
+            self.assertEqual(acceleration[dim - 3], max_der)
+
+        return
+
+    def test_single_face_lift(self) -> None:
+        """Ensure that the single face lift is correctly performed."""
+        rect = HyperRectangle(
+            [
+                Interval(0.1, 0.3),  # x
+                Interval(0.5, 0.6),  # y
+                Interval(3.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+        acceleration = (0.3, 0.4, 0.5)
+        step_size = 0.01
+        time_remaining = 2
+
+        new_rect, time_to_elapse = SafetyChecker.single_face_lift(
+            rect, acceleration, step_size, time_remaining
+        )
+
+        return
 
     def test_face_lifting_iterative_improvement(self) -> None:
+        """Verify that the face lifting algorithm is correctly implemented."""
+        pass
+
+    def test_check_collision(self) -> None:
         pass
 
 

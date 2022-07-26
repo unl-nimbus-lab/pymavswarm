@@ -28,12 +28,8 @@ from pymavswarm.safety.interval import Interval
 class SafetyChecker:
     """Real-time reachability analysis for collision prevention."""
 
-    def __init__(self) -> None:
-        """Create a new SafetyChecker."""
-        return
-
-    def __make_neighborhood_rectangle(
-        self,
+    @staticmethod
+    def make_neighborhood_rectangle(
         original: HyperRectangle,
         bloated: HyperRectangle,
         face: int,
@@ -57,8 +53,9 @@ class SafetyChecker:
 
         return result
 
-    def __compute_derivative_bounds(
-        self, rect: HyperRectangle, face: int, acceleration: tuple[float, float, float]
+    @staticmethod
+    def compute_derivative_bounds(
+        rect: HyperRectangle, face: int, acceleration: tuple[float, float, float]
     ) -> float:
         """
         Compute position bounds using simplified quadrotor motion dynamics.
@@ -102,27 +99,28 @@ class SafetyChecker:
         # If the dimension is velocity, return the control signal (acceleration)
         elif dimension == 3:
             # v_x' = a_x
-            bounds = Interval(0, acceleration[0])
+            bounds = Interval(acceleration[0], acceleration[0])
         elif dimension == 4:
             # v_y' = a_y
-            bounds = Interval(0, acceleration[1])
+            bounds = Interval(acceleration[1], acceleration[1])
         elif dimension == 5:
             # v_z' = v_z
-            bounds = Interval(0, acceleration[2])
+            bounds = Interval(acceleration[2], acceleration[2])
 
         return bounds.interval_min if face % 2 == 0 else bounds.interval_max
 
-    def __single_face_lift(
-        self,
+    @staticmethod
+    def single_face_lift(
         rect: HyperRectangle,
         acceleration: tuple[float, float, float],
         step_size: float,
         time_remaining: float,
     ) -> tuple[HyperRectangle, float]:
         bloated_rect = deepcopy(rect)
-        recompute = True
         neighborhood_widths = np.zeros(rect.faces)
-        derivatives: list[float] = []
+        derivatives = np.zeros(rect.faces)
+
+        recompute = True
 
         while recompute:
             recompute = False
@@ -133,66 +131,66 @@ class SafetyChecker:
                 is_min = face % 2 == 0
 
                 # Compute the candidate neighborhood
-                neighbor_rect = self.__make_neighborhood_rectangle(
+                neighbor_rect = SafetyChecker.make_neighborhood_rectangle(
                     rect, bloated_rect, face, neighborhood_widths[face]
                 )
 
                 # Compute the face derivative
-                derivative = self.__compute_derivative_bounds(
+                derivative = SafetyChecker.compute_derivative_bounds(
                     neighbor_rect, face, acceleration
                 )
 
                 # Calculate the face widths
-                prev_neighbor_width = neighborhood_widths[face]
-                updated_neighbor_width = derivative * step_size
+                prev_neighborhood_width = neighborhood_widths[face]
+                updated_neighborhood_width = derivative * step_size
 
                 # Check if the face width grew outward
-                prev_grew_outward = (is_min and prev_neighbor_width < 0) or (
-                    not is_min and prev_neighbor_width > 0
+                prev_grew_outward = (is_min and prev_neighborhood_width < 0) or (
+                    not is_min and prev_neighborhood_width > 0
                 )
-                grew_outward = (is_min and updated_neighbor_width < 0) or (
-                    not is_min and updated_neighbor_width > 0
+                grew_outward = (is_min and updated_neighborhood_width < 0) or (
+                    not is_min and updated_neighborhood_width > 0
                 )
 
                 # Prevent flipping from outward face to inward face
                 if not grew_outward and prev_grew_outward:
-                    updated_neighbor_width = 0
+                    updated_neighborhood_width = 0
                     derivative = 0
 
                 # Recompute if flipping from inward to outward or if the derivative
                 # doubled
                 if (not prev_grew_outward and grew_outward) or abs(
-                    updated_neighbor_width
-                ) > 2 * abs(prev_neighbor_width):
+                    updated_neighborhood_width
+                ) > 2 * abs(prev_neighborhood_width):
                     recompute = True
 
                 # Adjust the bloated rectangle
                 if recompute:
-                    neighborhood_widths[face] = updated_neighbor_width
+                    neighborhood_widths[face] = updated_neighborhood_width
 
-                    if is_min and updated_neighbor_width < 0:
+                    if is_min and updated_neighborhood_width < 0:
                         bloated_rect.intervals[dimension].interval_min = (
                             rect.intervals[dimension].interval_min
-                            + updated_neighbor_width
+                            + updated_neighborhood_width
                         )
-                    elif not is_min and updated_neighbor_width > 0:
+                    elif not is_min and updated_neighborhood_width > 0:
                         bloated_rect.intervals[dimension].interval_max = (
                             rect.intervals[dimension].interval_max
-                            + updated_neighbor_width
+                            + updated_neighborhood_width
                         )
                 else:
-                    if (derivative < 0 and prev_neighbor_width > 0) or (
-                        derivative > 0 and prev_neighbor_width < 0
+                    if (derivative < 0 and prev_neighborhood_width > 0) or (
+                        derivative > 0 and prev_neighborhood_width < 0
                     ):
                         derivative = 0
 
                     if derivative != 0:
-                        cross_time = prev_neighbor_width / derivative
+                        cross_time = prev_neighborhood_width / derivative
 
                         if cross_time < min_neighbor_cross_time:
                             min_neighbor_cross_time = cross_time
 
-                    derivatives.append(derivative)
+                    derivatives[face] = derivative
 
         if min_neighbor_cross_time * 2 < step_size:
             raise RuntimeError(
@@ -210,11 +208,9 @@ class SafetyChecker:
 
         # Perform the face lift
         for dim in range(rect.dimensions):
-            rect.intervals[dim].interval_min += (
-                derivatives[2 * dimension] * time_to_elapse
-            )
+            rect.intervals[dim].interval_min += derivatives[2 * dim] * time_to_elapse
             rect.intervals[dim].interval_max += (
-                derivatives[2 * dimension + 1] * time_to_elapse
+                derivatives[2 * dim + 1] * time_to_elapse
             )
 
         if not bloated_rect.contains(rect):
@@ -222,8 +218,8 @@ class SafetyChecker:
 
         return rect, time_to_elapse
 
+    @staticmethod
     def face_lifting_iterative_improvement(
-        self,
         rect: HyperRectangle,
         local_start_time: float,
         acceleration: tuple[float, float, float],
@@ -277,7 +273,7 @@ class SafetyChecker:
             reach_time_advance = 0.0
 
             while reach_time_remaining > 0:
-                rect_result, reach_time_elapsed = self.__single_face_lift(
+                rect_result, reach_time_elapsed = SafetyChecker.single_face_lift(
                     rect, acceleration, step_size, reach_time_remaining
                 )
 
@@ -295,8 +291,8 @@ class SafetyChecker:
 
         return hull, end_time
 
+    @staticmethod
     def check_collision(
-        self,
         current_state: HyperRectangle,
         sender_state: HyperRectangle,
         allowable_distance: float,

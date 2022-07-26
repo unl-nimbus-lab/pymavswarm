@@ -100,7 +100,50 @@ class TestHyperRectangle(unittest.TestCase):
         return
 
     def test_convex_hull(self) -> None:
-        pass
+        """Verify that the convex hull is computed properly."""
+        rect_one = HyperRectangle([Interval(0, 5), Interval(3, 10)])
+        rect_two = HyperRectangle([Interval(-1, 4), Interval(4, 12)])
+
+        # Create a hyperrectangle with the expected values
+        expected_hull = HyperRectangle([Interval(-1, 5), Interval(3, 12)])
+
+        # Compute the convex hull
+        resulting_hull = rect_one.convex_hull(rect_two, in_place=False)
+
+        for dim in range(resulting_hull.dimensions):  # type: ignore
+            self.assertEqual(
+                resulting_hull.intervals[dim].interval_min,  # type: ignore
+                expected_hull.intervals[dim].interval_min,
+            )
+            self.assertEqual(
+                resulting_hull.intervals[dim].interval_max,  # type: ignore
+                expected_hull.intervals[dim].interval_max,
+            )
+
+        return
+
+    def test_convex_hull_in_place(self) -> None:
+        """Verify that the convex hull is computed properly in place."""
+        rect_one = HyperRectangle([Interval(0, 5), Interval(3, 10)])
+        rect_two = HyperRectangle([Interval(-1, 4), Interval(4, 12)])
+
+        # Create a hyperrectangle with the expected values
+        expected_hull = HyperRectangle([Interval(-1, 5), Interval(3, 12)])
+
+        # Compute the convex hull
+        rect_one.convex_hull(rect_two, in_place=True)
+
+        for dim in range(rect_one.dimensions):  # type: ignore
+            self.assertEqual(
+                rect_one.intervals[dim].interval_min,  # type: ignore
+                expected_hull.intervals[dim].interval_min,
+            )
+            self.assertEqual(
+                rect_one.intervals[dim].interval_max,  # type: ignore
+                expected_hull.intervals[dim].interval_max,
+            )
+
+        return
 
 
 if __name__ == "__main__":
