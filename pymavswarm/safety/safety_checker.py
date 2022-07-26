@@ -21,7 +21,8 @@ from copy import deepcopy
 
 import numpy as np
 
-from pymavswarm.safety import HyperRectangle, Interval
+from pymavswarm.safety.hyperrectangle import HyperRectangle
+from pymavswarm.safety.interval import Interval
 
 
 class SafetyChecker:

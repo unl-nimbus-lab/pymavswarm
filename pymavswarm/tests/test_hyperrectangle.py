@@ -22,11 +22,82 @@ from pymavswarm.safety import HyperRectangle, Interval
 class TestHyperRectangle(unittest.TestCase):
     """Test the HyperRectangle class."""
 
+    def test_dimensions(self) -> None:
+        """Verify that the dimensions are correctly computed."""
+        intervals = [Interval(0, 1), Interval(0, 1)]
+        rect = HyperRectangle(intervals)
+
+        # Ensure that the dimensions are equal to the length of the intervals list
+        self.assertEqual(len(intervals), rect.dimensions)
+
+        return
+
+    def test_faces(self) -> None:
+        """Verify that the number of faces is computed properly."""
+        intervals = [Interval(0, 1), Interval(0, 1)]
+        rect = HyperRectangle(intervals)
+
+        # Ensure that the number of faces is equal to 2x the length of the intervals
+        # list
+        self.assertEqual(2 * len(intervals), rect.faces)
+
+        return
+
     def test_max_width(self) -> None:
-        pass
+        """Ensure that the maximum interval width is properly computed."""
+        max_interval_range = (0, 5)
+        min_interval_range = (0, 1)
+
+        # Compute the width of the interval
+        max_interval_width = max_interval_range[1] - max_interval_range[0]
+
+        intervals = [Interval(*max_interval_range), Interval(*min_interval_range)]
+        rect = HyperRectangle(intervals)
+
+        # Verify that the max width property is equivalent to the max width
+        # pre-determined
+        self.assertEqual(max_interval_width, rect.max_width)
+
+        return
+
+    def test_invalid_contains(self) -> None:
+        """Verify that an error is raised when rectangle dimensions don't match up."""
+        outside = HyperRectangle([Interval(0, 1), Interval(1, 2)])
+        inside = HyperRectangle([Interval(0, 1)])
+
+        self.assertRaises(ValueError, outside.contains, inside)
+
+        return
 
     def test_contains(self) -> None:
-        pass
+        """Verify that rectangles properly determine when another is contained."""
+        outside = HyperRectangle([Interval(0, 5), Interval(3, 10)])
+        inside = HyperRectangle([Interval(1, 4), Interval(4, 7)])
+
+        self.assertTrue(outside.contains(inside))
+
+        return
+
+    def test_does_not_contain(self) -> None:
+        """Verify that rectangles properly determine when another is not contained."""
+        outside = HyperRectangle([Interval(0, 5), Interval(3, 10)])
+
+        # The inside rectangle has an interval that is smaller than the outside
+        # rectangle
+        inside = HyperRectangle([Interval(-1, 4), Interval(4, 7)])
+
+        self.assertFalse(outside.contains(inside))
+
+        return
+
+    def test_invalid_convex_hull(self) -> None:
+        """Verify that an error is raised when rectangle dimensions don't match."""
+        outside = HyperRectangle([Interval(0, 5), Interval(3, 10)])
+        inside = HyperRectangle([Interval(1, 4)])
+
+        self.assertRaises(ValueError, outside.convex_hull, inside)
+
+        return
 
     def test_convex_hull(self) -> None:
         pass

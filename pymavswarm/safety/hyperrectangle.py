@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from pymavswarm.safety import Interval
+from pymavswarm.safety.interval import Interval
 
 
 class HyperRectangle:
@@ -33,7 +33,9 @@ class HyperRectangle:
         """
         Create a new hyperrectangle.
 
-        TODO: Document intervals
+        :param intervals: intervals that should be used to construct the hyperrectangle
+            faces
+        :type intervals: list[Interval]
         """
         if len(intervals) <= 0:
             raise ValueError(
@@ -81,12 +83,17 @@ class HyperRectangle:
     @property
     def max_width(self) -> float:
         """
-        Get the maximum face width.
+        Get the maximum interval width.
 
-        :return: maximum distance between the face intervals
+        :return: maximum distance between the intervals
         :rtype: float
         """
-        return max([face.interval_max - face.interval_min for face in self.__intervals])
+        return max(
+            [
+                interval.interval_max - interval.interval_min
+                for interval in self.__intervals
+            ]
+        )
 
     def contains(self, inside_rectangle: HyperRectangle) -> bool:
         """
@@ -119,7 +126,7 @@ class HyperRectangle:
         self, contained: HyperRectangle, in_place: bool = True
     ) -> HyperRectangle | None:
         """
-        Compute the convex hull of the this rectangle and the contained rectangle.
+        Compute the convex hull of this rectangle and the contained rectangle.
 
         :param contained: rectangle to compute the convex hull with
         :type contained: HyperRectangle
