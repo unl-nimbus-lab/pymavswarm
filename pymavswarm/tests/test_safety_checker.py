@@ -218,7 +218,84 @@ class TestSafetyChecker(unittest.TestCase):
         pass
 
     def test_check_collision(self) -> None:
-        pass
+        """Verify that collisions are detected between collided agents."""
+        agent_one = HyperRectangle(
+            [
+                Interval(0.1, 0.3),  # x
+                Interval(0.5, 0.6),  # y
+                Interval(3.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+        agent_two = HyperRectangle(
+            [
+                Interval(1.1, 1.3),  # x
+                Interval(1.5, 1.6),  # y
+                Interval(4.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+        acceleration = (0.3, 0.4, 0.5)
+        time_since_boot_ms = 5000
+
+        agent_one_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
+            agent_one, time_since_boot_ms, acceleration
+        )
+        agent_two_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
+            agent_two, time_since_boot_ms, acceleration
+        )
+
+        self.assertTrue(
+            SafetyChecker.check_collision(
+                agent_one_future_state, agent_two_future_state, 2
+            )
+        )
+
+        return
+
+    def test_check_no_collision(self) -> None:
+        """Verify that no collisions are detected between distant agents."""
+        agent_one = HyperRectangle(
+            [
+                Interval(0.1, 0.3),  # x
+                Interval(0.5, 0.6),  # y
+                Interval(3.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+        agent_two = HyperRectangle(
+            [
+                Interval(4.0, 6.6),  # x
+                Interval(7.5, 9.6),  # y
+                Interval(4.4, 5.6),  # z
+                Interval(1.2, 1.4),  # vx
+                Interval(2.3, 2.4),  # vy
+                Interval(2.5, 2.7),  # vz
+            ]
+        )
+        acceleration = (0.3, 0.4, 0.5)
+        time_since_boot_ms = 5000
+
+        agent_one_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
+            agent_one, time_since_boot_ms, acceleration
+        )
+        agent_two_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
+            agent_two, time_since_boot_ms, acceleration
+        )
+
+        self.assertFalse(
+            SafetyChecker.check_collision(
+                agent_one_future_state, agent_two_future_state, 2
+            )
+        )
+
+        return
 
 
 if __name__ == "__main__":
