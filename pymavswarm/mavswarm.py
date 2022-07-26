@@ -1851,22 +1851,42 @@ class MavSwarm:
             ack_timeout,
         )
 
-    def handle_collision(self, collision_response: int) -> Future:
+    def handle_collision(
+        self,
+        colliding_agents: list[AgentID],
+        collision_response: int,
+        retry: bool = True,
+        verify_state: bool = True,
+    ) -> Future:
         """
-        Execute a collision response.
+        Execute a collision response on the colliding agents.
 
-        :param collision_response: integer dictating the collision response, available
-            as a MavSwarm constant
+        :param colliding_agents: agents that are on track to collide
+        :type colliding_agents: list[AgentID]
+        :param collision_response: behavior that should be executed on the colliding
+            agents; options are available as MavSwarm constants
         :type collision_response: int
-        :return: future result of collision response call
+        :param retry: retry sending the collision response on failure, defaults to True
+        :type retry: bool, optional
+        :param verify_state: verify that the agent switched into the collision response
+            mode, defaults to True
+        :type verify_state: bool, optional
+        :raises ValueError: an invalid collision response was provided
+        :return: future collision response result
         :rtype: Future
         """
         if collision_response == MavSwarm.COLLISION_RESPONSE_LAND:
-            pass
+            return self.set_mode(
+                "LAND", colliding_agents, retry=retry, verify_state=verify_state
+            )
         elif collision_response == MavSwarm.COLLISION_RESPONSE_LOITER:
-            pass
+            return self.set_mode(
+                "LOITER", colliding_agents, retry=retry, verify_state=verify_state
+            )
         elif collision_response == MavSwarm.COLLISION_RESPONSE_RTL:
-            pass
+            return self.set_mode(
+                "RTL", colliding_agents, retry=retry, verify_state=verify_state
+            )
         else:
             raise ValueError("An invalid collision response was provided")
 
