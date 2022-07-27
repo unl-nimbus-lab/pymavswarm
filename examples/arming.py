@@ -96,7 +96,7 @@ def main() -> None:
     time.sleep(5)
 
     # Disarm each of the agents; retry on message failure
-    future = mavswarm.disarm(retry=True, verify_state=True)
+    future = mavswarm.disarm(retry=True, verify_state=True, force=True)
     future.add_done_callback(print_message_response_cb)
 
     # Wait for the disarm command to complete

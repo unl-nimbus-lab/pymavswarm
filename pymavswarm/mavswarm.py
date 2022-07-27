@@ -57,6 +57,7 @@ class MavSwarm:
     COLLISION_RESPONSE_LAND = 0
     COLLISION_RESPONSE_RTL = 1
     COLLISION_RESPONSE_LOITER = 2
+    COLLISION_RESPONSE_FORCE_DISARM = 3
 
     def __init__(
         self,
@@ -1307,7 +1308,7 @@ class MavSwarm:
         # Attempt to disarm all agents on stage 1 failure
         if failure_occured(future.result()):
             self._logger.warning("Takeoff sequence command failed at stage 1")
-            self.disarm(agent_ids=agent_ids, retry=True, verify_state=True)
+            self.disarm(agent_ids=agent_ids, retry=True, verify_state=True, force=True)
             return future.result()
 
         time.sleep(stage_delay)
@@ -1886,6 +1887,10 @@ class MavSwarm:
         elif collision_response == MavSwarm.COLLISION_RESPONSE_RTL:
             return self.set_mode(
                 "RTL", colliding_agents, retry=retry, verify_state=verify_state
+            )
+        elif collision_response == MavSwarm.COLLISION_RESPONSE_FORCE_DISARM:
+            return self.disarm(
+                colliding_agents, retry=retry, verify_state=verify_state, force=True
             )
         else:
             raise ValueError("An invalid collision response was provided")
