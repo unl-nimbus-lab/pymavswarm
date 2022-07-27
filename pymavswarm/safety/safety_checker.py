@@ -26,7 +26,16 @@ from pymavswarm.safety.interval import Interval
 
 
 class SafetyChecker:
-    """Real-time reachability analysis for collision prevention."""
+    """
+    Real-time reachability analysis for collision prevention.
+
+    This implementation is inspired by the following source:
+
+    Tran, H. D., Nguyen, L. V., Musau, P., Xiang, W., & Johnson, T. T. (2019, June).
+    Decentralized real-time safety verification for distributed cyber-physical systems.
+    In International Conference on Formal Techniques for Distributed Objects,
+    Components, and Systems (pp. 261-277). Springer, Cham.
+    """
 
     @staticmethod
     def make_neighborhood_rectangle(
@@ -35,6 +44,20 @@ class SafetyChecker:
         face: int,
         neighborhood_width: float,
     ) -> HyperRectangle:
+        """
+        Create a face's neighborhood given a target width.
+
+        :param original: initial rectangle to
+        :type original: HyperRectangle
+        :param bloated: rectangle that should be used to create the neighborhood
+        :type bloated: HyperRectangle
+        :param face: face who's neighborhood should be created
+        :type face: int
+        :param neighborhood_width: width of the neighborhood
+        :type neighborhood_width: float
+        :return: neighborhood hyperrectangle
+        :rtype: HyperRectangle
+        """
         result = deepcopy(bloated)
 
         dim = int(face / 2)
@@ -66,15 +89,15 @@ class SafetyChecker:
         - y = q(t)
 
         with the state vector x(t) = [q, q_{overdot}], where q is the drone position
-        (x, y, z) and q_{overdot} is the velocity of the agent (vx, vy, vz).
+        (x, y, z) and q_{overdot} is the velocity of the agent (vx, vy, vz) [m/s].
 
-        :param rect: _description_
+        :param rect: rectangle that should be used to compute the face derivative
         :type rect: HyperRectangle
-        :param face: _description_
+        :param face: face who's derivative should be computed
         :type face: int
-        :param acceleration: _description_
+        :param acceleration: control signal; current acceleration of the agent [m/s^2]
         :type acceleration: tuple[float, float, float]
-        :return: _description_
+        :return: derivative of the current face
         :rtype: float
         """
         dimension = int(face / 2)
@@ -116,6 +139,23 @@ class SafetyChecker:
         step_size: float,
         time_remaining: float,
     ) -> tuple[HyperRectangle, float]:
+        """
+        Perform a single face lifting operation.
+
+        :param rect: hyperrectangle that the face lifting operation should be applied to
+        :type rect: HyperRectangle
+        :param acceleration: current acceleration of the agent [m/s^2]
+        :type acceleration: tuple[float, float, float]
+        :param step_size: scale to apply to the derivative
+        :type step_size: float
+        :param time_remaining: amount of time left to perform the face lift
+        :type time_remaining: float
+        :raises RuntimeError: minimum neighborhood cross time is less than half of the
+            step size
+        :raises RuntimeError: lifted rectangle is outside of the bloated rectangle
+        :return: lifted rectangle, elapsed reach time
+        :rtype: tuple[HyperRectangle, float]
+        """
         bloated_rect = deepcopy(rect)
         neighborhood_widths = np.zeros(rect.faces)
         derivatives = np.zeros(rect.faces)
@@ -127,7 +167,10 @@ class SafetyChecker:
             min_neighbor_cross_time = float("inf")
 
             for face in range(rect.faces):
+                # Get the target dimension
                 dimension = int(face / 2)
+
+                # Determine whether the face is a minimum face or a maximum face
                 is_min = face % 2 == 0
 
                 # Compute the candidate neighborhood
@@ -221,7 +264,7 @@ class SafetyChecker:
     @staticmethod
     def face_lifting_iterative_improvement(
         rect: HyperRectangle,
-        local_start_time: float,
+        start_time: float,
         acceleration: tuple[float, float, float],
         initial_step_size: float = 0.01,
         reach_time: float = 2.0,
@@ -229,14 +272,15 @@ class SafetyChecker:
         min_step_size: float = 0.0000001,
     ) -> tuple[HyperRectangle, float]:
         """
-        Perform the face lifting algorithm to compute the reachable set.
+        Perform iterative face lifting to compute the reachable state.
 
-        :param rect: current state of the agent that sent the position message
+        :param rect: initial state of the agent that sent the position message
         :type rect: HyperRectangle
-        :param local_start_time: time since boot of the agent that sent the message in
-            the local clock [ms]
-        :type local_start_time: float
-        :param acceleration: acceleration of the agent that sent the position message
+        :param start_time: estimated time since boot of the agent that sent the
+            message in the global clock [ms]
+        :type start_time: float
+        :param acceleration: acceleration [m/s^2] of the agent that sent the position
+            message
         :type acceleration: tuple[float, float, float]
         :param initial_step_size: step size to start the algorithm with, defaults to
             0.01
@@ -249,8 +293,8 @@ class SafetyChecker:
         :param min_step_size: minimum step size to allow before automatically
             cancelling the algorithm's execution, defaults to 0.0000001
         :type min_step_size: float, optional
-        :return: reachable set, time in the local clock that the algorithm has
-            computed forward
+        :return: reachable set, time in the global clock that the algorithm has
+            computed forward to
         :rtype: tuple[HyperRectangle, float]
         """
         # Begin with the initial step size, this will decrease each iteration to
@@ -259,7 +303,7 @@ class SafetyChecker:
 
         # Initialize the return values
         hull = deepcopy(rect)
-        end_time = local_start_time
+        end_time = start_time
 
         start_t = time.time()
 
@@ -273,80 +317,17 @@ class SafetyChecker:
             reach_time_advance = 0.0
 
             while reach_time_remaining > 0:
-                rect_result, reach_time_elapsed = SafetyChecker.single_face_lift(
+                rect, reach_time_elapsed = SafetyChecker.single_face_lift(
                     rect, acceleration, step_size, reach_time_remaining
                 )
 
-                updated_hull = hull.convex_hull(rect_result, in_place=False)
-
-                if updated_hull is not None:
-                    hull = updated_hull
+                hull.convex_hull(rect, in_place=True)
 
                 reach_time_advance += reach_time_elapsed
-                end_time = local_start_time + 1000 * reach_time_advance
+                end_time = start_time + 1000 * reach_time_advance
 
                 reach_time_remaining -= reach_time_elapsed
 
             step_size /= 2.0
 
         return hull, end_time
-
-    @staticmethod
-    def check_collision(
-        current_state: HyperRectangle,
-        sender_state: HyperRectangle,
-        allowable_distance: float,
-    ) -> bool:
-        """
-        Check for a potential collision between the two agents.
-
-        :param current_state: state of the agent that received the message
-        :type current_state: HyperRectangle
-        :param sender_state: state of the agent that sent the position message
-        :type sender_state: HyperRectangle
-        :param allowable_distance: minimum allowable distance between agents
-        :type allowable_distance: float
-        :return: potential collision detected
-        :rtype: bool
-        """
-        current_min_pos = np.array(
-            [
-                current_state.intervals[0].interval_min,
-                current_state.intervals[1].interval_min,
-                current_state.intervals[2].interval_min,
-            ]
-        )
-
-        current_max_pos = np.array(
-            [
-                current_state.intervals[0].interval_max,
-                current_state.intervals[1].interval_max,
-                current_state.intervals[2].interval_max,
-            ]
-        )
-
-        sender_min_pos = np.array(
-            [
-                sender_state.intervals[0].interval_min,
-                sender_state.intervals[1].interval_min,
-                sender_state.intervals[2].interval_min,
-            ]
-        )
-
-        sender_max_pos = np.array(
-            [
-                sender_state.intervals[0].interval_max,
-                sender_state.intervals[1].interval_max,
-                sender_state.intervals[2].interval_max,
-            ]
-        )
-
-        # Calculate the distances between the intervals
-        distances = [
-            np.linalg.norm(sender_min_pos - current_min_pos),
-            np.linalg.norm(sender_min_pos - current_max_pos),
-            np.linalg.norm(sender_max_pos - current_min_pos),
-            np.linalg.norm(sender_max_pos - current_max_pos),
-        ]
-
-        return min(distances) < allowable_distance  # type: ignore

@@ -116,17 +116,13 @@ class TestSafetyChecker(unittest.TestCase):
             original, bloated, face, neighborhood_width
         )
 
-        # Sometimes Python experiences floating point errors
+        # Python experiences floating point errors too
         for dim in range(result.dimensions):
             self.assertAlmostEqual(
-                result.intervals[dim].interval_min,
-                expected.intervals[dim].interval_min,
-                delta=0.000000001,
+                result.intervals[dim].interval_min, expected.intervals[dim].interval_min
             )
             self.assertAlmostEqual(
-                result.intervals[dim].interval_max,
-                expected.intervals[dim].interval_max,
-                delta=0.000000001,
+                result.intervals[dim].interval_max, expected.intervals[dim].interval_max
             )
 
         return
@@ -195,91 +191,155 @@ class TestSafetyChecker(unittest.TestCase):
         """Ensure that the single face lift is correctly performed."""
         rect = HyperRectangle(
             [
-                Interval(0.1, 0.3),  # x
-                Interval(0.5, 0.6),  # y
-                Interval(3.4, 5.6),  # z
-                Interval(1.2, 1.4),  # vx
-                Interval(2.3, 2.4),  # vy
-                Interval(2.5, 2.7),  # vz
+                Interval(2.0, 2.0),  # x
+                Interval(3.0, 3.0),  # y
+                Interval(5.0, 5.0),  # z
+                Interval(0.0, 0.0),  # vx
+                Interval(2.0, 2.0),  # vy
+                Interval(0.0, 0.0),  # vz
             ]
         )
-        acceleration = (0.3, 0.4, 0.5)
+        acceleration = (0.0, 0.0, 0.0)
         step_size = 0.01
         time_remaining = 2
 
-        new_rect, time_to_elapse = SafetyChecker.single_face_lift(
+        lifted_rect, _ = SafetyChecker.single_face_lift(
             rect, acceleration, step_size, time_remaining
         )
+
+        expected_rect = HyperRectangle(
+            [
+                Interval(2.0, 2.0),  # x
+                Interval(3.02, 3.02),  # y
+                Interval(5.0, 5.0),  # z
+                Interval(0.0, 0.0),  # vx
+                Interval(2.0, 2.0),  # vy
+                Interval(0.0, 0.0),  # vz
+            ]
+        )
+
+        for dim in range(lifted_rect.dimensions):
+            self.assertAlmostEqual(
+                lifted_rect.intervals[dim].interval_min,
+                expected_rect.intervals[dim].interval_min,
+            )
+            self.assertAlmostEqual(
+                lifted_rect.intervals[dim].interval_max,
+                expected_rect.intervals[dim].interval_max,
+            )
 
         return
 
     def test_face_lifting_iterative_improvement(self) -> None:
-        """Verify that the face lifting algorithm is correctly implemented."""
-        pass
+        """Ensure that the iterative face lifting is correctly performed."""
+        rect = HyperRectangle(
+            [
+                Interval(2.0, 2.0),  # x
+                Interval(3.0, 3.0),  # y
+                Interval(5.0, 5.0),  # z
+                Interval(0.0, 0.0),  # vx
+                Interval(2.0, 2.0),  # vy
+                Interval(0.0, 0.0),  # vz
+            ]
+        )
+        acceleration = (0.0, 0.0, 0.0)
 
-    def test_check_collision(self) -> None:
-        """Verify that collisions are detected between collided agents."""
+        lifted_rect, _ = SafetyChecker.face_lifting_iterative_improvement(
+            rect, 500, acceleration
+        )
+
+        expected_rect = HyperRectangle(
+            [
+                Interval(2.0, 2.0),  # x
+                Interval(3.0, 7.0),  # y
+                Interval(5.0, 5.0),  # z
+                Interval(0.0, 0.0),  # vx
+                Interval(2.0, 2.0),  # vy
+                Interval(0.0, 0.0),  # vz
+            ]
+        )
+
+        for dim in range(lifted_rect.dimensions):
+            self.assertAlmostEqual(
+                lifted_rect.intervals[dim].interval_min,
+                expected_rect.intervals[dim].interval_min,
+            )
+            self.assertAlmostEqual(
+                lifted_rect.intervals[dim].interval_max,
+                expected_rect.intervals[dim].interval_max,
+            )
+
+        return
+
+    def test_check_intersection_with_collision_trajectory(self) -> None:
+        """Verify collisions are detected between agents on a collision trajectory."""
         agent_one = HyperRectangle(
             [
-                Interval(0.1, 0.3),  # x
-                Interval(0.5, 0.6),  # y
-                Interval(3.4, 5.6),  # z
-                Interval(1.2, 1.4),  # vx
-                Interval(2.3, 2.4),  # vy
-                Interval(2.5, 2.7),  # vz
+                Interval(2.0, 2.0),  # x
+                Interval(3.0, 3.0),  # y
+                Interval(5.0, 5.0),  # z
+                Interval(0.0, 0.0),  # vx
+                Interval(2.0, 2.0),  # vy
+                Interval(0.0, 0.0),  # vz
             ]
         )
         agent_two = HyperRectangle(
             [
-                Interval(1.1, 1.3),  # x
-                Interval(1.5, 1.6),  # y
-                Interval(4.4, 5.6),  # z
-                Interval(1.2, 1.4),  # vx
-                Interval(2.3, 2.4),  # vy
-                Interval(2.5, 2.7),  # vz
+                Interval(4.0, 4.0),  # x
+                Interval(7.0, 7.0),  # y
+                Interval(5.0, 5.0),  # z
+                Interval(-1.0, -1.0),  # vx
+                Interval(0.0, 0.0),  # vy
+                Interval(0.0, 0.0),  # vz
             ]
         )
-        acceleration = (0.3, 0.4, 0.5)
+
+        # Positive acceleration in the y direction
+        agent_one_acceleration = (0.0, 0.0, 0.0)
+
+        # Negative acceleration in the -x direction
+        agent_two_acceleration = (0.0, 0.0, 0.0)
+
         time_since_boot_ms = 5000
 
         agent_one_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
-            agent_one, time_since_boot_ms, acceleration
+            agent_one, time_since_boot_ms, agent_one_acceleration
         )
         agent_two_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
-            agent_two, time_since_boot_ms, acceleration
+            agent_two, time_since_boot_ms, agent_two_acceleration
         )
 
         self.assertTrue(
-            SafetyChecker.check_collision(
-                agent_one_future_state, agent_two_future_state, 2
+            agent_one_future_state.intersects(
+                agent_two_future_state, dimensions=[0, 1, 2]
             )
         )
 
         return
 
     def test_check_no_collision(self) -> None:
-        """Verify that no collisions are detected between distant agents."""
+        """Verify that no collisions are detected between non-colliding agents."""
         agent_one = HyperRectangle(
             [
-                Interval(0.1, 0.3),  # x
-                Interval(0.5, 0.6),  # y
-                Interval(3.4, 5.6),  # z
-                Interval(1.2, 1.4),  # vx
-                Interval(2.3, 2.4),  # vy
-                Interval(2.5, 2.7),  # vz
+                Interval(1.0, 1.0),  # x
+                Interval(2.0, 2.0),  # y
+                Interval(3.0, 3.0),  # z
+                Interval(-4.0, -4.0),  # vx
+                Interval(0.0, 0.0),  # vy
+                Interval(0.0, 0.0),  # vz
             ]
         )
         agent_two = HyperRectangle(
             [
-                Interval(4.0, 6.6),  # x
-                Interval(7.5, 9.6),  # y
-                Interval(4.4, 5.6),  # z
-                Interval(1.2, 1.4),  # vx
-                Interval(2.3, 2.4),  # vy
-                Interval(2.5, 2.7),  # vz
+                Interval(3.0, 3.0),  # x
+                Interval(2.0, 2.0),  # y
+                Interval(3.0, 3.0),  # z
+                Interval(4.0, 4.0),  # vx
+                Interval(0.0, 0.0),  # vy
+                Interval(0.0, 0.0),  # vz
             ]
         )
-        acceleration = (0.3, 0.4, 0.5)
+        acceleration = (0.1, 0.1, 0.1)
         time_since_boot_ms = 5000
 
         agent_one_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
@@ -290,8 +350,8 @@ class TestSafetyChecker(unittest.TestCase):
         )
 
         self.assertFalse(
-            SafetyChecker.check_collision(
-                agent_one_future_state, agent_two_future_state, 2
+            agent_one_future_state.intersects(
+                agent_two_future_state, dimensions=[0, 1, 2]
             )
         )
 

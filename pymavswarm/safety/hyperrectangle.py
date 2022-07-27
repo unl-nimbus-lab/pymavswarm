@@ -16,15 +16,14 @@
 
 from __future__ import annotations
 
+import math
 from copy import deepcopy
 
 from pymavswarm.safety.interval import Interval
 
 
 class HyperRectangle:
-    """
-    Orthotope used for computing reachable drone states.
-    """
+    """Orthotope used for computing reachable drone states."""
 
     def __init__(self, intervals: list[Interval]) -> None:
         """
@@ -34,12 +33,6 @@ class HyperRectangle:
             faces
         :type intervals: list[Interval]
         """
-        if len(intervals) <= 0:
-            raise ValueError(
-                "Invalid HyperRectangle dimensions provided. Ensure that the "
-                "dimensions are non-negative."
-            )
-
         # Construct the dimensions for the hyper-rectangle
         self.__intervals = intervals
         self.__dimensions = len(self.__intervals)
@@ -50,7 +43,7 @@ class HyperRectangle:
     @property
     def faces(self) -> int:
         """
-        Get the total number of faces in the hyperrectangle.
+        Total number of faces in the hyperrectangle.
 
         :return: number of faces
         :rtype: int
@@ -60,7 +53,7 @@ class HyperRectangle:
     @property
     def dimensions(self) -> int:
         """
-        Get the hyperrectangle dimensions.
+        Total number of dimensions in the hyperrectangle.
 
         :return: dimensions
         :rtype: int
@@ -70,7 +63,7 @@ class HyperRectangle:
     @property
     def intervals(self) -> list[Interval]:
         """
-        Get the hyperrectangle intervals.
+        Intervals in the hyperrectangle.
 
         :return: intervals
         :rtype: list[Interval]
@@ -98,6 +91,7 @@ class HyperRectangle:
 
         :param inside: hyperrectangle to check for containment
         :type inside: HyperRectangle
+        :raises ValueError: dimensions of the hyperrectangles do not match
         :return: inside is contained by this hyperrectangle
         :rtype: bool
         """
@@ -167,6 +161,78 @@ class HyperRectangle:
             return result_rect
 
         return None
+
+    def intersects(
+        self, rect: HyperRectangle, dimensions: list[int] | None = None
+    ) -> bool:
+        """
+        Check if this rectangle intersects another rectangle.
+
+        :param rect: rectangle to check for intersection with
+        :type rect: HyperRectangle
+        :param dimensions: dimensions to check for intersection; leave as None for all
+            dimensions, defaults to None
+        :type dimensions: list[int], optional
+        :raises ValueError: rectangle dimensions do not match
+        :return: the two rectangles intersect
+        :rtype: bool
+        """
+        if self.__dimensions != rect.dimensions:
+            raise ValueError(
+                f"The dimensions of the provided rectangle {rect.dimensions} is "
+                f"not equal to the current dimensions {self.__dimensions}"
+            )
+
+        if dimensions is None:
+            check_dimensions = list(range(self.__dimensions))
+        else:
+            check_dimensions = dimensions
+
+        def check_dimension_intersection(dims: list[int]) -> bool:
+            dim = dims.pop()
+
+            cond_one = (
+                math.isclose(
+                    self.__intervals[dim].interval_max, rect.intervals[dim].interval_min
+                )
+                or (
+                    self.__intervals[dim].interval_max
+                    > rect.intervals[dim].interval_min
+                )
+            ) and (
+                math.isclose(
+                    self.__intervals[dim].interval_max, rect.intervals[dim].interval_max
+                )
+                or (
+                    self.__intervals[dim].interval_max
+                    < rect.intervals[dim].interval_min
+                )
+            )
+
+            cond_two = (
+                math.isclose(
+                    self.__intervals[dim].interval_min, rect.intervals[dim].interval_min
+                )
+                or (
+                    self.__intervals[dim].interval_min
+                    > rect.intervals[dim].interval_min
+                )
+            ) and (
+                math.isclose(
+                    self.__intervals[dim].interval_min, rect.intervals[dim].interval_max
+                )
+                or (
+                    self.__intervals[dim].interval_min
+                    < rect.intervals[dim].interval_max
+                )
+            )
+
+            if len(dims) > 0:
+                return (cond_one or cond_two) and check_dimension_intersection(dims)
+            else:
+                return cond_one or cond_two
+
+        return check_dimension_intersection(check_dimensions)
 
     def __str__(self) -> str:
         """
