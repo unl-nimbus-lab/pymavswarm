@@ -26,19 +26,18 @@ class DockerInfo(State):
 
     def __init__(
         self,
-        version: str = "0.0.0",
-        last_update: datetime.datetime = datetime.datetime(datetime.MINYEAR, 1, 1),
+        version: str,
+        last_update: datetime.datetime,
         optional_context_props: dict | None = None,
     ) -> None:
         """
         Create a new docker info instance.
 
-        :param version: version of the Docker image deployed on an agent,
-            defaults to "0.0.0"
-        :type version: str, optional
+        :param version: version of the Docker image deployed on an agent
+        :type version: str
         :param last_update: date that the Docker image deployed on the agent
-            was last updated, defaults to 1/1/1
-        :type last_update: datetime.datetime, optional
+            was last updated
+        :type last_update: datetime.datetime
         :param optional_context_props: optional properties to add to the DockerInfo
             context, defaults to None
         :type optional_context_props: dict | None, optional

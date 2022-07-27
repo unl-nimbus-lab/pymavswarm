@@ -24,21 +24,22 @@ class Velocity(State):
 
     def __init__(
         self,
-        vx: float = 0.0,
-        vy: float = 0.0,
-        vz: float = 0.0,
+        vx: float,
+        vy: float,
+        vz: float,
         optional_context_props: dict | None = None,
     ) -> None:
         """
         Create a new velocity object.
 
-        :param vx: ground x speed [Latitude, positive north], defaults to 0.0
-        :type vx: float, optional
-        :param vy: ground y speed [Longitude, positive east], defaults to 0.0
-        :type vy: float, optional
-        :param vz: ground z speed [Altitude, positive down], defaults to 0.0
-        :type vz: float, optional
-        :param optional_context_props: optional properties to add to the context
+        :param vx: ground x speed [Latitude, positive north]
+        :type vx: float
+        :param vy: ground y speed [Longitude, positive east]
+        :type vy: float
+        :param vz: ground z speed [Altitude, positive down]
+        :type vz: float
+        :param optional_context_props: optional properties to add to the context,
+            defaults to None
         :type optional_context_props: dict, optional
         """
         super().__init__(optional_context_props)
@@ -64,7 +65,7 @@ class Velocity(State):
         """
         Set the velocity's x component.
 
-        :param vel: x speed [cm/s]
+        :param vel: x speed [m/s]
         :type vel: float
         """
         prev_vx = self.__vx
@@ -91,7 +92,7 @@ class Velocity(State):
         """
         Set the velocity's y component.
 
-        :param vel: y speed [cm/s]
+        :param vel: y speed [m/s]
         :type vel: float
         """
         prev_vy = self.__vy
@@ -118,7 +119,7 @@ class Velocity(State):
         """
         Set the velocity's z component.
 
-        :param vel: z speed [cm/s]
+        :param vel: z speed [m/s]
         :type vel: float
         """
         prev_vz = self.__vz

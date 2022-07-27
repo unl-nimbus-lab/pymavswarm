@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from .acceleration import Acceleration
 from .attitude import Attitude
 from .battery import Battery
 from .docker_info import DockerInfo

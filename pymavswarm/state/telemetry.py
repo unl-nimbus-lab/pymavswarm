@@ -23,15 +23,14 @@ class Telemetry(State):
     """Telemetry state information."""
 
     def __init__(
-        self, drop_rate: float = 0.0, optional_context_props: dict | None = None
+        self, drop_rate: float, optional_context_props: dict | None = None
     ) -> None:
         """
         Create a new telemetry status object.
 
         :param drop_rate: communication drop rate, (UART, I2C, SPI, CAN), dropped
-            packets on all links (packets that were corrupted on reception on the MAV),
-            defaults to 0.0
-        :type drop_rate: float, optional
+            packets on all links (packets that were corrupted on reception on the MAV)
+        :type drop_rate: float
         :param optional_context_props: optional context properties, defaults to None
         :type optional_context_props: dict | None, optional
         """

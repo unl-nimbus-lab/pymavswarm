@@ -25,7 +25,6 @@ import monotonic
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega as mavlink1
 
-import pymavswarm.state as swarm_state
 from pymavswarm.agent import Agent
 from pymavswarm.handlers.receivers import Receivers
 from pymavswarm.types import AgentID
@@ -136,29 +135,39 @@ class MessageReceivers(Receivers):
             if agent_id not in agents:
                 return agents
 
+            # Store the previous velocity
+            prev_velocity_x = agents[agent_id].velocity.velocity_x
+            prev_velocity_y = agents[agent_id].velocity.velocity_y
+            prev_velocity_z = agents[agent_id].velocity.velocity_z
+
             # Update the agent velocity
-            if agents[agent_id].velocity is None:
-                velocity = swarm_state.Velocity(
-                    message.vx / 100, message.vy / 100, message.vz / 100
-                )
-                agents[agent_id].velocity = velocity
-            else:
-                agents[agent_id].velocity.vx = message.vx / 100
-                agents[agent_id].velocity.vy = message.vy / 100
-                agents[agent_id].velocity.vz = message.vz / 100
+            agents[agent_id].velocity.velocity_x = message.vx / 100
+            agents[agent_id].velocity.velocity_y = message.vy / 100
+            agents[agent_id].velocity.velocity_z = message.vz / 100
+
+            # Update the previous velocity
+            agents[agent_id].previous_velocity.velocity_x = prev_velocity_x
+            agents[agent_id].previous_velocity.velocity_y = prev_velocity_y
+            agents[agent_id].previous_velocity.velocity_z = prev_velocity_z
+
+            # Calculate the acceleration
+            agents[agent_id].acceleration.acceleration_x = (
+                agents[agent_id].velocity.velocity_x
+                - agents[agent_id].previous_velocity.velocity_x
+            )
+            agents[agent_id].acceleration.acceleration_y = (
+                agents[agent_id].velocity.velocity_y
+                - agents[agent_id].previous_velocity.velocity_y
+            )
+            agents[agent_id].acceleration.acceleration_z = (
+                agents[agent_id].velocity.velocity_z
+                - agents[agent_id].previous_velocity.velocity_z
+            )
 
             # Update the agent location
-            if agents[agent_id].location is None:
-                loc = swarm_state.Location(
-                    message.lat / 1.0e7,
-                    message.lon / 1.0e7,
-                    message.alt / 1000,
-                )
-                agents[agent_id].location = loc
-            else:
-                agents[agent_id].location.latitude = message.lat / 1.0e7
-                agents[agent_id].location.longitude = message.lon / 1.0e7
-                agents[agent_id].location.altitude = message.alt / 1000
+            agents[agent_id].location.latitude = message.lat / 1.0e7
+            agents[agent_id].location.longitude = message.lon / 1.0e7
+            agents[agent_id].location.altitude = message.alt / 1000
 
             return
 
@@ -178,23 +187,12 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Update the respective agents attitude
-            if agents[agent_id].attitude is None:
-                att = swarm_state.Attitude(
-                    message.pitch,
-                    message.yaw,
-                    message.roll,
-                    message.pitchspeed,
-                    message.yawspeed,
-                    message.rollspeed,
-                )
-                agents[agent_id].attitude = att
-            else:
-                agents[agent_id].attitude.pitch = message.pitch
-                agents[agent_id].attitude.roll = message.roll
-                agents[agent_id].attitude.yaw = message.yaw
-                agents[agent_id].attitude.pitch_speed = message.pitchspeed
-                agents[agent_id].attitude.roll_speed = message.rollspeed
-                agents[agent_id].attitude.yaw_speed = message.yawspeed
+            agents[agent_id].attitude.pitch = message.pitch
+            agents[agent_id].attitude.roll = message.roll
+            agents[agent_id].attitude.yaw = message.yaw
+            agents[agent_id].attitude.pitch_speed = message.pitchspeed
+            agents[agent_id].attitude.roll_speed = message.rollspeed
+            agents[agent_id].attitude.yaw_speed = message.yawspeed
 
             return
 
@@ -214,17 +212,9 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Update the battery information
-            if agents[agent_id].battery is None:
-                batt = swarm_state.Battery(
-                    message.voltage_battery,
-                    message.current_battery,
-                    message.battery_remaining,
-                )
-                agents[agent_id].battery = batt
-            else:
-                agents[agent_id].battery.voltage = message.voltage_battery
-                agents[agent_id].battery.current = message.current_battery
-                agents[agent_id].battery.level = message.battery_remaining
+            agents[agent_id].battery.voltage = message.voltage_battery
+            agents[agent_id].battery.current = message.current_battery
+            agents[agent_id].battery.level = message.battery_remaining
 
             return
 
@@ -244,21 +234,10 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Read the GPS status information
-            if agents[agent_id].gps_info is None:
-                info = swarm_state.GPSInfo(
-                    message.eph,
-                    message.epv,
-                    message.fix_type,
-                    message.satellites_visible,
-                )
-                agents[agent_id].gps_info = info
-            else:
-                agents[agent_id].gps_info.eph = message.eph
-                agents[agent_id].gps_info.epv = message.epv
-                agents[agent_id].gps_info.fix_type = message.fix_type
-                agents[
-                    agent_id
-                ].gps_info.satellites_visible = message.satellites_visible
+            agents[agent_id].gps_info.eph = message.eph
+            agents[agent_id].gps_info.epv = message.epv
+            agents[agent_id].gps_info.fix_type = message.fix_type
+            agents[agent_id].gps_info.satellites_visible = message.satellites_visible
 
             return
 
@@ -278,36 +257,22 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Read the EKF Status information
-            if agents[agent_id].ekf is None:
-                ekf = swarm_state.EKFStatus(
-                    message.velocity_variance,
-                    message.pos_horiz_variance,
-                    message.pos_vert_variance,
-                    message.compass_variance,
-                    message.terrain_alt_variance,
-                    (message.flags & mavlink1.EKF_POS_HORIZ_ABS) > 0,
-                    (message.flags & mavlink1.EKF_CONST_POS_MODE) > 0,
-                    (message.flags & mavlink1.EKF_PRED_POS_HORIZ_ABS) > 0,
-                )
-                agents[agent_id].ekf = ekf
-            else:
-                # Read variance properties
-                agents[agent_id].ekf.velocity_variance = message.velocity_variance
-                agents[agent_id].ekf.pos_horiz_variance = message.pos_horiz_variance
-                agents[agent_id].ekf.pos_vert_variance = message.pos_vert_variance
-                agents[agent_id].ekf.compass_variance = message.compass_variance
-                agents[agent_id].ekf.terrain_alt_variance = message.terrain_alt_variance
+            agents[agent_id].ekf.velocity_variance = message.velocity_variance
+            agents[agent_id].ekf.pos_horiz_variance = message.pos_horiz_variance
+            agents[agent_id].ekf.pos_vert_variance = message.pos_vert_variance
+            agents[agent_id].ekf.compass_variance = message.compass_variance
+            agents[agent_id].ekf.terrain_alt_variance = message.terrain_alt_variance
 
-                # Read flags
-                agents[agent_id].ekf.pos_horiz_abs = (
-                    message.flags & mavlink1.EKF_POS_HORIZ_ABS
-                ) > 0
-                agents[agent_id].ekf.const_pos_mode = (
-                    message.flags & mavlink1.EKF_CONST_POS_MODE
-                ) > 0
-                agents[agent_id].ekf.pred_pos_horiz_abs = (
-                    message.flags & mavlink1.EKF_PRED_POS_HORIZ_ABS
-                ) > 0
+            # Read flags
+            agents[agent_id].ekf.pos_horiz_abs = (
+                message.flags & mavlink1.EKF_POS_HORIZ_ABS
+            ) > 0
+            agents[agent_id].ekf.const_pos_mode = (
+                message.flags & mavlink1.EKF_CONST_POS_MODE
+            ) > 0
+            agents[agent_id].ekf.pred_pos_horiz_abs = (
+                message.flags & mavlink1.EKF_PRED_POS_HORIZ_ABS
+            ) > 0
 
             return
 
@@ -327,23 +292,12 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Update the respective agent's attitude
-            if agents[agent_id].attitude is None:
-                att = swarm_state.Attitude(
-                    message.pitch,
-                    message.yaw,
-                    message.roll,
-                    message.pitchspeed,
-                    message.yawspeed,
-                    message.rollspeed,
-                )
-                agents[agent_id].attitude = att
-            else:
-                agents[agent_id].attitude.pitch = message.pitch
-                agents[agent_id].attitude.roll = message.roll
-                agents[agent_id].attitude.yaw = message.yaw
-                agents[agent_id].attitude.pitch_speed = message.pitchspeed
-                agents[agent_id].attitude.roll_speed = message.rollspeed
-                agents[agent_id].attitude.yaw_speed = message.yawspeed
+            agents[agent_id].attitude.pitch = message.pitch
+            agents[agent_id].attitude.roll = message.roll
+            agents[agent_id].attitude.yaw = message.yaw
+            agents[agent_id].attitude.pitch_speed = message.pitchspeed
+            agents[agent_id].attitude.roll_speed = message.rollspeed
+            agents[agent_id].attitude.yaw_speed = message.yawspeed
 
             return
 
@@ -366,17 +320,9 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Update the agent home location
-            if agents[agent_id].home_position is None:
-                loc = swarm_state.Location(
-                    message.latitude / 1.0e7,
-                    message.longitude / 1.0e7,
-                    message.altitude / 1000,
-                )
-                agents[agent_id].home_position = loc
-            else:
-                agents[agent_id].home_position.latitude = message.latitude / 1.0e7
-                agents[agent_id].home_position.longitude = message.longitude / 1.0e7
-                agents[agent_id].home_position.altitude = message.altitude / 1000
+            agents[agent_id].home_position.latitude = message.latitude / 1.0e7
+            agents[agent_id].home_position.longitude = message.longitude / 1.0e7
+            agents[agent_id].home_position.altitude = message.altitude / 1000
 
             return
 

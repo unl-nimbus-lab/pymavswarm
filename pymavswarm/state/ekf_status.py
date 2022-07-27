@@ -24,38 +24,38 @@ class EKFStatus(State):
 
     def __init__(
         self,
-        velocity_variance: float = 0.0,
-        pos_horiz_variance: float = 0.0,
-        pos_vert_variance: float = 0.0,
-        compass_variance: float = 0.0,
-        terrain_alt_variance: float = 0.0,
-        pos_horiz_abs: float = 0.0,
-        const_pos_mode: float = 0.0,
-        pred_pos_horiz_abs: float = 0.0,
+        velocity_variance: float,
+        pos_horiz_variance: float,
+        pos_vert_variance: float,
+        compass_variance: float,
+        terrain_alt_variance: float,
+        pos_horiz_abs: float,
+        const_pos_mode: float,
+        pred_pos_horiz_abs: float,
         optional_context_props: dict | None = None,
     ) -> None:
         """
         Create an EKF status.
 
-        :param velocity_variance: velocity variance, defaults to 0.0
-        :type velocity_variance: float, optional
-        :param pos_horiz_variance: horizontal position variance, defaults to 0.0
-        :type pos_horiz_variance: float, optional
-        :param pos_vert_variance: vertical position variance, defaults to 0.0
-        :type pos_vert_variance: float, optional
-        :param compass_variance: compass variance, defaults to 0.0
-        :type compass_variance: float, optional
-        :param terrain_alt_variance: terrain altitude variance, defaults to 0.0
-        :type terrain_alt_variance: float, optional
+        :param velocity_variance: velocity variance
+        :type velocity_variance: float
+        :param pos_horiz_variance: horizontal position variance
+        :type pos_horiz_variance: float
+        :param pos_vert_variance: vertical position variance
+        :type pos_vert_variance: float
+        :param compass_variance: compass variance
+        :type compass_variance: float
+        :param terrain_alt_variance: terrain altitude variance
+        :type terrain_alt_variance: float
         :param pos_horiz_abs: flags, EKF's Horizontal position (absolute) estimate is
-            good, defaults to 0.0
-        :type pos_horiz_abs: float, optional
+            good
+        :type pos_horiz_abs: float
         :param const_pos_mode: flags, EKF is in constant position mode and does not
-            know  it's absolute or relative position, defaults to 0.0
-        :type const_pos_mode: float, optional
+            know  it's absolute or relative position
+        :type const_pos_mode: float
         :param pred_pos_horiz_abs: EKF's predicted horizontal position (absolute)
-            estimate is good, defaults to 0.0
-        :type pred_pos_horiz_abs: float, optional
+            estimate is good
+        :type pred_pos_horiz_abs: float
         :param optional_context_props: optional properties to add to the EKF status
             context, defaults to None
         :type optional_context_props: dict | None, optional

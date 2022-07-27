@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 from collections import deque
+from datetime import datetime
 from statistics import fmean
 from typing import Any
 
@@ -66,16 +67,36 @@ class Agent:
         context_props = {"sys_id": system_id, "comp_id": component_id}
 
         # Mutable
-        self.__attitude = swarm_state.Attitude(optional_context_props=context_props)
-        self.__battery = swarm_state.Battery(optional_context_props=context_props)
-        self.__docker_info = swarm_state.DockerInfo(
-            optional_context_props=context_props
+        self.__attitude = swarm_state.Attitude(
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, optional_context_props=context_props
         )
-        self.__gps_info = swarm_state.GPSInfo(optional_context_props=context_props)
-        self.__location = swarm_state.Location(optional_context_props=context_props)
-        self.__ekf = swarm_state.EKFStatus(optional_context_props=context_props)
-        self.__telemetry = swarm_state.Telemetry(optional_context_props=context_props)
-        self.__velocity = swarm_state.Velocity(optional_context_props=context_props)
+        self.__battery = swarm_state.Battery(
+            0.0, 0.0, 0.0, optional_context_props=context_props
+        )
+        self.__docker_info = swarm_state.DockerInfo(
+            "0.0.0", datetime(1, 1, 1), optional_context_props=context_props
+        )
+        self.__gps_info = swarm_state.GPSInfo(
+            0.0, 0.0, 0, 0, optional_context_props=context_props
+        )
+        self.__location = swarm_state.Location(
+            0.0, 0.0, 0.0, optional_context_props=context_props
+        )
+        self.__ekf = swarm_state.EKFStatus(
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, optional_context_props=context_props
+        )
+        self.__telemetry = swarm_state.Telemetry(
+            0.0, optional_context_props=context_props
+        )
+        self.__velocity = swarm_state.Velocity(
+            0.0, 0.0, 0.0, optional_context_props=context_props
+        )
+        self.__prev_velocity = swarm_state.Velocity(
+            0.0, 0.0, 0.0, optional_context_props=context_props
+        )
+        self.__acceleration = swarm_state.Acceleration(
+            0.0, 0.0, 0.0, optional_context_props=context_props
+        )
         self.__armed = swarm_state.Generic(
             "armed", False, optional_context_props=context_props
         )
@@ -107,7 +128,7 @@ class Agent:
             max_length=max_params_stored, optional_context_props=context_props
         )
         self.__home_position = swarm_state.Location(
-            optional_context_props=context_props
+            0.0, 0.0, 0.0, optional_context_props=context_props
         )
         self.__hrl_state = swarm_state.Generic(
             "hrl_state", None, optional_context_props=context_props
@@ -218,6 +239,26 @@ class Agent:
         :rtype: Velocity
         """
         return self.__velocity
+
+    @property
+    def previous_velocity(self) -> swarm_state.Velocity:
+        """
+        Velocity of the agent at the previous measurement.
+
+        return: agent's previous velocity
+        :rtype: Velocity
+        """
+        return self.__prev_velocity
+
+    @property
+    def acceleration(self) -> swarm_state.Acceleration:
+        """
+        Acceleration of the agent.
+
+        :return: agent acceleration
+        :rtype: swarm_state.Acceleration
+        """
+        return self.__acceleration
 
     @property
     def armed(self) -> Generic:
