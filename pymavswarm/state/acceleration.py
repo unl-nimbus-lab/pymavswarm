@@ -72,7 +72,7 @@ class Acceleration(State):
 
         # Signal state change event
         if self.__ax != prev_ax:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -99,7 +99,7 @@ class Acceleration(State):
 
         # Signal state change event
         if self.__ay != prev_ay:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -126,7 +126,7 @@ class Acceleration(State):
 
         # Signal state change event
         if self.__az != prev_az:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

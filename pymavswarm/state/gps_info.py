@@ -82,7 +82,7 @@ class GPSInfo(State):
 
         # Signal state change event
         if self.__eph != prev_eph:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -111,7 +111,7 @@ class GPSInfo(State):
 
         # Signal state change event
         if self.__epv != prev_epv:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -140,7 +140,7 @@ class GPSInfo(State):
 
         # Signal state change event
         if self.__fix_type != prev_fix_type:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -169,7 +169,7 @@ class GPSInfo(State):
 
         # Signal state change event
         if self.__satellites_visible != prev_satellites_visible:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

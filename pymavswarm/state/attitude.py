@@ -85,7 +85,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__pitch != prev_pitch:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -112,7 +112,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__yaw != prev_yaw:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -139,7 +139,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__roll != prev_roll:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -166,7 +166,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__pitch_speed != prev_pitch_speed:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -193,7 +193,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__roll_speed != prev_roll_speed:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -220,7 +220,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__yaw_speed != prev_yaw_speed:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

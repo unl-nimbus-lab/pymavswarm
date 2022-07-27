@@ -72,7 +72,7 @@ class DockerInfo(State):
 
         # Signal state change event
         if self.__version != prev_version:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -99,7 +99,7 @@ class DockerInfo(State):
 
         # Signal state change event
         if self.__last_update != prev_last_update:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

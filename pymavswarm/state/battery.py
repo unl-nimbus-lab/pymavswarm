@@ -76,7 +76,7 @@ class Battery(State):
 
         # Signal state change event
         if self.__voltage != prev_voltage:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -108,7 +108,7 @@ class Battery(State):
 
         # Signal state change event
         if self.__current != prev_current:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -136,7 +136,7 @@ class Battery(State):
 
         # Signal state change event
         if self.__level != prev_level:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

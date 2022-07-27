@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-from copy import deepcopy
 from typing import Any, Iterator
 
 from pymavswarm.utils import Event
@@ -77,7 +76,7 @@ class NotifierDict(MutableMapping):
         :param key: key whose value should be deleted
         :type key: Any
         """
-        self.__event.notify(operation="del", key=key, value=deepcopy(self.__store[key]))
+        self.__event.notify(operation="del", key=key, value=self.__store[key])
         del self.__store[key]
 
         return

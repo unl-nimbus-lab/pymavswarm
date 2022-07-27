@@ -96,7 +96,7 @@ class EKFStatus(State):
 
         # Signal state change event
         if self.__velocity_variance != prev_velocity_variance:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -123,7 +123,7 @@ class EKFStatus(State):
 
         # Signal state change event
         if self.__pos_horiz_variance != prev_pov_horiz_variance:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -150,7 +150,7 @@ class EKFStatus(State):
 
         # Signal state change event
         if self.__pos_vert_variance != prev_pos_vert_variance:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -177,7 +177,7 @@ class EKFStatus(State):
 
         # Signal state change event
         if self.__compass_variance != prev_compass_variance:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -204,7 +204,7 @@ class EKFStatus(State):
 
         # Signal state change event
         if self.__terrain_alt_variance != prev_terrain_alt_variance:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -233,7 +233,7 @@ class EKFStatus(State):
 
         # Signal state change event
         if self.__pos_horiz_abs != prev_pos_horiz_abs:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -263,7 +263,7 @@ class EKFStatus(State):
 
         # Signal state change event
         if self.__const_pos_mode != prev_const_pos_mode:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -292,7 +292,7 @@ class EKFStatus(State):
 
         # Signal state change event
         if self.__pred_pos_horiz_abs != prev_pred_pos_horiz_abs:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

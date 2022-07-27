@@ -74,7 +74,7 @@ class Location(State):
 
         # Signal state change event
         if self.__latitude != prev_latitude:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -101,7 +101,7 @@ class Location(State):
 
         # Signal state change event
         if self.__longitude != prev_longitude:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -130,7 +130,7 @@ class Location(State):
 
         # Signal state change event
         if self.__altitude != prev_altitude:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

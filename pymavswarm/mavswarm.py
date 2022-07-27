@@ -2607,3 +2607,60 @@ class MavSwarm:
             )
 
         return
+
+    def enable_collision_detection(
+        self,
+        position_error: float,
+        velocity_error: float,
+        acceleration_error: float,
+        collision_response: int,
+        reach_time: float,
+        use_latency: bool = True,
+    ) -> None:
+        # Create a callback function to handle checking for collisions when a position
+        # message is received
+        def check_for_collisions(
+            sys_id: int = None,
+            comp_id: int = None,
+            latitude: float = None,
+            longitude: float = None,
+            altitude: float = None,
+        ):
+            pass
+
+        # Start by adding the collision detection callback to all registered agents
+        for agent_id in self.agent_ids:
+            self._agents[agent_id].location.state_changed_event.add_listener(
+                check_for_collisions
+            )
+
+        def add_collision_check(operation: str, key: AgentID, value: Agent) -> None:
+            if operation == "set" and key in self._agents:
+                self._agents[key].location.state_changed_event.add_listener(
+                    check_for_collisions
+                )
+
+        # Add collision detection for any new agents that are registered
+        self.__agent_list_changed.add_listener(add_collision_check)
+
+        # We make these private to prevent anyone from accidentally calling them
+        # They need to be assigned to the instance; however, to ensure that users
+        # can properly disable collision detection
+        self.__check_for_collisions = check_for_collisions
+        self.__add_collision_check = add_collision_check
+
+        return
+
+    def disable_collision_detection(self) -> None:
+        """Disable collision detection."""
+        # Ensure that collision detection has been enabled first, then remove any
+        # callbacks
+        if hasattr(self, "_MavSwarm__check_for_collisions"):
+            for agent_id in self.agent_ids:
+                self._agents[agent_id].location.state_changed_event.remove_listener(
+                    self.__check_for_collisions
+                )
+        if hasattr(self, "_MavSwarm__add_collision_check"):
+            self.__agent_list_changed.remove_listener(self.__add_collision_check)
+
+        return

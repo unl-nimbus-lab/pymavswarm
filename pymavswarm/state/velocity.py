@@ -73,7 +73,7 @@ class Velocity(State):
 
         # Signal state change event
         if self.__vx != prev_vx:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -100,7 +100,7 @@ class Velocity(State):
 
         # Signal state change event
         if self.__vy != prev_vy:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -127,7 +127,7 @@ class Velocity(State):
 
         # Signal state change event
         if self.__vz != prev_vz:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

@@ -66,7 +66,7 @@ class Telemetry(State):
 
         # Signal state change event
         if self.__drop_rate != prev_drop_rate:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
