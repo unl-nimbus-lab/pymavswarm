@@ -169,6 +169,11 @@ class MessageReceivers(Receivers):
             agents[agent_id].location.longitude = message.lon / 1.0e7
             agents[agent_id].location.altitude = message.alt / 1000
 
+            # Update the last GPS timestamp using the current clock offset
+            agents[agent_id].last_gps_message_timestamp.value = (
+                message.time_boot_ms - agents[agent_id].clock_offset
+            )
+
             return
 
         @self._receive_message("ATTITUDE")

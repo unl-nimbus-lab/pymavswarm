@@ -136,7 +136,14 @@ class Agent:
         self.__ping = swarm_state.Generic(
             "ping", 0, optional_context_props=context_props
         )
+        self.__last_gps_message_timestamp = swarm_state.Generic(
+            "time_boot_ms", 0, optional_context_props=context_props
+        )
         self.__clock_offset: deque[int] = deque(maxlen=5)
+
+        # Initialize the clock offset with a value so that we have something to access
+        # at boot
+        self.__clock_offset.append(0)
 
         return
 
@@ -389,6 +396,16 @@ class Agent:
         :rtype: Generic
         """
         return self.__ping
+
+    @property
+    def last_gps_message_timestamp(self) -> Generic:
+        """
+        Most recent time that the agent sent the GPS message in the global clock.
+
+        :return: time since boot [ms]
+        :rtype: Generic
+        """
+        return self.__last_gps_message_timestamp
 
     def update_clock_offset(self, offset: int) -> None:
         """

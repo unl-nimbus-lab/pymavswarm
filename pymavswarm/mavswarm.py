@@ -33,6 +33,7 @@ from pymavswarm.agent import Agent
 from pymavswarm.handlers import MessageReceivers
 from pymavswarm.message import codes
 from pymavswarm.message.response import Response
+from pymavswarm.safety import HyperRectangle, Interval, SafetyChecker
 from pymavswarm.state import Parameter
 from pymavswarm.types import (
     AgentID,
@@ -54,10 +55,11 @@ class MavSwarm:
     """
 
     # Collision response constants
-    COLLISION_RESPONSE_LAND = 0
-    COLLISION_RESPONSE_RTL = 1
-    COLLISION_RESPONSE_LOITER = 2
-    COLLISION_RESPONSE_FORCE_DISARM = 3
+    COLLISION_RESPONSE_NONE = 0
+    COLLISION_RESPONSE_LAND = 1
+    COLLISION_RESPONSE_RTL = 2
+    COLLISION_RESPONSE_LOITER = 3
+    COLLISION_RESPONSE_FORCE_DISARM = 4
 
     def __init__(
         self,
@@ -1858,7 +1860,7 @@ class MavSwarm:
         collision_response: int,
         retry: bool = True,
         verify_state: bool = True,
-    ) -> Future:
+    ) -> None:
         """
         Execute a collision response on the colliding agents.
 
@@ -1873,27 +1875,56 @@ class MavSwarm:
             mode, defaults to True
         :type verify_state: bool, optional
         :raises ValueError: an invalid collision response was provided
-        :return: future collision response result
-        :rtype: Future
         """
+
+        def print_collision_response_result(future: Future):
+            responses = future.result()
+
+            if isinstance(responses, list):
+                for response in responses:
+                    if not response.result:
+                        self._logger.critical(
+                            f"Failed to execute collision response "
+                            f"{collision_response} on agent "
+                            f"({response.target_agent_id})"
+                        )
+            else:
+                if not responses.result:
+                    self._logger.critical(
+                        f"Failed to execute collision response "
+                        f"{collision_response} on agent "
+                        f"({responses.target_agent_id})"
+                    )
+
+            return
+
+        future = None
+
+        if collision_response == MavSwarm.COLLISION_RESPONSE_NONE:
+            pass
         if collision_response == MavSwarm.COLLISION_RESPONSE_LAND:
-            return self.set_mode(
+            future = self.set_mode(
                 "LAND", colliding_agents, retry=retry, verify_state=verify_state
             )
         elif collision_response == MavSwarm.COLLISION_RESPONSE_LOITER:
-            return self.set_mode(
+            future = self.set_mode(
                 "LOITER", colliding_agents, retry=retry, verify_state=verify_state
             )
         elif collision_response == MavSwarm.COLLISION_RESPONSE_RTL:
-            return self.set_mode(
+            future = self.set_mode(
                 "RTL", colliding_agents, retry=retry, verify_state=verify_state
             )
         elif collision_response == MavSwarm.COLLISION_RESPONSE_FORCE_DISARM:
-            return self.disarm(
+            future = self.disarm(
                 colliding_agents, retry=retry, verify_state=verify_state, force=True
             )
         else:
             raise ValueError("An invalid collision response was provided")
+
+        if future is not None:
+            future.add_done_callback(print_collision_response_result)
+
+        return
 
     def get_agent_by_id(self, agent_id: AgentID) -> Agent | None:
         """
@@ -2610,33 +2641,277 @@ class MavSwarm:
 
     def enable_collision_detection(
         self,
+        reach_time: float,
         position_error: float,
         velocity_error: float,
-        acceleration_error: float,
         collision_response: int,
-        reach_time: float,
         use_latency: bool = True,
+        initial_step_size: float = 0.01,
+        reach_timeout: float = 0.01,
+        retry_collision_response: bool = True,
+        verify_collision_response_state: bool = True,
     ) -> None:
+        """
+        Enable collision detection between agents.
+
+        :param reach_time: amount of time to project forward when computing the
+            reachable states of agents [s]
+        :type reach_time: float
+        :param position_error: 3D position error of each agent [m]
+        :type position_error: float
+        :param velocity_error: 3D velocity error of each agent [m/s]
+        :type velocity_error: float
+        :param collision_response: collision response to execute when a potential
+            collision is detected
+        :type collision_response: int
+        :param use_latency: integrate the current communications latency between the
+            agents into the reach time calculation, defaults to True
+        :type use_latency: bool, optional
+        :param initial_step_size: initial step to step forward when performing face
+            lifting (lower means higher accuracy, but slower, higher means lower
+            accuracy but faster), defaults to 0.01
+        :type initial_step_size: float, optional
+        :param reach_timeout: maximum amount of time to spend computing the reachable
+            set [s], defaults to 0.01
+        :type reach_timeout: float, optional
+        :param retry_collision_response: retry sending a collision response if an agent
+            does not acknowledge the collision response command, defaults to True
+        :type retry_collision_response: bool, optional
+        :param verify_collision_response_state: verify that an agent properly changes
+            states after receiving a collision response command, defaults to True
+        :type verify_collision_response_state: bool, optional
+        """
         # Create a callback function to handle checking for collisions when a position
         # message is received
         def check_for_collisions(
-            sys_id: int = None,
-            comp_id: int = None,
-            latitude: float = None,
-            longitude: float = None,
-            altitude: float = None,
+            sys_id: int,
+            comp_id: int,
+            time_boot_ms: float,
         ):
-            pass
+            sender_agent = self.get_agent_by_id((sys_id, comp_id))
+
+            # Make sure that the agent has been registered
+            if sender_agent is None:
+                return
+
+            # Construct the initial state
+            sender_init_rect = HyperRectangle(
+                [
+                    # When computing the reachable state for the position, we pass
+                    # the origin as the position. After computing what the reachable
+                    # change, we correct the original lat/lon position. This
+                    # helps us eliminate *some* error that occurs during
+                    # conversions.
+                    Interval(-position_error, position_error),
+                    Interval(-position_error, position_error),
+                    Interval(
+                        sender_agent.location.altitude - position_error,
+                        sender_agent.location.altitude + position_error,
+                    ),
+                    Interval(
+                        sender_agent.velocity.velocity_x - velocity_error,
+                        sender_agent.velocity.velocity_x + velocity_error,
+                    ),
+                    Interval(
+                        sender_agent.velocity.velocity_y - velocity_error,
+                        sender_agent.velocity.velocity_y + velocity_error,
+                    ),
+                    Interval(
+                        sender_agent.velocity.velocity_z - velocity_error,
+                        sender_agent.velocity.velocity_z + velocity_error,
+                    ),
+                ]
+            )
+
+            # Account for latency in the reach time if desired
+            if use_latency:
+                sender_reach_time = reach_time + sender_agent.ping.value
+            else:
+                sender_reach_time = reach_time
+
+            # Compute the sender's reachable state
+            (
+                sender_reachable_state,
+                _,
+            ) = SafetyChecker.face_lifting_iterative_improvement(
+                sender_init_rect,
+                time_boot_ms,
+                (
+                    sender_agent.acceleration.acceleration_x,
+                    sender_agent.acceleration.acceleration_y,
+                    sender_agent.acceleration.acceleration_z,
+                ),
+                initial_step_size=initial_step_size,
+                reach_time=sender_reach_time,
+                timeout=reach_timeout,
+            )
+
+            # Specify Earth's radius to use for calculating position
+            radius_earth = 6378137
+
+            # Get the latitude given the previous latitude and some position
+            # offset [m]
+            def latitude_conversion(latitude: float, offset: float):
+                latitude + (offset / radius_earth) * (180 / math.pi)
+
+            # Get the longitude given the previous longitude and some position
+            # offset [m]
+            def longitude_conversion(latitude: float, longitude: float, offset: float):
+                longitude + (offset / radius_earth) * (180 / math.pi) / math.cos(
+                    latitude * math.pi / 180
+                )
+
+            # Correct the latitude using the reachable positions
+            sender_reachable_state.intervals[0].interval_min = latitude_conversion(
+                sender_agent.location.latitude,
+                sender_reachable_state.intervals[0].interval_min,
+            )
+            sender_reachable_state.intervals[0].interval_max = latitude_conversion(
+                sender_agent.location.latitude,
+                sender_reachable_state.intervals[0].interval_max,
+            )
+
+            # Correct the longitude using the reachable positions
+            sender_reachable_state.intervals[1].interval_min = longitude_conversion(
+                sender_agent.location.latitude,
+                sender_agent.location.longitude,
+                sender_reachable_state.intervals[1].interval_min,
+            )
+            sender_reachable_state.intervals[1].interval_max = longitude_conversion(
+                sender_agent.location.latitude,
+                sender_agent.location.longitude,
+                sender_reachable_state.intervals[1].interval_max,
+            )
+
+            # Get the list of agents that we should check for collisions with
+            agent_ids_to_check = list(
+                filter(
+                    lambda agent_id: (sys_id != agent_id[0] and comp_id != agent_id[1]),
+                    self.agent_ids,
+                )
+            )
+
+            # Keep track of the agents that the sender may collide with
+            colliding_agent_ids: list[AgentID] = []
+
+            for agent_id in agent_ids_to_check:
+                agent = self.get_agent_by_id(agent_id)
+
+                if agent is None:
+                    continue
+
+                # Create the initial rectangle for the agent that we want to check
+                # for collisions with
+                agent_init_rect = HyperRectangle(
+                    [
+                        Interval(-position_error, position_error),
+                        Interval(-position_error, position_error),
+                        Interval(
+                            agent.location.altitude - position_error,
+                            agent.location.altitude + position_error,
+                        ),
+                        Interval(
+                            agent.velocity.velocity_x - velocity_error,
+                            agent.velocity.velocity_x + velocity_error,
+                        ),
+                        Interval(
+                            agent.velocity.velocity_y - velocity_error,
+                            agent.velocity.velocity_y + velocity_error,
+                        ),
+                        Interval(
+                            agent.velocity.velocity_z - velocity_error,
+                            agent.velocity.velocity_z + velocity_error,
+                        ),
+                    ]
+                )
+
+                # Set the reach time for the agent; note that we add the difference
+                # between the time that the sender was last updated and the current
+                # agent in the loop was updated. This ensures that we project far
+                # enough forward to check for collisions
+                if use_latency:
+                    agent_reach_time = (
+                        reach_time
+                        + agent.ping.value
+                        + (time_boot_ms - agent.last_gps_message_timestamp.value)
+                    )
+                else:
+                    agent_reach_time = reach_time + (
+                        time_boot_ms - agent.last_gps_message_timestamp.value
+                    )
+
+                # Compute the current agent's reachable state
+                (
+                    agent_reachable_state,
+                    _,
+                ) = SafetyChecker.face_lifting_iterative_improvement(
+                    agent_init_rect,
+                    agent.last_gps_message_timestamp.value,
+                    (
+                        agent.acceleration.acceleration_x,
+                        agent.acceleration.acceleration_y,
+                        agent.acceleration.acceleration_z,
+                    ),
+                    initial_step_size=initial_step_size,
+                    reach_time=agent_reach_time,
+                    timeout=reach_timeout,
+                )
+
+                # Correct the latitude using the reachable positions
+                agent_reachable_state.intervals[0].interval_min = latitude_conversion(
+                    agent.location.latitude,
+                    agent_reachable_state.intervals[0].interval_min,
+                )
+                agent_reachable_state.intervals[0].interval_max = latitude_conversion(
+                    agent.location.latitude,
+                    agent_reachable_state.intervals[0].interval_max,
+                )
+
+                # Correct the longitude using the reachable positions
+                agent_reachable_state.intervals[1].interval_min = longitude_conversion(
+                    agent.location.latitude,
+                    agent.location.longitude,
+                    agent_reachable_state.intervals[1].interval_min,
+                )
+                agent_reachable_state.intervals[1].interval_max = longitude_conversion(
+                    agent.location.latitude,
+                    agent.location.longitude,
+                    agent_reachable_state.intervals[1].interval_max,
+                )
+
+                if agent_reachable_state.intersects(sender_reachable_state):
+                    colliding_agent_ids.append((agent.system_id, agent.component_id))
+
+            # Handle the potential collision
+            if colliding_agent_ids:
+                self._logger.critical(
+                    f"Agent ({sys_id}, {comp_id} may collide with agents "
+                    f"{colliding_agent_ids} in the next {reach_time} seconds"
+                )
+                colliding_agent_ids.append((sys_id, comp_id))
+
+                self.handle_collision(
+                    colliding_agent_ids,
+                    collision_response,
+                    retry=retry_collision_response,
+                    verify_state=verify_collision_response_state,
+                )
+
+            return
 
         # Start by adding the collision detection callback to all registered agents
         for agent_id in self.agent_ids:
-            self._agents[agent_id].location.state_changed_event.add_listener(
+            self._agents[
+                agent_id
+            ].last_gps_message_timestamp.state_changed_event.add_listener(
                 check_for_collisions
             )
 
         def add_collision_check(operation: str, key: AgentID, value: Agent) -> None:
             if operation == "set" and key in self._agents:
-                self._agents[key].location.state_changed_event.add_listener(
+                self._agents[
+                    key
+                ].last_gps_message_timestamp.state_changed_event.add_listener(
                     check_for_collisions
                 )
 
