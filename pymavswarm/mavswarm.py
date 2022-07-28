@@ -2650,6 +2650,7 @@ class MavSwarm:
         reach_timeout: float = 0.01,
         retry_collision_response: bool = True,
         verify_collision_response_state: bool = True,
+        max_time_difference: float = 4.0,
     ) -> None:
         """
         Enable collision avoidance between agents.
@@ -2686,6 +2687,9 @@ class MavSwarm:
         :param verify_collision_response_state: verify that an agent properly changes
             states after receiving a collision response command, defaults to True
         :type verify_collision_response_state: bool, optional
+        :param max_time_difference: max difference between agent timestamps before the
+            state is considered stale and not checked [s], defaults to 4.0
+        :type max_time_difference: float, optional
         """
         self._logger.warning("Collision avoidance mode has been enabled")
 
@@ -2813,10 +2817,19 @@ class MavSwarm:
             # Keep track of the agents that the sender may collide with
             colliding_agent_ids: list[AgentID] = []
 
+            # Correct the time difference to use ms instead of seconds
+            max_time_difference_ms = max_time_difference * 100
+
             for agent_id in agent_ids_to_check:
                 agent = self.get_agent_by_id(agent_id)
 
-                if agent is None:
+                # Check if the agent exists and if the time difference is greater than
+                # the allowable time
+                if (
+                    agent is None
+                    or time_boot_ms - agent.last_gps_message_timestamp.value
+                    > max_time_difference_ms
+                ):
                     continue
 
                 # Create the initial rectangle for the agent that we want to check
@@ -2846,9 +2859,15 @@ class MavSwarm:
 
                 # Set the reach time for the agent
                 if use_latency:
-                    agent_reach_time = reach_time + (agent.ping.value / 100)
+                    agent_reach_time = (
+                        reach_time
+                        + (agent.ping.value / 100)
+                        + (time_boot_ms - agent.last_gps_message_timestamp.value)
+                    )
                 else:
-                    agent_reach_time = reach_time
+                    agent_reach_time = reach_time + (
+                        time_boot_ms - agent.last_gps_message_timestamp.value
+                    )
 
                 try:
                     # Compute the current agent's reachable state
