@@ -2654,6 +2654,12 @@ class MavSwarm:
         """
         Enable collision detection between agents.
 
+        WARNING: THIS IS A HIGHLY EXPERIMENTAL FEATURE!
+
+        Please use extreme caution when using collision detection! The pymavswarm team
+        does not take any credit for any collisions that occur when using this
+        feature.
+
         :param reach_time: amount of time to project forward when computing the
             reachable states of agents [s]
         :type reach_time: float

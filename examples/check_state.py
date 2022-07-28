@@ -60,8 +60,6 @@ def main() -> None:
 
     print(f"Logging the attitude of swarm agents for {args.duration} seconds")
 
-    mavswarm.enable_collision_detection(0.0, 0.0, 0.0, 0, 0.0)
-
     start_t = time.time()
 
     while time.time() - start_t < args.duration:
@@ -74,8 +72,6 @@ def main() -> None:
                 print(f"The current attitude of {agent} is: {agent.attitude}")
 
             time.sleep(0.5)
-
-    mavswarm.disable_collision_detection()
 
     # Disconnect from the swarm
     mavswarm.disconnect()
