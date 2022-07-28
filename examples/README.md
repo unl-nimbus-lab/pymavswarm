@@ -5,19 +5,25 @@ Several examples have been implemented to demonstrate how to use and extend the
 
 - `arming.py`: demonstrates how to arm and disarm swarm agents
 - `check_state.py`: demonstrates how to check the state of swarm agents; also
-demonstrates how to log data to a [`tlog`](https://ardupilot.org/copter/docs/common-mission-planner-telemetry-logs.html)
-file
+  demonstrates how to log data to a [`tlog`](https://ardupilot.org/copter/docs/common-mission-planner-telemetry-logs.html)
+  file.
+- `collision_prevention_no_flight.py`: demonstrates how to use collision
+  avoidance without flying drones head on into each other. You can use use this
+  to manually carry drones close to each other to verify that collisions are
+  detected.
+- `collision_prevention.py`: demonstrates how to use the collision avoidance
+  feature.
 - `custom_observer.py`: demonstrates how to implement a callback for an agent
-state change
+  state change.
 - `goto.py`: demonstrates how to command an agent to fly to a specified location
-using a configuration file; an example configuration file is provided in
-`resources/goto.yaml`
-- `set_flight_mode.py`: demonstrates how to set the agents' flight mode
+  using a configuration file; an example configuration file is provided in
+  `resources/goto.yaml`.
+- `set_flight_mode.py`: demonstrates how to set the agents' flight mode.
 - `set_home_position.py`: demonstrates how to set the swarm agents' home
-position
-- `set_parameter.py`: demonstrates how to set an agent's parameter
+  position.
+- `set_parameter.py`: demonstrates how to set an agent's parameter.
 - `subclass_mavswarm.py`: demonstrates how to extend the functionality of
-`MavSwarm`
+  `MavSwarm`.
 - `takeoff_sequence.py`: demonstrates how to execute a full takeoff sequence
 
 ## Running the examples

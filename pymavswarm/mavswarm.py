@@ -2639,24 +2639,24 @@ class MavSwarm:
 
         return
 
-    def enable_collision_detection(
+    def enable_collision_avoidance(
         self,
         reach_time: float,
         position_error: float,
         velocity_error: float,
         collision_response: int,
         use_latency: bool = True,
-        initial_step_size: float = 0.01,
+        initial_step_size: float = 0.1,
         reach_timeout: float = 0.01,
         retry_collision_response: bool = True,
         verify_collision_response_state: bool = True,
     ) -> None:
         """
-        Enable collision detection between agents.
+        Enable collision avoidance between agents.
 
         WARNING: THIS IS A HIGHLY EXPERIMENTAL FEATURE!
 
-        Please use extreme caution when using collision detection! The pymavswarm team
+        Please use extreme caution when using collision avoidance! The pymavswarm team
         does not take any credit for any collisions that occur when using this
         feature.
 
@@ -2687,6 +2687,8 @@ class MavSwarm:
             states after receiving a collision response command, defaults to True
         :type verify_collision_response_state: bool, optional
         """
+        self._logger.warning("Collision avoidance mode has been enabled")
+
         # Create a callback function to handle checking for collisions when a position
         # message is received
         def check_for_collisions(
@@ -2731,26 +2733,32 @@ class MavSwarm:
 
             # Account for latency in the reach time if desired
             if use_latency:
-                sender_reach_time = reach_time + sender_agent.ping.value
+                sender_reach_time = reach_time + (sender_agent.ping.value / 100)
             else:
                 sender_reach_time = reach_time
 
-            # Compute the sender's reachable state
-            (
-                sender_reachable_state,
-                _,
-            ) = SafetyChecker.face_lifting_iterative_improvement(
-                sender_init_rect,
-                time_boot_ms,
+            try:
+                # Compute the sender's reachable state
                 (
-                    sender_agent.acceleration.acceleration_x,
-                    sender_agent.acceleration.acceleration_y,
-                    sender_agent.acceleration.acceleration_z,
-                ),
-                initial_step_size=initial_step_size,
-                reach_time=sender_reach_time,
-                timeout=reach_timeout,
-            )
+                    sender_reachable_state,
+                    _,
+                ) = SafetyChecker.face_lifting_iterative_improvement(
+                    sender_init_rect,
+                    time_boot_ms,
+                    (
+                        sender_agent.acceleration.acceleration_x,
+                        sender_agent.acceleration.acceleration_y,
+                        sender_agent.acceleration.acceleration_z,
+                    ),
+                    initial_step_size=initial_step_size,
+                    reach_time=sender_reach_time,
+                    timeout=reach_timeout,
+                )
+            except Exception:
+                self._logger.debug(
+                    "Unable to compute the reachable state of the sender"
+                )
+                return
 
             # Specify Earth's radius to use for calculating position
             radius_earth = 6378137
@@ -2758,12 +2766,12 @@ class MavSwarm:
             # Get the latitude given the previous latitude and some position
             # offset [m]
             def latitude_conversion(latitude: float, offset: float):
-                latitude + (offset / radius_earth) * (180 / math.pi)
+                return latitude + (offset / radius_earth) * (180 / math.pi)
 
             # Get the longitude given the previous longitude and some position
             # offset [m]
             def longitude_conversion(latitude: float, longitude: float, offset: float):
-                longitude + (offset / radius_earth) * (180 / math.pi) / math.cos(
+                return longitude + (offset / radius_earth) * (180 / math.pi) / math.cos(
                     latitude * math.pi / 180
                 )
 
@@ -2836,32 +2844,33 @@ class MavSwarm:
                 # agent in the loop was updated. This ensures that we project far
                 # enough forward to check for collisions
                 if use_latency:
-                    agent_reach_time = (
-                        reach_time
-                        + agent.ping.value
-                        + (time_boot_ms - agent.last_gps_message_timestamp.value)
-                    )
+                    agent_reach_time = reach_time + (agent.ping.value / 100)
                 else:
-                    agent_reach_time = reach_time + (
-                        time_boot_ms - agent.last_gps_message_timestamp.value
-                    )
+                    agent_reach_time = reach_time
 
-                # Compute the current agent's reachable state
-                (
-                    agent_reachable_state,
-                    _,
-                ) = SafetyChecker.face_lifting_iterative_improvement(
-                    agent_init_rect,
-                    agent.last_gps_message_timestamp.value,
+                try:
+                    # Compute the current agent's reachable state
                     (
-                        agent.acceleration.acceleration_x,
-                        agent.acceleration.acceleration_y,
-                        agent.acceleration.acceleration_z,
-                    ),
-                    initial_step_size=initial_step_size,
-                    reach_time=agent_reach_time,
-                    timeout=reach_timeout,
-                )
+                        agent_reachable_state,
+                        _,
+                    ) = SafetyChecker.face_lifting_iterative_improvement(
+                        agent_init_rect,
+                        agent.last_gps_message_timestamp.value,
+                        (
+                            agent.acceleration.acceleration_x,
+                            agent.acceleration.acceleration_y,
+                            agent.acceleration.acceleration_z,
+                        ),
+                        initial_step_size=initial_step_size,
+                        reach_time=agent_reach_time,
+                        timeout=reach_timeout,
+                    )
+                except Exception:
+                    self._logger.debug(
+                        "Unable to compute the reachable set for agent "
+                        f"({agent.system_id}, {agent.component_id})"
+                    )
+                    return
 
                 # Correct the latitude using the reachable positions
                 agent_reachable_state.intervals[0].interval_min = latitude_conversion(
@@ -2932,8 +2941,10 @@ class MavSwarm:
 
         return
 
-    def disable_collision_detection(self) -> None:
+    def disable_collision_avoidance(self) -> None:
         """Disable collision detection."""
+        self._logger.warning("Collision avoidance has been disabled")
+
         # Ensure that collision detection has been enabled first, then remove any
         # callbacks
         if hasattr(self, "_MavSwarm__check_for_collisions"):
