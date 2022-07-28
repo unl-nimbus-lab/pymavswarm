@@ -75,7 +75,7 @@ def print_message_response_cb(future: Future) -> None:
 
 
 def main() -> None:
-    """Demonstrate how to command agents to go to a location."""
+    """Demonstrate collision avoidance without flying."""
     # Parse the script arguments
     args = parse_args()
 
