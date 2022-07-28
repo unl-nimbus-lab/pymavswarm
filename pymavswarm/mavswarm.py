@@ -2741,7 +2741,7 @@ class MavSwarm:
                 # Compute the sender's reachable state
                 (
                     sender_reachable_state,
-                    _,
+                    sender_reach_time_elapsed,
                 ) = SafetyChecker.face_lifting_iterative_improvement(
                     sender_init_rect,
                     time_boot_ms,
@@ -2797,6 +2797,11 @@ class MavSwarm:
                 sender_reachable_state.intervals[1].interval_max,
             )
 
+            # We can use hyperrectangles to see if the reach times intersect
+            sender_reach_time_rect = HyperRectangle(
+                [Interval(time_boot_ms, sender_reach_time_elapsed)]
+            )
+
             # Get the list of agents that we should check for collisions with
             agent_ids_to_check = list(
                 filter(
@@ -2839,10 +2844,7 @@ class MavSwarm:
                     ]
                 )
 
-                # Set the reach time for the agent; note that we add the difference
-                # between the time that the sender was last updated and the current
-                # agent in the loop was updated. This ensures that we project far
-                # enough forward to check for collisions
+                # Set the reach time for the agent
                 if use_latency:
                     agent_reach_time = reach_time + (agent.ping.value / 100)
                 else:
@@ -2852,7 +2854,7 @@ class MavSwarm:
                     # Compute the current agent's reachable state
                     (
                         agent_reachable_state,
-                        _,
+                        agent_reach_time_elapsed,
                     ) = SafetyChecker.face_lifting_iterative_improvement(
                         agent_init_rect,
                         agent.last_gps_message_timestamp.value,
@@ -2894,7 +2896,18 @@ class MavSwarm:
                     agent_reachable_state.intervals[1].interval_max,
                 )
 
-                if agent_reachable_state.intersects(sender_reachable_state):
+                agent_reach_time_rect = HyperRectangle(
+                    [
+                        Interval(
+                            agent.last_gps_message_timestamp.value,
+                            agent_reach_time_elapsed,
+                        )
+                    ]
+                )
+
+                if agent_reachable_state.intersects(
+                    sender_reachable_state
+                ) and agent_reach_time_rect.intersects(sender_reach_time_rect):
                     colliding_agent_ids.append((agent.system_id, agent.component_id))
 
             # Handle the potential collision
