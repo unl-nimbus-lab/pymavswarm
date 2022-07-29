@@ -2650,7 +2650,7 @@ class MavSwarm:
         reach_timeout: float = 0.01,
         retry_collision_response: bool = True,
         verify_collision_response_state: bool = True,
-        max_time_difference: float = 4.0,
+        max_time_difference: float = 2.0,
     ) -> None:
         """
         Enable collision avoidance between agents.
@@ -2688,7 +2688,7 @@ class MavSwarm:
             states after receiving a collision response command, defaults to True
         :type verify_collision_response_state: bool, optional
         :param max_time_difference: max difference between agent timestamps before the
-            state is considered stale and not checked [s], defaults to 4.0
+            state is considered stale and not checked [s], defaults to 2.0
         :type max_time_difference: float, optional
         """
         self._logger.warning("Collision avoidance mode has been enabled")
@@ -2859,10 +2859,18 @@ class MavSwarm:
                 )
 
                 # Set the reach time for the agent
+                # Make sure to project forward to the time that the current agent is at
+                # and then through the target reach time
                 if use_latency:
-                    agent_reach_time = reach_time + ((agent.ping.value / 2) / 100)
+                    agent_reach_time = (
+                        reach_time
+                        + ((agent.ping.value / 2) / 100)
+                        + (time_boot_ms - agent.last_gps_message_timestamp.value)
+                    )
                 else:
-                    agent_reach_time = reach_time
+                    agent_reach_time = reach_time + (
+                        time_boot_ms - agent.last_gps_message_timestamp.value
+                    )
 
                 try:
                     # Compute the current agent's reachable state

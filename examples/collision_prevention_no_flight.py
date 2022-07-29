@@ -36,17 +36,6 @@ def parse_args() -> Any:
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
-    parser.add_argument("config", type=str, help="Pre-planned positions to load")
-    parser.add_argument(
-        "--takeoff_alt", type=float, default=3.0, help="altitude to takeoff to [m]"
-    )
-    parser.add_argument(
-        "--ground_speed",
-        type=float,
-        default=3.0,
-        help="ground speed that the agents should fly at when flying to the target "
-        "location",
-    )
     return parser.parse_args()
 
 
@@ -86,16 +75,15 @@ def main() -> None:
     if not mavswarm.connect(args.port, args.baud):
         return
 
-    # Get the target agents specified in the config file
-    target_agents = list(mavswarm.parse_yaml_mission(args.config)[0].keys())
-
-    # Wait for the swarm to register all target agents
-    while not all(agent_id in mavswarm.agent_ids for agent_id in target_agents):
-        print("Waiting for the system to recognize all target agents...")
+    # Wait for the swarm to auto-register new agents
+    while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
+        print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
     # Enable collision avoidance
-    mavswarm.enable_collision_avoidance(1, 1.5, 0.1, MavSwarm.COLLISION_RESPONSE_NONE)
+    mavswarm.enable_collision_avoidance(
+        0.5, 2.5, 0.01, MavSwarm.COLLISION_RESPONSE_NONE
+    )
 
     input("Hit 'enter' to exit the example")
 

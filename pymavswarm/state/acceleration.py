@@ -52,7 +52,7 @@ class Acceleration(State):
     @property
     def acceleration_x(self) -> float:
         """
-        Ground X acceleration [Latitude, positive north].
+        Ground X acceleration.
 
         :return: acceleration x component
         :rtype: float
@@ -79,7 +79,7 @@ class Acceleration(State):
     @property
     def acceleration_y(self) -> float:
         """
-        Ground Y acceleration [Longitude, positive east].
+        Ground Y acceleration.
 
         :return: acceleration y component
         :rtype: float
@@ -106,7 +106,7 @@ class Acceleration(State):
     @property
     def acceleration_z(self) -> float:
         """
-        Ground Z acceleration [Altitude, positive down].
+        Ground Z acceleration.
 
         :return: acceleration z component
         :rtype: float
