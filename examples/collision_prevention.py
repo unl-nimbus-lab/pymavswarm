@@ -46,12 +46,6 @@ def parse_args() -> Any:
         default=0.5,
         help="ground speed that the agents should fly at when flying toward each other",
     )
-    parser.add_argument(
-        "--visualize",
-        type=bool,
-        default=False,
-        help="visualize the reachable states computed",
-    )
     return parser.parse_args()
 
 

@@ -13,8 +13,12 @@
     "--security-opt=seccomp:unconfined",
     "--security-opt=apparmor:unconfined",
     "--volume=/dev:/dev",
-    "--privileged"
+    "--privileged",
+    "--volume=/tmp/.X11-unix:/tmp/.X11-unix"
   ],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}"
+  },
   "settings": {
     "terminal.integrated.profiles.linux": {
       "bash": {
@@ -25,9 +29,7 @@
     "editor.formatOnSave": true,
     "editor.tabSize": 4,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.rulers": [
-      88
-    ],
+    "editor.rulers": [88],
     "rewrap.autoWrap.enabled": true,
     "rewrap.wrappingColumn": 80,
     "rewrap.wholeComment": true,
@@ -55,9 +57,7 @@
       "pymavswarm"
     ],
     "[python]": {
-      "editor.rulers": [
-        88
-      ],
+      "editor.rulers": [88],
       "editor.tabSize": 4,
       "editor.defaultFormatter": "ms-python.python",
       "editor.codeActionsOnSave": {
@@ -65,9 +65,7 @@
       }
     },
     "[markdown]": {
-      "editor.rulers": [
-        80
-      ],
+      "editor.rulers": [80],
       "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
     },
     "[dockerfile]": {

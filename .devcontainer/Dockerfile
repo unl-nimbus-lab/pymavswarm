@@ -37,6 +37,8 @@ RUN apt-get update \
 
 # Install debugging/linting Python packages
 RUN pip3 install \
+    matplotlib \
+    plotly \
     pipenv \
     black \
     flake8 \
@@ -60,6 +62,20 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
     && rm -rf /var/lib/apt/lists/*
+
+# Install packages needed for enabling OpenGL and X11
+RUN apt-get update && apt-get install -y -qq --no-install-recommends \
+    libglvnd0 \
+    libgl1 \
+    libglx0 \
+    libegl1 \
+    libxext6 \
+    libx11-6
+
+# Configure environment variables needed
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
+ENV QT_X11_NO_MITSHM 1
 
 # Add the .local/bin directory to the path
 ENV PATH "${PATH}:/home/$USERNAME/.local/bin"
