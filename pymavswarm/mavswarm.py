@@ -1839,6 +1839,70 @@ class MavSwarm:
             ack_timeout,
         )
 
+    def set_message_interval(
+        self,
+        message: str,
+        frequency: float,
+        response_target: int = 0,
+        agent_ids: AgentID | list[AgentID] | None = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        """
+        Set the interval that a message should be sent at.
+
+        This can be used to increase the frequency or to block messages from being sent.
+
+        :param message: MAVLink message whose message interval should be set
+        :type message: str
+        :param frequency: frequency that the message should be sent at [Hz]
+        :type frequency: float
+        :param response_target: target address of message stream, defaults to 0 (flight
+            stack default)
+        :type response_target: int, optional
+        :param agent_ids: agents that should have, defaults to None
+        :param agent_ids: optional list of target agent IDs, defaults to None
+        :type agent_ids: AgentID | list[AgentID] | None, optional
+        :param retry: retry setting the message interval on acknowledgement failure,
+            defaults to False
+        :type retry: bool, optional
+        :param message_timeout: maximum amount of time allowed to try setting a message
+            interval before a timeout occurs, defaults to 2.5 [s]
+        :type message_timeout: float, optional
+        :param ack_timeout: maximum amount of time allowed per attempt to verify
+            acknowledgement of the message interval setting message, defaults to 0.5 [s]
+        :type ack_timeout: float, optional
+        :return: future message response, if any
+        :rtype: Future
+        """
+
+        def executor(agent_id: AgentID) -> None:
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+                    0,
+                    message,
+                    1e6 / frequency,
+                    0,
+                    0,
+                    0,
+                    0,
+                    response_target,
+                )
+            return
+
+        return self._send_command(
+            agent_ids,
+            executor,
+            "SET_MESSAGE_INTERVAL",
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
+
     def get_agent_by_id(self, agent_id: AgentID) -> Agent | None:
         """
         Get the agent with the specified ID (system ID, component ID).
@@ -1880,7 +1944,7 @@ class MavSwarm:
         mission = None
 
         with open(config_file, "r") as config:
-            mission = yaml.load(config, yaml.FullLoader)["mission"]
+            mission = yaml.load(config, yaml.FullLoader)["mission"]  # nosec: B506
 
         return mission
 
@@ -2431,12 +2495,12 @@ class MavSwarm:
         """
         Request the system time from the agent at the desired rate.
 
-        :param operation: _description_
+        :param operation: dictionary operation performed
         :type operation: str
-        :param agent_id: _description_
-        :type agent_id: AgentID
-        :param agent: _description_
-        :type agent: Agent
+        :param key: dictionary key (agent ID)
+        :type key: AgentID
+        :param value: dictionary value (agent)
+        :type value: Agent
         """
         REQUEST_FREQ = 0.5  # Hz
 
@@ -2444,31 +2508,8 @@ class MavSwarm:
             # Request that the agent broadcast its system time at the target interval
             # Note that we request that it broadcast to reduce reduncancy in the
             # case where multiple agents create a request for this message
-
-            def executor(agent_id: AgentID) -> None:
-                if self._connection.mavlink_connection is not None:
-                    self._connection.mavlink_connection.mav.command_long_send(
-                        agent_id[0],
-                        agent_id[1],
-                        mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
-                        0,
-                        mavutil.mavlink.MAVLINK_MSG_ID_SYSTEM_TIME,
-                        1e6 / REQUEST_FREQ,
-                        0,
-                        0,
-                        0,
-                        0,
-                        2,
-                    )
-                return
-
-            future = self._send_command(
-                key,
-                executor,
-                "SET_MESSAGE_INTERVAL",
-                True,
-                2.5,
-                0.5,
+            future = self.set_message_interval(
+                mavutil.mavlink.MAVLINK_MSG_ID_SYSTEM_TIME, REQUEST_FREQ, 2, key, True
             )
 
             while not future.done():
