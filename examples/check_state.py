@@ -69,8 +69,7 @@ def main() -> None:
             agent = mavswarm.get_agent_by_id(agent_id)
 
             if agent is not None:
-                # print(f"The current attitude of {agent} is: {agent.attitude}")
-                pass
+                print(f"The current attitude of {agent} is: {agent.attitude}")
 
             time.sleep(0.5)
 
