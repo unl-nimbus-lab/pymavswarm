@@ -70,7 +70,7 @@ class MessageReceivers(Receivers):
             else:
                 # The connection has been restored
                 if agents[agent_id].timeout.value:
-                    self.__logger.info(
+                    self._logger.info(
                         f"Connection to agent {sys_id}:{comp_id} has been restored"
                     )
 
