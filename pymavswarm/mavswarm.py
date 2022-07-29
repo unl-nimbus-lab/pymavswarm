@@ -2502,7 +2502,7 @@ class MavSwarm:
         :param value: dictionary value (agent)
         :type value: Agent
         """
-        REQUEST_FREQ = 0.5  # Hz
+        REQUEST_FREQ = 1.0  # Hz
 
         if operation == "set" and self._connection.mavlink_connection is not None:
             # Request that the agent broadcast its system time at the target interval
