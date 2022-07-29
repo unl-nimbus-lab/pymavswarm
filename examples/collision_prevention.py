@@ -94,7 +94,7 @@ def main() -> None:
         time.sleep(0.5)
 
     # Enable collision avoidance
-    mavswarm.enable_collision_avoidance(3, 2.5, 1.0, MavSwarm.COLLISION_RESPONSE_LOITER)
+    mavswarm.enable_collision_avoidance(2, 2.0, 0.01, MavSwarm.COLLISION_RESPONSE_LAND)
 
     # Set each agent to guided mode before attempting a takeoff sequence
     future = mavswarm.set_mode(

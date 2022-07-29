@@ -1902,7 +1902,7 @@ class MavSwarm:
 
         if collision_response == MavSwarm.COLLISION_RESPONSE_NONE:
             pass
-        if collision_response == MavSwarm.COLLISION_RESPONSE_LAND:
+        elif collision_response == MavSwarm.COLLISION_RESPONSE_LAND:
             future = self.set_mode(
                 "LAND", colliding_agents, retry=retry, verify_state=verify_state
             )
@@ -2737,7 +2737,7 @@ class MavSwarm:
 
             # Account for latency in the reach time if desired
             if use_latency:
-                sender_reach_time = reach_time + (sender_agent.ping.value / 100)
+                sender_reach_time = reach_time + ((sender_agent.ping.value / 2) / 100)
             else:
                 sender_reach_time = reach_time
 
@@ -2770,13 +2770,17 @@ class MavSwarm:
             # Get the latitude given the previous latitude and some position
             # offset [m]
             def latitude_conversion(latitude: float, offset: float):
-                return latitude + (offset / radius_earth) * (180 / math.pi)
+                return round(latitude + (offset / radius_earth) * (180 / math.pi), 7)
 
             # Get the longitude given the previous longitude and some position
             # offset [m]
             def longitude_conversion(latitude: float, longitude: float, offset: float):
-                return longitude + (offset / radius_earth) * (180 / math.pi) / math.cos(
-                    latitude * math.pi / 180
+                return round(
+                    longitude
+                    + (offset / radius_earth)
+                    * (180 / math.pi)
+                    / math.cos(latitude * math.pi / 180),
+                    7,
                 )
 
             # Correct the latitude using the reachable positions
@@ -2801,15 +2805,12 @@ class MavSwarm:
                 sender_reachable_state.intervals[1].interval_max,
             )
 
-            # We can use hyperrectangles to see if the reach times intersect
-            sender_reach_time_rect = HyperRectangle(
-                [Interval(time_boot_ms, sender_reach_time_elapsed)]
-            )
-
             # Get the list of agents that we should check for collisions with
             agent_ids_to_check = list(
                 filter(
-                    lambda agent_id: (sys_id != agent_id[0] and comp_id != agent_id[1]),
+                    lambda agent_id: not (
+                        sys_id == agent_id[0] and comp_id == agent_id[1]
+                    ),
                     self.agent_ids,
                 )
             )
@@ -2859,21 +2860,15 @@ class MavSwarm:
 
                 # Set the reach time for the agent
                 if use_latency:
-                    agent_reach_time = (
-                        reach_time
-                        + (agent.ping.value / 100)
-                        + (time_boot_ms - agent.last_gps_message_timestamp.value)
-                    )
+                    agent_reach_time = reach_time + ((agent.ping.value / 2) / 100)
                 else:
-                    agent_reach_time = reach_time + (
-                        time_boot_ms - agent.last_gps_message_timestamp.value
-                    )
+                    agent_reach_time = reach_time
 
                 try:
                     # Compute the current agent's reachable state
                     (
                         agent_reachable_state,
-                        agent_reach_time_elapsed,
+                        _,
                     ) = SafetyChecker.face_lifting_iterative_improvement(
                         agent_init_rect,
                         agent.last_gps_message_timestamp.value,
@@ -2915,25 +2910,18 @@ class MavSwarm:
                     agent_reachable_state.intervals[1].interval_max,
                 )
 
-                agent_reach_time_rect = HyperRectangle(
-                    [
-                        Interval(
-                            agent.last_gps_message_timestamp.value,
-                            agent_reach_time_elapsed,
-                        )
-                    ]
-                )
-
                 if agent_reachable_state.intersects(
-                    sender_reachable_state
-                ) and agent_reach_time_rect.intersects(sender_reach_time_rect):
+                    sender_reachable_state, dimensions=[0, 1, 2]
+                ):
                     colliding_agent_ids.append((agent.system_id, agent.component_id))
 
             # Handle the potential collision
             if colliding_agent_ids:
                 self._logger.critical(
                     f"Agent ({sys_id}, {comp_id} may collide with agents "
-                    f"{colliding_agent_ids} in the next {reach_time} seconds"
+                    f"{colliding_agent_ids} in the next {reach_time} seconds. "
+                    f"The current global time is {self.time_since_boot}. The expected "
+                    f"collision time is {sender_reach_time_elapsed}"
                 )
                 colliding_agent_ids.append((sys_id, comp_id))
 
