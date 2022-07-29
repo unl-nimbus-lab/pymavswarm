@@ -19,6 +19,7 @@ Here are some of the main features of `pymavswarm`:
 - Implement custom swarm ground control stations
 - Log incoming MAVLink messages for future evaluation and debugging
 - Construct pre-planned missions
+- Multi-agent collision avoidance using reachability analysis
 
 ## Dependencies
 
