@@ -3,24 +3,26 @@
 Several examples have been implemented to demonstrate how to use and extend the
 `pymavswarm` library. The implemented examples include:
 
-- `arming.py`: demonstrates how to arm and disarm swarm agents
+- `arming.py`: demonstrates how to arm and disarm swarm agents.
 - `check_state.py`: demonstrates how to check the state of swarm agents; also
-demonstrates how to log data to a [`tlog`](https://ardupilot.org/copter/docs/common-mission-planner-telemetry-logs.html)
-file
+  demonstrates how to log data to a [`tlog`](https://ardupilot.org/copter/docs/common-mission-planner-telemetry-logs.html)
+  file.
 - `companion_computer.py`: demonstrates how to send commands from a companion
-computer
+computer.
 - `custom_observer.py`: demonstrates how to implement a callback for an agent
-state change
+state change.
 - `goto.py`: demonstrates how to command an agent to fly to a specified location
 using a configuration file; an example configuration file is provided in
-`resources/goto.yaml`
-- `set_flight_mode.py`: demonstrates how to set the agents' flight mode
+`resources/goto.yaml`.
+- `mission_report.py`: demonstrates how to use the `parse_log_file` method to
+  create a mission report.
+- `set_flight_mode.py`: demonstrates how to set the agents' flight mode.
 - `set_home_position.py`: demonstrates how to set the swarm agents' home
-position
-- `set_parameter.py`: demonstrates how to set an agent's parameter
+position.
+- `set_parameter.py`: demonstrates how to set an agent's parameter.
 - `subclass_mavswarm.py`: demonstrates how to extend the functionality of
-`MavSwarm`
-- `takeoff_sequence.py`: demonstrates how to execute a full takeoff sequence
+`MavSwarm`.
+- `takeoff_sequence.py`: demonstrates how to execute a full takeoff sequence.
 
 ## Running the examples
 
