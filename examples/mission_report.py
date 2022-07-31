@@ -134,6 +134,19 @@ def main() -> None:
     )
     remnoise_fig.write_html(os.path.join(report_dir, "remnoise.html"))
 
+    rxerrors_fig = px.line(
+        radio_status_df,
+        x="timestamp",
+        y="rxerrors",
+        color="system_id",
+        title="Radio Packet Recieve Errors",
+        labels={
+            "timestamp": "Timestamp",
+            "rxerrors": "Receive Errors (since boot)",
+        },
+    )
+    rxerrors_fig.write_html(os.path.join(report_dir, "rxerrors.html"))
+
     # Create a basic report
     report = f"""
     ===========================================================================
