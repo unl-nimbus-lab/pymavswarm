@@ -59,6 +59,9 @@ class MavSwarm:
         log_level: int = logging.INFO,
         log_to_file: bool = False,
         log_filename: str | None = None,
+        ignore_ids: list[tuple[int | None, int | None]]
+        | tuple[int | None, int | None]
+        | None = None,
     ) -> None:
         """
         Construct MavSwarm interface.
@@ -73,12 +76,42 @@ class MavSwarm:
         :type log_to_file: bool, optional
         :param log_filename: name of the file to log messages to, defaults to None
         :type log_filename: str | None, optional
+        :param ignore_ids: agent IDs that should be ignored. This can be a list of agent
+            IDs or a single agent ID. To specify a system ID that should be ignored, use
+            (SYSTEM_ID, None). To specify a component ID that should be ignored, use
+            (None, COMPONENT_ID). Note that if messages are being logged, messages from
+            the blocked agents will still be logged, defaults to None
+        :type ignore_ids: list[tuple[int | None, int | None]] |
+            tuple[int | None, int | None] | None, optional
         """
         super().__init__()
 
         self._logger = init_logger(__name__, log_level=log_level)
         self.__agent_list_changed = Event()
         self._agents = NotifierDict(self.__agent_list_changed)
+
+        # Create a list of IDs to ignore
+        self.__ignore_agent_ids: list[tuple[int | None, int | None]] = []
+        self.__ignore_system_ids: list[int | None] = []
+        self.__ignore_component_ids: list[int | None] = []
+
+        # Populate the list of IDs specified by the user
+        if ignore_ids is not None:
+            if isinstance(ignore_ids, list):
+                for agent_id in ignore_ids:
+                    if agent_id[1] is None:
+                        self.__ignore_system_ids.append(agent_id[0])
+                    elif agent_id[0] is None:
+                        self.__ignore_component_ids.append(agent_id[1])
+                    else:
+                        self.__ignore_agent_ids.append(agent_id)
+            else:
+                if ignore_ids[1] is None:
+                    self.__ignore_system_ids.append(ignore_ids[0])
+                elif ignore_ids[0] is None:
+                    self.__ignore_component_ids.append(ignore_ids[1])
+                else:
+                    self.__ignore_agent_ids.append(ignore_ids)
 
         # Register a listener to update the system time publish rate
         self.__agent_list_changed.add_listener(self.__request_system_time)
@@ -2400,6 +2433,16 @@ class MavSwarm:
                     message.get_type(),
                     message.to_dict(),
                 )
+
+            # Don't handle the message if it's from an ignored agent
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
+
+            if (
+                agent_id[0] in self.__ignore_system_ids
+                or agent_id[1] in self.__ignore_component_ids
+                or agent_id in self.__ignore_agent_ids
+            ):
+                continue
 
             # Execute the respective message handler(s)
             if message.get_type() in self.__message_receivers.receivers:
