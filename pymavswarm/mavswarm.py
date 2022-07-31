@@ -81,7 +81,8 @@ class MavSwarm:
             (SYSTEM_ID, None). To specify a component ID that should be ignored, use
             (None, COMPONENT_ID). Note that if messages are being logged, messages from
             the blocked agents will still be logged, defaults to None
-        :type ignore_ids: list[AgentID] | AgentID | None, optional
+        :type ignore_ids: list[tuple[int | None, int | None]] |
+            tuple[int | None, int | None] | None, optional
         """
         super().__init__()
 
