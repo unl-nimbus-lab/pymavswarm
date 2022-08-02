@@ -139,7 +139,7 @@ def main() -> None:
         x="timestamp",
         y="rxerrors",
         color="system_id",
-        title="Radio Packet Recieve Errors",
+        title="Radio Packet Receive Errors",
         labels={
             "timestamp": "Timestamp",
             "rxerrors": "Receive Errors (since boot)",
@@ -175,8 +175,11 @@ def main() -> None:
     Maximum Radio Packet Receive Errors: {radio_status_df["rxerrors"].to_numpy().max()}
     """
 
+    # Write the report to a file and print it out
     with open(os.path.join(report_dir, "mission_report.txt"), "w") as file:
         file.write(report)
+
+    print(report)
 
     return
 

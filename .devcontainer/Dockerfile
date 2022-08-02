@@ -49,7 +49,7 @@ RUN pip3 install \
 
 # Install visualization tools
 RUN pip3 install \
-    matplotlib \ 
+    matplotlib \
     plotly \
     kaleido
 
