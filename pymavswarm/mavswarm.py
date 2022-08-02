@@ -2493,7 +2493,7 @@ class MavSwarm:
             # Attempt to read the message
             # Note that a timeout has been integrated. Consequently not ALL messages
             # may be received from an agent
-            if self.__read_message_mutex.acquire(timeout=0.1):
+            if self.__read_message_mutex.acquire(timeout=0.01):
                 try:
                     message = self._connection.mavlink_connection.recv_msg()
                 except Exception:
@@ -2632,7 +2632,7 @@ class MavSwarm:
         :param value: dictionary value (agent)
         :type value: Agent
         """
-        REQUEST_FREQ = 1.0  # Hz
+        REQUEST_FREQ = 3  # Hz
 
         if operation == "set" and self._connection.mavlink_connection is not None:
             # Request that the agent broadcast its system time at the target interval
@@ -2730,8 +2730,8 @@ class MavSwarm:
         velocity_error: float,
         collision_response: int,
         use_latency: bool = True,
-        initial_step_size: float = 0.1,
-        reach_timeout: float = 0.01,
+        initial_step_size: float = 0.5,
+        reach_timeout: float = 0.001,
         retry_collision_response: bool = True,
         verify_collision_response_state: bool = True,
         max_time_difference: float = 2.0,
@@ -2821,7 +2821,7 @@ class MavSwarm:
 
             # Account for latency in the reach time if desired
             if use_latency:
-                sender_reach_time = reach_time + ((sender_agent.ping.value / 2) / 100)
+                sender_reach_time = reach_time + ((sender_agent.ping.value / 2) / 1000)
             else:
                 sender_reach_time = reach_time
 
@@ -2903,18 +2903,26 @@ class MavSwarm:
             colliding_agent_ids: list[AgentID] = []
 
             # Correct the time difference to use ms instead of seconds
-            max_time_difference_ms = max_time_difference * 100
+            max_time_difference_ms = max_time_difference * 1000
 
             for agent_id in agent_ids_to_check:
                 agent = self.get_agent_by_id(agent_id)
 
                 # Check if the agent exists and if the time difference is greater than
-                # the allowable time
+                # the allowable time. If this situation occurs it means that the clocks
+                # not synchronized or there is high network latency
+                if agent is None:
+                    continue
+
                 if (
-                    agent is None
-                    or time_boot_ms - agent.last_gps_message_timestamp.value
+                    time_boot_ms - agent.last_gps_message_timestamp.value
                     > max_time_difference_ms
                 ):
+                    self._logger.debug(
+                        f"Agent ({sys_id}, {comp_id}) is out of sync with agent "
+                        f"{agent_id} by "
+                        f"{time_boot_ms - agent.last_gps_message_timestamp.value}"
+                    )
                     continue
 
                 # Create the initial rectangle for the agent that we want to check
@@ -2948,12 +2956,15 @@ class MavSwarm:
                 if use_latency:
                     agent_reach_time = (
                         reach_time
-                        + ((agent.ping.value / 2) / 100)
-                        + (time_boot_ms - agent.last_gps_message_timestamp.value)
+                        + ((agent.ping.value / 2) / 1000)
+                        + (
+                            (time_boot_ms - agent.last_gps_message_timestamp.value)
+                            / 1000
+                        )
                     )
                 else:
                     agent_reach_time = reach_time + (
-                        time_boot_ms - agent.last_gps_message_timestamp.value
+                        (time_boot_ms - agent.last_gps_message_timestamp.value) / 1000
                     )
 
                 try:
@@ -3003,7 +3014,7 @@ class MavSwarm:
                 )
 
                 if agent_reachable_state.intersects(
-                    sender_reachable_state, dimensions=[0, 1, 2]
+                    sender_reachable_state, dimensions=[0, 1]
                 ):
                     colliding_agent_ids.append((agent.system_id, agent.component_id))
 

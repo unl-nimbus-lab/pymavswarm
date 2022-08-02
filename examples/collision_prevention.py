@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from argparse import ArgumentParser
 from concurrent.futures import Future
@@ -79,7 +80,11 @@ def main() -> None:
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_to_file=True)
+    mavswarm = MavSwarm(
+        log_level=logging.DEBUG,
+        log_to_file=True,
+        ignore_ids=[(1, 240), (1, 0), (6, 1), (255, 190), (13, 1)],
+    )
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -94,7 +99,9 @@ def main() -> None:
         time.sleep(0.5)
 
     # Enable collision avoidance
-    mavswarm.enable_collision_avoidance(2, 2.0, 0.01, MavSwarm.COLLISION_RESPONSE_LAND)
+    mavswarm.enable_collision_avoidance(
+        3.0, 2.5, 0.1, MavSwarm.COLLISION_RESPONSE_LOITER
+    )
 
     # Set each agent to guided mode before attempting a takeoff sequence
     future = mavswarm.set_mode(

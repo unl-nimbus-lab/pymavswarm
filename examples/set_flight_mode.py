@@ -75,16 +75,19 @@ def main() -> None:
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm()
+    mavswarm = MavSwarm(ignore_ids=[(1, 240), (1, 0)])
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
         return
 
-    # Wait for the swarm to auto-register new agents
-    while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
-        print("Waiting for the system to recognize agents in the network...")
+    while not (6, 1) in mavswarm.agent_ids:
         time.sleep(0.5)
+
+    # Wait for the swarm to auto-register new agents
+    # while not list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
+    #     print("Waiting for the system to recognize agents in the network...")
+    #     time.sleep(0.5)
 
     # Print out the current flight modes of the agents
     for agent_id in list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
@@ -97,7 +100,9 @@ def main() -> None:
             )
 
     # Arm all agents in the swarm; retry on message failure
-    future = mavswarm.set_mode(args.mode, verify_state=True, retry=True)
+    future = mavswarm.set_mode(
+        args.mode, verify_state=True, retry=True, agent_ids=(6, 1)
+    )
     future.add_done_callback(print_message_response_cb)
 
     # Wait for the arm command to complete
