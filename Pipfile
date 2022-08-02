@@ -20,6 +20,9 @@ bandit = "*"
 coverage = "*"
 pre-commit = "*"
 tox = "*"
+matplotlib = "*"
+plotly = "*"
+kaleido = "*"
 
 [requires]
 python_version = "3"
