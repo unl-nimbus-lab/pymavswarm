@@ -50,7 +50,7 @@ class Acceleration(State):
         return
 
     @property
-    def acceleration_x(self) -> float:
+    def x(self) -> float:
         """
         Ground X acceleration.
 
@@ -59,8 +59,8 @@ class Acceleration(State):
         """
         return self.__ax
 
-    @acceleration_x.setter
-    def acceleration_x(self, accel: float) -> None:
+    @x.setter
+    def x(self, accel: float) -> None:
         """
         Set the acceleration's x component.
 
@@ -77,7 +77,7 @@ class Acceleration(State):
         return
 
     @property
-    def acceleration_y(self) -> float:
+    def y(self) -> float:
         """
         Ground Y acceleration.
 
@@ -86,8 +86,8 @@ class Acceleration(State):
         """
         return self.__ay
 
-    @acceleration_y.setter
-    def acceleration_y(self, accel: float) -> None:
+    @y.setter
+    def y(self, accel: float) -> None:
         """
         Set the acceleration's y component.
 
@@ -104,7 +104,7 @@ class Acceleration(State):
         return
 
     @property
-    def acceleration_z(self) -> float:
+    def z(self) -> float:
         """
         Ground Z acceleration.
 
@@ -113,8 +113,8 @@ class Acceleration(State):
         """
         return self.__az
 
-    @acceleration_z.setter
-    def acceleration_z(self, accel: float) -> None:
+    @z.setter
+    def z(self, accel: float) -> None:
         """
         Set the acceleration's z component.
 

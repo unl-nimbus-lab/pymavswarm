@@ -51,7 +51,7 @@ class Velocity(State):
         return
 
     @property
-    def velocity_x(self) -> float:
+    def x(self) -> float:
         """
         Ground X Speed [Latitude, positive north].
 
@@ -60,8 +60,8 @@ class Velocity(State):
         """
         return self.__vx
 
-    @velocity_x.setter
-    def velocity_x(self, vel: float) -> None:
+    @x.setter
+    def x(self, vel: float) -> None:
         """
         Set the velocity's x component.
 
@@ -78,7 +78,7 @@ class Velocity(State):
         return
 
     @property
-    def velocity_y(self) -> float:
+    def y(self) -> float:
         """
         Ground Y Speed [Longitude, positive east].
 
@@ -87,8 +87,8 @@ class Velocity(State):
         """
         return self.__vy
 
-    @velocity_y.setter
-    def velocity_y(self, vel: float) -> None:
+    @y.setter
+    def y(self, vel: float) -> None:
         """
         Set the velocity's y component.
 
@@ -105,7 +105,7 @@ class Velocity(State):
         return
 
     @property
-    def velocity_z(self) -> float:
+    def z(self) -> float:
         """
         Ground Z Speed [Altitude, positive down].
 
@@ -114,8 +114,8 @@ class Velocity(State):
         """
         return self.__vz
 
-    @velocity_z.setter
-    def velocity_z(self, vel: float) -> None:
+    @z.setter
+    def z(self, vel: float) -> None:
         """
         Set the velocity's z component.
 

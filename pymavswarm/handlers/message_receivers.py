@@ -136,32 +136,29 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Store the previous velocity
-            prev_velocity_x = agents[agent_id].velocity.velocity_x
-            prev_velocity_y = agents[agent_id].velocity.velocity_y
-            prev_velocity_z = agents[agent_id].velocity.velocity_z
+            prev_velocity_x = agents[agent_id].velocity.x
+            prev_velocity_y = agents[agent_id].velocity.y
+            prev_velocity_z = agents[agent_id].velocity.z
 
             # Update the agent velocity
-            agents[agent_id].velocity.velocity_x = message.vx / 100
-            agents[agent_id].velocity.velocity_y = message.vy / 100
-            agents[agent_id].velocity.velocity_z = message.vz / 100
+            agents[agent_id].velocity.x = message.vx / 100
+            agents[agent_id].velocity.y = message.vy / 100
+            agents[agent_id].velocity.z = message.vz / 100
 
             # Update the previous velocity
-            agents[agent_id].previous_velocity.velocity_x = prev_velocity_x
-            agents[agent_id].previous_velocity.velocity_y = prev_velocity_y
-            agents[agent_id].previous_velocity.velocity_z = prev_velocity_z
+            agents[agent_id].previous_velocity.x = prev_velocity_x
+            agents[agent_id].previous_velocity.y = prev_velocity_y
+            agents[agent_id].previous_velocity.z = prev_velocity_z
 
             # Calculate the acceleration
-            agents[agent_id].acceleration.acceleration_x = (
-                agents[agent_id].velocity.velocity_x
-                - agents[agent_id].previous_velocity.velocity_x
+            agents[agent_id].acceleration.x = (
+                agents[agent_id].velocity.x - agents[agent_id].previous_velocity.x
             )
-            agents[agent_id].acceleration.acceleration_y = (
-                agents[agent_id].velocity.velocity_y
-                - agents[agent_id].previous_velocity.velocity_y
+            agents[agent_id].acceleration.y = (
+                agents[agent_id].velocity.y - agents[agent_id].previous_velocity.y
             )
-            agents[agent_id].acceleration.acceleration_z = (
-                agents[agent_id].velocity.velocity_z
-                - agents[agent_id].previous_velocity.velocity_z
+            agents[agent_id].acceleration.z = (
+                agents[agent_id].velocity.z - agents[agent_id].previous_velocity.z
             )
 
             # Update the agent location

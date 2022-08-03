@@ -2759,11 +2759,11 @@ class MavSwarm:
             agents into the reach time calculation, defaults to True
         :type use_latency: bool, optional
         :param initial_step_size: initial step to step forward when performing face
-            lifting (lower means higher accuracy, but slower, higher means lower
-            accuracy but faster), defaults to 0.01
+            lifting (lower means higher accuracy but slower; higher means lower
+            accuracy but faster), defaults to 0.5
         :type initial_step_size: float, optional
         :param reach_timeout: maximum amount of time to spend computing the reachable
-            set [s], defaults to 0.01
+            set [s], defaults to 0.001
         :type reach_timeout: float, optional
         :param retry_collision_response: retry sending a collision response if an agent
             does not acknowledge the collision response command, defaults to True
@@ -2805,16 +2805,16 @@ class MavSwarm:
                         sender_agent.location.altitude + position_error,
                     ),
                     Interval(
-                        sender_agent.velocity.velocity_x - velocity_error,
-                        sender_agent.velocity.velocity_x + velocity_error,
+                        sender_agent.velocity.x - velocity_error,
+                        sender_agent.velocity.x + velocity_error,
                     ),
                     Interval(
-                        sender_agent.velocity.velocity_y - velocity_error,
-                        sender_agent.velocity.velocity_y + velocity_error,
+                        sender_agent.velocity.y - velocity_error,
+                        sender_agent.velocity.y + velocity_error,
                     ),
                     Interval(
-                        sender_agent.velocity.velocity_z - velocity_error,
-                        sender_agent.velocity.velocity_z + velocity_error,
+                        sender_agent.velocity.z - velocity_error,
+                        sender_agent.velocity.z + velocity_error,
                     ),
                 ]
             )
@@ -2834,9 +2834,9 @@ class MavSwarm:
                     sender_init_rect,
                     time_boot_ms,
                     (
-                        sender_agent.acceleration.acceleration_x,
-                        sender_agent.acceleration.acceleration_y,
-                        sender_agent.acceleration.acceleration_z,
+                        sender_agent.acceleration.x,
+                        sender_agent.acceleration.y,
+                        sender_agent.acceleration.z,
                     ),
                     initial_step_size=initial_step_size,
                     reach_time=sender_reach_time,
@@ -2909,8 +2909,8 @@ class MavSwarm:
                 agent = self.get_agent_by_id(agent_id)
 
                 # Check if the agent exists and if the time difference is greater than
-                # the allowable time. If this situation occurs it means that the clocks
-                # not synchronized or there is high network latency
+                # the allowable time. If this situation occurs, it means that there may
+                # be high latency or a low position message frequency
                 if agent is None:
                     continue
 
@@ -2936,16 +2936,16 @@ class MavSwarm:
                             agent.location.altitude + position_error,
                         ),
                         Interval(
-                            agent.velocity.velocity_x - velocity_error,
-                            agent.velocity.velocity_x + velocity_error,
+                            agent.velocity.x - velocity_error,
+                            agent.velocity.x + velocity_error,
                         ),
                         Interval(
-                            agent.velocity.velocity_y - velocity_error,
-                            agent.velocity.velocity_y + velocity_error,
+                            agent.velocity.y - velocity_error,
+                            agent.velocity.y + velocity_error,
                         ),
                         Interval(
-                            agent.velocity.velocity_z - velocity_error,
-                            agent.velocity.velocity_z + velocity_error,
+                            agent.velocity.z - velocity_error,
+                            agent.velocity.z + velocity_error,
                         ),
                     ]
                 )
@@ -2976,9 +2976,9 @@ class MavSwarm:
                         agent_init_rect,
                         agent.last_gps_message_timestamp.value,
                         (
-                            agent.acceleration.acceleration_x,
-                            agent.acceleration.acceleration_y,
-                            agent.acceleration.acceleration_z,
+                            agent.acceleration.x,
+                            agent.acceleration.y,
+                            agent.acceleration.z,
                         ),
                         initial_step_size=initial_step_size,
                         reach_time=agent_reach_time,

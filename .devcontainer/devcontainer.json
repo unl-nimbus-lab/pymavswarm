@@ -14,8 +14,7 @@
     "--security-opt=apparmor:unconfined",
     "--volume=/tmp/.X11-unix:/tmp/.X11-unix",
     "--volume=/dev:/dev",
-    "--privileged",
-    "--volume=/tmp/.X11-unix:/tmp/.X11-unix"
+    "--privileged"
   ],
   "containerEnv": {
     "DISPLAY": "${localEnv:DISPLAY}"
