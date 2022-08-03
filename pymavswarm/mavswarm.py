@@ -3014,7 +3014,7 @@ class MavSwarm:
                 )
 
                 if agent_reachable_state.intersects(
-                    sender_reachable_state, dimensions=[0, 1]
+                    sender_reachable_state, dimensions=[0, 1, 2]
                 ):
                     colliding_agent_ids.append((agent.system_id, agent.component_id))
 

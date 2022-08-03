@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import logging
 import time
 from argparse import ArgumentParser
 from concurrent.futures import Future
@@ -80,11 +79,7 @@ def main() -> None:
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(
-        log_level=logging.DEBUG,
-        log_to_file=True,
-        ignore_ids=[(1, 240), (1, 0), (6, 1), (255, 190), (13, 1)],
-    )
+    mavswarm = MavSwarm()
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -172,7 +167,7 @@ def main() -> None:
         pass
 
     # Wait for user input
-    input("Press the 'enter' key to command the agents to land")
+    input("Press the 'enter' key to command the agents to land\n")
 
     # Attempt to land the agents
     future = mavswarm.set_mode(
