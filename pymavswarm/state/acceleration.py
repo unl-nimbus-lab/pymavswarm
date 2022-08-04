@@ -19,60 +19,59 @@ from __future__ import annotations
 from pymavswarm.state.state import State
 
 
-class Velocity(State):
-    """Velocity state."""
+class Acceleration(State):
+    """Acceleration state."""
 
     def __init__(
         self,
-        vx: float,
-        vy: float,
-        vz: float,
+        ax: float,
+        ay: float,
+        az: float,
         optional_context_props: dict | None = None,
     ) -> None:
         """
-        Create a new velocity object.
+        Create a new acceleration object.
 
-        :param vx: ground x speed [Latitude, positive north]
-        :type vx: float
-        :param vy: ground y speed [Longitude, positive east]
-        :type vy: float
-        :param vz: ground z speed [Altitude, positive down]
-        :type vz: float
-        :param optional_context_props: optional properties to add to the context,
-            defaults to None
+        :param ax: ground x acceleration [Latitude, positive north]
+        :type ax: float
+        :param ay: ground y acceleration [Longitude, positive east]
+        :type ay: float
+        :param az: ground z acceleration [Altitude, positive down]
+        :type az: float
+        :param optional_context_props: optional properties to add to the context
         :type optional_context_props: dict, optional
         """
         super().__init__(optional_context_props)
 
-        self.__vx = vx
-        self.__vy = vy
-        self.__vz = vz
+        self.__ax = ax
+        self.__ay = ay
+        self.__az = az
 
         return
 
     @property
     def x(self) -> float:
         """
-        Ground X Speed [Latitude, positive north].
+        Ground X acceleration.
 
-        :return: velocity x component
+        :return: acceleration x component
         :rtype: float
         """
-        return self.__vx
+        return self.__ax
 
     @x.setter
-    def x(self, vel: float) -> None:
+    def x(self, accel: float) -> None:
         """
-        Set the velocity's x component.
+        Set the acceleration's x component.
 
-        :param vel: x speed [m/s]
-        :type vel: float
+        :param accel: x acceleration [m/s^s]
+        :type accel: float
         """
-        prev_vx = self.__vx
-        self.__vx = vel
+        prev_ax = self.__ax
+        self.__ax = accel
 
         # Signal state change event
-        if self.__vx != prev_vx:
+        if self.__ax != prev_ax:
             self.state_changed_event.notify(**self.context)
 
         return
@@ -80,26 +79,26 @@ class Velocity(State):
     @property
     def y(self) -> float:
         """
-        Ground Y Speed [Longitude, positive east].
+        Ground Y acceleration.
 
-        :return: velocity y component
+        :return: acceleration y component
         :rtype: float
         """
-        return self.__vy
+        return self.__ay
 
     @y.setter
-    def y(self, vel: float) -> None:
+    def y(self, accel: float) -> None:
         """
-        Set the velocity's y component.
+        Set the acceleration's y component.
 
-        :param vel: y speed [m/s]
-        :type vel: float
+        :param accel: y acceleration [m/s^2]
+        :type accel: float
         """
-        prev_vy = self.__vy
-        self.__vy = vel
+        prev_ay = self.__ay
+        self.__ay = accel
 
         # Signal state change event
-        if self.__vy != prev_vy:
+        if self.__ay != prev_ay:
             self.state_changed_event.notify(**self.context)
 
         return
@@ -107,26 +106,26 @@ class Velocity(State):
     @property
     def z(self) -> float:
         """
-        Ground Z Speed [Altitude, positive down].
+        Ground Z acceleration.
 
-        :return: velocity z component
+        :return: acceleration z component
         :rtype: float
         """
-        return self.__vz
+        return self.__az
 
     @z.setter
-    def z(self, vel: float) -> None:
+    def z(self, accel: float) -> None:
         """
-        Set the velocity's z component.
+        Set the acceleration's z component.
 
-        :param vel: z speed [m/s]
-        :type vel: float
+        :param accel: z acceleration [m/s^2]
+        :type accel: float
         """
-        prev_vz = self.__vz
-        self.__vz = vel
+        prev_az = self.__az
+        self.__az = accel
 
         # Signal state change event
-        if self.__vz != prev_vz:
+        if self.__az != prev_az:
             self.state_changed_event.notify(**self.context)
 
         return
@@ -134,24 +133,24 @@ class Velocity(State):
     @property
     def context(self) -> dict:
         """
-        Velocity context.
+        Acceleration context.
 
         :return: context
         :rtype: dict
         """
         context = super().context
 
-        context["vx"] = self.__vx
-        context["vy"] = self.__vy
-        context["vz"] = self.__vz
+        context["ax"] = self.__ax
+        context["ay"] = self.__ay
+        context["az"] = self.__az
 
         return context
 
     def __str__(self) -> str:
         """
-        Print velocity information in a human-readable format.
+        Print acceleration information in a human-readable format.
 
-        :return: velocity information
+        :return: acceleration information
         :rtype: str
         """
-        return f"Velocity: {self.context}"
+        return f"Acceleration: {self.context}"

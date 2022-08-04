@@ -14,15 +14,16 @@ Contributions include but are not restricted to:
 
 ## Workflow
 
-- Send all pull requests to the `main` branch (unless otherwise requested)
-- Limit each pull request to resolving a single [issue](https://github.com/unl-nimbus-lab/pymavswarm/issues)
+- Send all pull requests to the `main` branch (unless otherwise requested).
+- Limit each pull request to resolving a single
+  [issue](https://github.com/unl-nimbus-lab/pymavswarm/issues).
 - It is your responsibility to ensure that your development branch is up-to-date
-with the `main` branch. You may either rebase on `main` or merge `main` into
-your development branch.
+  with the `main` branch. You may either rebase on `main` or merge `main` into
+  your development branch.
 - Always test and document your code. We also encourage performing field tests
-for significant changes.
+  for significant changes.
 - Ensure that your changes pass our CI. We will not review your PR until the CI
-passes.
+  passes.
 
 ## Setting up a local development environment
 
@@ -34,7 +35,7 @@ passes.
 A VSCode development container has been provided to offer a fully sandboxed
 development environment. This environment includes all development Python
 packages (e.g., `pre-commit`) used by the `pymavswarm` development team and
-utilizes a variety of VSCode packages that make it easy to run tests and to
+utilizes a variety of VSCode extensions that make it easy to run tests and to
 ensure that all style conventions are followed. Follow the instructions
 [here](https://code.visualstudio.com/docs/remote/containers) to learn how to
 install and launch development containers using VSCode. Once these steps have

@@ -16,6 +16,9 @@
     "--volume=/dev:/dev",
     "--privileged"
   ],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}"
+  },
   "settings": {
     "terminal.integrated.profiles.linux": {
       "bash": {
@@ -35,6 +38,7 @@
     "python.linting.pylintEnabled": false,
     "python.linting.pydocstyleEnabled": true,
     "python.linting.mypyEnabled": true,
+    "python.linting.banditEnabled": true,
     "python.formatting.provider": "black",
     "python.formatting.blackPath": "/usr/local/bin/black",
     "python.testing.unittestArgs": [
@@ -91,7 +95,8 @@
     "DavidAnson.vscode-markdownlint",
     "esbenp.prettier-vscode",
     "LittleFoxTeam.vscode-python-test-adapter",
-    "tamasfe.even-better-toml"
+    "tamasfe.even-better-toml",
+    "alefragnani.Bookmarks"
   ],
   "postStartCommand": "pip3 install -e ."
 }

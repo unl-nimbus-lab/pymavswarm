@@ -33,6 +33,7 @@ from pymavswarm.agent import Agent
 from pymavswarm.handlers import MessageReceivers
 from pymavswarm.message import codes
 from pymavswarm.message.response import Response
+from pymavswarm.safety import HyperRectangle, Interval, SafetyChecker
 from pymavswarm.state import Parameter
 from pymavswarm.types import (
     AgentID,
@@ -52,6 +53,13 @@ class MavSwarm:
     Provides an interface for controlling robot swarms, obtaining swarm state, and
     configuring agents.
     """
+
+    # Collision response constants
+    COLLISION_RESPONSE_NONE = 0
+    COLLISION_RESPONSE_LAND = 1
+    COLLISION_RESPONSE_RTL = 2
+    COLLISION_RESPONSE_LOITER = 3
+    COLLISION_RESPONSE_FORCE_DISARM = 4
 
     def __init__(
         self,
@@ -225,7 +233,7 @@ class MavSwarm:
     def connect(
         self,
         port: str,
-        baudrate: int,
+        baudrate: int | None = None,
         source_system: int = 255,
         source_component: int = 0,
         connection_attempt_timeout: float = 2.0,
@@ -255,7 +263,11 @@ class MavSwarm:
         )
 
         if not self._connection.connect(
-            port, baudrate, source_system, source_component, connection_attempt_timeout
+            port,
+            baudrate if baudrate is not None else 115200,
+            source_system,
+            source_component,
+            connection_attempt_timeout,
         ):
             return False
 
@@ -406,6 +418,7 @@ class MavSwarm:
         ack_timeout: float = 0.5,
         verify_state: bool = False,
         verify_state_timeout: float = 1.0,
+        force: bool = False,
     ) -> Future:
         """
         Disarm the desired agents.
@@ -429,6 +442,8 @@ class MavSwarm:
         :param verify_state_timeout: maximum amount of time allowed per attempt to
             verify that an agent is in the disarmed state, defaults to 1.0 [s]
         :type verify_state_timeout: float, optional
+        :param force: force disarm the agents, defaults to False
+        :type force: bool, optional
         :return: future message response, if any
         :rtype: Future
         """
@@ -441,7 +456,7 @@ class MavSwarm:
                     mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                     0,
                     0,
-                    0,
+                    0 if not force else 21196,
                     0,
                     0,
                     0,
@@ -1328,7 +1343,7 @@ class MavSwarm:
         # Attempt to disarm all agents on stage 1 failure
         if failure_occured(future.result()):
             self._logger.warning("Takeoff sequence command failed at stage 1")
-            self.disarm(agent_ids=agent_ids, retry=True, verify_state=True)
+            self.disarm(agent_ids=agent_ids, retry=True, verify_state=True, force=True)
             return future.result()
 
         time.sleep(stage_delay)
@@ -1872,6 +1887,78 @@ class MavSwarm:
             ack_timeout,
         )
 
+    def handle_collision(
+        self,
+        colliding_agents: list[AgentID],
+        collision_response: int,
+        retry: bool = True,
+        verify_state: bool = True,
+    ) -> None:
+        """
+        Execute a collision response on the colliding agents.
+
+        :param colliding_agents: agents that are on track to collide
+        :type colliding_agents: list[AgentID]
+        :param collision_response: behavior that should be executed on the colliding
+            agents; options are available as MavSwarm constants
+        :type collision_response: int
+        :param retry: retry sending the collision response on failure, defaults to True
+        :type retry: bool, optional
+        :param verify_state: verify that the agent switched into the collision response
+            mode, defaults to True
+        :type verify_state: bool, optional
+        :raises ValueError: an invalid collision response was provided
+        """
+
+        def print_collision_response_result(future: Future):
+            responses = future.result()
+
+            if isinstance(responses, list):
+                for response in responses:
+                    if not response.result:
+                        self._logger.critical(
+                            f"Failed to execute collision response "
+                            f"{collision_response} on agent "
+                            f"({response.target_agent_id})"
+                        )
+            else:
+                if not responses.result:
+                    self._logger.critical(
+                        f"Failed to execute collision response "
+                        f"{collision_response} on agent "
+                        f"({responses.target_agent_id})"
+                    )
+
+            return
+
+        future = None
+
+        if collision_response == MavSwarm.COLLISION_RESPONSE_NONE:
+            pass
+        elif collision_response == MavSwarm.COLLISION_RESPONSE_LAND:
+            future = self.set_mode(
+                "LAND", colliding_agents, retry=retry, verify_state=verify_state
+            )
+        elif collision_response == MavSwarm.COLLISION_RESPONSE_LOITER:
+            future = self.set_mode(
+                "LOITER", colliding_agents, retry=retry, verify_state=verify_state
+            )
+        elif collision_response == MavSwarm.COLLISION_RESPONSE_RTL:
+            future = self.set_mode(
+                "RTL", colliding_agents, retry=retry, verify_state=verify_state
+            )
+        elif collision_response == MavSwarm.COLLISION_RESPONSE_FORCE_DISARM:
+            future = self.disarm(
+                colliding_agents, retry=retry, verify_state=verify_state, force=True
+            )
+        else:
+            raise ValueError("An invalid collision response was provided")
+
+        if future is not None:
+            future.add_done_callback(print_collision_response_result)
+
+        return
+
     def set_message_interval(
         self,
         message: str,
@@ -2406,7 +2493,7 @@ class MavSwarm:
             # Attempt to read the message
             # Note that a timeout has been integrated. Consequently not ALL messages
             # may be received from an agent
-            if self.__read_message_mutex.acquire(timeout=0.1):
+            if self.__read_message_mutex.acquire(timeout=0.01):
                 try:
                     message = self._connection.mavlink_connection.recv_msg()
                 except Exception:
@@ -2545,7 +2632,7 @@ class MavSwarm:
         :param value: dictionary value (agent)
         :type value: Agent
         """
-        REQUEST_FREQ = 1.0  # Hz
+        REQUEST_FREQ = 3  # Hz
 
         if operation == "set" and self._connection.mavlink_connection is not None:
             # Request that the agent broadcast its system time at the target interval
@@ -2633,5 +2720,362 @@ class MavSwarm:
                 - int(agents[agent_id].ping.value / 2)
                 - self.time_since_boot
             )
+
+        return
+
+    def enable_collision_avoidance(
+        self,
+        reach_time: float,
+        position_error: float,
+        velocity_error: float,
+        collision_response: int,
+        use_latency: bool = True,
+        initial_step_size: float = 0.5,
+        reach_timeout: float = 0.001,
+        retry_collision_response: bool = True,
+        verify_collision_response_state: bool = True,
+        max_time_difference: float = 2.0,
+    ) -> None:
+        """
+        Enable collision avoidance between agents.
+
+        WARNING: THIS IS A HIGHLY EXPERIMENTAL FEATURE!
+
+        Please use extreme caution when using collision avoidance! The pymavswarm team
+        does not take any credit for any collisions that occur when using this
+        feature.
+
+        :param reach_time: amount of time to project forward when computing the
+            reachable states of agents [s]
+        :type reach_time: float
+        :param position_error: 3D position error of each agent [m]
+        :type position_error: float
+        :param velocity_error: 3D velocity error of each agent [m/s]
+        :type velocity_error: float
+        :param collision_response: collision response to execute when a potential
+            collision is detected
+        :type collision_response: int
+        :param use_latency: integrate the current communications latency between the
+            agents into the reach time calculation, defaults to True
+        :type use_latency: bool, optional
+        :param initial_step_size: initial step to step forward when performing face
+            lifting (lower means higher accuracy but slower; higher means lower
+            accuracy but faster), defaults to 0.5
+        :type initial_step_size: float, optional
+        :param reach_timeout: maximum amount of time to spend computing the reachable
+            set [s], defaults to 0.001
+        :type reach_timeout: float, optional
+        :param retry_collision_response: retry sending a collision response if an agent
+            does not acknowledge the collision response command, defaults to True
+        :type retry_collision_response: bool, optional
+        :param verify_collision_response_state: verify that an agent properly changes
+            states after receiving a collision response command, defaults to True
+        :type verify_collision_response_state: bool, optional
+        :param max_time_difference: max difference between agent timestamps before the
+            state is considered stale and not checked [s], defaults to 2.0
+        :type max_time_difference: float, optional
+        """
+        self._logger.warning("Collision avoidance mode has been enabled")
+
+        # Create a callback function to handle checking for collisions when a position
+        # message is received
+        def check_for_collisions(
+            sys_id: int,
+            comp_id: int,
+            time_boot_ms: float,
+        ):
+            sender_agent = self.get_agent_by_id((sys_id, comp_id))
+
+            # Make sure that the agent has been registered
+            if sender_agent is None:
+                return
+
+            # Construct the initial state
+            sender_init_rect = HyperRectangle(
+                [
+                    # When computing the reachable state for the position, we pass
+                    # the origin as the position. After computing what the reachable
+                    # change, we correct the original lat/lon position. This
+                    # helps us eliminate *some* error that occurs during
+                    # conversions.
+                    Interval(-position_error, position_error),
+                    Interval(-position_error, position_error),
+                    Interval(
+                        sender_agent.location.altitude - position_error,
+                        sender_agent.location.altitude + position_error,
+                    ),
+                    Interval(
+                        sender_agent.velocity.x - velocity_error,
+                        sender_agent.velocity.x + velocity_error,
+                    ),
+                    Interval(
+                        sender_agent.velocity.y - velocity_error,
+                        sender_agent.velocity.y + velocity_error,
+                    ),
+                    Interval(
+                        sender_agent.velocity.z - velocity_error,
+                        sender_agent.velocity.z + velocity_error,
+                    ),
+                ]
+            )
+
+            # Account for latency in the reach time if desired
+            if use_latency:
+                sender_reach_time = reach_time + ((sender_agent.ping.value / 2) / 1000)
+            else:
+                sender_reach_time = reach_time
+
+            try:
+                # Compute the sender's reachable state
+                (
+                    sender_reachable_state,
+                    sender_reach_time_elapsed,
+                ) = SafetyChecker.face_lifting_iterative_improvement(
+                    sender_init_rect,
+                    time_boot_ms,
+                    (
+                        sender_agent.acceleration.x,
+                        sender_agent.acceleration.y,
+                        sender_agent.acceleration.z,
+                    ),
+                    initial_step_size=initial_step_size,
+                    reach_time=sender_reach_time,
+                    timeout=reach_timeout,
+                )
+            except Exception:
+                self._logger.debug(
+                    "Unable to compute the reachable state of the sender"
+                )
+                return
+
+            # Specify Earth's radius to use for calculating position
+            radius_earth = 6378137
+
+            # Get the latitude given the previous latitude and some position
+            # offset [m]
+            def latitude_conversion(latitude: float, offset: float):
+                return round(latitude + (offset / radius_earth) * (180 / math.pi), 7)
+
+            # Get the longitude given the previous longitude and some position
+            # offset [m]
+            def longitude_conversion(latitude: float, longitude: float, offset: float):
+                return round(
+                    longitude
+                    + (offset / radius_earth)
+                    * (180 / math.pi)
+                    / math.cos(latitude * math.pi / 180),
+                    7,
+                )
+
+            # Correct the latitude using the reachable positions
+            sender_reachable_state.intervals[0].interval_min = latitude_conversion(
+                sender_agent.location.latitude,
+                sender_reachable_state.intervals[0].interval_min,
+            )
+            sender_reachable_state.intervals[0].interval_max = latitude_conversion(
+                sender_agent.location.latitude,
+                sender_reachable_state.intervals[0].interval_max,
+            )
+
+            # Correct the longitude using the reachable positions
+            sender_reachable_state.intervals[1].interval_min = longitude_conversion(
+                sender_agent.location.latitude,
+                sender_agent.location.longitude,
+                sender_reachable_state.intervals[1].interval_min,
+            )
+            sender_reachable_state.intervals[1].interval_max = longitude_conversion(
+                sender_agent.location.latitude,
+                sender_agent.location.longitude,
+                sender_reachable_state.intervals[1].interval_max,
+            )
+
+            # Get the list of agents that we should check for collisions with
+            agent_ids_to_check = list(
+                filter(
+                    lambda agent_id: not (
+                        sys_id == agent_id[0] and comp_id == agent_id[1]
+                    ),
+                    self.agent_ids,
+                )
+            )
+
+            # Keep track of the agents that the sender may collide with
+            colliding_agent_ids: list[AgentID] = []
+
+            # Correct the time difference to use ms instead of seconds
+            max_time_difference_ms = max_time_difference * 1000
+
+            for agent_id in agent_ids_to_check:
+                agent = self.get_agent_by_id(agent_id)
+
+                # Check if the agent exists and if the time difference is greater than
+                # the allowable time. If this situation occurs, it means that there may
+                # be high latency or a low position message frequency
+                if agent is None:
+                    continue
+
+                if (
+                    time_boot_ms - agent.last_gps_message_timestamp.value
+                    > max_time_difference_ms
+                ):
+                    self._logger.debug(
+                        f"Agent ({sys_id}, {comp_id}) is out of sync with agent "
+                        f"{agent_id} by "
+                        f"{time_boot_ms - agent.last_gps_message_timestamp.value}"
+                    )
+                    continue
+
+                # Create the initial rectangle for the agent that we want to check
+                # for collisions with
+                agent_init_rect = HyperRectangle(
+                    [
+                        Interval(-position_error, position_error),
+                        Interval(-position_error, position_error),
+                        Interval(
+                            agent.location.altitude - position_error,
+                            agent.location.altitude + position_error,
+                        ),
+                        Interval(
+                            agent.velocity.x - velocity_error,
+                            agent.velocity.x + velocity_error,
+                        ),
+                        Interval(
+                            agent.velocity.y - velocity_error,
+                            agent.velocity.y + velocity_error,
+                        ),
+                        Interval(
+                            agent.velocity.z - velocity_error,
+                            agent.velocity.z + velocity_error,
+                        ),
+                    ]
+                )
+
+                # Set the reach time for the agent
+                # Make sure to project forward to the time that the current agent is at
+                # and then through the target reach time
+                if use_latency:
+                    agent_reach_time = (
+                        reach_time
+                        + ((agent.ping.value / 2) / 1000)
+                        + (
+                            (time_boot_ms - agent.last_gps_message_timestamp.value)
+                            / 1000
+                        )
+                    )
+                else:
+                    agent_reach_time = reach_time + (
+                        (time_boot_ms - agent.last_gps_message_timestamp.value) / 1000
+                    )
+
+                try:
+                    # Compute the current agent's reachable state
+                    (
+                        agent_reachable_state,
+                        _,
+                    ) = SafetyChecker.face_lifting_iterative_improvement(
+                        agent_init_rect,
+                        agent.last_gps_message_timestamp.value,
+                        (
+                            agent.acceleration.x,
+                            agent.acceleration.y,
+                            agent.acceleration.z,
+                        ),
+                        initial_step_size=initial_step_size,
+                        reach_time=agent_reach_time,
+                        timeout=reach_timeout,
+                    )
+                except Exception:
+                    self._logger.debug(
+                        "Unable to compute the reachable set for agent "
+                        f"({agent.system_id}, {agent.component_id})"
+                    )
+                    return
+
+                # Correct the latitude using the reachable positions
+                agent_reachable_state.intervals[0].interval_min = latitude_conversion(
+                    agent.location.latitude,
+                    agent_reachable_state.intervals[0].interval_min,
+                )
+                agent_reachable_state.intervals[0].interval_max = latitude_conversion(
+                    agent.location.latitude,
+                    agent_reachable_state.intervals[0].interval_max,
+                )
+
+                # Correct the longitude using the reachable positions
+                agent_reachable_state.intervals[1].interval_min = longitude_conversion(
+                    agent.location.latitude,
+                    agent.location.longitude,
+                    agent_reachable_state.intervals[1].interval_min,
+                )
+                agent_reachable_state.intervals[1].interval_max = longitude_conversion(
+                    agent.location.latitude,
+                    agent.location.longitude,
+                    agent_reachable_state.intervals[1].interval_max,
+                )
+
+                if agent_reachable_state.intersects(
+                    sender_reachable_state, dimensions=[0, 1, 2]
+                ):
+                    colliding_agent_ids.append((agent.system_id, agent.component_id))
+
+            # Handle the potential collision
+            if colliding_agent_ids:
+                self._logger.critical(
+                    f"Agent ({sys_id}, {comp_id} may collide with agents "
+                    f"{colliding_agent_ids} in the next {reach_time} seconds. "
+                    f"The current global time is {self.time_since_boot}. The expected "
+                    f"collision time is {sender_reach_time_elapsed}"
+                )
+                colliding_agent_ids.append((sys_id, comp_id))
+
+                self.handle_collision(
+                    colliding_agent_ids,
+                    collision_response,
+                    retry=retry_collision_response,
+                    verify_state=verify_collision_response_state,
+                )
+
+            return
+
+        # Start by adding the collision detection callback to all registered agents
+        for agent_id in self.agent_ids:
+            self._agents[
+                agent_id
+            ].last_gps_message_timestamp.state_changed_event.add_listener(
+                check_for_collisions
+            )
+
+        def add_collision_check(operation: str, key: AgentID, value: Agent) -> None:
+            if operation == "set" and key in self._agents:
+                self._agents[
+                    key
+                ].last_gps_message_timestamp.state_changed_event.add_listener(
+                    check_for_collisions
+                )
+
+        # Add collision detection for any new agents that are registered
+        self.__agent_list_changed.add_listener(add_collision_check)
+
+        # We make these private to prevent anyone from accidentally calling them
+        # They need to be assigned to the instance; however, to ensure that users
+        # can properly disable collision detection
+        self.__check_for_collisions = check_for_collisions
+        self.__add_collision_check = add_collision_check
+
+        return
+
+    def disable_collision_avoidance(self) -> None:
+        """Disable collision detection."""
+        self._logger.warning("Collision avoidance has been disabled")
+
+        # Ensure that collision detection has been enabled first, then remove any
+        # callbacks
+        if hasattr(self, "_MavSwarm__check_for_collisions"):
+            for agent_id in self.agent_ids:
+                self._agents[agent_id].location.state_changed_event.remove_listener(
+                    self.__check_for_collisions
+                )
+        if hasattr(self, "_MavSwarm__add_collision_check"):
+            self.__agent_list_changed.remove_listener(self.__add_collision_check)
 
         return

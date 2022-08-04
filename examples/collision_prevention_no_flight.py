@@ -64,11 +64,7 @@ def print_message_response_cb(future: Future) -> None:
 
 
 def main() -> None:
-    """
-    Demonstrate how to arm and disarm swarm agents.
-
-    Ensure that all propellers have been removed prior to running this example!
-    """
+    """Demonstrate collision avoidance without flying."""
     # Parse the script arguments
     args = parse_args()
 
@@ -84,24 +80,12 @@ def main() -> None:
         print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # Arm all agents in the swarm; retry on message failure
-    future = mavswarm.arm(verify_state=True, retry=True)
-    future.add_done_callback(print_message_response_cb)
+    # Enable collision avoidance
+    mavswarm.enable_collision_avoidance(2.0, 2.5, 0.1, MavSwarm.COLLISION_RESPONSE_NONE)
 
-    # Wait for the arm command to complete
-    while not future.done():
-        pass
+    input("Hit 'enter' to exit the example\n")
 
-    # Let each of the agents arm
-    time.sleep(5)
-
-    # Disarm each of the agents; retry on message failure
-    future = mavswarm.disarm(retry=True, verify_state=True, force=True)
-    future.add_done_callback(print_message_response_cb)
-
-    # Wait for the disarm command to complete
-    while not future.done():
-        pass
+    mavswarm.disable_collision_avoidance()
 
     # Disconnect from the swarm
     mavswarm.disconnect()

@@ -43,9 +43,8 @@ def parse_args() -> Any:
     parser.add_argument(
         "--ground_speed",
         type=float,
-        default=3.0,
-        help="ground speed that the agents should fly at when flying to the target "
-        "location",
+        default=0.5,
+        help="ground speed that the agents should fly at when flying toward each other",
     )
     return parser.parse_args()
 
@@ -75,7 +74,7 @@ def print_message_response_cb(future: Future) -> None:
 
 
 def main() -> None:
-    """Demonstrate how to command agents to go to a location."""
+    """Demonstrate how to use collision avoidance."""
     # Parse the script arguments
     args = parse_args()
 
@@ -93,6 +92,11 @@ def main() -> None:
     while not all(agent_id in mavswarm.agent_ids for agent_id in target_agents):
         print("Waiting for the system to recognize all target agents...")
         time.sleep(0.5)
+
+    # Enable collision avoidance
+    mavswarm.enable_collision_avoidance(
+        3.0, 2.5, 0.1, MavSwarm.COLLISION_RESPONSE_LOITER
+    )
 
     # Set each agent to guided mode before attempting a takeoff sequence
     future = mavswarm.set_mode(
@@ -152,7 +156,8 @@ def main() -> None:
     while not future.done():
         pass
 
-    # Set the groundspeed
+    # Set the groundspeed; make sure that this is set low when running the examples on
+    # real hardware
     future = mavswarm.set_groundspeed(
         args.ground_speed, agent_ids=target_agents, retry=True
     )
@@ -162,7 +167,7 @@ def main() -> None:
         pass
 
     # Wait for user input
-    input("Press the 'enter' key to command the agents to land")
+    input("Press the 'enter' key to command the agents to land\n")
 
     # Attempt to land the agents
     future = mavswarm.set_mode(
@@ -173,6 +178,9 @@ def main() -> None:
     # Wait for the land command to complete
     while not future.done():
         pass
+
+    # Disable collision avoidance
+    mavswarm.disable_collision_avoidance()
 
     # Disconnect from the swarm
     mavswarm.disconnect()

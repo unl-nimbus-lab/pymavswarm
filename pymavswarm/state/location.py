@@ -24,22 +24,21 @@ class Location(State):
 
     def __init__(
         self,
-        latitude: float = 0.0,
-        longitude: float = 0.0,
-        altitude: float = 0.0,
+        latitude: float,
+        longitude: float,
+        altitude: float,
         optional_context_props: dict | None = None,
     ) -> None:
         """
         Create a new location object.
 
-        :param latitude: latitude [WGS84, EGM96 ellipsoid], defaults to 0.0
-        :type latitude: float, optional
-        :param longitude: longitude [WGS84, EGM96 ellipsoid], defaults to 0.0
-        :type longitude: float, optional
+        :param latitude: latitude [WGS84, EGM96 ellipsoid]
+        :type latitude: float
+        :param longitude: longitude [WGS84, EGM96 ellipsoid]
+        :type longitude: float
         :param altitude: altitude [MSL]. Positive for up. Note that virtually all GPS
-            modules provide the MSL altitude in addition to the WGS84 altitude,
-            defaults to 0.0
-        :type altitude: float, optional
+            modules provide the MSL altitude in addition to the WGS84 altitude
+        :type altitude: float
         :param optional_context_props: properties to add to the location context,
             defaults to None
         :type optional_context_props: dict | None, optional
@@ -75,7 +74,7 @@ class Location(State):
 
         # Signal state change event
         if self.__latitude != prev_latitude:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -102,7 +101,7 @@ class Location(State):
 
         # Signal state change event
         if self.__longitude != prev_longitude:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -131,7 +130,7 @@ class Location(State):
 
         # Signal state change event
         if self.__altitude != prev_altitude:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

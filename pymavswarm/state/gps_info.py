@@ -24,26 +24,26 @@ class GPSInfo(State):
 
     def __init__(
         self,
-        eph: float = 0.0,
-        epv: float = 0.0,
-        fix_type: int = 0,
-        satellites_visible: int = 0,
+        eph: float,
+        epv: float,
+        fix_type: int,
+        satellites_visible: int,
         optional_context_props: dict | None = None,
     ) -> None:
         """
         Create a GPSInfo object.
 
         :param eph: GPS HDOP horizontal dilution of position (unitless * 100).
-            If unknown, set to: UINT16_MAX, defaults to 0.0
-        :type eph: float, optional
+            If unknown, set to: UINT16_MAX
+        :type eph: float
         :param epv: GPS VDOP vertical dilution of position (unitless * 100). If
-            unknown, set to: UINT16_MAX, defaults to 0.0
-        :type epv: float, optional
-        :param fix_type: GPS fix type (GPS_FIX_TYPE), defaults to 0
-        :type fix_type: int, optional
+            unknown, set to: UINT16_MAX
+        :type epv: float
+        :param fix_type: GPS fix type (GPS_FIX_TYPE)
+        :type fix_type: int
         :param satellites_visible: number of satellites visible. If unknown, set to
-            UINT8_MAX, defaults to 0
-        :type satellites_visible: int, optional
+            UINT8_MAX
+        :type satellites_visible: int
         :param optional_context_props: properties to add to the context, defaults to
             None
         :type optional_context_props: dict | None, optional
@@ -82,7 +82,7 @@ class GPSInfo(State):
 
         # Signal state change event
         if self.__eph != prev_eph:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -111,7 +111,7 @@ class GPSInfo(State):
 
         # Signal state change event
         if self.__epv != prev_epv:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -140,7 +140,7 @@ class GPSInfo(State):
 
         # Signal state change event
         if self.__fix_type != prev_fix_type:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -169,7 +169,7 @@ class GPSInfo(State):
 
         # Signal state change event
         if self.__satellites_visible != prev_satellites_visible:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

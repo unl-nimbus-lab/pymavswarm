@@ -103,6 +103,7 @@ class Connection:
             source_system=source_system,
             source_component=source_component,
             autoreconnect=True,
+            input=False,
         )
 
         if self.__mavlink_connection is None:
