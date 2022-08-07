@@ -19,25 +19,24 @@ from __future__ import annotations
 from pymavswarm.state.state import State
 
 
-class Location(State):
-    """Agent GPS location."""
+class Position(State):
+    """Agent position."""
 
     def __init__(
         self,
-        latitude: float,
-        longitude: float,
-        altitude: float,
+        x: float,
+        y: float,
+        z: float,
         optional_context_props: dict | None = None,
     ) -> None:
         """
         Create a new location object.
 
-        :param latitude: latitude [WGS84, EGM96 ellipsoid]
-        :type latitude: float
-        :param longitude: longitude [WGS84, EGM96 ellipsoid]
-        :type longitude: float
-        :param altitude: altitude [MSL]. Positive for up. Note that virtually all GPS
-            modules provide the MSL altitude in addition to the WGS84 altitude
+        :param x: x position; this will typicall be latitude [WGS84, EGM96 ellipsoid]
+        :type x: float
+        :param y: y position; this will typically be longitude [WGS84, EGM96 ellipsoid]
+        :type y: float
+        :param z: z position; this will typically be altitude
         :type altitude: float
         :param optional_context_props: properties to add to the location context,
             defaults to None
@@ -45,91 +44,91 @@ class Location(State):
         """
         super().__init__(optional_context_props)
 
-        self.__latitude = latitude
-        self.__longitude = longitude
-        self.__altitude = altitude
+        self.__x = x
+        self.__y = y
+        self.__z = z
 
         return
 
     @property
-    def latitude(self) -> float:
+    def x(self) -> float:
         """
-        Latitude [WGS84, EGM96 ellipsoid].
+        x position; this will typically be latitude [WGS84, EGM96 ellipsoid].
 
-        :return: latitude
+        :return: x position
         :rtype: float
         """
-        return self.__latitude
+        return self.__x
 
-    @latitude.setter
-    def latitude(self, lat: float) -> None:
+    @x.setter
+    def x(self, pos: float) -> None:
         """
-        Set the latitude.
+        Set the x position.
 
-        :param lat: latitude [degE7]
-        :type lat: float
+        :param pos: x position in the target frame
+        :type pos: float
         """
-        prev_latitude = self.__latitude
-        self.__latitude = lat
+        prev_pos = self.__x
+        self.__x = pos
 
         # Signal state change event
-        if self.__latitude != prev_latitude:
+        if self.__x != prev_pos:
             self.state_changed_event.notify(**self.context)
 
         return
 
     @property
-    def longitude(self) -> float:
+    def y(self) -> float:
         """
-        Longitude [WGS84, EGM96 ellipsoid].
+        y position; this will typically be longitude [WGS84, EGM96 ellipsoid].
 
-        :return: longitude
+        :return: y position
         :rtype: float
         """
-        return self.__longitude
+        return self.__y
 
-    @longitude.setter
-    def longitude(self, lon: float) -> None:
+    @y.setter
+    def y(self, pos: float) -> None:
         """
-        Set the longitude.
+        Set the y position.
 
-        :param lon: longitude [degE7]
-        :type lon: float
+        :param pos: y position in the target frame
+        :type pos: float
         """
-        prev_longitude = self.__longitude
-        self.__longitude = lon
+        prev_pos = self.__y
+        self.__y = pos
 
         # Signal state change event
-        if self.__longitude != prev_longitude:
+        if self.__y != prev_pos:
             self.state_changed_event.notify(**self.context)
 
         return
 
     @property
-    def altitude(self) -> float:
+    def z(self) -> float:
         """
-        Altitude [MSL].
+        z position; this will typically be altitude [MSL].
 
         Positive for up.
 
-        :return: altitude
+        :return: z position
         :rtype: float
         """
-        return self.__altitude
+        return self.__z
 
-    @altitude.setter
-    def altitude(self, alt: float) -> None:
+    @z.setter
+    def z(self, pos: float) -> None:
         """
-        Set the altitude.
+        Set the z position.
 
-        :param alt: altitude [MSL, mm]
+        :param alt: z position in the target frame
         :type alt: float
         """
-        prev_altitude = self.__altitude
-        self.__altitude = alt
+        prev_pos = self.__z
+        self.__z = pos
 
         # Signal state change event
-        if self.__altitude != prev_altitude:
+        if self.__z != prev_pos:
             self.state_changed_event.notify(**self.context)
 
         return
@@ -137,24 +136,24 @@ class Location(State):
     @property
     def context(self) -> dict:
         """
-        Location context.
+        Position context.
 
         :return: context
         :rtype: dict
         """
         context = super().context
 
-        context["altitude"] = self.__altitude
-        context["latitude"] = self.__latitude
-        context["longitude"] = self.__longitude
+        context["x"] = self.__x
+        context["y"] = self.__y
+        context["z"] = self.__z
 
         return context
 
     def __str__(self) -> str:
         """
-        Print location in a human-readable format.
+        Print position in a human-readable format.
 
-        :return: location
+        :return: position
         :rtype: str
         """
-        return f"Location: {self.context}"
+        return f"Position: {self.context}"

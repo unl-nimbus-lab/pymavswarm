@@ -244,8 +244,10 @@ class TestSafetyChecker(unittest.TestCase):
         )
         acceleration = (0.0, 0.0, 0.0)
 
+        reach_time = 2.0
+
         lifted_rect, _ = SafetyChecker.face_lifting_iterative_improvement(
-            rect, 500, acceleration
+            rect, 500, acceleration, reach_time
         )
 
         expected_rect = HyperRectangle(
@@ -301,12 +303,13 @@ class TestSafetyChecker(unittest.TestCase):
         agent_two_acceleration = (0.0, 0.0, 0.0)
 
         time_since_boot_ms = 5000
+        reach_time = 2.0
 
         agent_one_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
-            agent_one, time_since_boot_ms, agent_one_acceleration
+            agent_one, time_since_boot_ms, agent_one_acceleration, reach_time
         )
         agent_two_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
-            agent_two, time_since_boot_ms, agent_two_acceleration
+            agent_two, time_since_boot_ms, agent_two_acceleration, reach_time
         )
 
         self.assertTrue(
@@ -341,12 +344,13 @@ class TestSafetyChecker(unittest.TestCase):
         )
         acceleration = (0.1, 0.1, 0.1)
         time_since_boot_ms = 5000
+        reach_time = 2.0
 
         agent_one_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
-            agent_one, time_since_boot_ms, acceleration
+            agent_one, time_since_boot_ms, acceleration, reach_time
         )
         agent_two_future_state, _ = SafetyChecker.face_lifting_iterative_improvement(
-            agent_two, time_since_boot_ms, acceleration
+            agent_two, time_since_boot_ms, acceleration, reach_time
         )
 
         self.assertFalse(

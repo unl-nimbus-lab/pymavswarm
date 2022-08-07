@@ -266,8 +266,8 @@ class SafetyChecker:
         rect: HyperRectangle,
         start_time: float,
         acceleration: tuple[float, float, float],
+        reach_time: float,
         initial_step_size: float = 0.01,
-        reach_time: float = 2.0,
         timeout: float = 0.01,
         min_step_size: float = 0.0000001,
     ) -> tuple[HyperRectangle, float]:
@@ -282,11 +282,11 @@ class SafetyChecker:
         :param acceleration: acceleration [m/s^2] of the agent that sent the position
             message
         :type acceleration: tuple[float, float, float]
+        :param reach_time: maximum reach time [s], defaults to 2.0
+        :type reach_time: float, optional
         :param initial_step_size: step size to start the algorithm with, defaults to
             0.01
         :type initial_step_size: float, optional
-        :param reach_time: maximum reach time [s], defaults to 2.0
-        :type reach_time: float, optional
         :param timeout: maximum time to execute the face lifting algorithm [s],
             defaults to 0.01
         :type timeout: float, optional
