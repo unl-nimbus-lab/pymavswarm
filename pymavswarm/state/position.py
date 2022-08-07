@@ -32,7 +32,7 @@ class Position(State):
         """
         Create a new location object.
 
-        :param x: x position; this will typicall be latitude [WGS84, EGM96 ellipsoid]
+        :param x: x position; this will typically be latitude [WGS84, EGM96 ellipsoid]
         :type x: float
         :param y: y position; this will typically be longitude [WGS84, EGM96 ellipsoid]
         :type y: float
