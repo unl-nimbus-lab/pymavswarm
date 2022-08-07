@@ -162,12 +162,12 @@ class MessageReceivers(Receivers):
             )
 
             # Update the agent location
-            agents[agent_id].location.latitude = message.lat / 1.0e7
-            agents[agent_id].location.longitude = message.lon / 1.0e7
-            agents[agent_id].location.altitude = message.alt / 1000
+            agents[agent_id].position.x = message.lat / 1.0e7
+            agents[agent_id].position.y = message.lon / 1.0e7
+            agents[agent_id].position.z = message.alt / 1000
 
             # Update the last GPS timestamp using the current clock offset
-            agents[agent_id].last_gps_message_timestamp.value = (
+            agents[agent_id].last_position_message_timestamp.value = (
                 message.time_boot_ms - agents[agent_id].clock_offset
             )
 
@@ -322,9 +322,9 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Update the agent home location
-            agents[agent_id].home_position.latitude = message.latitude / 1.0e7
-            agents[agent_id].home_position.longitude = message.longitude / 1.0e7
-            agents[agent_id].home_position.altitude = message.altitude / 1000
+            agents[agent_id].home_position.x = message.latitude / 1.0e7
+            agents[agent_id].home_position.y = message.longitude / 1.0e7
+            agents[agent_id].home_position.z = message.altitude / 1000
 
             return
 

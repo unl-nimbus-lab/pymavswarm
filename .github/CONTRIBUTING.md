@@ -110,7 +110,7 @@ rather than
 ```python
 from typing import Optional
 
-agent_location: Optional[Location] = None
+agent_location: Optional[Position] = None
 ```
 
 You should use
@@ -118,7 +118,7 @@ You should use
 ```python
 from __future__ import annotations
 
-agent_location: Location | None = None
+agent_location: Position | None = None
 ```
 
 Commonly used types will appear in `pymavswarm.types`. These should be used
@@ -139,16 +139,18 @@ The following example demonstrates the Sphinx markdown conventions used by
 `pymavswarm`:
 
 ```python
-def compute_location(current_location: Location | None = None) -> Location | None:
+def compute_location(
+    current_location: Position | None = None
+  ) -> Position | None:
     """
     Demonstrate how to write a docstring.
 
     Docstrings are a great way to add developer documentation.
 
     :param current_location: current location of an agent, defaults to None
-    :type current_location: Location | None, optional
+    :type current_location: Position | None, optional
     :return: computed agent location
-    :rtype: Location | None
+    :rtype: Position | None
     """
     return current_location
 ```

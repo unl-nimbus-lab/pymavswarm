@@ -25,7 +25,9 @@ import monotonic
 
 import pymavswarm.state as swarm_state
 from pymavswarm.mission import SwarmMission
+from pymavswarm.safety import HyperRectangle, Interval, SafetyChecker
 from pymavswarm.state.generic import Generic
+from pymavswarm.utils import latitude_conversion, longitude_conversion
 
 
 class Agent:
@@ -79,7 +81,7 @@ class Agent:
         self.__gps_info = swarm_state.GPSInfo(
             0.0, 0.0, 0, 0, optional_context_props=context_props
         )
-        self.__location = swarm_state.Location(
+        self.__position = swarm_state.Position(
             0.0, 0.0, 0.0, optional_context_props=context_props
         )
         self.__ekf = swarm_state.EKFStatus(
@@ -127,7 +129,7 @@ class Agent:
         self.__last_params_read = swarm_state.ParameterList(
             max_length=max_params_stored, optional_context_props=context_props
         )
-        self.__home_position = swarm_state.Location(
+        self.__home_position = swarm_state.Position(
             0.0, 0.0, 0.0, optional_context_props=context_props
         )
         self.__hrl_state = swarm_state.Generic(
@@ -136,7 +138,7 @@ class Agent:
         self.__ping = swarm_state.Generic(
             "ping", 0, optional_context_props=context_props
         )
-        self.__last_gps_message_timestamp = swarm_state.Generic(
+        self.__last_position_message_timestamp = swarm_state.Generic(
             "time_boot_ms", 0, optional_context_props=context_props
         )
         self.__clock_offset: deque[int] = deque(maxlen=5)
@@ -208,14 +210,14 @@ class Agent:
         return self.__gps_info
 
     @property
-    def location(self) -> swarm_state.Location:
+    def position(self) -> swarm_state.Position:
         """
-        Location of an agent.
+        Position of an agent.
 
-        :return: agent location
-        :rtype: Location
+        :return: agent position
+        :rtype: Position
         """
-        return self.__location
+        return self.__position
 
     @property
     def ekf(self) -> swarm_state.EKFStatus:
@@ -368,12 +370,12 @@ class Agent:
         return self.__last_params_read
 
     @property
-    def home_position(self) -> swarm_state.Location:
+    def home_position(self) -> swarm_state.Position:
         """
         Home position of the agent.
 
         :return: agent's home position
-        :rtype: Location
+        :rtype: Position
         """
         return self.__home_position
 
@@ -398,14 +400,14 @@ class Agent:
         return self.__ping
 
     @property
-    def last_gps_message_timestamp(self) -> Generic:
+    def last_position_message_timestamp(self) -> Generic:
         """
-        Most recent time that the agent sent the GPS message in the global clock.
+        Most recent time that the agent sent the position message in the global clock.
 
         :return: time since boot [ms]
         :rtype: Generic
         """
-        return self.__last_gps_message_timestamp
+        return self.__last_position_message_timestamp
 
     def update_clock_offset(self, offset: int) -> None:
         """
@@ -428,6 +430,135 @@ class Agent:
         :rtype: int
         """
         return int(fmean(self.__clock_offset))
+
+    def compute_reachable_set(
+        self,
+        position_error: float,
+        velocity_error: float,
+        reach_time: float,
+        initial_step_size: float = 0.5,
+        reach_timeout: float = 0.001,
+        uses_lat_lon: bool = True,
+    ) -> tuple[HyperRectangle, float]:
+        """
+        Compute the current reachable set of the agent.
+
+        :param position_error: 3D position error to account for in the measurement
+        :type position_error: float
+        :param velocity_error: 3D velocity error to account for in the measurement
+        :type velocity_error: float
+        :param reach_time: time that the reachable set should reach forward to
+        :type reach_time: float
+        :param initial_step_size: initial step to step forward when performing face
+            lifting (lower means higher accuracy but slower; higher means lower
+            accuracy but faster), defaults to 0.5
+        :type initial_step_size: float, optional
+        :param reach_timeout: maximum amount of time to spend computing the reachable
+            set [s], defaults to 0.001
+        :type reach_timeout: float, optional
+        :return: reachable set for the agent, time that the reachable set reaches to
+            from the start time
+        :rtype: tuple[HyperRectangle, float]
+        """
+        if uses_lat_lon:
+            rect = HyperRectangle(
+                [
+                    # When computing the reachable state for the GPS position, we pass
+                    # the origin as the position. After computing what the reachable
+                    # change, we correct the original lat/lon position. This
+                    # helps us eliminate *some* error that occurs during
+                    # conversions.
+                    Interval(-position_error, position_error),
+                    Interval(-position_error, position_error),
+                    Interval(
+                        self.position.z - position_error,
+                        self.position.z + position_error,
+                    ),
+                    Interval(
+                        self.velocity.x - velocity_error,
+                        self.velocity.x + velocity_error,
+                    ),
+                    Interval(
+                        self.velocity.y - velocity_error,
+                        self.velocity.y + velocity_error,
+                    ),
+                    Interval(
+                        self.velocity.z - velocity_error,
+                        self.velocity.z + velocity_error,
+                    ),
+                ]
+            )
+        else:
+            rect = HyperRectangle(
+                [
+                    Interval(
+                        self.position.x - position_error,
+                        self.position.x + position_error,
+                    ),
+                    Interval(
+                        self.position.y - position_error,
+                        self.position.y + position_error,
+                    ),
+                    Interval(
+                        self.position.z - position_error,
+                        self.position.z + position_error,
+                    ),
+                    Interval(
+                        self.velocity.x - velocity_error,
+                        self.velocity.x + velocity_error,
+                    ),
+                    Interval(
+                        self.velocity.y - velocity_error,
+                        self.velocity.y + velocity_error,
+                    ),
+                    Interval(
+                        self.velocity.z - velocity_error,
+                        self.velocity.z + velocity_error,
+                    ),
+                ]
+            )
+
+        # Compute the sender's reachable state
+        (
+            reachable_state,
+            reach_time_elapsed,
+        ) = SafetyChecker.face_lifting_iterative_improvement(
+            rect,
+            self.last_position_message_timestamp.value,
+            (
+                self.acceleration.x,
+                self.acceleration.y,
+                self.acceleration.z,
+            ),
+            reach_time,
+            initial_step_size=initial_step_size,
+            timeout=reach_timeout,
+        )
+
+        if uses_lat_lon:
+            # Correct the latitude using the reachable positions
+            reachable_state.intervals[0].interval_min = latitude_conversion(
+                self.position.x,
+                reachable_state.intervals[0].interval_min,
+            )
+            reachable_state.intervals[0].interval_max = latitude_conversion(
+                self.position.x,
+                reachable_state.intervals[0].interval_max,
+            )
+
+            # Correct the longitude using the reachable positions
+            reachable_state.intervals[1].interval_min = longitude_conversion(
+                self.position.x,
+                self.position.y,
+                reachable_state.intervals[1].interval_min,
+            )
+            reachable_state.intervals[1].interval_max = longitude_conversion(
+                self.position.x,
+                self.position.y,
+                reachable_state.intervals[1].interval_max,
+            )
+
+        return reachable_state, reach_time_elapsed
 
     def __str__(self) -> str:
         """

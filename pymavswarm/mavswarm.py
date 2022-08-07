@@ -33,7 +33,6 @@ from pymavswarm.agent import Agent
 from pymavswarm.handlers import MessageReceivers
 from pymavswarm.message import codes
 from pymavswarm.message.response import Response
-from pymavswarm.safety import HyperRectangle, Interval, SafetyChecker
 from pymavswarm.state import Parameter
 from pymavswarm.types import (
     AgentID,
@@ -1660,22 +1659,22 @@ class MavSwarm:
                 ack = True
                 start_time = time.time()
 
-                current_location = self._agents[agent_id].location
+                current_position = self._agents[agent_id].position
 
                 while (
                     not math.isclose(
-                        current_location.latitude,
-                        self._agents[agent_id].home_position.latitude,
+                        current_position.x,
+                        self._agents[agent_id].home_position.x,
                         abs_tol=lat_lon_deviation_tolerance,
                     )
                     or not math.isclose(
-                        current_location.latitude,
-                        self._agents[agent_id].home_position.latitude,
+                        current_position.y,
+                        self._agents[agent_id].home_position.y,
                         abs_tol=lat_lon_deviation_tolerance,
                     )
                     or not math.isclose(
-                        current_location.altitude,
-                        self._agents[agent_id].home_position.altitude,
+                        current_position.z,
+                        self._agents[agent_id].home_position.z,
                         abs_tol=altitude_deviation_tolerance,
                     )
                 ):
@@ -1716,9 +1715,9 @@ class MavSwarm:
                 start_time = time.time()
 
                 while (
-                    self._agents[agent_id].home_position.latitude != latitude
-                    and self._agents[agent_id].home_position.longitude != longitude
-                    and self._agents[agent_id].home_position.altitude != altitude
+                    self._agents[agent_id].home_position.x != latitude
+                    and self._agents[agent_id].home_position.y != longitude
+                    and self._agents[agent_id].home_position.z != altitude
                 ):
                     if self.__send_message_mutex.acquire(timeout=0.1):
                         try:
@@ -2735,6 +2734,7 @@ class MavSwarm:
         retry_collision_response: bool = True,
         verify_collision_response_state: bool = True,
         max_time_difference: float = 2.0,
+        uses_lat_lon: bool = True,
     ) -> None:
         """
         Enable collision avoidance between agents.
@@ -2774,6 +2774,9 @@ class MavSwarm:
         :param max_time_difference: max difference between agent timestamps before the
             state is considered stale and not checked [s], defaults to 2.0
         :type max_time_difference: float, optional
+        :param uses_lat_lon: flag indicating that the position measurements use latitude
+            and longitude format, defaults to True
+        :type uses_lat_lon: bool, optional
         """
         self._logger.warning("Collision avoidance mode has been enabled")
 
@@ -2790,35 +2793,6 @@ class MavSwarm:
             if sender_agent is None:
                 return
 
-            # Construct the initial state
-            sender_init_rect = HyperRectangle(
-                [
-                    # When computing the reachable state for the position, we pass
-                    # the origin as the position. After computing what the reachable
-                    # change, we correct the original lat/lon position. This
-                    # helps us eliminate *some* error that occurs during
-                    # conversions.
-                    Interval(-position_error, position_error),
-                    Interval(-position_error, position_error),
-                    Interval(
-                        sender_agent.location.altitude - position_error,
-                        sender_agent.location.altitude + position_error,
-                    ),
-                    Interval(
-                        sender_agent.velocity.x - velocity_error,
-                        sender_agent.velocity.x + velocity_error,
-                    ),
-                    Interval(
-                        sender_agent.velocity.y - velocity_error,
-                        sender_agent.velocity.y + velocity_error,
-                    ),
-                    Interval(
-                        sender_agent.velocity.z - velocity_error,
-                        sender_agent.velocity.z + velocity_error,
-                    ),
-                ]
-            )
-
             # Account for latency in the reach time if desired
             if use_latency:
                 sender_reach_time = reach_time + ((sender_agent.ping.value / 2) / 1000)
@@ -2830,64 +2804,19 @@ class MavSwarm:
                 (
                     sender_reachable_state,
                     sender_reach_time_elapsed,
-                ) = SafetyChecker.face_lifting_iterative_improvement(
-                    sender_init_rect,
-                    time_boot_ms,
-                    (
-                        sender_agent.acceleration.x,
-                        sender_agent.acceleration.y,
-                        sender_agent.acceleration.z,
-                    ),
-                    initial_step_size=initial_step_size,
-                    reach_time=sender_reach_time,
-                    timeout=reach_timeout,
+                ) = sender_agent.compute_reachable_set(
+                    position_error,
+                    velocity_error,
+                    sender_reach_time,
+                    initial_step_size,
+                    reach_timeout,
+                    uses_lat_lon=uses_lat_lon,
                 )
             except Exception:
                 self._logger.debug(
                     "Unable to compute the reachable state of the sender"
                 )
                 return
-
-            # Specify Earth's radius to use for calculating position
-            radius_earth = 6378137
-
-            # Get the latitude given the previous latitude and some position
-            # offset [m]
-            def latitude_conversion(latitude: float, offset: float):
-                return round(latitude + (offset / radius_earth) * (180 / math.pi), 7)
-
-            # Get the longitude given the previous longitude and some position
-            # offset [m]
-            def longitude_conversion(latitude: float, longitude: float, offset: float):
-                return round(
-                    longitude
-                    + (offset / radius_earth)
-                    * (180 / math.pi)
-                    / math.cos(latitude * math.pi / 180),
-                    7,
-                )
-
-            # Correct the latitude using the reachable positions
-            sender_reachable_state.intervals[0].interval_min = latitude_conversion(
-                sender_agent.location.latitude,
-                sender_reachable_state.intervals[0].interval_min,
-            )
-            sender_reachable_state.intervals[0].interval_max = latitude_conversion(
-                sender_agent.location.latitude,
-                sender_reachable_state.intervals[0].interval_max,
-            )
-
-            # Correct the longitude using the reachable positions
-            sender_reachable_state.intervals[1].interval_min = longitude_conversion(
-                sender_agent.location.latitude,
-                sender_agent.location.longitude,
-                sender_reachable_state.intervals[1].interval_min,
-            )
-            sender_reachable_state.intervals[1].interval_max = longitude_conversion(
-                sender_agent.location.latitude,
-                sender_agent.location.longitude,
-                sender_reachable_state.intervals[1].interval_max,
-            )
 
             # Get the list of agents that we should check for collisions with
             agent_ids_to_check = list(
@@ -2902,7 +2831,7 @@ class MavSwarm:
             # Keep track of the agents that the sender may collide with
             colliding_agent_ids: list[AgentID] = []
 
-            # Correct the time difference to use ms instead of seconds
+            # Correct the max time difference to use ms instead of seconds
             max_time_difference_ms = max_time_difference * 1000
 
             for agent_id in agent_ids_to_check:
@@ -2915,40 +2844,15 @@ class MavSwarm:
                     continue
 
                 if (
-                    time_boot_ms - agent.last_gps_message_timestamp.value
+                    time_boot_ms - agent.last_position_message_timestamp.value
                     > max_time_difference_ms
                 ):
                     self._logger.debug(
                         f"Agent ({sys_id}, {comp_id}) is out of sync with agent "
                         f"{agent_id} by "
-                        f"{time_boot_ms - agent.last_gps_message_timestamp.value}"
+                        f"{time_boot_ms - agent.last_position_message_timestamp.value}"
                     )
                     continue
-
-                # Create the initial rectangle for the agent that we want to check
-                # for collisions with
-                agent_init_rect = HyperRectangle(
-                    [
-                        Interval(-position_error, position_error),
-                        Interval(-position_error, position_error),
-                        Interval(
-                            agent.location.altitude - position_error,
-                            agent.location.altitude + position_error,
-                        ),
-                        Interval(
-                            agent.velocity.x - velocity_error,
-                            agent.velocity.x + velocity_error,
-                        ),
-                        Interval(
-                            agent.velocity.y - velocity_error,
-                            agent.velocity.y + velocity_error,
-                        ),
-                        Interval(
-                            agent.velocity.z - velocity_error,
-                            agent.velocity.z + velocity_error,
-                        ),
-                    ]
-                )
 
                 # Set the reach time for the agent
                 # Make sure to project forward to the time that the current agent is at
@@ -2958,31 +2862,25 @@ class MavSwarm:
                         reach_time
                         + ((agent.ping.value / 2) / 1000)
                         + (
-                            (time_boot_ms - agent.last_gps_message_timestamp.value)
+                            (time_boot_ms - agent.last_position_message_timestamp.value)
                             / 1000
                         )
                     )
                 else:
                     agent_reach_time = reach_time + (
-                        (time_boot_ms - agent.last_gps_message_timestamp.value) / 1000
+                        (time_boot_ms - agent.last_position_message_timestamp.value)
+                        / 1000
                     )
 
                 try:
                     # Compute the current agent's reachable state
-                    (
-                        agent_reachable_state,
-                        _,
-                    ) = SafetyChecker.face_lifting_iterative_improvement(
-                        agent_init_rect,
-                        agent.last_gps_message_timestamp.value,
-                        (
-                            agent.acceleration.x,
-                            agent.acceleration.y,
-                            agent.acceleration.z,
-                        ),
-                        initial_step_size=initial_step_size,
-                        reach_time=agent_reach_time,
-                        timeout=reach_timeout,
+                    agent_reachable_state, _ = agent.compute_reachable_set(
+                        position_error,
+                        velocity_error,
+                        agent_reach_time,
+                        initial_step_size,
+                        reach_timeout,
+                        uses_lat_lon=uses_lat_lon,
                     )
                 except Exception:
                     self._logger.debug(
@@ -2990,28 +2888,6 @@ class MavSwarm:
                         f"({agent.system_id}, {agent.component_id})"
                     )
                     return
-
-                # Correct the latitude using the reachable positions
-                agent_reachable_state.intervals[0].interval_min = latitude_conversion(
-                    agent.location.latitude,
-                    agent_reachable_state.intervals[0].interval_min,
-                )
-                agent_reachable_state.intervals[0].interval_max = latitude_conversion(
-                    agent.location.latitude,
-                    agent_reachable_state.intervals[0].interval_max,
-                )
-
-                # Correct the longitude using the reachable positions
-                agent_reachable_state.intervals[1].interval_min = longitude_conversion(
-                    agent.location.latitude,
-                    agent.location.longitude,
-                    agent_reachable_state.intervals[1].interval_min,
-                )
-                agent_reachable_state.intervals[1].interval_max = longitude_conversion(
-                    agent.location.latitude,
-                    agent.location.longitude,
-                    agent_reachable_state.intervals[1].interval_max,
-                )
 
                 if agent_reachable_state.intersects(
                     sender_reachable_state, dimensions=[0, 1, 2]
@@ -3041,7 +2917,7 @@ class MavSwarm:
         for agent_id in self.agent_ids:
             self._agents[
                 agent_id
-            ].last_gps_message_timestamp.state_changed_event.add_listener(
+            ].last_position_message_timestamp.state_changed_event.add_listener(
                 check_for_collisions
             )
 
@@ -3049,7 +2925,7 @@ class MavSwarm:
             if operation == "set" and key in self._agents:
                 self._agents[
                     key
-                ].last_gps_message_timestamp.state_changed_event.add_listener(
+                ].last_position_message_timestamp.state_changed_event.add_listener(
                     check_for_collisions
                 )
 
@@ -3072,7 +2948,9 @@ class MavSwarm:
         # callbacks
         if hasattr(self, "_MavSwarm__check_for_collisions"):
             for agent_id in self.agent_ids:
-                self._agents[agent_id].location.state_changed_event.remove_listener(
+                self._agents[
+                    agent_id
+                ].last_position_message_timestamp.state_changed_event.remove_listener(
                     self.__check_for_collisions
                 )
         if hasattr(self, "_MavSwarm__add_collision_check"):
