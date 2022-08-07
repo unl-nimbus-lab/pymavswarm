@@ -1668,7 +1668,7 @@ class MavSwarm:
                         abs_tol=lat_lon_deviation_tolerance,
                     )
                     or not math.isclose(
-                        current_position.x,
+                        current_position.y,
                         self._agents[agent_id].home_position.y,
                         abs_tol=lat_lon_deviation_tolerance,
                     )

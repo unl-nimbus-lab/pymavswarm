@@ -85,7 +85,8 @@
       "**/build": true,
       "**/install": true,
       "**/log": true
-    }
+    },
+    "autoDocstring.docstringFormat": "sphinx"
   },
   "extensions": [
     "ms-azuretools.vscode-docker",
