@@ -145,7 +145,7 @@ class MessageReceivers(Receivers):
             agents[agent_id].velocity.global_frame.z = message.vz / 100
 
             # Compute the corrected timestamp in the global clock
-            timestamp = message.time_boot_ms - agents[agent_id].clock_offset
+            timestamp = message.time_boot_ms - agents[agent_id].clock_offset.value
 
             # Calculate the acceleration if there has been more than one velocity
             # reading
@@ -199,7 +199,7 @@ class MessageReceivers(Receivers):
             agents[agent_id].velocity.global_relative_frame.z = message.vz / 100
 
             # Compute the corrected timestamp in the global clock
-            timestamp = message.time_boot_ms - agents[agent_id].clock_offset
+            timestamp = message.time_boot_ms - agents[agent_id].clock_offset.value
 
             # Calculate the acceleration if there has been more than one velocity
             # reading
@@ -255,7 +255,7 @@ class MessageReceivers(Receivers):
             agents[agent_id].velocity.local_frame.z = message.vz
 
             # Compute the corrected timestamp in the global clock
-            timestamp = message.time_boot_ms - agents[agent_id].clock_offset
+            timestamp = message.time_boot_ms - agents[agent_id].clock_offset.value
 
             # Calculate the acceleration if there has been more than one velocity
             # reading

@@ -16,9 +16,7 @@
 
 from __future__ import annotations
 
-from collections import deque
 from datetime import datetime
-from statistics import fmean
 from typing import Any
 
 import monotonic
@@ -137,11 +135,9 @@ class Agent:
         self.__ping = swarm_state.Generic(
             "ping", 0, optional_context_props=context_props
         )
-        self.__clock_offset: deque[int] = deque(maxlen=5)
-
-        # Initialize the clock offset with a value so that we have something to access
-        # at boot
-        self.__clock_offset.append(0)
+        self.__clock_offset = swarm_state.Generic(
+            "clock_offset", 0, optional_context_props=context_props
+        )
 
         return
 
@@ -385,27 +381,15 @@ class Agent:
         """
         return self.__ping
 
-    def update_clock_offset(self, offset: int) -> None:
-        """
-        Update the agent clock offset relative to the source clock.
-
-        :param offset: clock offset
-        :type offset: int
-        """
-        self.__clock_offset.append(offset)
-        return
-
     @property
-    def clock_offset(self) -> int:
+    def clock_offset(self) -> Generic:
         """
-        Average offset between the source clock and agent clock.
-
-        This property does not implement a watcher interface.
+        Clock offset from the global clock.
 
         :return: clock offset
-        :rtype: int
+        :rtype: Generic
         """
-        return int(fmean(self.__clock_offset))
+        return self.__clock_offset
 
     def compute_reachable_set(
         self,

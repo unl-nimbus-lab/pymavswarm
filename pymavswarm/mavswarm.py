@@ -2719,7 +2719,7 @@ class MavSwarm:
 
         if self.time_since_boot is not None and agent_id in agents:
             # We make the assumption that the latency is equivalent in both directions
-            agents[agent_id].update_clock_offset(
+            agents[agent_id].clock_offset.value = (
                 message.time_boot_ms
                 - int(agents[agent_id].ping.value / 2)
                 - self.time_since_boot
