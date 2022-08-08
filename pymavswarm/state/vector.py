@@ -69,14 +69,14 @@ class Vector(State):
         return self.__x
 
     @x.setter
-    def x(self, pos: float) -> None:
+    def x(self, value: float) -> None:
         """
         Set the x component.
 
-        :param pos: x component in the target frame
-        :type pos: float
+        :param value: x component in the target frame
+        :type value: float
         """
-        self.__x = pos
+        self.__x = value
 
         return
 
@@ -91,14 +91,14 @@ class Vector(State):
         return self.__y
 
     @y.setter
-    def y(self, pos: float) -> None:
+    def y(self, value: float) -> None:
         """
         Set the y component.
 
-        :param pos: y component in the target frame
-        :type pos: float
+        :param value: y component in the target frame
+        :type value: float
         """
-        self.__y = pos
+        self.__y = value
 
         return
 
@@ -107,7 +107,7 @@ class Vector(State):
         """
         z component.
 
-        Positive for up.
+        Valueitive for up.
 
         :return: z component
         :rtype: float
@@ -115,14 +115,14 @@ class Vector(State):
         return self.__z
 
     @z.setter
-    def z(self, pos: float) -> None:
+    def z(self, value: float) -> None:
         """
         Set the z component.
 
         :param alt: z component in the target frame
         :type alt: float
         """
-        self.__z = pos
+        self.__z = value
 
         return
 
