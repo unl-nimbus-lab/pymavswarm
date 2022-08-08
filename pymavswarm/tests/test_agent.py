@@ -28,29 +28,27 @@ class TestAgent(unittest.TestCase):
         """Test computing an agents reachable set."""
         agent = Agent(1, 1)
 
-        agent.position.local_frame.x = 2.0
-        agent.position.local_frame.y = 3.0
-        agent.position.local_frame.z = 5.0
+        agent.position.global_frame.x = 40.682167
+        agent.position.global_frame.y = -99.107494
+        agent.position.global_frame.z = 695.0
 
-        agent.velocity.local_frame.x = 0.0
-        agent.velocity.local_frame.y = 2.0
-        agent.velocity.local_frame.z = 0.0
+        agent.velocity.global_frame.x = 0.0
+        agent.velocity.global_frame.y = 2.0
+        agent.velocity.global_frame.z = 0.0
 
-        agent.acceleration.local_frame.x = 0.0
-        agent.acceleration.local_frame.y = 0.0
-        agent.acceleration.local_frame.z = 0.0
+        agent.acceleration.global_frame.x = 0.0
+        agent.acceleration.global_frame.y = 0.0
+        agent.acceleration.global_frame.z = 0.0
 
         reach_time = 2.0
 
-        result_rect, _ = agent.compute_reachable_set(
-            0, 0, reach_time, MavSwarm.LOCAL_FRAME
-        )
+        result_rect, _ = agent.compute_reachable_set(0, 0, reach_time)
 
         expected_rect = HyperRectangle(
             [
-                Interval(2.0, 2.0),  # x
-                Interval(3.0, 7.0),  # y
-                Interval(5.0, 5.0),  # z
+                Interval(40.682167, 40.682167),  # x
+                Interval(-99.107494, -99.1074466),  # y
+                Interval(695.0, 695.0),  # z
                 Interval(0.0, 0.0),  # vx
                 Interval(2.0, 2.0),  # vy
                 Interval(0.0, 0.0),  # vz
