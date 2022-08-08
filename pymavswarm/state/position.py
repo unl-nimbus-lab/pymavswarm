@@ -16,122 +16,81 @@
 
 from __future__ import annotations
 
+from pymavlink import mavutil
+
 from pymavswarm.state.state import State
+from pymavswarm.state.vector import Vector
 
 
 class Position(State):
     """Agent position."""
 
-    def __init__(
-        self,
-        x: float,
-        y: float,
-        z: float,
-        optional_context_props: dict | None = None,
-    ) -> None:
+    def __init__(self, optional_context_props: dict | None = None) -> None:
         """
         Create a new location object.
 
-        :param x: x position; this will typically be latitude [WGS84, EGM96 ellipsoid]
-        :type x: float
-        :param y: y position; this will typically be longitude [WGS84, EGM96 ellipsoid]
-        :type y: float
-        :param z: z position; this will typically be altitude
-        :type altitude: float
         :param optional_context_props: properties to add to the location context,
             defaults to None
         :type optional_context_props: dict | None, optional
         """
         super().__init__(optional_context_props)
 
-        self.__x = x
-        self.__y = y
-        self.__z = z
+        self.__local = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
+        self.__global = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_GLOBAL,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
+        self.__global_relative = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
 
         return
 
     @property
-    def x(self) -> float:
+    def local_frame(self) -> Vector:
         """
-        x position; this will typically be latitude [WGS84, EGM96 ellipsoid].
+        Position in the local frame (MAV_FRAME_LOCAL_NED).
 
-        :return: x position
-        :rtype: float
+        :return: local position
+        :rtype: Vector
         """
-        return self.__x
-
-    @x.setter
-    def x(self, pos: float) -> None:
-        """
-        Set the x position.
-
-        :param pos: x position in the target frame
-        :type pos: float
-        """
-        prev_pos = self.__x
-        self.__x = pos
-
-        # Signal state change event
-        if self.__x != prev_pos:
-            self.state_changed_event.notify(**self.context)
-
-        return
+        return self.__local
 
     @property
-    def y(self) -> float:
+    def global_frame(self) -> Vector:
         """
-        y position; this will typically be longitude [WGS84, EGM96 ellipsoid].
+        Position in the global frame (MAV_FRAME_GLOBAL).
 
-        :return: y position
-        :rtype: float
+        :return: global position
+        :rtype: Vector
         """
-        return self.__y
-
-    @y.setter
-    def y(self, pos: float) -> None:
-        """
-        Set the y position.
-
-        :param pos: y position in the target frame
-        :type pos: float
-        """
-        prev_pos = self.__y
-        self.__y = pos
-
-        # Signal state change event
-        if self.__y != prev_pos:
-            self.state_changed_event.notify(**self.context)
-
-        return
+        return self.__global
 
     @property
-    def z(self) -> float:
+    def global_relative_frame(self) -> Vector:
         """
-        z position; this will typically be altitude [MSL].
+        Position in the global relative frame (MAV_FRAME_GLOBAL_TERRAIN_ALT).
 
-        Positive for up.
-
-        :return: z position
-        :rtype: float
+        :return: global relative position
+        :rtype: Vector
         """
-        return self.__z
-
-    @z.setter
-    def z(self, pos: float) -> None:
-        """
-        Set the z position.
-
-        :param alt: z position in the target frame
-        :type alt: float
-        """
-        prev_pos = self.__z
-        self.__z = pos
-
-        # Signal state change event
-        if self.__z != prev_pos:
-            self.state_changed_event.notify(**self.context)
-
-        return
+        return self.__global_relative
 
     @property
     def context(self) -> dict:
@@ -143,9 +102,9 @@ class Position(State):
         """
         context = super().context
 
-        context["x"] = self.__x
-        context["y"] = self.__y
-        context["z"] = self.__z
+        context["global_frame"] = self.__global
+        context["global_relative_frame"] = self.__global_relative
+        context["local_frame"] = self.__local
 
         return context
 

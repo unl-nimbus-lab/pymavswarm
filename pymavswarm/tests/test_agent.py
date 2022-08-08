@@ -16,7 +16,8 @@
 
 import unittest
 
-from pymavswarm import Agent
+from pymavswarm import Agent, mavswarm
+from pymavswarm.mavswarm import MavSwarm
 from pymavswarm.safety import HyperRectangle, Interval
 
 
@@ -27,29 +28,27 @@ class TestAgent(unittest.TestCase):
         """Test computing an agents reachable set."""
         agent = Agent(1, 1)
 
-        agent.position.x = 2.0
-        agent.position.y = 3.0
-        agent.position.z = 5.0
+        agent.position.global_frame.x = 40.682167
+        agent.position.global_frame.y = -99.107494
+        agent.position.global_frame.z = 695.0
 
-        agent.velocity.x = 0.0
-        agent.velocity.y = 2.0
-        agent.velocity.z = 0.0
+        agent.velocity.global_frame.x = 0.0
+        agent.velocity.global_frame.y = 2.0
+        agent.velocity.global_frame.z = 0.0
 
-        agent.acceleration.x = 0.0
-        agent.acceleration.y = 0.0
-        agent.acceleration.z = 0.0
+        agent.acceleration.global_frame.x = 0.0
+        agent.acceleration.global_frame.y = 0.0
+        agent.acceleration.global_frame.z = 0.0
 
         reach_time = 2.0
 
-        result_rect, _ = agent.compute_reachable_set(
-            0, 0, reach_time, uses_lat_lon=False
-        )
+        result_rect, _ = agent.compute_reachable_set(0, 0, reach_time)
 
         expected_rect = HyperRectangle(
             [
-                Interval(2.0, 2.0),  # x
-                Interval(3.0, 7.0),  # y
-                Interval(5.0, 5.0),  # z
+                Interval(40.682167, 40.682167),  # x
+                Interval(-99.107494, -99.1074466),  # y
+                Interval(695.0, 695.0),  # z
                 Interval(0.0, 0.0),  # vx
                 Interval(2.0, 2.0),  # vy
                 Interval(0.0, 0.0),  # vz

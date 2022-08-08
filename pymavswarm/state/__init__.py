@@ -26,4 +26,5 @@ from .parameter_list import ParameterList
 from .position import Position
 from .state import State
 from .telemetry import Telemetry
+from .vector import Vector
 from .velocity import Velocity

@@ -150,7 +150,9 @@ def main() -> None:
     # Command the agent to the target location
     # We don't need to specify the target agents because these are captured from the
     # config file
-    future = mavswarm.goto(config_file=args.config, retry=True)
+    future = mavswarm.goto(
+        config_file=args.config, retry=True, frame=MavSwarm.GLOBAL_RELATIVE_FRAME
+    )
     future.add_done_callback(print_message_response_cb)
 
     while not future.done():

@@ -16,119 +16,80 @@
 
 from __future__ import annotations
 
+from pymavlink import mavutil
+
 from pymavswarm.state.state import State
+from pymavswarm.state.vector import Vector
 
 
 class Acceleration(State):
     """Acceleration state."""
 
-    def __init__(
-        self,
-        ax: float,
-        ay: float,
-        az: float,
-        optional_context_props: dict | None = None,
-    ) -> None:
+    def __init__(self, optional_context_props: dict | None = None) -> None:
         """
         Create a new acceleration object.
 
-        :param ax: ground x acceleration [Latitude, positive north]
-        :type ax: float
-        :param ay: ground y acceleration [Longitude, positive east]
-        :type ay: float
-        :param az: ground z acceleration [Altitude, positive down]
-        :type az: float
         :param optional_context_props: optional properties to add to the context
         :type optional_context_props: dict, optional
         """
         super().__init__(optional_context_props)
 
-        self.__ax = ax
-        self.__ay = ay
-        self.__az = az
+        self.__local = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
+        self.__global = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_GLOBAL,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
+        self.__global_relative = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
 
         return
 
     @property
-    def x(self) -> float:
+    def local_frame(self) -> Vector:
         """
-        Ground X acceleration.
+        Acceleration in the local frame (MAV_FRAME_LOCAL_NED).
 
-        :return: acceleration x component
-        :rtype: float
+        :return: local acceleration
+        :rtype: Vector
         """
-        return self.__ax
-
-    @x.setter
-    def x(self, accel: float) -> None:
-        """
-        Set the acceleration's x component.
-
-        :param accel: x acceleration [m/s^s]
-        :type accel: float
-        """
-        prev_ax = self.__ax
-        self.__ax = accel
-
-        # Signal state change event
-        if self.__ax != prev_ax:
-            self.state_changed_event.notify(**self.context)
-
-        return
+        return self.__local
 
     @property
-    def y(self) -> float:
+    def global_frame(self) -> Vector:
         """
-        Ground Y acceleration.
+        Acceleration in the global frame (MAV_FRAME_GLOBAL).
 
-        :return: acceleration y component
-        :rtype: float
+        :return: global acceleration
+        :rtype: Vector
         """
-        return self.__ay
-
-    @y.setter
-    def y(self, accel: float) -> None:
-        """
-        Set the acceleration's y component.
-
-        :param accel: y acceleration [m/s^2]
-        :type accel: float
-        """
-        prev_ay = self.__ay
-        self.__ay = accel
-
-        # Signal state change event
-        if self.__ay != prev_ay:
-            self.state_changed_event.notify(**self.context)
-
-        return
+        return self.__global
 
     @property
-    def z(self) -> float:
+    def global_relative_frame(self) -> Vector:
         """
-        Ground Z acceleration.
+        Acceleration in the global relative frame (MAV_FRAME_GLOBAL_TERRAIN_ALT).
 
-        :return: acceleration z component
-        :rtype: float
+        :return: global relative acceleration
+        :rtype: Vector
         """
-        return self.__az
-
-    @z.setter
-    def z(self, accel: float) -> None:
-        """
-        Set the acceleration's z component.
-
-        :param accel: z acceleration [m/s^2]
-        :type accel: float
-        """
-        prev_az = self.__az
-        self.__az = accel
-
-        # Signal state change event
-        if self.__az != prev_az:
-            self.state_changed_event.notify(**self.context)
-
-        return
+        return self.__global_relative
 
     @property
     def context(self) -> dict:
@@ -140,17 +101,17 @@ class Acceleration(State):
         """
         context = super().context
 
-        context["ax"] = self.__ax
-        context["ay"] = self.__ay
-        context["az"] = self.__az
+        context["global_frame"] = self.__global
+        context["global_relative_frame"] = self.__global_relative
+        context["local_frame"] = self.__local
 
         return context
 
     def __str__(self) -> str:
         """
-        Print acceleration information in a human-readable format.
+        Print acceleration in a human-readable format.
 
-        :return: acceleration information
+        :return: acceleration
         :rtype: str
         """
         return f"Acceleration: {self.context}"

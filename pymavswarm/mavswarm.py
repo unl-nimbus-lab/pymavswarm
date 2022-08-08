@@ -60,6 +60,11 @@ class MavSwarm:
     COLLISION_RESPONSE_LOITER = 3
     COLLISION_RESPONSE_FORCE_DISARM = 4
 
+    # Supported coordinate frames
+    GLOBAL_FRAME = mavutil.mavlink.MAV_FRAME_GLOBAL
+    GLOBAL_RELATIVE_FRAME = mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT
+    LOCAL_FRAME = mavutil.mavlink.MAV_FRAME_LOCAL_NED
+
     def __init__(
         self,
         max_workers: int = 5,
@@ -1770,7 +1775,7 @@ class MavSwarm:
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
         config_file: str | None = None,
-        frame: int = mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT,
+        frame: int = GLOBAL_RELATIVE_FRAME,
     ) -> Future:
         """
         Command the agents to go to the desired location.
@@ -1806,7 +1811,7 @@ class MavSwarm:
             to None
         :type config_file: str | None, optional
         :param frame: coordinate frame that the x, y, and z positions are provided in,
-            defaults to MAV_FRAME_GLOBAL_TERRAIN_ALT
+            defaults to GLOBAL_FRAME_RELATIVE
         :type frame: int, optional
         :return: future message response, if any
         :rtype: Future
@@ -2714,7 +2719,7 @@ class MavSwarm:
 
         if self.time_since_boot is not None and agent_id in agents:
             # We make the assumption that the latency is equivalent in both directions
-            agents[agent_id].update_clock_offset(
+            agents[agent_id].clock_offset.value = (
                 message.time_boot_ms
                 - int(agents[agent_id].ping.value / 2)
                 - self.time_since_boot
@@ -2734,7 +2739,6 @@ class MavSwarm:
         retry_collision_response: bool = True,
         verify_collision_response_state: bool = True,
         max_time_difference: float = 2.0,
-        uses_lat_lon: bool = True,
     ) -> None:
         """
         Enable collision avoidance between agents.
@@ -2774,9 +2778,6 @@ class MavSwarm:
         :param max_time_difference: max difference between agent timestamps before the
             state is considered stale and not checked [s], defaults to 2.0
         :type max_time_difference: float, optional
-        :param uses_lat_lon: flag indicating that the position measurements use latitude
-            and longitude format, defaults to True
-        :type uses_lat_lon: bool, optional
         """
         self._logger.warning("Collision avoidance mode has been enabled")
 
@@ -2785,7 +2786,11 @@ class MavSwarm:
         def check_for_collisions(
             sys_id: int,
             comp_id: int,
-            time_boot_ms: float,
+            x: float,
+            y: float,
+            z: float,
+            frame: int,
+            timestamp: float,
         ):
             sender_agent = self.get_agent_by_id((sys_id, comp_id))
 
@@ -2810,7 +2815,6 @@ class MavSwarm:
                     sender_reach_time,
                     initial_step_size,
                     reach_timeout,
-                    uses_lat_lon=uses_lat_lon,
                 )
             except Exception:
                 self._logger.debug(
@@ -2837,20 +2841,21 @@ class MavSwarm:
             for agent_id in agent_ids_to_check:
                 agent = self.get_agent_by_id(agent_id)
 
-                # Check if the agent exists and if the time difference is greater than
-                # the allowable time. If this situation occurs, it means that there may
-                # be high latency or a low position message frequency
+                # Check if the agent exists
                 if agent is None:
                     continue
 
+                # Check if the time difference is greater than the allowable time.
+                # If this situation occurs, it means that there may be high latency or
+                # a low position message frequency
                 if (
-                    time_boot_ms - agent.last_position_message_timestamp.value
+                    timestamp - agent.position.global_frame.timestamp
                     > max_time_difference_ms
                 ):
                     self._logger.debug(
                         f"Agent ({sys_id}, {comp_id}) is out of sync with agent "
                         f"{agent_id} by "
-                        f"{time_boot_ms - agent.last_position_message_timestamp.value}"
+                        f"{timestamp - agent.position.global_frame.timestamp}"
                     )
                     continue
 
@@ -2861,15 +2866,11 @@ class MavSwarm:
                     agent_reach_time = (
                         reach_time
                         + ((agent.ping.value / 2) / 1000)
-                        + (
-                            (time_boot_ms - agent.last_position_message_timestamp.value)
-                            / 1000
-                        )
+                        + ((timestamp - agent.position.global_frame.timestamp) / 1000)
                     )
                 else:
                     agent_reach_time = reach_time + (
-                        (time_boot_ms - agent.last_position_message_timestamp.value)
-                        / 1000
+                        (timestamp - agent.position.global_frame.timestamp) / 1000
                     )
 
                 try:
@@ -2880,7 +2881,6 @@ class MavSwarm:
                         agent_reach_time,
                         initial_step_size,
                         reach_timeout,
-                        uses_lat_lon=uses_lat_lon,
                     )
                 except Exception:
                     self._logger.debug(
@@ -2917,7 +2917,7 @@ class MavSwarm:
         for agent_id in self.agent_ids:
             self._agents[
                 agent_id
-            ].last_position_message_timestamp.state_changed_event.add_listener(
+            ].position.global_frame.state_changed_event.add_listener(
                 check_for_collisions
             )
 
@@ -2925,7 +2925,7 @@ class MavSwarm:
             if operation == "set" and key in self._agents:
                 self._agents[
                     key
-                ].last_position_message_timestamp.state_changed_event.add_listener(
+                ].last_position_message.state_changed_event.add_listener(
                     check_for_collisions
                 )
 
@@ -2950,7 +2950,7 @@ class MavSwarm:
             for agent_id in self.agent_ids:
                 self._agents[
                     agent_id
-                ].last_position_message_timestamp.state_changed_event.remove_listener(
+                ].position.global_frame.state_changed_event.remove_listener(
                     self.__check_for_collisions
                 )
         if hasattr(self, "_MavSwarm__add_collision_check"):
