@@ -2825,8 +2825,6 @@ class MavSwarm:
                 )
                 return
 
-            print(sender_reachable_state)
-
             # Get the list of agents that we should check for collisions with
             agent_ids_to_check = list(
                 filter(
