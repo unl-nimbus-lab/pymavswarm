@@ -34,15 +34,15 @@ class Vector(State):
         """
         Create a new vector object.
 
-        :param x: x position; this will typically be latitude [WGS84, EGM96 ellipsoid]
+        :param x: x component
         :type x: float
-        :param y: y position; this will typically be longitude [WGS84, EGM96 ellipsoid]
+        :param y: y component
         :type y: float
-        :param z: z position; this will typically be altitude
+        :param z: z component
         :type altitude: float
         :param frame: coordinate frame that the vector exists in
         :type frame: int
-        :param timestamp: timestamp that the message was initialized
+        :param timestamp: timestamp that the state was last updated
         :type timestamp: float
         :param optional_context_props: properties to add to the location context,
             defaults to None
@@ -61,9 +61,9 @@ class Vector(State):
     @property
     def x(self) -> float:
         """
-        x position.
+        x component.
 
-        :return: x position
+        :return: x component
         :rtype: float
         """
         return self.__x
@@ -71,9 +71,9 @@ class Vector(State):
     @x.setter
     def x(self, pos: float) -> None:
         """
-        Set the x position.
+        Set the x component.
 
-        :param pos: x position in the target frame
+        :param pos: x component in the target frame
         :type pos: float
         """
         self.__x = pos
@@ -83,9 +83,9 @@ class Vector(State):
     @property
     def y(self) -> float:
         """
-        y position.
+        y component.
 
-        :return: y position
+        :return: y component
         :rtype: float
         """
         return self.__y
@@ -93,9 +93,9 @@ class Vector(State):
     @y.setter
     def y(self, pos: float) -> None:
         """
-        Set the y position.
+        Set the y component.
 
-        :param pos: y position in the target frame
+        :param pos: y component in the target frame
         :type pos: float
         """
         self.__y = pos
@@ -105,11 +105,11 @@ class Vector(State):
     @property
     def z(self) -> float:
         """
-        z position.
+        z component.
 
         Positive for up.
 
-        :return: z position
+        :return: z component
         :rtype: float
         """
         return self.__z
@@ -117,9 +117,9 @@ class Vector(State):
     @z.setter
     def z(self, pos: float) -> None:
         """
-        Set the z position.
+        Set the z component.
 
-        :param alt: z position in the target frame
+        :param alt: z component in the target frame
         :type alt: float
         """
         self.__z = pos
@@ -187,7 +187,7 @@ class Vector(State):
         """
         Print vector in a human-readable format.
 
-        :return: position
+        :return: vector
         :rtype: str
         """
         return f"Vector: {self.context}"
