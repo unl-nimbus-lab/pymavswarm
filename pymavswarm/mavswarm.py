@@ -2518,7 +2518,7 @@ class MavSwarm:
             # Log the message to the logfile
             if self.__file_logger is not None and message.get_type() != "BAD_DATA":
                 self.__file_logger(
-                    int(time.time() * 1.0e6),
+                    self.time_since_boot if self.time_since_boot is not None else 0,
                     message.get_srcSystem(),
                     message.get_srcComponent(),
                     message.get_type(),
@@ -2690,7 +2690,7 @@ class MavSwarm:
                 # Log the ping to the log file
                 if self.__file_logger is not None:
                     self.__file_logger(
-                        int(time.time() * 1.0e6),
+                        self.time_since_boot if self.time_since_boot is not None else 0,
                         message.get_srcSystem(),
                         message.get_srcComponent(),
                         "PING",
@@ -2822,6 +2822,15 @@ class MavSwarm:
                 )
                 return
 
+            if self.__file_logger is not None:
+                self.__file_logger(
+                    self.time_since_boot if self.time_since_boot is not None else 0,
+                    sys_id,
+                    comp_id,
+                    "REACH_SET",
+                    {"set": sender_reachable_state},
+                )
+
             # Get the list of agents that we should check for collisions with
             agent_ids_to_check = list(
                 filter(
@@ -2893,6 +2902,15 @@ class MavSwarm:
                     sender_reachable_state, dimensions=[0, 1, 2]
                 ):
                     colliding_agent_ids.append((agent.system_id, agent.component_id))
+
+                if self.__file_logger is not None:
+                    self.__file_logger(
+                        self.time_since_boot if self.time_since_boot is not None else 0,
+                        agent_id[0],
+                        agent_id[1],
+                        "REACH_SET",
+                        {"set": agent_reachable_state},
+                    )
 
             # Handle the potential collision
             if colliding_agent_ids:
