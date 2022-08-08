@@ -22,6 +22,7 @@ from statistics import fmean
 from typing import Any
 
 import monotonic
+from pymavlink import mavutil
 
 import pymavswarm.state as swarm_state
 from pymavswarm.mission import SwarmMission
@@ -81,23 +82,16 @@ class Agent:
         self.__gps_info = swarm_state.GPSInfo(
             0.0, 0.0, 0, 0, optional_context_props=context_props
         )
-        self.__position = swarm_state.Position(
-            0.0, 0.0, 0.0, optional_context_props=context_props
-        )
+        self.__position = swarm_state.Position(optional_context_props=context_props)
         self.__ekf = swarm_state.EKFStatus(
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, optional_context_props=context_props
         )
         self.__telemetry = swarm_state.Telemetry(
             0.0, optional_context_props=context_props
         )
-        self.__velocity = swarm_state.Velocity(
-            0.0, 0.0, 0.0, optional_context_props=context_props
-        )
-        self.__prev_velocity = swarm_state.Velocity(
-            0.0, 0.0, 0.0, optional_context_props=context_props
-        )
+        self.__velocity = swarm_state.Velocity(optional_context_props=context_props)
         self.__acceleration = swarm_state.Acceleration(
-            0.0, 0.0, 0.0, optional_context_props=context_props
+            optional_context_props=context_props
         )
         self.__armed = swarm_state.Generic(
             "armed", False, optional_context_props=context_props
@@ -129,8 +123,13 @@ class Agent:
         self.__last_params_read = swarm_state.ParameterList(
             max_length=max_params_stored, optional_context_props=context_props
         )
-        self.__home_position = swarm_state.Position(
-            0.0, 0.0, 0.0, optional_context_props=context_props
+        self.__home_position = swarm_state.Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_GLOBAL,
+            0.0,
+            optional_context_props=context_props,
         )
         self.__hrl_state = swarm_state.Generic(
             "hrl_state", None, optional_context_props=context_props
@@ -138,7 +137,13 @@ class Agent:
         self.__ping = swarm_state.Generic(
             "ping", 0, optional_context_props=context_props
         )
-        self.__last_position_message_timestamp = swarm_state.Generic(
+        self.__last_global_relative_position_message_timestamp = swarm_state.Generic(
+            "time_boot_ms", 0, optional_context_props=context_props
+        )
+        self.__last_global_position_message_timestamp = swarm_state.Generic(
+            "time_boot_ms", 0, optional_context_props=context_props
+        )
+        self.__last_local_position_message_timestamp = swarm_state.Generic(
             "time_boot_ms", 0, optional_context_props=context_props
         )
         self.__clock_offset: deque[int] = deque(maxlen=5)
@@ -248,16 +253,6 @@ class Agent:
         :rtype: Velocity
         """
         return self.__velocity
-
-    @property
-    def previous_velocity(self) -> swarm_state.Velocity:
-        """
-        Velocity of the agent at the previous measurement.
-
-        return: agent's previous velocity
-        :rtype: Velocity
-        """
-        return self.__prev_velocity
 
     @property
     def acceleration(self) -> swarm_state.Acceleration:
@@ -370,7 +365,7 @@ class Agent:
         return self.__last_params_read
 
     @property
-    def home_position(self) -> swarm_state.Position:
+    def home_position(self) -> swarm_state.Vector:
         """
         Home position of the agent.
 
@@ -399,16 +394,6 @@ class Agent:
         """
         return self.__ping
 
-    @property
-    def last_position_message_timestamp(self) -> Generic:
-        """
-        Most recent time that the agent sent the position message in the global clock.
-
-        :return: time since boot [ms]
-        :rtype: Generic
-        """
-        return self.__last_position_message_timestamp
-
     def update_clock_offset(self, offset: int) -> None:
         """
         Update the agent clock offset relative to the source clock.
@@ -436,9 +421,9 @@ class Agent:
         position_error: float,
         velocity_error: float,
         reach_time: float,
+        frame: int,
         initial_step_size: float = 0.5,
         reach_timeout: float = 0.001,
-        uses_lat_lon: bool = True,
     ) -> tuple[HyperRectangle, float]:
         """
         Compute the current reachable set of the agent.
@@ -460,63 +445,97 @@ class Agent:
             from the start time
         :rtype: tuple[HyperRectangle, float]
         """
-        if uses_lat_lon:
+        # When computing the reachable state for the GPS position, we pass
+        # the origin as the position. After computing what the reachable
+        # change, we correct the original lat/lon position. This
+        # helps us eliminate *some* error that occurs during
+        # conversions.
+        if frame == mavutil.mavlink.MAV_FRAME_GLOBAL:
             rect = HyperRectangle(
                 [
-                    # When computing the reachable state for the GPS position, we pass
-                    # the origin as the position. After computing what the reachable
-                    # change, we correct the original lat/lon position. This
-                    # helps us eliminate *some* error that occurs during
-                    # conversions.
                     Interval(-position_error, position_error),
                     Interval(-position_error, position_error),
                     Interval(
-                        self.position.z - position_error,
-                        self.position.z + position_error,
+                        self.position.global_frame.z - position_error,
+                        self.position.global_frame.z + position_error,
                     ),
                     Interval(
-                        self.velocity.x - velocity_error,
-                        self.velocity.x + velocity_error,
+                        self.velocity.global_frame.x - velocity_error,
+                        self.velocity.global_frame.x + velocity_error,
                     ),
                     Interval(
-                        self.velocity.y - velocity_error,
-                        self.velocity.y + velocity_error,
+                        self.velocity.global_frame.y - velocity_error,
+                        self.velocity.global_frame.y + velocity_error,
                     ),
                     Interval(
-                        self.velocity.z - velocity_error,
-                        self.velocity.z + velocity_error,
+                        self.velocity.global_frame.z - velocity_error,
+                        self.velocity.global_frame.z + velocity_error,
                     ),
                 ]
             )
+            pos = self.position.global_frame
+            accel = self.acceleration.global_frame
+            stamp = self.position.global_frame.timestamp
+        elif frame == mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT:
+            rect = HyperRectangle(
+                [
+                    Interval(-position_error, position_error),
+                    Interval(-position_error, position_error),
+                    Interval(
+                        self.position.global_relative_frame.z - position_error,
+                        self.position.global_relative_frame.z + position_error,
+                    ),
+                    Interval(
+                        self.velocity.global_relative_frame.x - velocity_error,
+                        self.velocity.global_relative_frame.x + velocity_error,
+                    ),
+                    Interval(
+                        self.velocity.global_relative_frame.y - velocity_error,
+                        self.velocity.global_relative_frame.y + velocity_error,
+                    ),
+                    Interval(
+                        self.velocity.global_relative_frame.z - velocity_error,
+                        self.velocity.global_relative_frame.z + velocity_error,
+                    ),
+                ]
+            )
+            pos = self.position.global_relative_frame
+            accel = self.acceleration.global_relative_frame
+            stamp = self.position.global_relative_frame.timestamp
+        elif frame == mavutil.mavlink.MAV_FRAME_LOCAL_NED:
+            rect = HyperRectangle(
+                [
+                    Interval(
+                        self.position.local_frame.x - position_error,
+                        self.position.local_frame.x + position_error,
+                    ),
+                    Interval(
+                        self.position.local_frame.y - position_error,
+                        self.position.local_frame.y + position_error,
+                    ),
+                    Interval(
+                        self.position.local_frame.z - position_error,
+                        self.position.local_frame.z + position_error,
+                    ),
+                    Interval(
+                        self.velocity.local_frame.x - velocity_error,
+                        self.velocity.local_frame.x + velocity_error,
+                    ),
+                    Interval(
+                        self.velocity.local_frame.y - velocity_error,
+                        self.velocity.local_frame.y + velocity_error,
+                    ),
+                    Interval(
+                        self.velocity.local_frame.z - velocity_error,
+                        self.velocity.local_frame.z + velocity_error,
+                    ),
+                ]
+            )
+            pos = self.position.local_frame
+            accel = self.acceleration.local_frame
+            stamp = self.position.local_frame.timestamp
         else:
-            rect = HyperRectangle(
-                [
-                    Interval(
-                        self.position.x - position_error,
-                        self.position.x + position_error,
-                    ),
-                    Interval(
-                        self.position.y - position_error,
-                        self.position.y + position_error,
-                    ),
-                    Interval(
-                        self.position.z - position_error,
-                        self.position.z + position_error,
-                    ),
-                    Interval(
-                        self.velocity.x - velocity_error,
-                        self.velocity.x + velocity_error,
-                    ),
-                    Interval(
-                        self.velocity.y - velocity_error,
-                        self.velocity.y + velocity_error,
-                    ),
-                    Interval(
-                        self.velocity.z - velocity_error,
-                        self.velocity.z + velocity_error,
-                    ),
-                ]
-            )
+            raise ValueError(f"Unsupported frame provided: {frame}")
 
         # Compute the sender's reachable state
         (
@@ -524,37 +543,39 @@ class Agent:
             reach_time_elapsed,
         ) = SafetyChecker.face_lifting_iterative_improvement(
             rect,
-            self.last_position_message_timestamp.value,
+            stamp,
             (
-                self.acceleration.x,
-                self.acceleration.y,
-                self.acceleration.z,
+                accel.x,
+                accel.y,
+                accel.z,
             ),
             reach_time,
             initial_step_size=initial_step_size,
             timeout=reach_timeout,
         )
 
-        if uses_lat_lon:
-            # Correct the latitude using the reachable positions
+        # Correct the positions to use latitude and longitude
+        if (
+            frame == mavutil.mavlink.MAV_FRAME_GLOBAL
+            or frame == mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT
+        ):
             reachable_state.intervals[0].interval_min = latitude_conversion(
-                self.position.x,
+                pos.x,
                 reachable_state.intervals[0].interval_min,
             )
             reachable_state.intervals[0].interval_max = latitude_conversion(
-                self.position.x,
+                pos.x,
                 reachable_state.intervals[0].interval_max,
             )
 
-            # Correct the longitude using the reachable positions
             reachable_state.intervals[1].interval_min = longitude_conversion(
-                self.position.x,
-                self.position.y,
+                pos.x,
+                pos.y,
                 reachable_state.intervals[1].interval_min,
             )
             reachable_state.intervals[1].interval_max = longitude_conversion(
-                self.position.x,
-                self.position.y,
+                pos.x,
+                pos.y,
                 reachable_state.intervals[1].interval_max,
             )
 

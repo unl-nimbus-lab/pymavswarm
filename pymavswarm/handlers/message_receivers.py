@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from typing import Any
 
 import monotonic
@@ -123,7 +124,7 @@ class MessageReceivers(Receivers):
         @self._receive_message("GLOBAL_POSITION_INT")
         def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
-            Handle the a GPS position message.
+            Handle a GPS position message using the global frame.
 
             :param message: Incoming MAVLink message
             :type message: Any
@@ -136,40 +137,151 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Store the previous velocity
-            prev_velocity_x = agents[agent_id].velocity.x
-            prev_velocity_y = agents[agent_id].velocity.y
-            prev_velocity_z = agents[agent_id].velocity.z
+            prev_velocity = deepcopy(agents[agent_id].velocity)
 
             # Update the agent velocity
-            agents[agent_id].velocity.x = message.vx / 100
-            agents[agent_id].velocity.y = message.vy / 100
-            agents[agent_id].velocity.z = message.vz / 100
+            agents[agent_id].velocity.global_frame.x = message.vx / 100
+            agents[agent_id].velocity.global_frame.y = message.vy / 100
+            agents[agent_id].velocity.global_frame.z = message.vz / 100
 
-            # Update the previous velocity
-            agents[agent_id].previous_velocity.x = prev_velocity_x
-            agents[agent_id].previous_velocity.y = prev_velocity_y
-            agents[agent_id].previous_velocity.z = prev_velocity_z
+            # Compute the corrected timestamp in the global clock
+            timestamp = message.time_boot_ms - agents[agent_id].clock_offset
 
-            # Calculate the acceleration
-            agents[agent_id].acceleration.x = (
-                agents[agent_id].velocity.x - agents[agent_id].previous_velocity.x
-            )
-            agents[agent_id].acceleration.y = (
-                agents[agent_id].velocity.y - agents[agent_id].previous_velocity.y
-            )
-            agents[agent_id].acceleration.z = (
-                agents[agent_id].velocity.z - agents[agent_id].previous_velocity.z
+            # Calculate the acceleration if there has been more than one velocity
+            # reading
+            if prev_velocity.global_frame.timestamp != 0.0:
+                agents[agent_id].acceleration.global_frame.x = (
+                    agents[agent_id].velocity.global_frame.x
+                    - prev_velocity.global_frame.x
+                ) / (timestamp - prev_velocity.global_frame.timestamp)
+                agents[agent_id].acceleration.global_frame.y = (
+                    agents[agent_id].velocity.global_frame.y
+                    - prev_velocity.global_frame.y
+                ) / (timestamp - prev_velocity.global_frame.timestamp)
+                agents[agent_id].acceleration.global_frame.z = (
+                    agents[agent_id].velocity.global_frame.z
+                    - prev_velocity.global_frame.z
+                ) / (timestamp - prev_velocity.global_frame.timestamp)
+
+            # Update the agent global location
+            agents[agent_id].position.global_frame.x = message.lat / 1.0e7
+            agents[agent_id].position.global_frame.y = message.lon / 1.0e7
+            agents[agent_id].position.global_frame.z = message.alt / 1000
+
+            # Update the timestamps using the current clock offset
+            agents[agent_id].velocity.global_frame.timestamp = timestamp
+            agents[agent_id].acceleration.global_frame.timestamp = timestamp
+            agents[agent_id].position.global_frame.timestamp = timestamp
+
+            return
+
+        @self._receive_message("GLOBAL_POSITION_INT")
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+            """
+            Handle a GPS position message using the global relative frame.
+
+            :param message: Incoming MAVLink message
+            :type message: Any
+            :param agents: agents in the swarm
+            :type agents: dict[AgentID, Agent]
+            """
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
+
+            if agent_id not in agents:
+                return agents
+
+            # Store the previous velocity
+            prev_velocity = deepcopy(agents[agent_id].velocity)
+
+            # Update the agent velocity
+            agents[agent_id].velocity.global_relative_frame.x = message.vx / 100
+            agents[agent_id].velocity.global_relative_frame.y = message.vy / 100
+            agents[agent_id].velocity.global_relative_frame.z = message.vz / 100
+
+            # Compute the corrected timestamp in the global clock
+            timestamp = message.time_boot_ms - agents[agent_id].clock_offset
+
+            # Calculate the acceleration if there has been more than one velocity
+            # reading
+            if prev_velocity.global_relative_frame.timestamp != 0.0:
+                agents[agent_id].acceleration.global_relative_frame.x = (
+                    agents[agent_id].velocity.global_relative_frame.x
+                    - prev_velocity.global_relative_frame.x
+                ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
+                agents[agent_id].acceleration.global_relative_frame.y = (
+                    agents[agent_id].velocity.global_relative_frame.y
+                    - prev_velocity.global_relative_frame.y
+                ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
+                agents[agent_id].acceleration.global_relative_frame.z = (
+                    agents[agent_id].velocity.global_relative_frame.z
+                    - prev_velocity.global_relative_frame.z
+                ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
+
+            # Update the agent global location
+            agents[agent_id].position.global_relative_frame.x = message.lat / 1.0e7
+            agents[agent_id].position.global_relative_frame.y = message.lon / 1.0e7
+            agents[agent_id].position.global_relative_frame.z = (
+                message.relative_alt / 1000
             )
 
-            # Update the agent location
-            agents[agent_id].position.x = message.lat / 1.0e7
-            agents[agent_id].position.y = message.lon / 1.0e7
-            agents[agent_id].position.z = message.alt / 1000
+            # Update the timestamps using the current clock offset
+            agents[agent_id].velocity.global_relative_frame.timestamp = timestamp
+            agents[agent_id].acceleration.global_relative_frame.timestamp = timestamp
+            agents[agent_id].position.global_relative_frame.timestamp = timestamp
 
-            # Update the last GPS timestamp using the current clock offset
-            agents[agent_id].last_position_message_timestamp.value = (
-                message.time_boot_ms - agents[agent_id].clock_offset
-            )
+            return
+
+        @self._receive_message("LOCAL_POSITION_NED")
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+            """
+            Handle an agent local position message.
+
+            :param message: Incoming MAVLink message
+            :type message: Any
+            :param agents: agents in the swarm
+            :type agents: dict[AgentID, Agent]
+            """
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
+
+            if agent_id not in agents:
+                return agents
+
+            # Store the previous velocity
+            prev_velocity = deepcopy(agents[agent_id].velocity)
+
+            # Update the agent velocity
+            agents[agent_id].velocity.local_frame.x = message.vx
+            agents[agent_id].velocity.local_frame.y = message.vy
+            agents[agent_id].velocity.local_frame.z = message.vz
+
+            # Compute the corrected timestamp in the global clock
+            timestamp = message.time_boot_ms - agents[agent_id].clock_offset
+
+            # Calculate the acceleration if there has been more than one velocity
+            # reading
+            if prev_velocity.local_frame.timestamp != 0.0:
+                agents[agent_id].acceleration.local_frame.x = (
+                    agents[agent_id].velocity.local_frame.x
+                    - prev_velocity.local_frame.x
+                ) / (timestamp - prev_velocity.local_frame.timestamp)
+                agents[agent_id].acceleration.local_frame.y = (
+                    agents[agent_id].velocity.local_frame.y
+                    - prev_velocity.local_frame.y
+                ) / (timestamp - prev_velocity.local_frame.timestamp)
+                agents[agent_id].acceleration.local_frame.z = (
+                    agents[agent_id].velocity.local_frame.z
+                    - prev_velocity.local_frame.z
+                ) / (timestamp - prev_velocity.local_frame.timestamp)
+
+            # Update the agent local location
+            agents[agent_id].position.local_frame.x = message.x
+            agents[agent_id].position.local_frame.y = message.y
+            agents[agent_id].position.local_frame.z = message.z
+
+            # Update the timestamps using the current clock offset
+            agents[agent_id].velocity.local_frame.timestamp = timestamp
+            agents[agent_id].acceleration.local_frame.timestamp = timestamp
+            agents[agent_id].position.local_frame.timestamp = timestamp
 
             return
 
