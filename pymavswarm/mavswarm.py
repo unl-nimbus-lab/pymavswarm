@@ -2778,9 +2778,6 @@ class MavSwarm:
         :param max_time_difference: max difference between agent timestamps before the
             state is considered stale and not checked [s], defaults to 2.0
         :type max_time_difference: float, optional
-        :param frame: MAVLink frame to use when computing the reachable state; this is
-            exposed through MavSwarm constants, defaults to GLOBAL_FRAME_RELATIVE
-        :type frame: int, optional
         """
         self._logger.warning("Collision avoidance mode has been enabled")
 
