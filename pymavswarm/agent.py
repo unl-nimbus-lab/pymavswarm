@@ -137,15 +137,6 @@ class Agent:
         self.__ping = swarm_state.Generic(
             "ping", 0, optional_context_props=context_props
         )
-        self.__last_global_relative_position_message_timestamp = swarm_state.Generic(
-            "time_boot_ms", 0, optional_context_props=context_props
-        )
-        self.__last_global_position_message_timestamp = swarm_state.Generic(
-            "time_boot_ms", 0, optional_context_props=context_props
-        )
-        self.__last_local_position_message_timestamp = swarm_state.Generic(
-            "time_boot_ms", 0, optional_context_props=context_props
-        )
         self.__clock_offset: deque[int] = deque(maxlen=5)
 
         # Initialize the clock offset with a value so that we have something to access
