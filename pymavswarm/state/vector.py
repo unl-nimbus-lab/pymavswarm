@@ -76,12 +76,7 @@ class Vector(State):
         :param pos: x position in the target frame
         :type pos: float
         """
-        prev_pos = self.__x
         self.__x = pos
-
-        # Signal state change event
-        if self.__x != prev_pos:
-            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -103,12 +98,7 @@ class Vector(State):
         :param pos: y position in the target frame
         :type pos: float
         """
-        prev_pos = self.__y
         self.__y = pos
-
-        # Signal state change event
-        if self.__y != prev_pos:
-            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -132,12 +122,7 @@ class Vector(State):
         :param alt: z position in the target frame
         :type alt: float
         """
-        prev_pos = self.__z
         self.__z = pos
-
-        # Signal state change event
-        if self.__z != prev_pos:
-            self.state_changed_event.notify(**self.context)
 
         return
 

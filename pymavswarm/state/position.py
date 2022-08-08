@@ -35,10 +35,29 @@ class Position(State):
         """
         super().__init__(optional_context_props)
 
-        self.__local = Vector(0.0, 0.0, 0.0, mavutil.mavlink.MAV_FRAME_LOCAL_NED, 0.0)
-        self.__global = Vector(0.0, 0.0, 0.0, mavutil.mavlink.MAV_FRAME_GLOBAL, 0.0)
+        self.__local = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
+        self.__global = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_GLOBAL,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
         self.__global_relative = Vector(
-            0.0, 0.0, 0.0, mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT, 0.0
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT,
+            0.0,
+            optional_context_props=optional_context_props,
         )
 
         return

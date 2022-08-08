@@ -412,12 +412,15 @@ class Agent:
         position_error: float,
         velocity_error: float,
         reach_time: float,
-        frame: int,
         initial_step_size: float = 0.5,
         reach_timeout: float = 0.001,
     ) -> tuple[HyperRectangle, float]:
         """
         Compute the current reachable set of the agent.
+
+        In the current state of the system, the reachable set is only computed using
+        the global frame. In the future, if transformations between frames is
+        implemented, reachable set computation for multiple frames may be supported.
 
         :param position_error: 3D position error to account for in the measurement
         :type position_error: float
@@ -441,92 +444,28 @@ class Agent:
         # change, we correct the original lat/lon position. This
         # helps us eliminate *some* error that occurs during
         # conversions.
-        if frame == mavutil.mavlink.MAV_FRAME_GLOBAL:
-            rect = HyperRectangle(
-                [
-                    Interval(-position_error, position_error),
-                    Interval(-position_error, position_error),
-                    Interval(
-                        self.position.global_frame.z - position_error,
-                        self.position.global_frame.z + position_error,
-                    ),
-                    Interval(
-                        self.velocity.global_frame.x - velocity_error,
-                        self.velocity.global_frame.x + velocity_error,
-                    ),
-                    Interval(
-                        self.velocity.global_frame.y - velocity_error,
-                        self.velocity.global_frame.y + velocity_error,
-                    ),
-                    Interval(
-                        self.velocity.global_frame.z - velocity_error,
-                        self.velocity.global_frame.z + velocity_error,
-                    ),
-                ]
-            )
-            pos = self.position.global_frame
-            accel = self.acceleration.global_frame
-            stamp = self.position.global_frame.timestamp
-        elif frame == mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT:
-            rect = HyperRectangle(
-                [
-                    Interval(-position_error, position_error),
-                    Interval(-position_error, position_error),
-                    Interval(
-                        self.position.global_relative_frame.z - position_error,
-                        self.position.global_relative_frame.z + position_error,
-                    ),
-                    Interval(
-                        self.velocity.global_relative_frame.x - velocity_error,
-                        self.velocity.global_relative_frame.x + velocity_error,
-                    ),
-                    Interval(
-                        self.velocity.global_relative_frame.y - velocity_error,
-                        self.velocity.global_relative_frame.y + velocity_error,
-                    ),
-                    Interval(
-                        self.velocity.global_relative_frame.z - velocity_error,
-                        self.velocity.global_relative_frame.z + velocity_error,
-                    ),
-                ]
-            )
-            pos = self.position.global_relative_frame
-            accel = self.acceleration.global_relative_frame
-            stamp = self.position.global_relative_frame.timestamp
-        elif frame == mavutil.mavlink.MAV_FRAME_LOCAL_NED:
-            rect = HyperRectangle(
-                [
-                    Interval(
-                        self.position.local_frame.x - position_error,
-                        self.position.local_frame.x + position_error,
-                    ),
-                    Interval(
-                        self.position.local_frame.y - position_error,
-                        self.position.local_frame.y + position_error,
-                    ),
-                    Interval(
-                        self.position.local_frame.z - position_error,
-                        self.position.local_frame.z + position_error,
-                    ),
-                    Interval(
-                        self.velocity.local_frame.x - velocity_error,
-                        self.velocity.local_frame.x + velocity_error,
-                    ),
-                    Interval(
-                        self.velocity.local_frame.y - velocity_error,
-                        self.velocity.local_frame.y + velocity_error,
-                    ),
-                    Interval(
-                        self.velocity.local_frame.z - velocity_error,
-                        self.velocity.local_frame.z + velocity_error,
-                    ),
-                ]
-            )
-            pos = self.position.local_frame
-            accel = self.acceleration.local_frame
-            stamp = self.position.local_frame.timestamp
-        else:
-            raise ValueError(f"Unsupported frame provided: {frame}")
+        rect = HyperRectangle(
+            [
+                Interval(-position_error, position_error),
+                Interval(-position_error, position_error),
+                Interval(
+                    self.position.global_frame.z - position_error,
+                    self.position.global_frame.z + position_error,
+                ),
+                Interval(
+                    self.velocity.global_frame.x - velocity_error,
+                    self.velocity.global_frame.x + velocity_error,
+                ),
+                Interval(
+                    self.velocity.global_frame.y - velocity_error,
+                    self.velocity.global_frame.y + velocity_error,
+                ),
+                Interval(
+                    self.velocity.global_frame.z - velocity_error,
+                    self.velocity.global_frame.z + velocity_error,
+                ),
+            ]
+        )
 
         # Compute the sender's reachable state
         (
@@ -534,11 +473,11 @@ class Agent:
             reach_time_elapsed,
         ) = SafetyChecker.face_lifting_iterative_improvement(
             rect,
-            stamp,
+            self.position.global_frame.timestamp,
             (
-                accel.x,
-                accel.y,
-                accel.z,
+                self.acceleration.global_frame.x,
+                self.acceleration.global_frame.y,
+                self.acceleration.global_frame.z,
             ),
             reach_time,
             initial_step_size=initial_step_size,
@@ -546,29 +485,25 @@ class Agent:
         )
 
         # Correct the positions to use latitude and longitude
-        if (
-            frame == mavutil.mavlink.MAV_FRAME_GLOBAL
-            or frame == mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT
-        ):
-            reachable_state.intervals[0].interval_min = latitude_conversion(
-                pos.x,
-                reachable_state.intervals[0].interval_min,
-            )
-            reachable_state.intervals[0].interval_max = latitude_conversion(
-                pos.x,
-                reachable_state.intervals[0].interval_max,
-            )
+        reachable_state.intervals[0].interval_min = latitude_conversion(
+            self.position.global_frame.x,
+            reachable_state.intervals[0].interval_min,
+        )
+        reachable_state.intervals[0].interval_max = latitude_conversion(
+            self.position.global_frame.x,
+            reachable_state.intervals[0].interval_max,
+        )
 
-            reachable_state.intervals[1].interval_min = longitude_conversion(
-                pos.x,
-                pos.y,
-                reachable_state.intervals[1].interval_min,
-            )
-            reachable_state.intervals[1].interval_max = longitude_conversion(
-                pos.x,
-                pos.y,
-                reachable_state.intervals[1].interval_max,
-            )
+        reachable_state.intervals[1].interval_min = longitude_conversion(
+            self.position.global_frame.x,
+            self.position.global_frame.y,
+            reachable_state.intervals[1].interval_min,
+        )
+        reachable_state.intervals[1].interval_max = longitude_conversion(
+            self.position.global_frame.x,
+            self.position.global_frame.y,
+            reachable_state.intervals[1].interval_max,
+        )
 
         return reachable_state, reach_time_elapsed
 

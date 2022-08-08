@@ -2739,7 +2739,6 @@ class MavSwarm:
         retry_collision_response: bool = True,
         verify_collision_response_state: bool = True,
         max_time_difference: float = 2.0,
-        frame: int = GLOBAL_RELATIVE_FRAME,
     ) -> None:
         """
         Enable collision avoidance between agents.
@@ -2783,13 +2782,6 @@ class MavSwarm:
             exposed through MavSwarm constants, defaults to GLOBAL_FRAME_RELATIVE
         :type frame: int, optional
         """
-        if (
-            frame != MavSwarm.GLOBAL_FRAME
-            and frame != MavSwarm.GLOBAL_RELATIVE_FRAME
-            and frame != MavSwarm.LOCAL_FRAME
-        ):
-            raise ValueError(f"Unsupported frame provided: {frame}")
-
         self._logger.warning("Collision avoidance mode has been enabled")
 
         # Create a callback function to handle checking for collisions when a position
@@ -2797,22 +2789,17 @@ class MavSwarm:
         def check_for_collisions(
             sys_id: int,
             comp_id: int,
-            _: float,
+            x: float,
+            y: float,
+            z: float,
+            frame: int,
+            timestamp: float,
         ):
             sender_agent = self.get_agent_by_id((sys_id, comp_id))
 
             # Make sure that the agent has been registered
             if sender_agent is None:
                 return
-
-            if frame == MavSwarm.GLOBAL_FRAME:
-                sender_agent_last_update = sender_agent.position.global_frame.timestamp
-            elif frame == MavSwarm.GLOBAL_RELATIVE_FRAME:
-                sender_agent_last_update = (
-                    sender_agent.position.global_relative_frame.timestamp
-                )
-            else:
-                sender_agent_last_update = sender_agent.position.local_frame.timestamp
 
             # Account for latency in the reach time if desired
             if use_latency:
@@ -2829,7 +2816,6 @@ class MavSwarm:
                     position_error,
                     velocity_error,
                     sender_reach_time,
-                    frame,
                     initial_step_size,
                     reach_timeout,
                 )
@@ -2838,6 +2824,8 @@ class MavSwarm:
                     "Unable to compute the reachable state of the sender"
                 )
                 return
+
+            print(sender_reachable_state)
 
             # Get the list of agents that we should check for collisions with
             agent_ids_to_check = list(
@@ -2862,26 +2850,17 @@ class MavSwarm:
                 if agent is None:
                     continue
 
-                if frame == MavSwarm.GLOBAL_FRAME:
-                    agent_last_update = sender_agent.position.global_frame.timestamp
-                elif frame == MavSwarm.GLOBAL_RELATIVE_FRAME:
-                    agent_last_update = (
-                        sender_agent.position.global_relative_frame.timestamp
-                    )
-                else:
-                    agent_last_update = sender_agent.position.local_frame.timestamp
-
                 # Check if the time difference is greater than the allowable time.
                 # If this situation occurs, it means that there may be high latency or
                 # a low position message frequency
                 if (
-                    sender_agent_last_update - agent_last_update
+                    timestamp - agent.position.global_frame.timestamp
                     > max_time_difference_ms
                 ):
                     self._logger.debug(
                         f"Agent ({sys_id}, {comp_id}) is out of sync with agent "
                         f"{agent_id} by "
-                        f"{sender_agent_last_update - agent_last_update}"
+                        f"{timestamp - agent.position.global_frame.timestamp}"
                     )
                     continue
 
@@ -2892,11 +2871,11 @@ class MavSwarm:
                     agent_reach_time = (
                         reach_time
                         + ((agent.ping.value / 2) / 1000)
-                        + ((sender_agent_last_update - agent_last_update) / 1000)
+                        + ((timestamp - agent.position.global_frame.timestamp) / 1000)
                     )
                 else:
                     agent_reach_time = reach_time + (
-                        (sender_agent_last_update - agent_last_update) / 1000
+                        (timestamp - agent.position.global_frame.timestamp) / 1000
                     )
 
                 try:
@@ -2905,7 +2884,6 @@ class MavSwarm:
                         position_error,
                         velocity_error,
                         agent_reach_time,
-                        frame,
                         initial_step_size,
                         reach_timeout,
                     )
@@ -2944,7 +2922,7 @@ class MavSwarm:
         for agent_id in self.agent_ids:
             self._agents[
                 agent_id
-            ].last_position_message_timestamp.state_changed_event.add_listener(
+            ].position.global_frame.state_changed_event.add_listener(
                 check_for_collisions
             )
 
@@ -2952,7 +2930,7 @@ class MavSwarm:
             if operation == "set" and key in self._agents:
                 self._agents[
                     key
-                ].last_position_message_timestamp.state_changed_event.add_listener(
+                ].last_position_message.state_changed_event.add_listener(
                     check_for_collisions
                 )
 
@@ -2977,7 +2955,7 @@ class MavSwarm:
             for agent_id in self.agent_ids:
                 self._agents[
                     agent_id
-                ].last_position_message_timestamp.state_changed_event.remove_listener(
+                ].position.global_frame.state_changed_event.remove_listener(
                     self.__check_for_collisions
                 )
         if hasattr(self, "_MavSwarm__add_collision_check"):
