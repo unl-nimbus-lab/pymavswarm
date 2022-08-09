@@ -69,7 +69,7 @@ def main() -> None:
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm()
+    mavswarm = MavSwarm(log_to_file=True, ignore_ids=(1, 0))
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):

@@ -2828,7 +2828,14 @@ class MavSwarm:
                     sys_id,
                     comp_id,
                     "REACH_SET",
-                    {"set": sender_reachable_state},
+                    {
+                        "pos_x_min": sender_reachable_state.intervals[0].interval_min,
+                        "pos_x_max": sender_reachable_state.intervals[0].interval_max,
+                        "pos_y_min": sender_reachable_state.intervals[1].interval_min,
+                        "pos_y_max": sender_reachable_state.intervals[1].interval_max,
+                        "pos_z_min": sender_reachable_state.intervals[2].interval_min,
+                        "pos_z_max": sender_reachable_state.intervals[2].interval_max,
+                    },
                 )
 
             # Get the list of agents that we should check for collisions with
@@ -2909,7 +2916,26 @@ class MavSwarm:
                         agent_id[0],
                         agent_id[1],
                         "REACH_SET",
-                        {"set": agent_reachable_state},
+                        {
+                            "pos_x_min": agent_reachable_state.intervals[
+                                0
+                            ].interval_min,
+                            "pos_x_max": agent_reachable_state.intervals[
+                                0
+                            ].interval_max,
+                            "pos_y_min": agent_reachable_state.intervals[
+                                1
+                            ].interval_min,
+                            "pos_y_max": agent_reachable_state.intervals[
+                                1
+                            ].interval_max,
+                            "pos_z_min": agent_reachable_state.intervals[
+                                2
+                            ].interval_min,
+                            "pos_z_max": agent_reachable_state.intervals[
+                                2
+                            ].interval_max,
+                        },
                     )
 
             # Handle the potential collision
