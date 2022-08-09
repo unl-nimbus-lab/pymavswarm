@@ -78,7 +78,7 @@ def main() -> None:
     log = parse_log_file(args.logfile)
 
     # Create a mission report directory
-    report_dir = os.path.join(os.getcwd(), "evaluations")
+    report_dir = os.path.join(os.getcwd(), "results")
 
     if not os.path.isdir(report_dir):
         os.mkdir(report_dir)
@@ -111,22 +111,46 @@ def main() -> None:
     # Plot each trajectory
     for idx, agent_id in enumerate(agent_ids):
         trajectories_df = log["GLOBAL_POSITION_INT"][
-            ["system_id", "lat", "lon", "alt"]
+            ["system_id", "lat", "lon", "alt", "relative_alt"]
         ].apply(pd.to_numeric)
         trajectories_df = trajectories_df[trajectories_df["system_id"] == agent_id[0]]
 
         trajectories_df[["lat", "lon"]] = trajectories_df[["lat", "lon"]].div(1e7)
-        trajectories_df["alt"] = trajectories_df["alt"].div(1e3)
+        trajectories_df[["relative_alt", "alt"]] = trajectories_df[
+            ["relative_alt", "alt"]
+        ].div(1e3)
 
         ax.plot(
             trajectories_df["lat"].to_numpy(),
             trajectories_df["lon"].to_numpy(),
-            trajectories_df["alt"].to_numpy(),
+            trajectories_df["relative_alt"].to_numpy(),
             label=agent_id[0],
             color=colors(normalize_value(idx, 0, len(agent_ids))),
         )
 
-        agent_reach_df = reach_df[reach_df["system_id"] == agent_id[0]].iloc[::10, :]
+        # Get an estimate of the conversion from MSL to AGL
+        ground_level_df = trajectories_df[
+            trajectories_df["alt"] == trajectories_df["alt"].min()
+        ]
+        ground_level = ground_level_df["alt"] - ground_level_df["relative_alt"]
+
+        # Get the agent reachable sets to plot; skip every n plot to make it easier to
+        # visualize
+        every_n_set = 10
+
+        agent_reach_df = reach_df[reach_df["system_id"] == agent_id[0]].iloc[
+            ::every_n_set, :
+        ]
+
+        # Convert the MSL values to the estimated AGL values
+        agent_reach_df[["pos_z_min", "pos_z_max"]] = agent_reach_df[
+            ["pos_z_min", "pos_z_max"]
+        ].subtract(float(ground_level))
+
+        # Set all negative values to 0
+        agent_reach_df[["pos_z_min", "pos_z_max"]] = agent_reach_df[
+            ["pos_z_min", "pos_z_max"]
+        ].clip(lower=0)
 
         for _, row in agent_reach_df.iterrows():
             points = np.array(
@@ -190,7 +214,6 @@ def main() -> None:
                     sides,
                     facecolors=colors(normalize_value(idx, 0, len(agent_ids))),
                     linewidths=1,
-                    edgecolors="#dedede",
                     alpha=0.1,
                 )
             )
