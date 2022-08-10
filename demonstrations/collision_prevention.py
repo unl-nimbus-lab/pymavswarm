@@ -44,7 +44,7 @@ def parse_args() -> Any:
         "--ground_speed",
         type=float,
         default=0.5,
-        help="ground speed that the agents should fly at when flying toward each other",
+        help="ground speed that the agents should fly at",
     )
     return parser.parse_args()
 
@@ -74,12 +74,18 @@ def print_message_response_cb(future: Future) -> None:
 
 
 def main() -> None:
-    """Demonstrate how to use collision avoidance."""
+    """
+    Collision avoidance demonstration.
+
+    This script commands each agent to takeoff and execute a mission with collision
+    avoidance enabled. This demonstrates the ability of the system to recognize
+    and prevent potential collisions.
+    """
     # Parse the script arguments
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm()
+    mavswarm = MavSwarm(log_to_file=True, ignore_ids=[(1, 0)])
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -144,7 +150,7 @@ def main() -> None:
             f"({response.target_agent_id}): {responses.code}"
         )
 
-    # Wait for the user to indicate that the agents should fly to their waypoints
+    # Wait for input prior to sending agents to their waypoints
     input("Press the 'enter' key to command the agents to fly to their waypoints")
 
     # Command the agent to the target location
