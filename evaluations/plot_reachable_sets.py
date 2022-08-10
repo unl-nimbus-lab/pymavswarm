@@ -106,7 +106,7 @@ def main() -> None:
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
     # Set the colors for the plot
-    colors = plt.cm.get_cmap("Set1")
+    colors = plt.cm.get_cmap("viridis")
 
     # Plot each trajectory
     for idx, agent_id in enumerate(agent_ids):
@@ -219,7 +219,7 @@ def main() -> None:
             )
 
     # Configure the labels
-    ax.set_title("Multi-Agent Collision Avoidance", color="#364a68", loc="left")
+    ax.set_title("Agent Reachable Sets", color="#364a68")
     ax.set_xlabel("Latitude", labelpad=15, color="#364a68")
     ax.set_ylabel("Longitude", labelpad=15, color="#364a68")
     ax.zaxis.set_rotate_label(False)

@@ -68,6 +68,16 @@ def main() -> None:
         title="Network Latency",
         labels={"timestamp": "Timestamp (s)", "ping": "Latency (ms)"},
     )
+
+    # Center the title
+    ping_fig.update_layout(
+        title={
+            "y": 0.9,
+            "x": 0.5,
+            "xanchor": "center",
+            "yanchor": "top",
+        }
+    )
     ping_fig.write_image(os.path.join(report_dir, "latency_plot.png"))
 
     return

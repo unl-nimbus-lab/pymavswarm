@@ -15,28 +15,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from argparse import ArgumentParser
 from functools import partial
-from typing import Any
 
 import matplotlib.pyplot as plt
-import pandas as pd
-
-from pymavswarm.utils import parse_log_file
-
-
-def parse_args() -> Any:
-    """
-    Parse the script arguments.
-
-    :return: argument namespace
-    :rtype: Any
-    """
-    parser = ArgumentParser()
-    parser.add_argument(
-        "logfile", type=str, help="full path to the log file that should be parsed"
-    )
-    return parser.parse_args()
+import numpy as np
 
 
 def normalize_value(num: float, range_min: float, range_max: float) -> float:
@@ -70,46 +52,49 @@ def normalize_rgb(rgb: tuple[float, float, float]) -> tuple[float, float, float]
 
 def main() -> None:
     """Demonstrate how to generate a post-mission report."""
-    args = parse_args()
-
-    # Parse the log file
-    log = parse_log_file(args.logfile)
-
     # Create a mission report directory
     report_dir = os.path.join(os.getcwd(), "results")
 
     if not os.path.isdir(report_dir):
         os.mkdir(report_dir)
 
-    agent_ids_df = log["HEARTBEAT"][["system_id", "component_id"]].apply(pd.to_numeric)
-    agent_ids_df = agent_ids_df[agent_ids_df["component_id"] == 1]
-    agent_ids = set(map(tuple, agent_ids_df.to_numpy()))
-
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
     # Set the colors for the plot
-    colors = plt.cm.get_cmap("viridis")
+    colors = plt.cm.get_cmap("plasma")
+
+    trajectories = {
+        10: np.array(
+            [
+                [40.8519039, 40.8519039, 40.851912],
+                [-96.6085634, -96.6085634, -96.608669],
+                [0, 3.0, 3.0],
+            ]
+        ),
+        5: np.array(
+            [
+                [40.8519161, 40.8519161, 40.851912],
+                [-96.6087240, -96.6087240, -96.608669],
+                [0, 3.0, 3.0],
+            ]
+        ),
+    }
 
     # Plot each trajectory
-    for idx, agent_id in enumerate(agent_ids):
-        trajectories_df = log["GLOBAL_POSITION_INT"][
-            ["system_id", "lat", "lon", "relative_alt"]
-        ].apply(pd.to_numeric)
-        trajectories_df = trajectories_df[trajectories_df["system_id"] == agent_id[0]]
-
-        trajectories_df[["lat", "lon"]] = trajectories_df[["lat", "lon"]].div(1e7)
-        trajectories_df["relative_alt"] = trajectories_df["relative_alt"].div(1e3)
-
+    for idx, agent_id in enumerate(trajectories):
         ax.plot(
-            trajectories_df["lat"].to_numpy(),
-            trajectories_df["lon"].to_numpy(),
-            trajectories_df["relative_alt"].to_numpy(),
-            label=agent_id[0],
-            color=colors(normalize_value(idx, 0, len(agent_ids))),
+            trajectories[agent_id][0],
+            trajectories[agent_id][1],
+            trajectories[agent_id][2],
+            label=agent_id,
+            color=colors(normalize_value(idx, 0, len(trajectories))),
         )
 
+    # Plot the collision point
+    ax.scatter(40.851912, -96.608669, 3.0, s=70, color=colors(np.random.rand()))
+
     # Configure the labels
-    ax.set_title("Agent Trajectories", color="#364a68")
+    ax.set_title("Planned Trajectories", color="#364a68")
     ax.set_xlabel("Latitude", labelpad=15, color="#364a68")
     ax.set_ylabel("Longitude", labelpad=15, color="#364a68")
     ax.zaxis.set_rotate_label(False)
@@ -168,7 +153,7 @@ def main() -> None:
     # Set the legend color
     plt.setp(legend.get_title(), color="#364a68")
 
-    plt.savefig(os.path.join(report_dir, "trajectories.png"))
+    plt.savefig(os.path.join(report_dir, "planned_trajectories.png"))
 
     return
 
