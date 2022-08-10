@@ -45,7 +45,6 @@ def main() -> None:
     # Parse the log file
     log = parse_log_file(args.logfile)
 
-    # Create a mission report directory
     report_dir = os.path.join(os.getcwd(), "results")
 
     if not os.path.isdir(report_dir):
