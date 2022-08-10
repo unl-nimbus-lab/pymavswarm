@@ -39,7 +39,7 @@ def parse_args() -> Any:
 
 
 def main() -> None:
-    """Demonstrate how to generate a post-mission report."""
+    """Generate a latency plot."""
     args = parse_args()
 
     # Parse the log file

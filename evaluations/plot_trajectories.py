@@ -69,7 +69,7 @@ def normalize_rgb(rgb: tuple[float, float, float]) -> tuple[float, float, float]
 
 
 def main() -> None:
-    """Demonstrate how to generate a post-mission report."""
+    """Plot the trajectories flown by the agents during the mission."""
     args = parse_args()
 
     # Parse the log file

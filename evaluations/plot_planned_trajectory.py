@@ -51,8 +51,7 @@ def normalize_rgb(rgb: tuple[float, float, float]) -> tuple[float, float, float]
 
 
 def main() -> None:
-    """Demonstrate how to generate a post-mission report."""
-    # Create a mission report directory
+    """Plot the target trajectories that the agents were commanded to follow."""
     report_dir = os.path.join(os.getcwd(), "results")
 
     if not os.path.isdir(report_dir):
