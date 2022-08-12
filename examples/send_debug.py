@@ -96,9 +96,9 @@ def main() -> None:
     #         )
 
     # Send a debug message to all gents on the swarm
-    # future = mavswarm.send_debug_message("MSG_STR", list([0, 1, 2]))
+    future = mavswarm.send_debug_message("C1#2", list([0, 0, 0]))
     # future = mavswarm.send_debug_message("MSG_STR", float(0))
-    future = mavswarm.send_debug_message("MSG_STR", int(0))
+    # future = mavswarm.send_debug_message("MSG_STR", int(0))
     future.add_done_callback(print_message_response_cb)
 
     # Wait for the arm command to complete
