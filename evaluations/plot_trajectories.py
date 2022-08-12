@@ -100,6 +100,9 @@ def main() -> None:
         trajectories_df[["lat", "lon"]] = trajectories_df[["lat", "lon"]].div(1e7)
         trajectories_df["relative_alt"] = trajectories_df["relative_alt"].div(1e3)
 
+        drop_first_n_rows = 10
+        trajectories_df = trajectories_df.iloc[drop_first_n_rows:, :]
+
         ax.plot(
             trajectories_df["lat"].to_numpy(),
             trajectories_df["lon"].to_numpy(),

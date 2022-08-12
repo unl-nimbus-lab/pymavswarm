@@ -85,7 +85,10 @@ def main() -> None:
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_to_file=True, ignore_ids=[(1, 0)])
+    mavswarm = MavSwarm(
+        log_to_file=True,
+        ignore_ids=[(1, 240), (1, 0), (1, 1)],
+    )
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -101,7 +104,7 @@ def main() -> None:
 
     # Enable collision avoidance
     mavswarm.enable_collision_avoidance(
-        3.0, 2.5, 0.1, MavSwarm.COLLISION_RESPONSE_LOITER
+        4.0, 3.0, 0.1, MavSwarm.COLLISION_RESPONSE_LOITER
     )
 
     # Set each agent to guided mode before attempting a takeoff sequence
@@ -160,17 +163,7 @@ def main() -> None:
         config_file=args.config,
         retry=True,
         frame=MavSwarm.GLOBAL_RELATIVE_FRAME,
-        message_timeout=0.5,
-    )
-    future.add_done_callback(print_message_response_cb)
-
-    while not future.done():
-        pass
-
-    # Set the groundspeed; make sure that this is set low when running the examples on
-    # real hardware
-    future = mavswarm.set_groundspeed(
-        args.ground_speed, agent_ids=target_agents, retry=True
+        message_timeout=2.0,
     )
     future.add_done_callback(print_message_response_cb)
 

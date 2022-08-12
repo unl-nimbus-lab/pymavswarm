@@ -149,19 +149,20 @@ class MessageReceivers(Receivers):
 
             # Calculate the acceleration if there has been more than one velocity
             # reading
-            if prev_velocity.global_frame.timestamp != 0.0:
-                agents[agent_id].acceleration.global_frame.x = (
-                    agents[agent_id].velocity.global_frame.x
-                    - prev_velocity.global_frame.x
-                ) / (timestamp - prev_velocity.global_frame.timestamp)
-                agents[agent_id].acceleration.global_frame.y = (
-                    agents[agent_id].velocity.global_frame.y
-                    - prev_velocity.global_frame.y
-                ) / (timestamp - prev_velocity.global_frame.timestamp)
-                agents[agent_id].acceleration.global_frame.z = (
-                    agents[agent_id].velocity.global_frame.z
-                    - prev_velocity.global_frame.z
-                ) / (timestamp - prev_velocity.global_frame.timestamp)
+            if timestamp - prev_velocity.global_frame.timestamp > 0:
+                if prev_velocity.global_frame.timestamp != 0.0:
+                    agents[agent_id].acceleration.global_frame.x = (
+                        agents[agent_id].velocity.global_frame.x
+                        - prev_velocity.global_frame.x
+                    ) / (timestamp - prev_velocity.global_frame.timestamp)
+                    agents[agent_id].acceleration.global_frame.y = (
+                        agents[agent_id].velocity.global_frame.y
+                        - prev_velocity.global_frame.y
+                    ) / (timestamp - prev_velocity.global_frame.timestamp)
+                    agents[agent_id].acceleration.global_frame.z = (
+                        agents[agent_id].velocity.global_frame.z
+                        - prev_velocity.global_frame.z
+                    ) / (timestamp - prev_velocity.global_frame.timestamp)
 
             # Update the agent global location
             agents[agent_id].position.global_frame.x = message.lat / 1.0e7
@@ -203,19 +204,20 @@ class MessageReceivers(Receivers):
 
             # Calculate the acceleration if there has been more than one velocity
             # reading
-            if prev_velocity.global_relative_frame.timestamp != 0.0:
-                agents[agent_id].acceleration.global_relative_frame.x = (
-                    agents[agent_id].velocity.global_relative_frame.x
-                    - prev_velocity.global_relative_frame.x
-                ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
-                agents[agent_id].acceleration.global_relative_frame.y = (
-                    agents[agent_id].velocity.global_relative_frame.y
-                    - prev_velocity.global_relative_frame.y
-                ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
-                agents[agent_id].acceleration.global_relative_frame.z = (
-                    agents[agent_id].velocity.global_relative_frame.z
-                    - prev_velocity.global_relative_frame.z
-                ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
+            if timestamp - prev_velocity.global_relative_frame.timestamp > 0:
+                if prev_velocity.global_relative_frame.timestamp != 0.0:
+                    agents[agent_id].acceleration.global_relative_frame.x = (
+                        agents[agent_id].velocity.global_relative_frame.x
+                        - prev_velocity.global_relative_frame.x
+                    ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
+                    agents[agent_id].acceleration.global_relative_frame.y = (
+                        agents[agent_id].velocity.global_relative_frame.y
+                        - prev_velocity.global_relative_frame.y
+                    ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
+                    agents[agent_id].acceleration.global_relative_frame.z = (
+                        agents[agent_id].velocity.global_relative_frame.z
+                        - prev_velocity.global_relative_frame.z
+                    ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
 
             # Update the agent global location
             agents[agent_id].position.global_relative_frame.x = message.lat / 1.0e7

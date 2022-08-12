@@ -120,6 +120,9 @@ def main() -> None:
             ["relative_alt", "alt"]
         ].div(1e3)
 
+        drop_first_n_rows = 10
+        trajectories_df = trajectories_df.iloc[drop_first_n_rows:, :]
+
         ax.plot(
             trajectories_df["lat"].to_numpy(),
             trajectories_df["lon"].to_numpy(),
@@ -136,8 +139,7 @@ def main() -> None:
 
         # Get the agent reachable sets to plot; skip every n plot to make it easier to
         # visualize
-        every_n_set = 10
-
+        every_n_set = 120
         agent_reach_df = reach_df[reach_df["system_id"] == agent_id[0]].iloc[
             ::every_n_set, :
         ]
@@ -145,7 +147,7 @@ def main() -> None:
         # Convert the MSL values to the estimated AGL values
         agent_reach_df[["pos_z_min", "pos_z_max"]] = agent_reach_df[
             ["pos_z_min", "pos_z_max"]
-        ].subtract(float(ground_level))
+        ].subtract(float(ground_level.min()))
 
         # Set all negative values to 0
         agent_reach_df[["pos_z_min", "pos_z_max"]] = agent_reach_df[
@@ -215,6 +217,7 @@ def main() -> None:
                     facecolors=colors(normalize_value(idx, 0, len(agent_ids))),
                     linewidths=1,
                     alpha=0.1,
+                    edgecolors=colors(normalize_value(idx, 0, len(agent_ids))),
                 )
             )
 
@@ -265,6 +268,9 @@ def main() -> None:
     # Set the initial camera view
     ax.view_init(azim=-135, elev=35)
 
+    # Reset the margins to zoom out
+    ax.margins(x=0.5, y=0.5, z=0.2)
+
     # Add a legend
     legend = ax.legend(
         bbox_to_anchor=(1.05, 0.95),
@@ -278,7 +284,7 @@ def main() -> None:
     # Set the legend color
     plt.setp(legend.get_title(), color="#364a68")
 
-    plt.show()
+    plt.savefig(os.path.join(report_dir, "reachable_sets.png"))
 
     return
 
