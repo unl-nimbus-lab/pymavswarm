@@ -35,6 +35,16 @@ jobs:
           python -m pip install tox tox-gh-actions
       - name: Test implementation
         run: tox
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-data
+          path: ".coverage.*"
+          if-no-files-found: ignore
+      - name: Download coverage data
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage-data
       - name: Upload HTML report
         uses: actions/upload-artifact@v3
         with:
