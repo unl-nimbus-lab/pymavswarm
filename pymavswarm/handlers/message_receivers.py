@@ -149,7 +149,10 @@ class MessageReceivers(Receivers):
 
             # Calculate the acceleration if there has been more than one velocity
             # reading
-            if prev_velocity.global_frame.timestamp != 0.0:
+            if (
+                prev_velocity.global_frame.timestamp != 0.0
+                and (timestamp - prev_velocity.global_frame.timestamp) > 0.0
+            ):
                 agents[agent_id].acceleration.global_frame.x = (
                     agents[agent_id].velocity.global_frame.x
                     - prev_velocity.global_frame.x
@@ -202,8 +205,11 @@ class MessageReceivers(Receivers):
             timestamp = message.time_boot_ms - agents[agent_id].clock_offset.value
 
             # Calculate the acceleration if there has been more than one velocity
-            # reading
-            if prev_velocity.global_relative_frame.timestamp != 0.0:
+            # reading and the time difference is greater than zero
+            if (
+                prev_velocity.global_relative_frame.timestamp != 0.0
+                and (timestamp - prev_velocity.global_relative_frame.timestamp) > 0.0
+            ):
                 agents[agent_id].acceleration.global_relative_frame.x = (
                     agents[agent_id].velocity.global_relative_frame.x
                     - prev_velocity.global_relative_frame.x
@@ -259,7 +265,10 @@ class MessageReceivers(Receivers):
 
             # Calculate the acceleration if there has been more than one velocity
             # reading
-            if prev_velocity.local_frame.timestamp != 0.0:
+            if (
+                prev_velocity.local_frame.timestamp != 0.0
+                and (timestamp - prev_velocity.local_frame.timestamp) > 0.0
+            ):
                 agents[agent_id].acceleration.local_frame.x = (
                     agents[agent_id].velocity.local_frame.x
                     - prev_velocity.local_frame.x
