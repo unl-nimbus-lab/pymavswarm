@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature_76_cicd_pipelines
     tags:
       - v*.*.*
   pull_request:

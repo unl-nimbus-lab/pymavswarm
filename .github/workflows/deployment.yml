@@ -2,8 +2,6 @@ name: Deployment
 
 on:
   push:
-    branches:
-      - feature_76_cicd_pipelines
     tags:
       - v*.*.*
   workflow_dispatch:
