@@ -6,8 +6,11 @@ Several examples have been implemented to demonstrate how to use and extend the
 - `arming.py`: demonstrates how to arm and disarm swarm agents.
 - `check_state.py`: demonstrates how to check the state of swarm agents; also
   demonstrates how to log data to a log file.
-- `custom_observer.py`: demonstrates how to implement an observer for an agent
-state change event.
+- `collision_prevention_no_flight.py`: demonstrates how to accomplish collision
+  avoidance without requiring drone flight. This can be used to tune the
+  collision avoidance parameters.
+- `collision_prevention.py`: demonstrates how to use perform collision avoidance
+  on agents.
 - `goto.py`: demonstrates how to command an agent to fly to a specified location
 using a configuration file; an example configuration file is provided in
 `resources/goto.yaml`.

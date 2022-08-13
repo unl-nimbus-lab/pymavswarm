@@ -48,6 +48,12 @@ RUN pip3 install \
     pre-commit \
     tox
 
+# Install required packaging and deployment tools
+RUN pip3 install \
+    build \
+    twine \
+    check-wheel-contents
+
 # Install visualization tools
 RUN pip3 install \
     matplotlib \
