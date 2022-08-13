@@ -23,7 +23,8 @@ Here are some of the main features of `pymavswarm`:
 
 ## Installation
 
-`pymavswarm` may be installed from PyPi by running
+`pymavswarm` may be installed from
+[PyPI](https://pypi.org/project/pymavswarm/#description) by running
 
 ```bash
 pip3 install pymavswarm
