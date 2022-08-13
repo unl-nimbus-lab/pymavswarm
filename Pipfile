@@ -24,6 +24,9 @@ tox = "*"
 matplotlib = "*"
 plotly = "*"
 kaleido = "*"
+build = "*"
+twine = "*"
+check-wheel-contents = "*"
 
 [requires]
 python_version = "3"
