@@ -1,4 +1,4 @@
-name: Continuous Integration & Deployment
+name: Continuous Integration
 
 on:
   push:
@@ -50,8 +50,3 @@ jobs:
       - run: check-wheel-contents dist/*.whl
       - name: Check long_description
         run: python -m twine check dist/*
-      - name: Publish pymavswarm to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/

@@ -1,0 +1,30 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - feature_76_cicd_pipelines
+    tags:
+      - v*.*.*
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build & publish package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - run: python -m pip install build twine check-wheel-contents
+      - run: python -m build --sdist --wheel .
+      - run: ls -l dist
+      - run: check-wheel-contents dist/*.whl
+      - name: Check long_description
+        run: python -m twine check dist/*
+      - name: Publish pymavswarm to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
