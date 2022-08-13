@@ -21,18 +21,19 @@ Here are some of the main features of `pymavswarm`:
 - Construct pre-planned missions
 - Multi-agent collision avoidance using reachability analysis
 
-## Dependencies
-
-`pymavswarm` depends on Python versions 3.10 or greater. Ensure that this
-dependency is met prior to installation.
-
 ## Installation
 
-`pymavswarm` must currently be installed manually. To do so, refer to the steps
-below:
+`pymavswarm` may be installed from PyPi by running
 
-1. Clone this repository
-2. Navigate to the `pymavswarm/` repository directory
+```bash
+pip3 install pymavswarm
+```
+
+To build `pymavswarm` from source, first ensure that at least Python 3.10 is
+installed. Once this dependency has been met, refer to the steps below:
+
+1. Clone the project [repository](https://github.com/unl-nimbus-lab/pymavswarm)
+2. Navigate to the `pymavswarm/` base directory
 
 ```bash
 cd path/to/pymavswarm/
@@ -48,8 +49,8 @@ pip3 install .
 
 `pymavswarm` has been implemented to enable easy interfacing with drone
 swarms. Refer to the following code snippet for a simple example to get started
-with the library. Additional examples may be found in the `pymavswarm/examples`.
-directory.
+with the library. Additional examples may be found in the project
+[examples](https://github.com/unl-nimbus-lab/pymavswarm/tree/main/examples).
 
 ```python
 import time
@@ -88,7 +89,7 @@ board!
 ## Contributing
 
 All contributions and ideas are welcome! Detailed guidelines regarding how to
-contribute can be found in the `.github/CONTRIBUTING.md` document.
+contribute can be found in the [contribution guidelines](https://github.com/unl-nimbus-lab/pymavswarm/blob/main/.github/CONTRIBUTING.md).
 
 ## License
 
