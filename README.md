@@ -1,6 +1,6 @@
 # pymavswarm
 
-[![PyPI Version](https://img.shields.io/pypi/v/pymavswarm?color=gr)](https://pypi.org/project/pymavswarm/#description)
+[![PyPI Version](https://img.shields.io/pypi/v/pymavswarm?color=gr)](https://pypi.org/project/pymavswarm/)
 [![Contribution Frequency](https://img.shields.io/github/commit-activity/m/unl-nimbus-lab/pymavswarm)](https://github.com/unl-nimbus-lab/pymavswarm/commits/main)
 [![Project License](https://img.shields.io/github/license/unl-nimbus-lab/pymavswarm)](https://github.com/unl-nimbus-lab/pymavswarm/blob/main/LICENSE)
 [![Open Issues](https://img.shields.io/github/issues/unl-nimbus-lab/pymavswarm?color=purple)](https://github.com/unl-nimbus-lab/pymavswarm/issues)
