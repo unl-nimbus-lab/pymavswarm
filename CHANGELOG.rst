@@ -2,8 +2,8 @@
 Change Log
 ==========
 
-All contributions to the `pymavswarm` system are documented here. `pymavswarm` utilizes
-`Semantic Versioning`_ for project versioning.
+All contributions to the `pymavswarm` system are documented here. ``pymavswarm``
+utilizes `Semantic Versioning`_ for project versioning.
 
 .. _Semantic Versioning: https://semver.org/
 

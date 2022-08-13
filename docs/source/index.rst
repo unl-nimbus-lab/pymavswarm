@@ -1,5 +1,5 @@
 ==============
-`pymavswarm`
+``pymavswarm``
 ==============
 
 bleh
@@ -10,5 +10,6 @@ bleh
 
    overview
    installation
+   examples
    contribution
    changelog

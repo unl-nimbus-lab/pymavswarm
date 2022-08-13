@@ -2,8 +2,8 @@
 Contributing
 ============
 
-Thank you for considering contributing to `pymavswarm`! This document serves
-to provide a set of guidelines for contributing.
+Thank you for considering contributing to ``pymavswarm``! Here we provide a set of
+guidelines for contributing to the project.
 
 Contributions include but are not restricted to:
 
@@ -22,7 +22,7 @@ Workflow
 - Send all pull requests to the ``main`` branch (unless otherwise requested).
 - Limit each pull request to resolving a single `issue`_
 - It is your responsibility to ensure that your development branch is up-to-date
-  with the `main` branch. You may either rebase on ``main`` or merge ``main`` into
+  with the ``main`` branch. You may either rebase on ``main`` or merge ``main`` into
   your development branch.
 - Always test and document your code. We also encourage performing field tests
   for significant changes.
@@ -34,7 +34,7 @@ Workflow
 Setting up a local development environment
 ------------------------------------------
 
-`pymavswarm` provides two ways to configure a local development environment:
+``pymavswarm`` provides two ways to configure a local development environment:
 
 1. Using our `VSCode development container`_
 2. Using `Pipenv`_
@@ -44,7 +44,7 @@ Setting up a local development environment
 
 A VSCode development container has been provided to offer a fully sandboxed
 development environment. This environment includes all development Python
-packages (e.g., `pre-commit`) used by the ``pymavswarm`` development team and
+packages (e.g., ``pre-commit``) used by the ``pymavswarm`` development team and
 utilizes a variety of VSCode extensions that make it easy to run tests and to
 ensure that all style conventions are followed. Follow the instructions `here`_ to 
 learn how to install and launch development containers using VSCode. Once these steps 
@@ -54,7 +54,7 @@ editable mode.
 
 .. _here: https://code.visualstudio.com/docs/remote/containers
 
-A `Pipfile` has also been provided to enable support for creating and managing
+A ``Pipfile`` has also been provided to enable support for creating and managing
 a `virtual environment`_ using `Pipenv`_. To use a virtual environment,
 first ensure that ``pipenv`` has been installed. After successfully installing 
 ``pipenv``, navigate to the base ``pymavswarm/`` directory:
@@ -109,14 +109,14 @@ using one of our recommended local development configurations, you may run
 
    $ pre-commit run --all-files
 
-We *strongly* recommend running `pre-commit` before committing your code to
+We *strongly* recommend running ``pre-commit`` before committing your code to
 ensure that your commit follows our code style conventions. Any warnings from
 these checks will cause the CI to fail.
 
 Type hints
 ^^^^^^^^^^
 
-`pymavswarm` uses `PEP 484`_ type-hints. Any new development should use type hints. 
+``pymavswarm`` uses `PEP 484`_ type-hints. Any new development should use type hints. 
 When using type-hints, it is preferred that built-in types are used (see `PEP 585`_).
 The ``Optional`` type-hint should be avoided in favor of ``| None``. For example,
 rather than
@@ -125,13 +125,15 @@ rather than
 .. _PEP 585: https://peps.python.org/pep-0585/
 
 .. code-block:: python
-    from typing import Optional
 
-    agent_location: Optional[Position] = None
+   from typing import Optional
+
+   agent_location: Optional[Position] = None
 
 You should use
 
 .. code-block:: python
+
     from __future__ import annotations
 
     agent_location = Position | None = None
@@ -143,39 +145,40 @@ Writing documentation
 ---------------------
 
 ``pymavswarm`` uses Sphinx to generate online developer documentation from
-docstrings. Broadly, docstrings should adhere to
-[PEP 257](https://peps.python.org/pep-0257/), unless otherwise specified.
+docstrings. Broadly, docstrings should adhere to `PEP 257`_, unless otherwise specified.
+
+.. _PEP 257: https://peps.python.org/pep-0257/
 
 All docstrings should use triple quotation marks. Multi-line docstrings should
-start on new-lines. Parameters and their types should be prefaced with `:param`
-and `:type`, respectively. All methods should have a short summary. An extended
+start on new-lines. Parameters and their types should be prefaced with ``:param``
+and ``:type``, respectively. All methods should have a short summary. An extended
 summary should be used when an in-depth explanation of a method is required.
 
 The following example demonstrates the Sphinx markdown conventions used by
-`pymavswarm`:
+``pymavswarm``:
 
-```python
-def compute_location(
-    current_location: Position | None = None
-  ) -> Position | None:
-    """
-    Demonstrate how to write a docstring.
+.. code-block:: python
 
-    Docstrings are a great way to add developer documentation.
+   def compute_location(
+      current_location: Position | None = None
+   ) -> Position | None:
+      """
+      Demonstrate how to write a docstring.
 
-    :param current_location: current location of an agent, defaults to None
-    :type current_location: Position | None, optional
-    :return: computed agent location
-    :rtype: Position | None
-    """
-    return current_location
-```
+      Docstrings are a great way to add developer documentation.
+
+      :param current_location: current location of an agent, defaults to None
+      :type current_location: Position | None, optional
+      :return: computed agent location
+      :rtype: Position | None
+      """
+      return current_location
 
 Testing
 ^^^^^^^
 
-Unit tests should be implemented using `unittest`. Unit tests should be
-implemented whenever possible. Functional tests should be named `def test_*`.
+Unit tests should be implemented using ``unittest``. Unit tests should be
+implemented whenever possible. Functional tests should be named ``def test_*``.
 It is suggested that field tests are also performed when adding a code
 contribution; however, this is not required (we understand that not everyone
 has a fleet of drones laying around).
@@ -184,5 +187,6 @@ Support
 -------
 
 If you have questions regarding your contribution, please create a new
-discussion post on the `pymavswarm` `Discussions_`[Discussions](https://github.com/unl-nimbus-lab/pymavswarm/discussions)
-board.
+discussion post on the ``pymavswarm`` `Discussions`_ board.
+
+.. _Discussions: https://github.com/unl-nimbus-lab/pymavswarm/discussions

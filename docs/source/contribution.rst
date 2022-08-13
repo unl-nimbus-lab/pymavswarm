@@ -1,5 +1,1 @@
-=============
-Contributing
-=============
-
-Learn how to contribute to pymavswarm
+.. include:: ../../.github/CONTRIBUTING.rst

@@ -55,7 +55,7 @@ RUN pip3 install \
     twine \
     check-wheel-contents \
     sphinx \
-    sphinx-rtd-theme \
+    furo \
     sphinx-autobuild
 
 # Install visualization tools
