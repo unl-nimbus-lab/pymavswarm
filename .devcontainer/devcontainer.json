@@ -89,15 +89,16 @@
     "autoDocstring.docstringFormat": "sphinx"
   },
   "extensions": [
-    "ms-azuretools.vscode-docker",
-    "ms-python.python",
-    "njpwerner.autodocstring",
-    "ms-python.vscode-pylance",
-    "DavidAnson.vscode-markdownlint",
-    "esbenp.prettier-vscode",
-    "LittleFoxTeam.vscode-python-test-adapter",
-    "tamasfe.even-better-toml",
-    "alefragnani.Bookmarks"
-  ],
+	"ms-azuretools.vscode-docker",
+	"ms-python.python",
+	"njpwerner.autodocstring",
+	"ms-python.vscode-pylance",
+	"esbenp.prettier-vscode",
+	"LittleFoxTeam.vscode-python-test-adapter",
+	"tamasfe.even-better-toml",
+	"alefragnani.Bookmarks",
+	"lextudio.restructuredtext",
+	"trond-snekvik.simple-rst"
+],
   "postStartCommand": "pip3 install -e ."
 }
