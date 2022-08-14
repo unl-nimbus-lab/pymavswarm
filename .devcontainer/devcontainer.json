@@ -98,7 +98,8 @@
 	"tamasfe.even-better-toml",
 	"alefragnani.Bookmarks",
 	"lextudio.restructuredtext",
-	"trond-snekvik.simple-rst"
+	"trond-snekvik.simple-rst",
+	"ritwickdey.LiveServer"
 ],
   "postStartCommand": "pip3 install -e ."
 }

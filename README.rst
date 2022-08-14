@@ -19,6 +19,8 @@ pymavswarm
         </a>
     </p>
 
+.. read-me-summary-begin
+
 What is pymavswarm?
 -------------------
 
@@ -115,6 +117,8 @@ If you have questions regarding ``pymavswarm`` usage or contribution please ask 
 question on our `Discussions`_ board!
 
 .. _Discussions: https://github.com/unl-nimbus-lab/pymavswarm/discussions
+
+.. read-me-summary-end
 
 Contributing
 ------------
