@@ -15,4 +15,4 @@ exclude_patterns = ["_build"]  # type: ignore
 epub_description = "Python library for drone swarm control and algorithm development"
 
 html_theme = "furo"
-html_static_path = ["_static"]
+html_static_path = ["source/_static"]
