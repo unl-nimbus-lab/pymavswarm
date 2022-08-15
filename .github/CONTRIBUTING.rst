@@ -46,8 +46,8 @@ A VSCode development container has been provided to offer a fully sandboxed
 development environment. This environment includes all development Python
 packages (e.g., ``pre-commit``) used by the ``pymavswarm`` development team and
 utilizes a variety of VSCode extensions that make it easy to run tests and to
-ensure that all style conventions are followed. Follow the instructions `here`_ to 
-learn how to install and launch development containers using VSCode. Once these steps 
+ensure that all style conventions are followed. Follow the instructions `here`_ to
+learn how to install and launch development containers using VSCode. Once these steps
 have been completed, launch the ``pymavswarm`` project using the provided development
 image. Launching the development image will also install ``pymavswarm`` in
 editable mode.
@@ -56,7 +56,7 @@ editable mode.
 
 A ``Pipfile`` has also been provided to enable support for creating and managing
 a `virtual environment`_ using `Pipenv`_. To use a virtual environment,
-first ensure that ``pipenv`` has been installed. After successfully installing 
+first ensure that ``pipenv`` has been installed. After successfully installing
 ``pipenv``, navigate to the base ``pymavswarm/`` directory:
 
 .. _virtual environment: https://virtualenv.pypa.io/en/latest/
@@ -116,7 +116,7 @@ these checks will cause the CI to fail.
 Type hints
 ^^^^^^^^^^
 
-``pymavswarm`` uses `PEP 484`_ type-hints. Any new development should use type hints. 
+``pymavswarm`` uses `PEP 484`_ type-hints. Any new development should use type hints.
 When using type-hints, it is preferred that built-in types are used (see `PEP 585`_).
 The ``Optional`` type-hint should be avoided in favor of ``| None``. For example,
 rather than

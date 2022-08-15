@@ -64,10 +64,6 @@
         "source.organizeImports": true
       }
     },
-    "[markdown]": {
-      "editor.rulers": [80],
-      "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
-    },
     "[dockerfile]": {
       "editor.quickSuggestions": {
         "strings": true
@@ -89,17 +85,17 @@
     "autoDocstring.docstringFormat": "sphinx"
   },
   "extensions": [
-	"ms-azuretools.vscode-docker",
-	"ms-python.python",
-	"njpwerner.autodocstring",
-	"ms-python.vscode-pylance",
-	"esbenp.prettier-vscode",
-	"LittleFoxTeam.vscode-python-test-adapter",
-	"tamasfe.even-better-toml",
-	"alefragnani.Bookmarks",
-	"lextudio.restructuredtext",
-	"trond-snekvik.simple-rst",
-	"ritwickdey.LiveServer"
-],
-  "postStartCommand": "pip3 install -e ."
+    "ms-azuretools.vscode-docker",
+    "ms-python.python",
+    "njpwerner.autodocstring",
+    "ms-python.vscode-pylance",
+    "esbenp.prettier-vscode",
+    "LittleFoxTeam.vscode-python-test-adapter",
+    "tamasfe.even-better-toml",
+    "alefragnani.Bookmarks",
+    "lextudio.restructuredtext",
+    "trond-snekvik.simple-rst",
+    "ritwickdey.LiveServer"
+  ],
+  "postStartCommand": "python3 -m pip install -e ."
 }
