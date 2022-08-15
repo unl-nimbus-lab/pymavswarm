@@ -311,3 +311,40 @@ An example demonstrating how this can be used is as follows:
     # Attach the callback
     future.add_done_callback(print_message_response_cb)
 
+Sending a goto command
+----------------------
+
+Using collision avoidance
+-------------------------
+
+``pymavswarm`` implements support for multi-agent collision avoidance using 
+reachability analysis. When enabled, ``MavSwarm`` will compute the reachable sets of 
+agents according to their current state. The reachable space is computed forward to a
+specific time using the face lifting method. Using the reachable sets computed,
+``MavSwarm`` will check for potential collisions. If a potential collision is detected,
+a specified collision response will be executed on the agents that may collide. Please
+note that this is a highly experimental feature and should be used with caution.
+
+To enable collision avoidance, the following code may be executed:
+
+.. code-block:: python
+
+    reach_time = 3.0 # Time (s) that the reachable sets should be computed forward to
+    gps_error = 2.5 # 3D GPS error that should be accounted for
+    velocity_error = 0.1 # 3D velocity error
+
+    # Enable collision avoidance
+    # Switch each agent that may collide into the Loiter flight mode when potential 
+    # collisions are detected
+    mavswarm.enable_collision_avoidance(
+        reach_time, gps_error, velocity_error, MavSwarm.COLLISION_RESPONSE_LOITER
+    )
+
+Collision avoidance can be later disabled using
+
+.. code-block:: python
+
+    mavswarm.disable_collision_avoidance()
+
+Subclassing MavSwarm
+--------------------
