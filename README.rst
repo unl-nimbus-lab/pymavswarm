@@ -3,7 +3,7 @@ pymavswarm
 ==========
 
 .. raw:: html
-    
+
     <p align="left">
         <a href="https://pypi.org/project/pymavswarm/">
             <img src="https://img.shields.io/pypi/v/pymavswarm?color=gr" alt="PyPI Version" />

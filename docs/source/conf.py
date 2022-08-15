@@ -1,4 +1,9 @@
-import furo  # noqa
+import os
+import sys
+
+import furo  # noqa: F401
+
+sys.path.insert(0, os.path.abspath("../../pymavswarm/"))
 
 project = "pymavswarm"
 author = "Evan Palmer"
@@ -10,7 +15,7 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = ["_build"]  # type: ignore
+exclude_patterns = ["_build"]
 
 epub_description = "Python library for drone swarm control and algorithm development"
 

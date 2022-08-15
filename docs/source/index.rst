@@ -10,6 +10,6 @@ needed to get started with integrating ``pymavswarm`` into your swarm developmen
 
    overview
    examples
-   api
+   modules
    contribution
    changelog

@@ -20,20 +20,20 @@ from typing import Any, Callable
 
 from pymavswarm import Agent
 
+# AgentID type alias. The provided order should be (system ID, component ID).
 AgentID = tuple[int, int]
-"""AgentID type alias. The provided order should be (system ID, component ID)."""
 
+# A message response code. The provided order should be (code number, code message).
 MessageCode = tuple[int, str]
-"""A message response code. The provided order shoudl be (code number, code message)."""
 
+# A method that checks for a state change in the target agent after a message is sent.
 StateVerifier = Callable[[AgentID], bool]
-"""
-A method that checks for a state change in the target agent after a message is sent.
-"""
 
+# A method that sends the desired message.
 CommandExecutor = Callable[[AgentID], None]
-"""A method that sends the desired message."""
 
+
+# A method that performs some behavior after sending a message.
 PostExecutionHandler = Callable[
     [
         AgentID,
@@ -43,7 +43,6 @@ PostExecutionHandler = Callable[
     ],
     None,
 ]
-"""A method that performs some behavior after sending a message."""
 
+# A callback method responsible for processing an incoming MAVLink message.
 MessageHandler = Callable[[Any, dict[AgentID, Agent]], None]
-"""A callback method responsible for processing an incoming MAVLink message."""

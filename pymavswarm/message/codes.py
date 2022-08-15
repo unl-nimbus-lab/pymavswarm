@@ -14,26 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# The message was successfully sent.
 SUCCESS = (1, "success")
-"""The message was successfully sent."""
 
+# The message was not acknowledged.
 ACK_FAILURE = (2, "acknowledgement failure")
-"""The message was not acknowledged."""
 
+# The state change that the message was attempting to accomplish was not verified.
 STATE_VALIDATION_FAILURE = (3, "state validation failure")
-"""The state change that the message was attempting to accomplish was not verified."""
 
+# A stage within a sequence command failed.
 SEQUENCE_STAGE_FAILURE = (4, "sequence stage failure")
-"""A stage within a sequence command failed."""
 
+# Parameter read failed.
 PARAM_READ_FAILURE = (5, "parameter read failure")
-"""Parameter read failed."""
 
+# Parameter set failed.
 PARAM_SETTING_FAILURE = (6, "parameter setting failure")
-"""Parameter set failed."""
 
+# The provided message is not supported.
 UNSUPPORTED_MESSAGE_TYPE = (7, "unsupported message type")
-"""The provided message is not supported."""
 
+# An exception was raised when the message was sent.
 EXCEPTION = (8, "an exception occurred on message send")
-"""An exception was raised when the message was sent."""
