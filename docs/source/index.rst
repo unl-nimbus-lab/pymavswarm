@@ -1,4 +1,4 @@
-``pymavswarm`` Documentation
+pymavswarm Documentation
 ============================
 
 Welcome to the ``pymavswarm`` project! In this documentation, we provide the information

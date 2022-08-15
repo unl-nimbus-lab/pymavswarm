@@ -10,7 +10,7 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = []  # type: ignore
+exclude_patterns = ["_build"]  # type: ignore
 
 epub_description = "Python library for drone swarm control and algorithm development"
 
