@@ -3,7 +3,7 @@ import sys
 
 import furo  # noqa: F401
 
-sys.path.insert(0, os.path.abspath("../../pymavswarm/"))
+sys.path.insert(0, os.path.abspath(os.path.join("..", "..", "pymavswarm")))
 
 project = "pymavswarm"
 author = "Evan Palmer"
