@@ -5,7 +5,7 @@ Submodules
 ----------
 
 pymavswarm.utils.event module
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.utils.event
    :members:
@@ -13,7 +13,7 @@ pymavswarm.utils.event module
    :show-inheritance:
 
 pymavswarm.utils.logging module
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.utils.logging
    :members:
@@ -21,7 +21,7 @@ pymavswarm.utils.logging module
    :show-inheritance:
 
 pymavswarm.utils.notifier\_dict module
---------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.utils.notifier_dict
    :members:

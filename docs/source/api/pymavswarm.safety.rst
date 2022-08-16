@@ -5,7 +5,7 @@ Submodules
 ----------
 
 pymavswarm.safety.hyperrectangle module
----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.safety.hyperrectangle
    :members:
@@ -13,7 +13,7 @@ pymavswarm.safety.hyperrectangle module
    :show-inheritance:
 
 pymavswarm.safety.interval module
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.safety.interval
    :members:
@@ -21,7 +21,7 @@ pymavswarm.safety.interval module
    :show-inheritance:
 
 pymavswarm.safety.safety\_checker module
-----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.safety.safety_checker
    :members:

@@ -5,7 +5,7 @@ Submodules
 ----------
 
 pymavswarm.state.acceleration module
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.acceleration
    :members:
@@ -13,7 +13,7 @@ pymavswarm.state.acceleration module
    :show-inheritance:
 
 pymavswarm.state.attitude module
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.attitude
    :members:
@@ -21,7 +21,7 @@ pymavswarm.state.attitude module
    :show-inheritance:
 
 pymavswarm.state.battery module
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.battery
    :members:
@@ -37,7 +37,7 @@ pymavswarm.state.docker\_info module
    :show-inheritance:
 
 pymavswarm.state.ekf\_status module
------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.ekf_status
    :members:
@@ -45,7 +45,7 @@ pymavswarm.state.ekf\_status module
    :show-inheritance:
 
 pymavswarm.state.generic module
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.generic
    :members:
@@ -53,7 +53,7 @@ pymavswarm.state.generic module
    :show-inheritance:
 
 pymavswarm.state.gps\_info module
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.gps_info
    :members:
@@ -61,7 +61,7 @@ pymavswarm.state.gps\_info module
    :show-inheritance:
 
 pymavswarm.state.parameter module
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.parameter
    :members:
@@ -69,7 +69,7 @@ pymavswarm.state.parameter module
    :show-inheritance:
 
 pymavswarm.state.parameter\_list module
----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.parameter_list
    :members:
@@ -77,7 +77,7 @@ pymavswarm.state.parameter\_list module
    :show-inheritance:
 
 pymavswarm.state.position module
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.position
    :members:
@@ -85,7 +85,7 @@ pymavswarm.state.position module
    :show-inheritance:
 
 pymavswarm.state.state module
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.state
    :members:
@@ -93,7 +93,7 @@ pymavswarm.state.state module
    :show-inheritance:
 
 pymavswarm.state.telemetry module
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.telemetry
    :members:
@@ -101,7 +101,7 @@ pymavswarm.state.telemetry module
    :show-inheritance:
 
 pymavswarm.state.vector module
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.vector
    :members:
@@ -109,7 +109,7 @@ pymavswarm.state.vector module
    :show-inheritance:
 
 pymavswarm.state.velocity module
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.state.velocity
    :members:

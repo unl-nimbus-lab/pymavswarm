@@ -12,15 +12,13 @@ Subpackages
    pymavswarm.mission
    pymavswarm.safety
    pymavswarm.state
-   pymavswarm.tests
-   pymavswarm.types
    pymavswarm.utils
 
 Submodules
 ----------
 
 pymavswarm.agent module
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.agent
    :members:
@@ -28,7 +26,7 @@ pymavswarm.agent module
    :show-inheritance:
 
 pymavswarm.connection module
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.connection
    :members:
@@ -36,7 +34,7 @@ pymavswarm.connection module
    :show-inheritance:
 
 pymavswarm.mavswarm module
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.mavswarm
    :members:

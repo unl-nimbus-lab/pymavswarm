@@ -5,7 +5,7 @@ Submodules
 ----------
 
 pymavswarm.handlers.message\_receivers module
----------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.handlers.message_receivers
    :members:
@@ -13,7 +13,7 @@ pymavswarm.handlers.message\_receivers module
    :show-inheritance:
 
 pymavswarm.handlers.receivers module
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: pymavswarm.handlers.receivers
    :members:
