@@ -2,22 +2,25 @@
 pymavswarm
 ==========
 
-.. raw:: html
+.. image:: https://img.shields.io/pypi/v/pymavswarm?color=gr
+    :target: https://pypi.org/project/pymavswarm/
+    :alt: PyPI Version
 
-    <p align="left">
-        <a href="https://pypi.org/project/pymavswarm/">
-            <img src="https://img.shields.io/pypi/v/pymavswarm?color=gr" alt="PyPI Version" />
-        </a>
-        <a href="https://github.com/unl-nimbus-lab/pymavswarm/commits/main">
-            <img src="https://img.shields.io/github/commit-activity/m/unl-nimbus-lab/pymavswarm" alt="Contribution Frequency" />
-        </a>
-        <a href="https://github.com/unl-nimbus-lab/pymavswarm/blob/main/LICENSE">
-            <img src="https://img.shields.io/github/license/unl-nimbus-lab/pymavswarm" alt="License: GPLv3" />
-        </a>
-        <a href="https://github.com/unl-nimbus-lab/pymavswarm/issues">
-            <img src="https://img.shields.io/github/issues/unl-nimbus-lab/pymavswarm?color=purple" alt="Open Issues" />
-        </a>
-    </p>
+.. image:: https://img.shields.io/github/commit-activity/m/unl-nimbus-lab/pymavswarm
+    :target: https://github.com/unl-nimbus-lab/pymavswarm/commits/main
+    :alt: Contribution Frequency
+
+.. image:: https://img.shields.io/github/license/unl-nimbus-lab/pymavswarm
+    :target: https://github.com/unl-nimbus-lab/pymavswarm/blob/main/LICENSE
+    :alt: License: GPLv3
+
+.. image:: https://img.shields.io/github/issues/unl-nimbus-lab/pymavswarm?color=purple
+    :target: https://github.com/unl-nimbus-lab/pymavswarm/issues
+    :alt: Open Issues
+
+.. image:: https://readthedocs.org/projects/pymavswarm/badge/?version=latest
+    :target: https://pymavswarm.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 .. read-me-summary-begin
 
