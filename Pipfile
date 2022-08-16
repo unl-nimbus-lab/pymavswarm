@@ -27,6 +27,9 @@ kaleido = "*"
 build = "*"
 twine = "*"
 check-wheel-contents = "*"
+Sphinx = "*"
+sphinx-autobuild = "*"
+furo = "*"
 
 [requires]
 python_version = "3"
