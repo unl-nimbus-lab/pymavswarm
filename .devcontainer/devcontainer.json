@@ -64,10 +64,6 @@
         "source.organizeImports": true
       }
     },
-    "[markdown]": {
-      "editor.rulers": [80],
-      "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
-    },
     "[dockerfile]": {
       "editor.quickSuggestions": {
         "strings": true
@@ -93,11 +89,13 @@
     "ms-python.python",
     "njpwerner.autodocstring",
     "ms-python.vscode-pylance",
-    "DavidAnson.vscode-markdownlint",
     "esbenp.prettier-vscode",
     "LittleFoxTeam.vscode-python-test-adapter",
     "tamasfe.even-better-toml",
-    "alefragnani.Bookmarks"
+    "alefragnani.Bookmarks",
+    "lextudio.restructuredtext",
+    "trond-snekvik.simple-rst",
+    "ritwickdey.LiveServer"
   ],
-  "postStartCommand": "pip3 install -e ."
+  "postStartCommand": "python3 -m pip install -e ."
 }

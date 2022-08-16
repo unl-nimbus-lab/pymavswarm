@@ -1686,7 +1686,7 @@ class MavSwarm:
                     if self.__send_message_mutex.acquire(timeout=0.1):
                         try:
                             if self._connection.mavlink_connection is not None:
-                                self._connection.mavlink_connection.mav.command_long_send(  # noqa
+                                self._connection.mavlink_connection.mav.command_long_send(  # noqa: E501
                                     agent_id[0],
                                     agent_id[1],
                                     mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,
@@ -1727,7 +1727,7 @@ class MavSwarm:
                     if self.__send_message_mutex.acquire(timeout=0.1):
                         try:
                             if self._connection.mavlink_connection is not None:
-                                self._connection.mavlink_connection.mav.command_long_send(  # noqa
+                                self._connection.mavlink_connection.mav.command_long_send(  # noqa: E501
                                     agent_id[0],
                                     agent_id[1],
                                     mavutil.mavlink.MAV_CMD_GET_HOME_POSITION,

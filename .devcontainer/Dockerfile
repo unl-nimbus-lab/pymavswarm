@@ -46,13 +46,17 @@ RUN pip3 install \
     bandit \
     coverage \
     pre-commit \
-    tox
+    tox \
+    rstcheck
 
 # Install required packaging and deployment tools
 RUN pip3 install \
     build \
     twine \
-    check-wheel-contents
+    check-wheel-contents \
+    sphinx \
+    furo \
+    sphinx-autobuild
 
 # Install visualization tools
 RUN pip3 install \
