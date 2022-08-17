@@ -36,6 +36,10 @@ def parse_args() -> Any:
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
+    parser.add_argument("name",type=str, help="debug value name")
+    parser.add_argument("data1", type=float, help="debug vector payload1")
+    parser.add_argument("data2", type=float, help="debug vector payload2")
+    parser.add_argument("data3", type=float, help="debug vector payload3")
     return parser.parse_args()
 
 
@@ -85,20 +89,8 @@ def main() -> None:
         print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # Print out the current flight modes of the agents
-    # for agent_id in list(filter(lambda agent_id: agent_id[1] == 1, mavswarm.agent_ids)):
-    #     agent = mavswarm.get_agent_by_id(agent_id)
-
-    #     if agent is not None:
-    #         print(
-    #             f"Agent ({agent.system_id}, {agent.component_id}) is currently in the "
-    #             f"{agent.mode.value} flight mode"
-    #         )
-
     # Send a debug message to all gents on the swarm
-    future = mavswarm.send_debug_message("C1#2", list([0, 0, 0]))
-    # future = mavswarm.send_debug_message("MSG_STR", float(0))
-    # future = mavswarm.send_debug_message("MSG_STR", int(0))
+    future = mavswarm.send_debug_message(args.name, [args.data1,args.data2,args.data3])
     future.add_done_callback(print_message_response_cb)
 
     # Wait for the arm command to complete
