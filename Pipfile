@@ -8,6 +8,7 @@ monotonic = ">=1.6"
 pymavlink = ">=2.3.3"
 pyserial = ">=3.0"
 pandas = ">=1.4.3"
+numpy = ">=1.23.1"
 PyYAML = ">=6.0"
 
 [dev-packages]
@@ -20,6 +21,15 @@ bandit = "*"
 coverage = "*"
 pre-commit = "*"
 tox = "*"
+matplotlib = "*"
+plotly = "*"
+kaleido = "*"
+build = "*"
+twine = "*"
+check-wheel-contents = "*"
+Sphinx = "*"
+sphinx-autobuild = "*"
+furo = "*"
 
 [requires]
 python_version = "3"

@@ -20,7 +20,7 @@ include a high-level discussion regarding the implementation of the PR.*
 
 Fixes # (issue)
 
-## Files Changes
+## Files Changed
 
 *A list of all files changed and a summary of the changes made to the respective
 files.*

@@ -88,7 +88,7 @@ def main() -> None:
         )
 
     # Wait for user input
-    input("Press any key to command the agents to land\n")
+    input("Press the 'enter' key to command the agents to land")
 
     # Attempt to land the agents
     future = mavswarm.set_mode("LAND", retry=True, verify_state=True)

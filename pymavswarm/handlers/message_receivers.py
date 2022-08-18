@@ -19,13 +19,13 @@
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from typing import Any
 
 import monotonic
 from pymavlink import mavutil
 from pymavlink.dialects.v10 import ardupilotmega as mavlink1
 
-import pymavswarm.state as swarm_state
 from pymavswarm.agent import Agent
 from pymavswarm.handlers.receivers import Receivers
 from pymavswarm.types import AgentID
@@ -71,7 +71,7 @@ class MessageReceivers(Receivers):
             else:
                 # The connection has been restored
                 if agents[agent_id].timeout.value:
-                    self.__logger.info(
+                    self._logger.info(
                         f"Connection to agent {sys_id}:{comp_id} has been restored"
                     )
 
@@ -124,7 +124,7 @@ class MessageReceivers(Receivers):
         @self._receive_message("GLOBAL_POSITION_INT")
         def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
             """
-            Handle the a GPS position message.
+            Handle a GPS position message using the global frame.
 
             :param message: Incoming MAVLink message
             :type message: Any
@@ -136,29 +136,161 @@ class MessageReceivers(Receivers):
             if agent_id not in agents:
                 return agents
 
-            # Update the agent velocity
-            if agents[agent_id].velocity is None:
-                velocity = swarm_state.Velocity(
-                    message.vx / 100, message.vy / 100, message.vz / 100
-                )
-                agents[agent_id].velocity = velocity
-            else:
-                agents[agent_id].velocity.vx = message.vx / 100
-                agents[agent_id].velocity.vy = message.vy / 100
-                agents[agent_id].velocity.vz = message.vz / 100
+            # Store the previous velocity
+            prev_velocity = deepcopy(agents[agent_id].velocity)
 
-            # Update the agent location
-            if agents[agent_id].location is None:
-                loc = swarm_state.Location(
-                    message.lat / 1.0e7,
-                    message.lon / 1.0e7,
-                    message.alt / 1000,
-                )
-                agents[agent_id].location = loc
-            else:
-                agents[agent_id].location.latitude = message.lat / 1.0e7
-                agents[agent_id].location.longitude = message.lon / 1.0e7
-                agents[agent_id].location.altitude = message.alt / 1000
+            # Update the agent velocity
+            agents[agent_id].velocity.global_frame.x = message.vx / 100
+            agents[agent_id].velocity.global_frame.y = message.vy / 100
+            agents[agent_id].velocity.global_frame.z = message.vz / 100
+
+            # Compute the corrected timestamp in the global clock
+            timestamp = message.time_boot_ms - agents[agent_id].clock_offset.value
+
+            # Calculate the acceleration if there has been more than one velocity
+            # reading
+            if (
+                prev_velocity.global_frame.timestamp != 0.0
+                and (timestamp - prev_velocity.global_frame.timestamp) > 0.0
+            ):
+                agents[agent_id].acceleration.global_frame.x = (
+                    agents[agent_id].velocity.global_frame.x
+                    - prev_velocity.global_frame.x
+                ) / (timestamp - prev_velocity.global_frame.timestamp)
+                agents[agent_id].acceleration.global_frame.y = (
+                    agents[agent_id].velocity.global_frame.y
+                    - prev_velocity.global_frame.y
+                ) / (timestamp - prev_velocity.global_frame.timestamp)
+                agents[agent_id].acceleration.global_frame.z = (
+                    agents[agent_id].velocity.global_frame.z
+                    - prev_velocity.global_frame.z
+                ) / (timestamp - prev_velocity.global_frame.timestamp)
+
+            # Update the agent global location
+            agents[agent_id].position.global_frame.x = message.lat / 1.0e7
+            agents[agent_id].position.global_frame.y = message.lon / 1.0e7
+            agents[agent_id].position.global_frame.z = message.alt / 1000
+
+            # Update the timestamps using the current clock offset
+            agents[agent_id].velocity.global_frame.timestamp = timestamp
+            agents[agent_id].acceleration.global_frame.timestamp = timestamp
+            agents[agent_id].position.global_frame.timestamp = timestamp
+
+            return
+
+        @self._receive_message("GLOBAL_POSITION_INT")
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+            """
+            Handle a GPS position message using the global relative frame.
+
+            :param message: Incoming MAVLink message
+            :type message: Any
+            :param agents: agents in the swarm
+            :type agents: dict[AgentID, Agent]
+            """
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
+
+            if agent_id not in agents:
+                return agents
+
+            # Store the previous velocity
+            prev_velocity = deepcopy(agents[agent_id].velocity)
+
+            # Update the agent velocity
+            agents[agent_id].velocity.global_relative_frame.x = message.vx / 100
+            agents[agent_id].velocity.global_relative_frame.y = message.vy / 100
+            agents[agent_id].velocity.global_relative_frame.z = message.vz / 100
+
+            # Compute the corrected timestamp in the global clock
+            timestamp = message.time_boot_ms - agents[agent_id].clock_offset.value
+
+            # Calculate the acceleration if there has been more than one velocity
+            # reading and the time difference is greater than zero
+            if (
+                prev_velocity.global_relative_frame.timestamp != 0.0
+                and (timestamp - prev_velocity.global_relative_frame.timestamp) > 0.0
+            ):
+                agents[agent_id].acceleration.global_relative_frame.x = (
+                    agents[agent_id].velocity.global_relative_frame.x
+                    - prev_velocity.global_relative_frame.x
+                ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
+                agents[agent_id].acceleration.global_relative_frame.y = (
+                    agents[agent_id].velocity.global_relative_frame.y
+                    - prev_velocity.global_relative_frame.y
+                ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
+                agents[agent_id].acceleration.global_relative_frame.z = (
+                    agents[agent_id].velocity.global_relative_frame.z
+                    - prev_velocity.global_relative_frame.z
+                ) / (timestamp - prev_velocity.global_relative_frame.timestamp)
+
+            # Update the agent global location
+            agents[agent_id].position.global_relative_frame.x = message.lat / 1.0e7
+            agents[agent_id].position.global_relative_frame.y = message.lon / 1.0e7
+            agents[agent_id].position.global_relative_frame.z = (
+                message.relative_alt / 1000
+            )
+
+            # Update the timestamps using the current clock offset
+            agents[agent_id].velocity.global_relative_frame.timestamp = timestamp
+            agents[agent_id].acceleration.global_relative_frame.timestamp = timestamp
+            agents[agent_id].position.global_relative_frame.timestamp = timestamp
+
+            return
+
+        @self._receive_message("LOCAL_POSITION_NED")
+        def listener(message: Any, agents: dict[AgentID, Agent]) -> None:
+            """
+            Handle an agent local position message.
+
+            :param message: Incoming MAVLink message
+            :type message: Any
+            :param agents: agents in the swarm
+            :type agents: dict[AgentID, Agent]
+            """
+            agent_id = (message.get_srcSystem(), message.get_srcComponent())
+
+            if agent_id not in agents:
+                return agents
+
+            # Store the previous velocity
+            prev_velocity = deepcopy(agents[agent_id].velocity)
+
+            # Update the agent velocity
+            agents[agent_id].velocity.local_frame.x = message.vx
+            agents[agent_id].velocity.local_frame.y = message.vy
+            agents[agent_id].velocity.local_frame.z = message.vz
+
+            # Compute the corrected timestamp in the global clock
+            timestamp = message.time_boot_ms - agents[agent_id].clock_offset.value
+
+            # Calculate the acceleration if there has been more than one velocity
+            # reading
+            if (
+                prev_velocity.local_frame.timestamp != 0.0
+                and (timestamp - prev_velocity.local_frame.timestamp) > 0.0
+            ):
+                agents[agent_id].acceleration.local_frame.x = (
+                    agents[agent_id].velocity.local_frame.x
+                    - prev_velocity.local_frame.x
+                ) / (timestamp - prev_velocity.local_frame.timestamp)
+                agents[agent_id].acceleration.local_frame.y = (
+                    agents[agent_id].velocity.local_frame.y
+                    - prev_velocity.local_frame.y
+                ) / (timestamp - prev_velocity.local_frame.timestamp)
+                agents[agent_id].acceleration.local_frame.z = (
+                    agents[agent_id].velocity.local_frame.z
+                    - prev_velocity.local_frame.z
+                ) / (timestamp - prev_velocity.local_frame.timestamp)
+
+            # Update the agent local location
+            agents[agent_id].position.local_frame.x = message.x
+            agents[agent_id].position.local_frame.y = message.y
+            agents[agent_id].position.local_frame.z = message.z
+
+            # Update the timestamps using the current clock offset
+            agents[agent_id].velocity.local_frame.timestamp = timestamp
+            agents[agent_id].acceleration.local_frame.timestamp = timestamp
+            agents[agent_id].position.local_frame.timestamp = timestamp
 
             return
 
@@ -178,23 +310,12 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Update the respective agents attitude
-            if agents[agent_id].attitude is None:
-                att = swarm_state.Attitude(
-                    message.pitch,
-                    message.yaw,
-                    message.roll,
-                    message.pitchspeed,
-                    message.yawspeed,
-                    message.rollspeed,
-                )
-                agents[agent_id].attitude = att
-            else:
-                agents[agent_id].attitude.pitch = message.pitch
-                agents[agent_id].attitude.roll = message.roll
-                agents[agent_id].attitude.yaw = message.yaw
-                agents[agent_id].attitude.pitch_speed = message.pitchspeed
-                agents[agent_id].attitude.roll_speed = message.rollspeed
-                agents[agent_id].attitude.yaw_speed = message.yawspeed
+            agents[agent_id].attitude.pitch = message.pitch
+            agents[agent_id].attitude.roll = message.roll
+            agents[agent_id].attitude.yaw = message.yaw
+            agents[agent_id].attitude.pitch_speed = message.pitchspeed
+            agents[agent_id].attitude.roll_speed = message.rollspeed
+            agents[agent_id].attitude.yaw_speed = message.yawspeed
 
             return
 
@@ -214,17 +335,9 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Update the battery information
-            if agents[agent_id].battery is None:
-                batt = swarm_state.Battery(
-                    message.voltage_battery,
-                    message.current_battery,
-                    message.battery_remaining,
-                )
-                agents[agent_id].battery = batt
-            else:
-                agents[agent_id].battery.voltage = message.voltage_battery
-                agents[agent_id].battery.current = message.current_battery
-                agents[agent_id].battery.level = message.battery_remaining
+            agents[agent_id].battery.voltage = message.voltage_battery
+            agents[agent_id].battery.current = message.current_battery
+            agents[agent_id].battery.level = message.battery_remaining
 
             return
 
@@ -244,21 +357,10 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Read the GPS status information
-            if agents[agent_id].gps_info is None:
-                info = swarm_state.GPSInfo(
-                    message.eph,
-                    message.epv,
-                    message.fix_type,
-                    message.satellites_visible,
-                )
-                agents[agent_id].gps_info = info
-            else:
-                agents[agent_id].gps_info.eph = message.eph
-                agents[agent_id].gps_info.epv = message.epv
-                agents[agent_id].gps_info.fix_type = message.fix_type
-                agents[
-                    agent_id
-                ].gps_info.satellites_visible = message.satellites_visible
+            agents[agent_id].gps_info.eph = message.eph
+            agents[agent_id].gps_info.epv = message.epv
+            agents[agent_id].gps_info.fix_type = message.fix_type
+            agents[agent_id].gps_info.satellites_visible = message.satellites_visible
 
             return
 
@@ -278,36 +380,22 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Read the EKF Status information
-            if agents[agent_id].ekf is None:
-                ekf = swarm_state.EKFStatus(
-                    message.velocity_variance,
-                    message.pos_horiz_variance,
-                    message.pos_vert_variance,
-                    message.compass_variance,
-                    message.terrain_alt_variance,
-                    (message.flags & mavlink1.EKF_POS_HORIZ_ABS) > 0,
-                    (message.flags & mavlink1.EKF_CONST_POS_MODE) > 0,
-                    (message.flags & mavlink1.EKF_PRED_POS_HORIZ_ABS) > 0,
-                )
-                agents[agent_id].ekf = ekf
-            else:
-                # Read variance properties
-                agents[agent_id].ekf.velocity_variance = message.velocity_variance
-                agents[agent_id].ekf.pos_horiz_variance = message.pos_horiz_variance
-                agents[agent_id].ekf.pos_vert_variance = message.pos_vert_variance
-                agents[agent_id].ekf.compass_variance = message.compass_variance
-                agents[agent_id].ekf.terrain_alt_variance = message.terrain_alt_variance
+            agents[agent_id].ekf.velocity_variance = message.velocity_variance
+            agents[agent_id].ekf.pos_horiz_variance = message.pos_horiz_variance
+            agents[agent_id].ekf.pos_vert_variance = message.pos_vert_variance
+            agents[agent_id].ekf.compass_variance = message.compass_variance
+            agents[agent_id].ekf.terrain_alt_variance = message.terrain_alt_variance
 
-                # Read flags
-                agents[agent_id].ekf.pos_horiz_abs = (
-                    message.flags & mavlink1.EKF_POS_HORIZ_ABS
-                ) > 0
-                agents[agent_id].ekf.const_pos_mode = (
-                    message.flags & mavlink1.EKF_CONST_POS_MODE
-                ) > 0
-                agents[agent_id].ekf.pred_pos_horiz_abs = (
-                    message.flags & mavlink1.EKF_PRED_POS_HORIZ_ABS
-                ) > 0
+            # Read flags
+            agents[agent_id].ekf.pos_horiz_abs = (
+                message.flags & mavlink1.EKF_POS_HORIZ_ABS
+            ) > 0
+            agents[agent_id].ekf.const_pos_mode = (
+                message.flags & mavlink1.EKF_CONST_POS_MODE
+            ) > 0
+            agents[agent_id].ekf.pred_pos_horiz_abs = (
+                message.flags & mavlink1.EKF_PRED_POS_HORIZ_ABS
+            ) > 0
 
             return
 
@@ -327,23 +415,12 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Update the respective agent's attitude
-            if agents[agent_id].attitude is None:
-                att = swarm_state.Attitude(
-                    message.pitch,
-                    message.yaw,
-                    message.roll,
-                    message.pitchspeed,
-                    message.yawspeed,
-                    message.rollspeed,
-                )
-                agents[agent_id].attitude = att
-            else:
-                agents[agent_id].attitude.pitch = message.pitch
-                agents[agent_id].attitude.roll = message.roll
-                agents[agent_id].attitude.yaw = message.yaw
-                agents[agent_id].attitude.pitch_speed = message.pitchspeed
-                agents[agent_id].attitude.roll_speed = message.rollspeed
-                agents[agent_id].attitude.yaw_speed = message.yawspeed
+            agents[agent_id].attitude.pitch = message.pitch
+            agents[agent_id].attitude.roll = message.roll
+            agents[agent_id].attitude.yaw = message.yaw
+            agents[agent_id].attitude.pitch_speed = message.pitchspeed
+            agents[agent_id].attitude.roll_speed = message.rollspeed
+            agents[agent_id].attitude.yaw_speed = message.yawspeed
 
             return
 
@@ -366,17 +443,9 @@ class MessageReceivers(Receivers):
                 return agents
 
             # Update the agent home location
-            if agents[agent_id].home_position is None:
-                loc = swarm_state.Location(
-                    message.latitude / 1.0e7,
-                    message.longitude / 1.0e7,
-                    message.altitude / 1000,
-                )
-                agents[agent_id].home_position = loc
-            else:
-                agents[agent_id].home_position.latitude = message.latitude / 1.0e7
-                agents[agent_id].home_position.longitude = message.longitude / 1.0e7
-                agents[agent_id].home_position.altitude = message.altitude / 1000
+            agents[agent_id].home_position.x = message.latitude / 1.0e7
+            agents[agent_id].home_position.y = message.longitude / 1.0e7
+            agents[agent_id].home_position.z = message.altitude / 1000
 
             return
 

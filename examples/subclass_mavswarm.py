@@ -80,14 +80,16 @@ class CustomMavSwarm(MavSwarm):
             ack_timeout=ack_timeout,
         )
 
-    def custom_handler(self, message: Any, agents: dict[AgentID, Agent]) -> None:
+    def custom_handler(
+        self, message: Any, agents: dict[tuple[int, int], Agent]
+    ) -> None:
         """
         Create a custom message handler.
 
         :param message: message to handle
         :type message: Any
         :param agents: swarm agents
-        :type agents: dict[AgentID, Agent]
+        :type agents: dict[tuple[int, int], Agent]
         """
         sys_id = message.get_srcSystem()
         comp_id = message.get_srcComponent()
