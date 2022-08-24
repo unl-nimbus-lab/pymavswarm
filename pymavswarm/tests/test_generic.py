@@ -50,13 +50,13 @@ class TestGeneric(unittest.TestCase):
 
         test_class = TestClass()
         total_calls = 0
-        passed_context = {}
+        passed_value = None
 
         # Sample listener to attach to the event
-        def test_fn(context=None) -> None:
-            nonlocal total_calls, passed_context
+        def test_fn(test=None) -> None:
+            nonlocal total_calls, passed_value
             total_calls += 1
-            passed_context = context
+            passed_value = test
 
             return
 
@@ -69,7 +69,7 @@ class TestGeneric(unittest.TestCase):
 
         # Verify that the listener was called
         self.assertEqual(total_calls, 1)
-        self.assertEqual(passed_context[test_prop_name], test_value)
+        self.assertEqual(passed_value, test_value)
 
         return
 

@@ -133,3 +133,4 @@ dmypy.json
 
 # pymavlink files
 logs/
+mission_report/

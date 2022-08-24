@@ -12,9 +12,13 @@
     "--cap-add=SYS_PTRACE",
     "--security-opt=seccomp:unconfined",
     "--security-opt=apparmor:unconfined",
+    "--volume=/tmp/.X11-unix:/tmp/.X11-unix",
     "--volume=/dev:/dev",
     "--privileged"
   ],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}"
+  },
   "settings": {
     "terminal.integrated.profiles.linux": {
       "bash": {
@@ -25,9 +29,7 @@
     "editor.formatOnSave": true,
     "editor.tabSize": 4,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.rulers": [
-      88
-    ],
+    "editor.rulers": [88],
     "rewrap.autoWrap.enabled": true,
     "rewrap.wrappingColumn": 80,
     "rewrap.wholeComment": true,
@@ -36,6 +38,7 @@
     "python.linting.pylintEnabled": false,
     "python.linting.pydocstyleEnabled": true,
     "python.linting.mypyEnabled": true,
+    "python.linting.banditEnabled": true,
     "python.formatting.provider": "black",
     "python.formatting.blackPath": "/usr/local/bin/black",
     "python.testing.unittestArgs": [
@@ -54,20 +57,12 @@
       "pymavswarm"
     ],
     "[python]": {
-      "editor.rulers": [
-        88
-      ],
+      "editor.rulers": [88],
       "editor.tabSize": 4,
       "editor.defaultFormatter": "ms-python.python",
       "editor.codeActionsOnSave": {
         "source.organizeImports": true
       }
-    },
-    "[markdown]": {
-      "editor.rulers": [
-        80
-      ],
-      "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
     },
     "[dockerfile]": {
       "editor.quickSuggestions": {
@@ -86,17 +81,21 @@
       "**/build": true,
       "**/install": true,
       "**/log": true
-    }
+    },
+    "autoDocstring.docstringFormat": "sphinx"
   },
   "extensions": [
     "ms-azuretools.vscode-docker",
     "ms-python.python",
     "njpwerner.autodocstring",
     "ms-python.vscode-pylance",
-    "DavidAnson.vscode-markdownlint",
     "esbenp.prettier-vscode",
     "LittleFoxTeam.vscode-python-test-adapter",
-    "tamasfe.even-better-toml"
+    "tamasfe.even-better-toml",
+    "alefragnani.Bookmarks",
+    "lextudio.restructuredtext",
+    "trond-snekvik.simple-rst",
+    "ritwickdey.LiveServer"
   ],
-  "postStartCommand": "pip3 install -e ."
+  "postStartCommand": "python3 -m pip install -e ."
 }

@@ -24,23 +24,21 @@ class Battery(State):
 
     def __init__(
         self,
-        voltage: float = 0.0,
-        current: float = 0.0,
-        level: float = 0.0,
+        voltage: float,
+        current: float,
+        level: float,
         optional_context_props: dict | None = None,
     ) -> None:
         """
         Create a battery state instance.
 
-        :param voltage: battery voltage [mV], UINT16_MAX: voltage not sent by autopilot,
-            defaults to 0.0
-        :type voltage: float, optional
-        :param current: battery current [cA], -1: current not sent by autopilot,
-            defaults to 0.0
-        :type current: float, optional
+        :param voltage: battery voltage [mV], UINT16_MAX: voltage not sent by autopilot
+        :type voltage: float
+        :param current: battery current [cA], -1: current not sent by autopilot
+        :type current: float
         :param level: battery energy remaining [%], -1: battery remaining energy not
-            sent by autopilot, defaults to 0.0
-        :type level: float, optional
+            sent by autopilot
+        :type level: float
         :param optional_context_props: optional properties to add to the battery
             context, defaults to None
         :type optional_context_props: dict | None, optional
@@ -78,7 +76,7 @@ class Battery(State):
 
         # Signal state change event
         if self.__voltage != prev_voltage:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -110,7 +108,7 @@ class Battery(State):
 
         # Signal state change event
         if self.__current != prev_current:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -138,7 +136,7 @@ class Battery(State):
 
         # Signal state change event
         if self.__level != prev_level:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

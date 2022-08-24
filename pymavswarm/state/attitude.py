@@ -24,29 +24,29 @@ class Attitude(State):
 
     def __init__(
         self,
-        pitch: float = 0.0,
-        yaw: float = 0.0,
-        roll: float = 0.0,
-        pitch_speed: float = 0.0,
-        yaw_speed: float = 0.0,
-        roll_speed: float = 0.0,
+        pitch: float,
+        yaw: float,
+        roll: float,
+        pitch_speed: float,
+        yaw_speed: float,
+        roll_speed: float,
         optional_context_props: dict | None = None,
     ) -> None:
         """
         Create a new attitude state instance.
 
-        :param pitch: pitch angle [-pi..+pi], defaults to 0.0
-        :type pitch: float, optional
-        :param yaw: yaw angle [-pi..+pi], defaults to 0.0
-        :type yaw: float, optional
-        :param roll: roll angle [-pi..+pi], defaults to 0.0
-        :type roll: float, optional
-        :param pitch_speed: pitch angular speed [rad/s], defaults to 0.0
-        :type pitch_speed: float, optional
-        :param yaw_speed: yaw angular speed [rad/s], defaults to 0.0
-        :type yaw_speed: float, optional
-        :param roll_speed: roll angular speed [rad/s], defaults to 0.0
-        :type roll_speed: float, optional
+        :param pitch: pitch angle [-pi..+pi]
+        :type pitch: float
+        :param yaw: yaw angle [-pi..+pi]
+        :type yaw: float
+        :param roll: roll angle [-pi..+pi]
+        :type roll: float
+        :param pitch_speed: pitch angular speed [rad/s]
+        :type pitch_speed: float
+        :param yaw_speed: yaw angular speed [rad/s]
+        :type yaw_speed: float
+        :param roll_speed: roll angular speed [rad/s]
+        :type roll_speed: float
         :param optional_context_props: optional properties to add to the context,
             defaults to None
         :type optional_context_props: dict | None, optional
@@ -85,7 +85,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__pitch != prev_pitch:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -112,7 +112,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__yaw != prev_yaw:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -139,7 +139,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__roll != prev_roll:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -166,7 +166,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__pitch_speed != prev_pitch_speed:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -193,7 +193,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__roll_speed != prev_roll_speed:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 
@@ -220,7 +220,7 @@ class Attitude(State):
 
         # Signal state change event
         if self.__yaw_speed != prev_yaw_speed:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

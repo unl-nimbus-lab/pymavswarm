@@ -88,7 +88,7 @@ class ParameterList(State):
         :type item: Parameter
         """
         self.__params.append(item)
-        self.state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(**self.context)
 
         return
 
@@ -100,14 +100,14 @@ class ParameterList(State):
         :type item: Parameter
         """
         self.__params.remove(item)
-        self.state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(**self.context)
 
         return
 
     def clear(self) -> None:
         """Clear all items from the parameter buffer."""
         self.__params.clear()
-        self.state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(**self.context)
 
         return
 
@@ -119,7 +119,7 @@ class ParameterList(State):
         :type params: list
         """
         self.__params.extend(params)
-        self.state_changed_event.notify(context=self.context)
+        self.state_changed_event.notify(**self.context)
 
         return
 

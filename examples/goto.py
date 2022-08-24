@@ -80,7 +80,7 @@ def main() -> None:
     args = parse_args()
 
     # Create a new MavSwarm instance
-    mavswarm = MavSwarm(log_to_file=True)
+    mavswarm = MavSwarm()
 
     # Attempt to create a new MAVLink connection
     if not mavswarm.connect(args.port, args.baud):
@@ -141,12 +141,14 @@ def main() -> None:
         )
 
     # Wait for the user to indicate that the agents should fly to their waypoints
-    input("Press any key to command the agents to fly to their waypoints")
+    input("Press the 'enter' key to command the agents to fly to their waypoints")
 
     # Command the agent to the target location
     # We don't need to specify the target agents because these are captured from the
     # config file
-    future = mavswarm.goto(config_file=args.config, retry=True)
+    future = mavswarm.goto(
+        config_file=args.config, retry=True, frame=MavSwarm.GLOBAL_RELATIVE_FRAME
+    )
     future.add_done_callback(print_message_response_cb)
 
     while not future.done():
@@ -162,7 +164,7 @@ def main() -> None:
         pass
 
     # Wait for user input
-    input("Press any key to command the agents to land")
+    input("Press the 'enter' key to command the agents to land")
 
     # Attempt to land the agents
     future = mavswarm.set_mode(

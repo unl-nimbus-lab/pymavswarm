@@ -68,7 +68,7 @@ class Generic(State):
 
         # Signal state change event
         if self.__value != prev_value:
-            self.state_changed_event.notify(context=self.context)
+            self.state_changed_event.notify(**self.context)
 
         return
 

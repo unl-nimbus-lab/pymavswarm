@@ -16,119 +16,81 @@
 
 from __future__ import annotations
 
+from pymavlink import mavutil
+
 from pymavswarm.state.state import State
+from pymavswarm.state.vector import Vector
 
 
 class Velocity(State):
     """Velocity state."""
 
-    def __init__(
-        self,
-        vx: float = 0.0,
-        vy: float = 0.0,
-        vz: float = 0.0,
-        optional_context_props: dict | None = None,
-    ) -> None:
+    def __init__(self, optional_context_props: dict | None = None) -> None:
         """
         Create a new velocity object.
 
-        :param vx: ground x speed [Latitude, positive north], defaults to 0.0
-        :type vx: float, optional
-        :param vy: ground y speed [Longitude, positive east], defaults to 0.0
-        :type vy: float, optional
-        :param vz: ground z speed [Altitude, positive down], defaults to 0.0
-        :type vz: float, optional
-        :param optional_context_props: optional properties to add to the context
+        :param optional_context_props: optional properties to add to the context,
+            defaults to None
         :type optional_context_props: dict, optional
         """
         super().__init__(optional_context_props)
 
-        self.__vx = vx
-        self.__vy = vy
-        self.__vz = vz
+        self.__local = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
+        self.__global = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_GLOBAL,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
+        self.__global_relative = Vector(
+            0.0,
+            0.0,
+            0.0,
+            mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT,
+            0.0,
+            optional_context_props=optional_context_props,
+        )
 
         return
 
     @property
-    def velocity_x(self) -> float:
+    def local_frame(self) -> Vector:
         """
-        Ground X Speed [Latitude, positive north].
+        Velocity in the local frame (MAV_FRAME_LOCAL_NED).
 
-        :return: velocity x component
-        :rtype: float
+        :return: local velocity
+        :rtype: Vector
         """
-        return self.__vx
-
-    @velocity_x.setter
-    def velocity_x(self, vel: float) -> None:
-        """
-        Set the velocity's x component.
-
-        :param vel: x speed [cm/s]
-        :type vel: float
-        """
-        prev_vx = self.__vx
-        self.__vx = vel
-
-        # Signal state change event
-        if self.__vx != prev_vx:
-            self.state_changed_event.notify(context=self.context)
-
-        return
+        return self.__local
 
     @property
-    def velocity_y(self) -> float:
+    def global_frame(self) -> Vector:
         """
-        Ground Y Speed [Longitude, positive east].
+        Velocity in the global frame (MAV_FRAME_GLOBAL).
 
-        :return: velocity y component
-        :rtype: float
+        :return: global velocity
+        :rtype: Vector
         """
-        return self.__vy
-
-    @velocity_y.setter
-    def velocity_y(self, vel: float) -> None:
-        """
-        Set the velocity's y component.
-
-        :param vel: y speed [cm/s]
-        :type vel: float
-        """
-        prev_vy = self.__vy
-        self.__vy = vel
-
-        # Signal state change event
-        if self.__vy != prev_vy:
-            self.state_changed_event.notify(context=self.context)
-
-        return
+        return self.__global
 
     @property
-    def velocity_z(self) -> float:
+    def global_relative_frame(self) -> Vector:
         """
-        Ground Z Speed [Altitude, positive down].
+        Velocity in the global relative frame (MAV_FRAME_GLOBAL_TERRAIN_ALT).
 
-        :return: velocity z component
-        :rtype: float
+        :return: global relative velocity
+        :rtype: Vector
         """
-        return self.__vz
-
-    @velocity_z.setter
-    def velocity_z(self, vel: float) -> None:
-        """
-        Set the velocity's z component.
-
-        :param vel: z speed [cm/s]
-        :type vel: float
-        """
-        prev_vz = self.__vz
-        self.__vz = vel
-
-        # Signal state change event
-        if self.__vz != prev_vz:
-            self.state_changed_event.notify(context=self.context)
-
-        return
+        return self.__global_relative
 
     @property
     def context(self) -> dict:
@@ -140,17 +102,17 @@ class Velocity(State):
         """
         context = super().context
 
-        context["vx"] = self.__vx
-        context["vy"] = self.__vy
-        context["vz"] = self.__vz
+        context["global_frame"] = self.__global
+        context["global_relative_frame"] = self.__global_relative
+        context["local_frame"] = self.__local
 
         return context
 
     def __str__(self) -> str:
         """
-        Print velocity information in a human-readable format.
+        Print velocity in a human-readable format.
 
-        :return: velocity information
+        :return: velocity
         :rtype: str
         """
         return f"Velocity: {self.context}"
