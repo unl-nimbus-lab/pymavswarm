@@ -70,7 +70,7 @@ def print_message_response_cb(future: Future) -> None:
 
 def main() -> None:
     """
-    Demonstrate how to send a deubg vector
+    Demonstrate how to send a debug vector
     """
     # Parse the script arguments
     args = parse_args()
@@ -88,7 +88,7 @@ def main() -> None:
         time.sleep(0.5)
 
     # Send a debug message to all agents in the swarm
-    future = mavswarm.send_debug_message(args.name, [args.data1,args.data2,args.data3])
+    future = mavswarm.send_debug_message(args.name, [args.data1,args.data2])
     future.add_done_callback(print_message_response_cb)
 
     # Wait for the arm command to complete
