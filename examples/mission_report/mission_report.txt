@@ -1,0 +1,26 @@
+
+    ===========================================================================
+    pymavswarm Mission Report
+    ===========================================================================
+    Agent IDs Seen: {('5', '1'), ('1', '0'), ('4', '1'), ('1', '240')}
+    ---------------------------------------
+    Average Network Latency: 837.6176470588235
+    Minimum Network Latency: 670
+    Maximum Network Latency: 2454
+    ---------------------------------------
+    Average Radio RSSI: 187.34615384615384
+    Minimum Radio RSSI: 182
+    Maximum Radio RSSI: 191
+    ---------------------------------------
+    Average Background Noise: 52.44230769230769
+    Minimum Background Noise: 45
+    Maximum Background Noise: 69
+    ---------------------------------------
+    Average Remote Background Noise: 89.75
+    Minimum Remote Background Noise: 64
+    Maximum Remote Background Noise: 98
+    ---------------------------------------
+    Average Radio Packet Receive Errors: 0.0
+    Minimum Radio Packet Receive Errors: 0
+    Maximum Radio Packet Receive Errors: 0
+    

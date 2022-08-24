@@ -70,9 +70,7 @@ def print_message_response_cb(future: Future) -> None:
 
 def main() -> None:
     """
-    Demonstrate how to change the flight mode of swarm agents.
-
-    Ensure that all propellers have been removed prior to running this example!
+    Demonstrate how to send a deubg vector
     """
     # Parse the script arguments
     args = parse_args()
@@ -89,7 +87,7 @@ def main() -> None:
         print("Waiting for the system to recognize agents in the network...")
         time.sleep(0.5)
 
-    # Send a debug message to all gents on the swarm
+    # Send a debug message to all agents in the swarm
     future = mavswarm.send_debug_message(args.name, [args.data1,args.data2,args.data3])
     future.add_done_callback(print_message_response_cb)
 
