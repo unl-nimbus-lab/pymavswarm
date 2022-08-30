@@ -1173,9 +1173,9 @@ class MavSwarm:
                         int(time.time()), str.encode(name), value
                     )
                 elif isinstance(value, list):
-                    if(len(value) is not 3):
-                        raise RuntimeError(
-                            f"Invalid number debug vector elements provided. Expected 3, got {len(value)}"
+                    if len(value) != 3:
+                        raise ValueError(
+                            f"Invalid number of debug vector elements provided. Expected 3, got {len(value)}"
                         )
                     self._connection.mavlink_connection.mav.debug_vect_send(
                          str.encode(name),int(time.time()), *value
