@@ -70,7 +70,7 @@ def print_message_response_cb(future: Future) -> None:
 
 def main() -> None:
     """
-    Demonstrate how to send a debug vector
+    Demonstrate how to send a debug vector.
     """
     # Parse the script arguments
     args = parse_args()

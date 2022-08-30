@@ -1154,7 +1154,7 @@ class MavSwarm:
 
         if not isinstance(value, int) and not isinstance(value, float) and not isinstance(value, list):
             raise TypeError(
-                f"Invalid value provided. Expected an int or float or list, got {type(value)}"
+                f"Invalid value provided. Expected an int, float or list, got {type(value)}"
             )
 
         def executor(agent_id: AgentID) -> None:
