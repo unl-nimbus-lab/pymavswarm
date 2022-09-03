@@ -128,16 +128,10 @@ def main() -> None:
         args.takeoff_alt, agent_ids=target_agents, verify_state=True, retry=True
     )
 
-    if isinstance(responses, list):
-        for response in responses:
-            print(
-                f"Result of {response.message_type} message sent to "
-                f"({response.target_agent_id}): {response.code}"
-            )
-    else:
+    for response in responses:
         print(
-            f"Result of {responses.message_type} message sent to "
-            f"({response.target_agent_id}): {responses.code}"
+            f"Result of {response.message_type} message sent to "
+            f"({response.target_agent_id}): {response.code}"
         )
 
     # Wait for the user to indicate that the agents should fly to their waypoints

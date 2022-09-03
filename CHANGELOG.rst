@@ -7,6 +7,13 @@ utilizes `Semantic Versioning`_ for project versioning.
 
 .. _Semantic Versioning: https://semver.org/
 
+[v1.0.1] - 2022-09-03
+
+Removed
+^^^^^^^
+
+- Interface for sending command to a single agent by specifying an agent ID tuple; this
+  now requires users to always specify a list of agent IDs.
 
 [v1.0.0] - 2022-08-13
 ---------------------

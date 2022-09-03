@@ -75,16 +75,10 @@ def main() -> None:
     # Perform takeoff with all agents in the swarm; retry on message failure
     responses = mavswarm.takeoff_sequence(args.altitude, verify_state=True, retry=True)
 
-    if isinstance(responses, list):
-        for response in responses:
-            print(
-                f"Result of {response.message_type} message sent to "
-                f"({response.target_agent_id}): {response.code}"
-            )
-    else:
+    for response in responses:
         print(
-            f"Result of {responses.message_type} message sent to "
-            f"({response.target_agent_id}): {responses.code}"
+            f"Result of {response.message_type} message sent to "
+            f"({response.target_agent_id}): {response.code}"
         )
 
     # Wait for user input
