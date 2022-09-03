@@ -56,7 +56,7 @@ Installation
 
 .. code-block:: console
 
-    $ python3 -m pip install pymavswarm
+    python3 -m pip install pymavswarm
 
 To build ``pymavswarm`` from source, first ensure that at least Python 3.10 is
 installed. Once this dependency has been met, refer to the steps below:
@@ -68,13 +68,13 @@ installed. Once this dependency has been met, refer to the steps below:
 
 .. code-block:: console
 
-    $ cd path/to/pymavswarm/
+    cd path/to/pymavswarm
 
 3. Install the ``pymavswarm`` Python package
 
 .. code-block:: console
 
-    $ python3 -m pip install .
+    python3 -m pip install .
 
 Quick start
 -----------

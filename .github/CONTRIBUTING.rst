@@ -64,32 +64,32 @@ first ensure that ``pipenv`` has been installed. After successfully installing
 
 .. code-block:: console
 
-   $ cd path/to/pymavswarm
+   cd path/to/pymavswarm
 
 Next, install the project dependencies:
 
 .. code-block:: console
 
-   $ pipenv install --dev
+   pipenv install --dev
 
 We also recommend installing ``pymavswarm`` in editable mode:
 
 .. code-block:: console
 
-   $ pip3 install -e .
+   pip3 install -e .
 
 Finally, launch the virtual environment:
 
 .. code-block:: console
 
-   $ pipenv shell
+   pipenv shell
 
 At this point, running the project tests should work and pass (in both the
 development container and the virtual environment):
 
 .. code-block:: console
 
-   $ python3 -m unittest
+   python3 -m unittest
 
 Coding guidelines
 -----------------

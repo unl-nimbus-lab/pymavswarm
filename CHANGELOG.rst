@@ -8,6 +8,14 @@ utilizes `Semantic Versioning`_ for project versioning.
 .. _Semantic Versioning: https://semver.org/
 
 
+[v1.1.0] - 2022-09-03
+
+Added
+^^^^^
+
+- Interface for creating swarm and agent missions
+
+
 [v1.0.0] - 2022-08-13
 ---------------------
 
