@@ -26,7 +26,7 @@ from typing import Any
 
 import monotonic
 import yaml  # type: ignore
-from pymavlink import mavutil
+from pymavlink import mavutil, mavwp
 
 from pymavswarm import Connection
 from pymavswarm.agent import Agent
@@ -101,6 +101,7 @@ class MavSwarm:
         self._logger = init_logger(__name__, log_level=log_level)
         self.__agent_list_changed = Event()
         self._agents = NotifierDict(self.__agent_list_changed)
+        self._wploader = mavwp.MAVWPLoader()
 
         # Create a list of IDs to ignore
         self.__ignore_agent_ids: list[tuple[int | None, int | None]] = []
