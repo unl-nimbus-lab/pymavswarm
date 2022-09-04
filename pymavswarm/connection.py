@@ -25,7 +25,7 @@ from pymavswarm.utils import init_logger
 
 
 class Connection:
-    """Handle interaction with the network and the MAVLink connection."""
+    """Handle interaction with the network and the MAVLink connection. this is a test to make sure pipeline fails"""
 
     def __init__(
         self,

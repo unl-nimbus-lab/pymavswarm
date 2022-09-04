@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - bug_122_broken_ci
     tags:
       - v*.*.*
   pull_request:
