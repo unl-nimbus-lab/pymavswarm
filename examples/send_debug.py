@@ -36,7 +36,7 @@ def parse_args() -> Any:
         "port", type=str, help="port to establish a MAVLink connection over"
     )
     parser.add_argument("baud", type=int, help="baudrate to establish a connection at")
-    parser.add_argument("name",type=str, help="debug value name")
+    parser.add_argument("name", type=str, help="debug value name")
     parser.add_argument("data1", type=float, help="debug vector payload1")
     parser.add_argument("data2", type=float, help="debug vector payload2")
     parser.add_argument("data3", type=float, help="debug vector payload3")
@@ -69,9 +69,7 @@ def print_message_response_cb(future: Future) -> None:
 
 
 def main() -> None:
-    """
-    Demonstrate how to send a debug vector.
-    """
+    """Demonstrate how to send a debug vector."""
     # Parse the script arguments
     args = parse_args()
 
@@ -88,7 +86,9 @@ def main() -> None:
         time.sleep(0.5)
 
     # Send a debug message to all agents in the swarm
-    future = mavswarm.send_debug_message(args.name, [args.data1,args.data2,args.data3])
+    future = mavswarm.send_debug_message(
+        args.name, [args.data1, args.data2, args.data3]
+    )
     future.add_done_callback(print_message_response_cb)
 
     # Wait for the arm command to complete

@@ -1152,9 +1152,14 @@ class MavSwarm:
         if not isinstance(name, str):
             raise TypeError(f"Invalid name provided. Expected string, got {type(name)}")
 
-        if not isinstance(value, int) and not isinstance(value, float) and not isinstance(value, list):
+        if (
+            not isinstance(value, int)
+            and not isinstance(value, float)
+            and not isinstance(value, list)
+        ):
             raise TypeError(
-                f"Invalid value provided. Expected an int, float or list, got {type(value)}"
+                "Invalid value provided. Expected an int, float or list, got "
+                f"{type(value)}"
             )
 
         def executor(agent_id: AgentID) -> None:
@@ -1168,19 +1173,19 @@ class MavSwarm:
                     self._connection.mavlink_connection.mav.named_value_int_send(
                         int(time.time()), str.encode(name), value
                     )
-                elif isinstance(value,float):
+                elif isinstance(value, float):
                     self._connection.mavlink_connection.mav.named_value_float_send(
                         int(time.time()), str.encode(name), value
                     )
                 elif isinstance(value, list):
                     if len(value) != 3:
                         raise ValueError(
-                            f"Invalid number of debug vector elements provided. Expected 3, got {len(value)}"
+                            "Invalid number of debug vector elements provided. "
+                            f"Expected 3, got {len(value)}"
                         )
                     self._connection.mavlink_connection.mav.debug_vect_send(
-                         str.encode(name),int(time.time()), *value
+                        str.encode(name), int(time.time()), *value
                     )
-
 
             return
 
