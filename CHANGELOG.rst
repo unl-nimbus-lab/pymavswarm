@@ -7,13 +7,15 @@ utilizes `Semantic Versioning`_ for project versioning.
 
 .. _Semantic Versioning: https://semver.org/
 
-[v1.0.1] - 2022-09-03
+[v1.1.0] - 2022-09-04
+---------------------
 
-Removed
-^^^^^^^
+Added
+^^^^^
 
-- Interface for sending command to a single agent by specifying an agent ID tuple; this
-  now requires users to always specify a list of agent IDs.
+- Support for sending debug vectors: `PR #118`_
+
+.. _PR #118: https://github.com/unl-nimbus-lab/pymavswarm/pull/118
 
 [v1.0.0] - 2022-08-13
 ---------------------

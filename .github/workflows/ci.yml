@@ -33,10 +33,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh-actions
       - name: Test implementation
-        run: tox
+        run: python -m tox
 
   package:
-    name: Build & publish package
+    name: Test package build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
