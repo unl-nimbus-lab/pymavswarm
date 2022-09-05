@@ -1114,7 +1114,7 @@ class MavSwarm:
         self,
         name: str,
         value: int | float | list,
-        agent_ids: AgentID | list[AgentID] | None = None,
+        agent_ids: list[AgentID] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
