@@ -1119,7 +1119,7 @@ class MavSwarm:
     def send_debug_message(
         self,
         name: str,
-        value: int | float,
+        value: int | float | list,
         agent_ids: AgentID | list[AgentID] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
@@ -1134,7 +1134,7 @@ class MavSwarm:
         :param name: debug message name
         :type name: str
         :param value: debug message value
-        :type value: int | float
+        :type value: int | float | list
         :param agent_ids: optional list of target agent IDs, defaults to None
         :type agent_ids: AgentID | list[AgentID] | None,
             optional
@@ -1153,9 +1153,14 @@ class MavSwarm:
         if not isinstance(name, str):
             raise TypeError(f"Invalid name provided. Expected string, got {type(name)}")
 
-        if not isinstance(value, int) and not isinstance(value, float):
+        if (
+            not isinstance(value, int)
+            and not isinstance(value, float)
+            and not isinstance(value, list)
+        ):
             raise TypeError(
-                f"Invalid value provided. Expected an int or a float, got {type(value)}"
+                "Invalid value provided. Expected an int, float or list, got "
+                f"{type(value)}"
             )
 
         def executor(agent_id: AgentID) -> None:
@@ -1164,14 +1169,23 @@ class MavSwarm:
                 self._connection.mavlink_connection.target_system = agent_id[0]
                 self._connection.mavlink_connection.target_component = agent_id[1]
 
-                # Send flight mode
+                # Send debug message
                 if isinstance(value, int):
                     self._connection.mavlink_connection.mav.named_value_int_send(
                         int(time.time()), str.encode(name), value
                     )
-                else:
+                elif isinstance(value, float):
                     self._connection.mavlink_connection.mav.named_value_float_send(
                         int(time.time()), str.encode(name), value
+                    )
+                elif isinstance(value, list):
+                    if len(value) != 3:
+                        raise ValueError(
+                            "Invalid number of debug vector elements provided. "
+                            f"Expected 3, got {len(value)}"
+                        )
+                    self._connection.mavlink_connection.mav.debug_vect_send(
+                        str.encode(name), int(time.time()), *value
                     )
 
             return
