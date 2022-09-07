@@ -16,25 +16,25 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any, Callable, TypeAlias
 
 from pymavswarm import Agent
 
 # AgentID type alias. The provided order should be (system ID, component ID).
-AgentID = tuple[int, int]
+AgentID: TypeAlias = tuple[int, int]
 
 # A message response code. The provided order should be (code number, code message).
-MessageCode = tuple[int, str]
+MessageCode: TypeAlias = tuple[int, str]
 
 # A method that checks for a state change in the target agent after a message is sent.
-StateVerifier = Callable[[AgentID], bool]
+StateVerifier: TypeAlias = Callable[[AgentID], bool]
 
 # A method that sends the desired message.
-CommandExecutor = Callable[[AgentID], None]
+CommandExecutor: TypeAlias = Callable[[AgentID], None]
 
 
 # A method that performs some behavior after sending a message.
-PostExecutionHandler = Callable[
+PostExecutionHandler: TypeAlias = Callable[
     [
         AgentID,
         bool,
@@ -45,4 +45,4 @@ PostExecutionHandler = Callable[
 ]
 
 # A callback method responsible for processing an incoming MAVLink message.
-MessageHandler = Callable[[Any, dict[AgentID, Agent]], None]
+MessageHandler: TypeAlias = Callable[[Any, dict[AgentID, Agent]], None]

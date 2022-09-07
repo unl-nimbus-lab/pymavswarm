@@ -1,8 +1,9 @@
 from argparse import ArgumentParser
 from typing import Any
 
-from pymavswarm import MavSwarm, mavswarm
-from pymavswarm.mission import Command, Mission, Stage
+from pymavswarm import MavSwarm
+from pymavswarm.mission import Mission, Stage
+from pymavswarm.mission.commands import Command
 
 
 def parse_args() -> Any:

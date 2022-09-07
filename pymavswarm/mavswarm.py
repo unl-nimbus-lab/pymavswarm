@@ -1864,6 +1864,9 @@ class MavSwarm:
             ack_timeout,
         )
 
+    def start_mission(self):
+        raise NotImplementedError("This method has not yet been implemented")
+
     def handle_collision(
         self,
         colliding_agents: list[AgentID],

@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 
-from pymavswarm.mission.command import Command
+from pymavswarm.mission.commands import Command
 from pymavswarm.types import AgentID
 
 
