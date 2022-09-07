@@ -17,3 +17,4 @@
 from .agent import Agent
 from .connection import Connection
 from .mavswarm import MavSwarm
+from .mission import Mission, Waypoint

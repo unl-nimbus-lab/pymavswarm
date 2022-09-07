@@ -14,6 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .command import Command
-from .mission import Mission
-from .stage import Stage
+from __future__ import annotations
+
+from pymavswarm.mission.command import Command
+from pymavswarm.types import AgentID
+
+
+class Stage:
+    def __init__(self, commands: list[Command]) -> None:
+        self.__commands = commands
+
+        return
+
+    @property
+    def commands(self) -> list[Command]:
+        return self.__commands
+
+    @property
+    def target_agent_ids(self) -> list[AgentID]:
+        return [command.target_agent_id for command in self.__commands]

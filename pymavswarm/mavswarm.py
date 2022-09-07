@@ -25,7 +25,6 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any
 
 import monotonic
-import yaml  # type: ignore
 from pymavlink import mavutil, mavwp
 
 from pymavswarm import Connection
@@ -1781,15 +1780,14 @@ class MavSwarm:
 
     def goto(
         self,
-        x: float = 0,
-        y: float = 0,
-        z: float = 0,
+        x: float,
+        y: float,
+        z: float,
         hold: float = 0,
         agent_ids: AgentID | list[AgentID] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
-        config_file: str | None = None,
         frame: int = GLOBAL_RELATIVE_FRAME,
     ) -> Future:
         """
@@ -1831,71 +1829,31 @@ class MavSwarm:
         :return: future message response, if any
         :rtype: Future
         """
-        if (agent_ids is None and config_file is None) or (
-            agent_ids is not None and len(agent_ids) > 1
-        ):
+        if agent_ids is None or (agent_ids is not None and len(agent_ids) > 1):
             self._logger.warning(
                 "More than one agent has received a command to fly to the same "
                 "location. This may result in a collision."
             )
 
-        if config_file is not None:
-            # Parse the config file
-            goto = self.parse_yaml_mission(config_file)
-
-            if len(goto) > 1:
-                self._logger.warning(
-                    "More than one stage was provided in the goto configuration file. "
-                    "The system will use only the first stage for command execution."
+        def executor(agent_id: AgentID) -> None:
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.mission_item_send(
+                    agent_id[0],
+                    agent_id[1],
+                    0,
+                    frame,
+                    mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
+                    2,
+                    0,
+                    hold,
+                    0,
+                    0,
+                    0,
+                    x,
+                    y,
+                    z,
                 )
-
-            # Get only the first stage
-            goto = goto[0]
-
-            # Get the agent IDs in the first stage
-            agent_ids = list(goto.keys())
-
-            def executor(agent_id: AgentID) -> None:
-                if self._connection.mavlink_connection is not None:
-                    self._connection.mavlink_connection.mav.mission_item_send(
-                        agent_id[0],
-                        agent_id[1],
-                        0,
-                        frame,
-                        mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
-                        2,
-                        0,
-                        goto[agent_id]["hold"],
-                        0,
-                        0,
-                        0,
-                        goto[agent_id]["x"],
-                        goto[agent_id]["y"],
-                        goto[agent_id]["z"],
-                    )
-                return
-
-        else:
-
-            def executor(agent_id: AgentID) -> None:
-                if self._connection.mavlink_connection is not None:
-                    self._connection.mavlink_connection.mav.mission_item_send(
-                        agent_id[0],
-                        agent_id[1],
-                        0,
-                        frame,
-                        mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
-                        2,
-                        0,
-                        hold,
-                        0,
-                        0,
-                        0,
-                        x,
-                        y,
-                        z,
-                    )
-                return
+            return
 
         return self._send_command(
             agent_ids,
@@ -2070,22 +2028,6 @@ class MavSwarm:
         self.__message_receivers.add_message_handler(message, callback)
 
         return
-
-    def parse_yaml_mission(self, config_file: str) -> dict:
-        """
-        Parse a pre-planned trajectory/mission.
-
-        :param config_file: configuration file to parse
-        :type config_file: str
-        :return: parsed configuration file
-        :rtype: dict
-        """
-        mission = None
-
-        with open(config_file, "r") as config:
-            mission = yaml.load(config, yaml.FullLoader)["mission"]  # nosec: B506
-
-        return mission
 
     def __get_expected_agent_ids(self) -> list[AgentID]:
         """
