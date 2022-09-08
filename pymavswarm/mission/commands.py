@@ -18,10 +18,42 @@ from __future__ import annotations
 
 from pymavlink import mavutil
 
+from pymavswarm.frames import GLOBAL_RELATIVE_FRAME
 from pymavswarm.types import AgentID
 
 
 class Command(mavutil.mavlink.MAVLink_mission_item_message):
+    def __init__(
+        self,
+        agent_id: AgentID,
+        frame: int,
+        command: int,
+        param1: int | float,
+        param2: int | float,
+        param3: int | float,
+        param4: int | float,
+        x: float,
+        y: float,
+        z: float,
+    ) -> None:
+        super().__init__(
+            agent_id[0],
+            agent_id[1],
+            0,  # seq: unsupported
+            frame,
+            command,
+            0,  # current: unsupported
+            0,  # autocontinue: unsupported
+            param1,
+            param2,
+            param3,
+            param4,
+            x,
+            y,
+            z,
+        )
+        return
+
     @property
     def target_agent_id(self) -> AgentID:
         return (self.target_system, self.target_component)
@@ -38,16 +70,12 @@ class Waypoint(Command):
         accept_radius: float = 0,
         pass_radius: float = 0,
         yaw: float = 0,
-        frame: int = mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT,
+        frame: int = GLOBAL_RELATIVE_FRAME,
     ) -> None:
-        super().__init__(
-            agent_id[0],
-            agent_id[1],
-            0,  # seq: unsupported
+        super().__init(
+            agent_id,
             frame,
             mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
-            0,  # current: unsupported
-            0,  # autocontinue: unsupported
             hold,
             accept_radius,
             pass_radius,
@@ -56,26 +84,57 @@ class Waypoint(Command):
             y,
             z,
         )
-
-
-class ReturnToLaunch(Command):
-    def __init__(self) -> None:
-        super().__init__()
+        return
 
 
 class Takeoff(Command):
-    def __init__(self) -> None:
-        super().__init__()
-
-
-class Land(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        agent_id: AgentID,
+        z: float,
+        pitch: float = 0,
+        yaw: float = 0,
+        x: float = 0,
+        y: float = 0,
+        frame: int = GLOBAL_RELATIVE_FRAME,
+    ) -> None:
+        super().__init(
+            agent_id,
+            frame,
+            mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
+            pitch,
+            0,
+            0,
+            yaw,
+            x,
+            y,
+            z,
+        )
+        return
 
 
 class LoiterUnlim(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        agent_id: AgentID,
+        x: float,
+        y: float,
+        z: float,
+        frame: int = GLOBAL_RELATIVE_FRAME,
+    ) -> None:
+        super().__init__(
+            agent_id,
+            frame,
+            mavutil.mavlink.MAV_CMD_NAV_LOITER_UNLIM,
+            0,
+            0,
+            0,
+            0,
+            x,
+            y,
+            z,
+        )
+        return
 
 
 class LoiterTurns(Command):
@@ -84,6 +143,16 @@ class LoiterTurns(Command):
 
 
 class LoiterTime(Command):
+    def __init__(self) -> None:
+        super().__init__()
+
+
+class ReturnToLaunch(Command):
+    def __init__(self, agent_id: AgentID) -> None:
+        super().__init__()
+
+
+class Land(Command):
     def __init__(self) -> None:
         super().__init__()
 

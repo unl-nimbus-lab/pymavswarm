@@ -48,4 +48,4 @@ class Mission:
         for stage in self.__stages:
             agent_ids.extend(stage.target_agent_ids)
 
-        return agent_ids
+        return [*set(agent_ids)]

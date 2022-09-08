@@ -16,20 +16,9 @@
 
 from __future__ import annotations
 
-from pymavswarm.mission.commands import Command
-from pymavswarm.types import AgentID
+from pymavlink import mavutil
 
-
-class Stage:
-    def __init__(self, commands: list[Command]) -> None:
-        self.__commands = commands
-
-        return
-
-    @property
-    def commands(self) -> list[Command]:
-        return self.__commands
-
-    @property
-    def target_agent_ids(self) -> list[AgentID]:
-        return [*set([command.target_agent_id for command in self.__commands])]
+# Supported coordinate frames
+GLOBAL_FRAME = mavutil.mavlink.MAV_FRAME_GLOBAL
+GLOBAL_RELATIVE_FRAME = mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT
+LOCAL_FRAME = mavutil.mavlink.MAV_FRAME_LOCAL_NED

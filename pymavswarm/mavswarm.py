@@ -29,6 +29,7 @@ from pymavlink import mavutil, mavwp
 
 from pymavswarm import Connection
 from pymavswarm.agent import Agent
+from pymavswarm.frames import GLOBAL_RELATIVE_FRAME
 from pymavswarm.handlers import MessageReceivers
 from pymavswarm.message import codes
 from pymavswarm.message.response import Response
@@ -58,11 +59,6 @@ class MavSwarm:
     COLLISION_RESPONSE_RTL = 2
     COLLISION_RESPONSE_LOITER = 3
     COLLISION_RESPONSE_FORCE_DISARM = 4
-
-    # Supported coordinate frames
-    GLOBAL_FRAME = mavutil.mavlink.MAV_FRAME_GLOBAL
-    GLOBAL_RELATIVE_FRAME = mavutil.mavlink.MAV_FRAME_GLOBAL_TERRAIN_ALT
-    LOCAL_FRAME = mavutil.mavlink.MAV_FRAME_LOCAL_NED
 
     def __init__(
         self,
