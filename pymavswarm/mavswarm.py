@@ -1926,22 +1926,13 @@ class MavSwarm:
         def print_collision_response_result(future: Future):
             responses = future.result()
 
-            if isinstance(responses, list):
-                for response in responses:
-                    if not response.result:
-                        self._logger.critical(
-                            f"Failed to execute collision response "
-                            f"{collision_response} on agent "
-                            f"({response.target_agent_id})"
-                        )
-            else:
-                if not responses.result:
+            for response in responses:
+                if not response.result:
                     self._logger.critical(
                         f"Failed to execute collision response "
                         f"{collision_response} on agent "
-                        f"({responses.target_agent_id})"
+                        f"({response.target_agent_id})"
                     )
-
             return
 
         future = None
@@ -2592,15 +2583,16 @@ class MavSwarm:
             while not future.done():
                 pass
 
-            response = future.result()
+            responses = future.result()
 
-            if not response.result:
-                self._logger.warning(
-                    "Unable to set the message interval of the SYSTEM_TIME message on "
-                    f"agent {response.target_agent_id}. This warning can be safely "
-                    "ignored if the target ID is not an actual agent in the swarm or "
-                    "if state estimation is not required."
-                )
+            for response in responses:
+                if not response.result:
+                    self._logger.warning(
+                        "Unable to set the message interval of the SYSTEM_TIME "
+                        "message on agent {response.target_agent_id}. This warning can "
+                        "be safely ignored if the target ID is not an actual agent in "
+                        "the swarm or if state estimation is not required."
+                    )
         return
 
     def __measure_ping(self, message: Any, agents: dict[AgentID, Agent]) -> None:
