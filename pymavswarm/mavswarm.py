@@ -1860,8 +1860,38 @@ class MavSwarm:
             ack_timeout,
         )
 
-    def start_mission(self):
-        raise NotImplementedError("This method has not yet been implemented")
+    def start_mission(
+        self,
+        agent_ids: AgentID | list[AgentID] | None = None,
+        retry: bool = False,
+        message_timeout: float = 2.5,
+        ack_timeout: float = 0.5,
+    ) -> Future:
+        def executor(agent_id: AgentID) -> None:
+            if self._connection.mavlink_connection is not None:
+                self._connection.mavlink_connection.mav.command_long_send(
+                    agent_id[0],
+                    agent_id[1],
+                    mavutil.mavlink.MAV_CMD_MISSION_START,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            return
+
+        return self._send_command(
+            agent_ids,
+            executor,
+            "MISSION_START",
+            retry,
+            message_timeout,
+            ack_timeout,
+        )
 
     def handle_collision(
         self,

@@ -117,9 +117,9 @@ class LoiterUnlim(Command):
     def __init__(
         self,
         agent_id: AgentID,
-        x: float,
-        y: float,
-        z: float,
+        x: float = 0,
+        y: float = 0,
+        z: float = 0,
         frame: int = GLOBAL_RELATIVE_FRAME,
     ) -> None:
         super().__init__(
@@ -138,67 +138,272 @@ class LoiterUnlim(Command):
 
 
 class LoiterTurns(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        agent_id: AgentID,
+        turns: float,
+        radius: float,
+        x: float = 0,
+        y: float = 0,
+        z: float = 0,
+        frame: int = GLOBAL_RELATIVE_FRAME,
+    ) -> None:
+        super().__init__(
+            agent_id,
+            frame,
+            mavutil.mavlink.MAV_CMD_NAV_LOITER_TURNS,
+            turns,
+            0,
+            radius,
+            0,
+            x,
+            y,
+            z,
+        )
+        return
 
 
 class LoiterTime(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        agent_id: AgentID,
+        time: float,
+        x: float = 0,
+        y: float = 0,
+        z: float = 0,
+        frame: int = GLOBAL_RELATIVE_FRAME,
+    ) -> None:
+        super().__init__(
+            agent_id,
+            frame,
+            mavutil.mavlink.MAV_CMD_NAV_LOITER_TIME,
+            time,
+            0,
+            0,
+            0,
+            x,
+            y,
+            z,
+        )
+        return
 
 
 class ReturnToLaunch(Command):
     def __init__(self, agent_id: AgentID) -> None:
-        super().__init__()
+        super().__init__(
+            agent_id,
+            0,  # frame: unused
+            mavutil.mavlink.MAV_CMD_NAV_RETURN_TO_LAUNCH,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+        return
 
 
 class Land(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        agent_id: AgentID,
+        x: float = 0,
+        y: float = 0,
+        frame: int = GLOBAL_RELATIVE_FRAME,
+    ) -> None:
+        super().__init__(
+            agent_id, frame, mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 0, 0, 0, x, y, 0
+        )
+        return
 
 
 class Spline(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        agent_id: AgentID,
+        x: float,
+        y: float,
+        z: float,
+        delay: float = 0,
+        frame: int = GLOBAL_RELATIVE_FRAME,
+    ) -> None:
+        super().__init__(
+            agent_id,
+            frame,
+            mavutil.mavlink.MAV_CMD_NAV_SPLINE_WAYPOINT,
+            delay,
+            0,
+            0,
+            0,
+            x,
+            y,
+            z,
+        )
+        return
 
 
 class GuidedEnable(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, agent_id: AgentID, enable: bool) -> None:
+        super().__init__(
+            agent_id,
+            0,  # frame: unused
+            mavutil.mavlink.MAV_CMD_NAV_GUIDED_ENABLE,
+            1 if enable else 0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+        return
 
 
 class Delay(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        agent_id: AgentID,
+        delay: int,
+        future_hour: int = 0,
+        future_minutes: int = 0,
+        future_seconds: int = 0,
+    ) -> None:
+        super().__init__(
+            agent_id,
+            0,  # frame: unused
+            mavutil.mavlink.MAV_CMD_DELAY,
+            delay,
+            future_hour,
+            future_minutes,
+            future_seconds,
+            0,
+            0,
+            0,
+        )
+        return
 
 
 class DoJump(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self, agent_id: AgentID, waypoint_number: int, repeat_number: int
+    ) -> None:
+        super().__init__(
+            agent_id,
+            0,  # frame: unused
+            mavutil.mavlink.MAV_CMD_DO_JUMP,
+            waypoint_number,
+            repeat_number,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+        return
 
 
 class ConditionDelay(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, agent_id: AgentID, delay: float) -> None:
+        super().__init__(
+            agent_id,
+            0,  # frame: unused
+            mavutil.mavlink.MAV_CMD_CONDITION_DELAY,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+        return
 
 
 class ConditionDistance(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, agent_id: AgentID, distance: float) -> None:
+        super().__init__(
+            agent_id,
+            0,  # frame: unused
+            mavutil.mavlink.MAV_CMD_CONDITION_DISTANCE,
+            distance,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+        return
 
 
 class ConditionYaw(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        agent_id: AgentID,
+        angle: float,
+        speed: float = 0,
+        relative: bool = False,
+        direction: int = 1,
+    ) -> None:
+        if relative and direction not in [-1, 1]:
+            raise ValueError(
+                "Please provide a valid direction when using relative direction. "
+                f"Valid directions are 1 (CW) and -1 (CCW), got {direction}."
+            )
+
+        super().__init__(
+            agent_id,
+            0,  # frame: unused
+            mavutil.mavlink.MAV_CMD_CONDITION_YAW,
+            angle,
+            speed,
+            direction if relative else 0,
+            1 if relative else 0,
+            0,
+            0,
+            0,
+        )
+        return
 
 
 class DoChangeSpeed(Command):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self, agent_id: AgentID, speed: float, speed_type: int = 1, throttle: float = -1
+    ) -> None:
+        if speed_type not in [0, 1, 2, 3]:
+            raise ValueError(
+                "Invalid speed type provided. Valid speed types are 0, 1, 2, and 3, "
+                f"got {speed_type}"
+            )
+
+        super().__init__(
+            agent_id,
+            0,  # frame: unused
+            mavutil.mavlink.MAV_CMD_DO_CHANGE_SPEED,
+            speed_type,
+            speed,
+            throttle,
+            0,
+            0,
+            0,
+            0,
+        )
+        return
 
 
 class DoSetHome(Command):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        agent_id: AgentID,
+        use_current_position: bool,
+        yaw: float = 0,
+        x: float = 0,
+        y: float = 0,
+        z: float = 0,
+        frame: int = GLOBAL_RELATIVE_FRAME,
+    ) -> None:
         super().__init__()
 
 
@@ -218,21 +423,6 @@ class DoRepeatServo(Command):
 
 
 class DoRepeatRelay(Command):
-    def __init__(self) -> None:
-        super().__init__()
-
-
-class DoDigiCamConfigure(Command):
-    def __init__(self) -> None:
-        super().__init__()
-
-
-class DoDigiCamControl(Command):
-    def __init__(self) -> None:
-        super().__init__()
-
-
-class DoSetCamTriggDist(Command):
     def __init__(self) -> None:
         super().__init__()
 
