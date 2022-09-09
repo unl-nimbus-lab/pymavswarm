@@ -106,20 +106,12 @@ def main() -> None:
     responses = future.result()
 
     # Exit if all agents didn't successfully switch into GUIDED mode
-    if isinstance(responses, list):
-        for response in responses:
-            if not response.result:
-                print(
-                    "Failed to set the flight mode of agent "
-                    f"{response.target_agent_id} to GUIDED prior to the takeoff "
-                    "sequence. Exiting."
-                )
-                return
-    else:
-        if not responses.result:
+    for response in responses:
+        if not response.result:
             print(
-                "Failed to set the flight mode of agent {responses.target_agent_id} to "
-                "GUIDED prior to the takeoff sequence. Exiting."
+                "Failed to set the flight mode of agent "
+                f"{response.target_agent_id} to GUIDED prior to the takeoff "
+                "sequence. Exiting."
             )
             return
 
