@@ -1898,6 +1898,7 @@ class MavSwarm:
             retry,
             message_timeout,
             ack_timeout,
+            ack_packet_type="MISSION_ACK",
         )
 
     def handle_collision(
