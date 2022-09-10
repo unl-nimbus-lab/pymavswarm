@@ -288,19 +288,10 @@ An example demonstrating how this can be used is as follows:
         # Get the message responses
         responses = future.result()
 
-        # The responses can be either a list of Response objects
-        # or a single Response object, depending on the number of agents
-        # that the command was sent to
-        if isinstance(responses, list):
-            for response in responses:
-                print(
-                    f"Result of {response.message_type} message sent to "
-                    f"({response.target_agent_id}): {response.code}"
-                )
-        else:
+        for response in responses:
             print(
-                f"Result of {responses.message_type} message sent to "
-                f"({responses.target_agent_id}): {responses.code}"
+                f"Result of {response.message_type} message sent to "
+                f"({response.target_agent_id}): {response.code}"
             )
 
         return

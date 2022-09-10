@@ -13,7 +13,7 @@ utilizes `Semantic Versioning`_ for project versioning.
 Fixed
 ^^^^^
 
-- Acknowledgement failure when sending navigation commands (e.g., waypoints) `PR #124`_
+- Acknowledgement failure when sending navigation commands (e.g., waypoints): `PR #124`_
 
 .. _PR #124: https://github.com/unl-nimbus-lab/pymavswarm/pull/124
 
