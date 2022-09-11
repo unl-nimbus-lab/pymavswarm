@@ -32,7 +32,6 @@ StateVerifier = Callable[[AgentID], bool]
 # A method that sends the desired message.
 CommandExecutor = Callable[[AgentID], None]
 
-
 # A method that performs some behavior after sending a message.
 PostExecutionHandler = Callable[
     [

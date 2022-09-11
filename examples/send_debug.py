@@ -53,16 +53,10 @@ def print_message_response_cb(future: Future) -> None:
     """
     responses = future.result()
 
-    if isinstance(responses, list):
-        for response in responses:
-            print(
-                f"Result of {response.message_type} message sent to "
-                f"({response.target_agent_id}): {response.code}"
-            )
-    else:
+    for response in responses:
         print(
-            f"Result of {responses.message_type} message sent to "
-            f"({responses.target_agent_id}): {responses.code}"
+            f"Result of {response.message_type} message sent to "
+            f"({response.target_agent_id}): {response.code}"
         )
 
     return

@@ -59,16 +59,10 @@ def print_message_response_cb(future: Future) -> None:
     """
     responses = future.result()
 
-    if isinstance(responses, list):
-        for response in responses:
-            print(
-                f"Result of {response.message_type} message sent to "
-                f"({response.target_agent_id}): {response.code}"
-            )
-    else:
+    for response in responses:
         print(
-            f"Result of {responses.message_type} message sent to "
-            f"({responses.target_agent_id}): {responses.code}"
+            f"Result of {response.message_type} message sent to "
+            f"({response.target_agent_id}): {response.code}"
         )
 
     return
@@ -106,20 +100,12 @@ def main() -> None:
     responses = future.result()
 
     # Exit if all agents didn't successfully switch into GUIDED mode
-    if isinstance(responses, list):
-        for response in responses:
-            if not response.result:
-                print(
-                    "Failed to set the flight mode of agent "
-                    f"{response.target_agent_id} to GUIDED prior to the takeoff "
-                    "sequence. Exiting."
-                )
-                return
-    else:
-        if not responses.result:
+    for response in responses:
+        if not response.result:
             print(
-                "Failed to set the flight mode of agent {responses.target_agent_id} to "
-                "GUIDED prior to the takeoff sequence. Exiting."
+                "Failed to set the flight mode of agent "
+                f"{response.target_agent_id} to GUIDED prior to the takeoff "
+                "sequence. Exiting."
             )
             return
 
@@ -128,16 +114,10 @@ def main() -> None:
         args.takeoff_alt, agent_ids=target_agents, verify_state=True, retry=True
     )
 
-    if isinstance(responses, list):
-        for response in responses:
-            print(
-                f"Result of {response.message_type} message sent to "
-                f"({response.target_agent_id}): {response.code}"
-            )
-    else:
+    for response in responses:
         print(
-            f"Result of {responses.message_type} message sent to "
-            f"({response.target_agent_id}): {responses.code}"
+            f"Result of {response.message_type} message sent to "
+            f"({response.target_agent_id}): {response.code}"
         )
 
     # Wait for the user to indicate that the agents should fly to their waypoints

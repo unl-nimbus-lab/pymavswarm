@@ -46,7 +46,7 @@ class CustomMavSwarm(MavSwarm):
 
     def fun_command(
         self,
-        agent_ids: AgentID | list[AgentID] | None = None,
+        agent_ids: list[AgentID] | None = None,
         retry: bool = False,
         message_timeout: float = 2.5,
         ack_timeout: float = 0.5,
@@ -55,7 +55,7 @@ class CustomMavSwarm(MavSwarm):
         Send a fun command to the specified agents.
 
         :param agent_ids: optional list of target agent IDs, defaults to None
-        :type agent_ids: AgentID | list[AgentID] | None,
+        :type agent_ids: list[AgentID] | None,
             optional
         :param retry: retry sending the fun command to an agent on failure, defaults to
             False
