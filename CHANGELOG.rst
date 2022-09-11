@@ -13,7 +13,7 @@ utilizes `Semantic Versioning`_ for project versioning.
 Removed
 ^^^^^^^
 
-- Ability to specify a single target agent ID using a tuple when sending commands, and 
+- Ability to specify a single target agent ID using a tuple when sending commands, and
   now always require a list argument: `PR #120`_
 
 .. _PR #120: https://github.com/unl-nimbus-lab/pymavswarm/pull/120
