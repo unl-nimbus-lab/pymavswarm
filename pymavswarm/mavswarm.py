@@ -131,6 +131,7 @@ class MavSwarm:
         # of their one-off dependence on single properties
         self.__message_receivers.add_message_handler("TIMESYNC", self.__measure_ping)
         self.__message_receivers.add_message_handler("SYSTEM_TIME", self.__sync_clocks)
+        self.__message_receivers.add_message_handler("NAMED_VALUE_FLOAT", self.__agent_ping)
 
         self.__file_logger: FileLogger | None = None
         self.__boot_time: float | None = None
@@ -2662,6 +2663,28 @@ class MavSwarm:
             )
 
         return
+
+    def __agent_ping(self, message: Any, agents: dict[AgentID, Agent]) -> None:
+        """
+        Measure the offset between the agent and source clocks.
+
+        This has been implemented externally from the message receivers because of its
+        dependence on the time since boot.
+
+        :param message: Incoming MAVLink message
+        :type message: Any
+        :param agents: agents in the swarm
+        :type agents: dict[AgentID, Agent]
+        """
+        agent_id = (message.get_srcSystem(), message.get_srcComponent())
+
+        print(str(message.name))
+
+        return
+
+        
+
+    
 
     def enable_collision_avoidance(
         self,

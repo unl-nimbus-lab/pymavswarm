@@ -192,6 +192,7 @@ class MessageReceivers(Receivers):
 
             if agent_id not in agents:
                 return agents
+                
 
             # Store the previous velocity
             prev_velocity = deepcopy(agents[agent_id].velocity)
